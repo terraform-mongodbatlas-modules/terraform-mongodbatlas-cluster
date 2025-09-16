@@ -1,0 +1,21 @@
+name: Format and validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
+        with:
+          terraform_version: ${{ vars.TF_VERSION_LATEST }}
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+      - run: terraform init
+      - run: terraform validate
