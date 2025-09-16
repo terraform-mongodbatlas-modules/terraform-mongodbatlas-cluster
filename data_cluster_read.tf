@@ -3,5 +3,5 @@ data "mongodbatlas_advanced_clusters" "this" {
 }
 
 locals {
-  existing_cluster = try(element([for cluster in data.mongodbatlas_advanced_clusters.this.results : { old_cluster = cluster } if cluster.name == var.name], 0), tomap({}))
+  existing_cluster = try(element([for cluster in data.mongodbatlas_advanced_clusters.this.results : { old_cluster = cluster } if cluster.name == local.final_name], 0), tomap({}))
 }
