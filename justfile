@@ -12,7 +12,6 @@ fmt:
 validate:
     terraform init
     terraform validate
-    tflint --recursive
 
 # Lint with comprehensive rules
 lint:
