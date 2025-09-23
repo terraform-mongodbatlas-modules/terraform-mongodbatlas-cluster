@@ -1,6 +1,5 @@
-# Cluster Module PoC
-- This module maps all the attributes of [`mongodbatlas_advanced_cluster (preview provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster%2520%2528preview%2520provider%25202.0.0%2529) to [variables.tf](variables.tf).
-- Remember to set the `export MONGODB_ATLAS_ADVANCED_CLUSTER_V2_SCHEMA=true` in your terminal before running `terraform` commands.
+# Cluster Module
+- This module maps all the attributes of [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to [variables.tf](variables.tf).
 - All deprecated fields are removed
 - The module supports either `auto_scaling` or setting `instance_size` on root level or in each `region`
 
@@ -11,7 +10,7 @@
 
 <!-- BEGIN_DISCLAIMER -->
 ## Disclaimer
-TODO: Add me
+TODO: Removal of this disclaimer should be considered, will be addressed in future PRs if needed ,or if some additional info will be added.
 
 <!-- END_DISCLAIMER -->
 
@@ -54,7 +53,7 @@ graph TD
 
 ```terraform
 module "cluster" {
-  source = "../.."
+  source = "../.." # TODO: Usage of published module instead of local one. Will be addressed in CLOUDP-347025
 
   name                   = "single-region"
   project_id             = var.project_id
@@ -386,6 +385,8 @@ The following providers are used by this module:
 The following resources are used by this module:
 
 - [mongodbatlas_advanced_cluster.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) (resource)
+
+# TODO: Removal and further considerations of usage of this resource will be addressed in CLOUDP-347041
 - [random_pet.generated_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/pet) (resource)
 - [mongodbatlas_advanced_clusters.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_clusters) (data source)
 
@@ -472,7 +473,7 @@ Default:
 
 ### <a name="input_auto_scaling"></a> [auto\_scaling](#input\_auto\_scaling)
 
-Description: Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults.
+Description: Auto scaling config for electable/read-only specs. Enabled by default with [Architecture Center](https://www.mongodb.com/docs/atlas/architecture/current/scalability/#all-deployment-paradigm-recommendations) recommended defaults.
 
 Type:
 
@@ -694,7 +695,7 @@ Description: MongoDB major version of the cluster.
 
 On creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).
 
- On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
+On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
 
 Type: `string`
 
@@ -893,7 +894,7 @@ Default: `{}`
 
 ### <a name="input_tags_required"></a> [tags\_required](#input\_tags\_required)
 
-Description: List of required tag keys for enterprise compliance. Default matches Architecture Center recommendations.
+Description: List of required tag keys for enterprise compliance. Default matches [Architecture Center](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#resource-tagging) recommendations.
 
 Type: `list(string)`
 

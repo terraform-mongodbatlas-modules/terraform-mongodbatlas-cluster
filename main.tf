@@ -1,6 +1,6 @@
 
 locals {
-  DEFAULT_INSTANCE_SIZE = "M10"
+  DEFAULT_INSTANCE_SIZE = "M10" # TODO: Suggestion to add warnings / errors conditional to the environment tag. If `environment` is production an error should raise if instance_size = M0 is set, and linked to Architecture Center.
 
   regions = coalesce(var.regions, [])
 
@@ -31,7 +31,7 @@ locals {
         for region_index, r in region_group : {
           provider_name          = coalesce(r.provider_name, var.provider_name)
           region_name            = r.name
-          priority               = 7 - region_index
+          priority               = 7 - region_index # TODO: Ensure it doesn't become negative for > 8 regions. Validate how this is handled.
           auto_scaling           = var.auto_scaling
           analytics_auto_scaling = var.auto_scaling_analytics
           electable_specs = r.node_count != null ? {
