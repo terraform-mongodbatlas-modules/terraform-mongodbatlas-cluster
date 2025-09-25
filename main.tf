@@ -15,9 +15,9 @@ locals {
   unique_shard_indices = local.computed_cluster_type == "SHARDED" ? sort(distinct([for r in local.regions : r.shard_index if r.shard_index != null])) : []
   # list of lists of regions, grouped by cluster type
   cluster_type_regions = {
-    REPLICASET = [local.regions]
+    REPLICASET = [local.regions],
     # unique_shard_indices is a list of strings, so we need to use _ to ignore the value otherwise the comparision will not work leaving empty lists
-    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_index == idx]]
+    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_index == idx]],
     GEOSHARDED = [for z in local.unique_zone_names : [for r in local.regions : r if r.zone_name == z]]
   }
 
@@ -29,7 +29,7 @@ locals {
       zone_name = local.computed_cluster_type == "GEOSHARDED" ? region_group[0].zone_name : null
       region_configs = tolist([
         for region_index, r in region_group : {
-          provider_name = r.provider_name != null ? r.provider_name : var.provider_name
+          provider_name          = r.provider_name != null ? r.provider_name : var.provider_name
           region_name            = r.name
           priority               = 7 - region_index # TODO: Ensure it doesn't become negative for > 8 regions. Validate how this is handled.
           auto_scaling           = var.auto_scaling
@@ -38,8 +38,8 @@ locals {
             disk_size_gb = var.disk_size_gb
             instance_size = var.auto_scaling.compute_enabled ? (
               try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size, null) != null
-                ? try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size, null)
-                : var.auto_scaling.compute_min_instance_size
+              ? try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size, null)
+              : var.auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
           } : null
@@ -55,8 +55,8 @@ locals {
             disk_size_gb = var.disk_size_gb
             instance_size = var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled ? (
               try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size, null) != null
-                ? try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size, null)
-                : var.auto_scaling_analytics.compute_min_instance_size
+              ? try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size, null)
+              : var.auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
           } : null
@@ -95,9 +95,9 @@ locals {
     var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
 
     // Autoscaling required fields
-   var.auto_scaling != null && var.auto_scaling.compute_enabled && var.auto_scaling.compute_min_instance_size == null ? ["Must set auto_scaling.compute_min_instance_size when auto_scaling.compute_enabled = true"] : [],
-   var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled && var.auto_scaling_analytics.compute_min_instance_size == null
-      ? ["Must set auto_scaling_analytics.compute_min_instance_size when auto_scaling_analytics.compute_enabled = true"] : [],
+    var.auto_scaling != null && var.auto_scaling.compute_enabled && var.auto_scaling.compute_min_instance_size == null ? ["Must set auto_scaling.compute_min_instance_size when auto_scaling.compute_enabled = true"] : [],
+    var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled && var.auto_scaling_analytics.compute_min_instance_size == null
+    ? ["Must set auto_scaling_analytics.compute_min_instance_size when auto_scaling_analytics.compute_enabled = true"] : [],
 
     // Per-region invalid instance_size when autoscaling is used
     var.auto_scaling.compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
