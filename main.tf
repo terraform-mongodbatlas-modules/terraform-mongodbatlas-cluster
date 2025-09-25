@@ -29,7 +29,7 @@ locals {
       zone_name = local.computed_cluster_type == "GEOSHARDED" ? region_group[0].zone_name : null
       region_configs = tolist([
         for region_index, r in region_group : {
-          provider_name          = coalesce(r.provider_name, var.provider_name)
+          provider_name          = coalesce(r.provider_name, var.provider_name, "ERROR_PROVIDER_NAME_MISSING")
           region_name            = r.name
           priority               = 7 - region_index # TODO: Ensure it doesn't become negative for > 8 regions. Validate how this is handled.
           auto_scaling           = var.auto_scaling
@@ -38,7 +38,8 @@ locals {
             disk_size_gb = var.disk_size_gb
             instance_size = var.auto_scaling.compute_enabled ? coalesce(
               try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size, null),
-              var.auto_scaling.compute_min_instance_size
+              var.auto_scaling.compute_min_instance_size,
+              "ERROR_AUTO_SCALING_MIN_INSTANCE_SIZE_MISSING"
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
           } : null
@@ -54,7 +55,8 @@ locals {
             disk_size_gb = var.disk_size_gb
             instance_size = var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled ? coalesce(
               try(local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size, null),
-              var.auto_scaling_analytics.compute_min_instance_size
+              var.auto_scaling_analytics.compute_min_instance_size,
+              "ERROR_AUTO_SCALING_ANALYTICS_MIN_INSTANCE_SIZE_MISSING"
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
           } : null
@@ -91,6 +93,11 @@ locals {
     var.instance_size != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.instance_size without var.regions"] : [],
     var.auto_scaling != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling without var.regions"] : [],
     var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
+
+ // Autoscaling required fields
+   var.auto_scaling != null && var.auto_scaling.compute_enabled && var.auto_scaling.compute_min_instance_size == null ? ["Must set auto_scaling.compute_min_instance_size when auto_scaling.compute_enabled = true"] : [],
+   var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled && var.auto_scaling_analytics.compute_min_instance_size == null
+      ? ["Must set auto_scaling_analytics.compute_min_instance_size when auto_scaling_analytics.compute_enabled = true"] : [],
 
     // Per-region invalid instance_size when autoscaling is used
     var.auto_scaling.compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
