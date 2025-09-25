@@ -1,4 +1,4 @@
-name: Format and validate
+name: Validate and Lint
 
 on:
   push:
@@ -14,8 +14,12 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
       - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
         with:
-          terraform_version: ${{ vars.TF_VERSION_LATEST }}
           terraform_wrapper: false
-      - run: terraform fmt -check -recursive
-      - run: terraform init
-      - run: terraform validate
+      - name: Install tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        with:
+          just-version: '1.40.0'
+      - run: just validate
+      - run: just lint
