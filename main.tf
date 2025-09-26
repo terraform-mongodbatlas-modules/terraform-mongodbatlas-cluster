@@ -15,9 +15,9 @@ locals {
   unique_shard_indices = local.computed_cluster_type == "SHARDED" ? sort(distinct([for r in local.regions : r.shard_index if r.shard_index != null])) : []
   # list of lists of regions, grouped by cluster type
   cluster_type_regions = {
-    REPLICASET = [local.regions],
+    REPLICASET = [local.regions]
     # unique_shard_indices is a list of strings, so we need to use _ to ignore the value otherwise the comparision will not work leaving empty lists
-    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_index == idx]],
+    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_index == idx]]
     GEOSHARDED = [for z in local.unique_zone_names : [for r in local.regions : r if r.zone_name == z]]
   }
 
