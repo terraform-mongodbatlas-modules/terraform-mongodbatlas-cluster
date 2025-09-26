@@ -92,11 +92,6 @@ locals {
     var.auto_scaling != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling without var.regions"] : [],
     var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
 
-    // Autoscaling required fields
-    var.auto_scaling != null && var.auto_scaling.compute_enabled && var.auto_scaling.compute_min_instance_size == null ? ["Must set auto_scaling.compute_min_instance_size when auto_scaling.compute_enabled = true"] : [],
-    var.auto_scaling_analytics != null && var.auto_scaling_analytics.compute_enabled && var.auto_scaling_analytics.compute_min_instance_size == null
-    ? ["Must set auto_scaling_analytics.compute_min_instance_size when auto_scaling_analytics.compute_enabled = true"] : [],
-
     // Per-region invalid instance_size when autoscaling is used
     var.auto_scaling.compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
     var.auto_scaling_analytics != null ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
