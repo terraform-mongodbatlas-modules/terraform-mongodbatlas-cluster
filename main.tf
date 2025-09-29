@@ -67,20 +67,9 @@ locals {
   empty_region_configs                = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
   empty_regions                       = length(local.regions) == 0
 
-  // Tags validation
-  missing_tags = [
-    for required_tag in var.tags_required : required_tag
-    if !contains(keys(var.tags), required_tag)
-  ]
-
   // Validation messages (non-empty strings represent errors)
   validation_errors = compact(concat(
     local.empty_region_configs,
-
-    // Tags validation
-    length(local.missing_tags) > 0 ? [
-      "Missing required tags: ${join(", ", local.missing_tags)}. Required tags: ${join(", ", var.tags_required)}"
-    ] : [],
 
     // Mutual exclusivity
     length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
