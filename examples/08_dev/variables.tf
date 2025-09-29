@@ -8,9 +8,40 @@ EOT
   type = string
 }
 
+variable "cluster_name" {
+  description = "The name of the MongoDB Atlas cluster."
+  type        = string
+  default     = "dev-cluster"
+}
+
+variable "provider_name" {
+  description = "Cloud provider for the MongoDB Atlas cluster."
+  type        = string
+  default     = "AWS"
+}
+
+variable "region_name" {
+  description = "Region where the MongoDB Atlas cluster will be deployed."
+  type        = string
+  default     = "US_EAST_1"
+}
+
+variable "instance_size" {
+  description = "Fixed instance size for dev (use dedicated M10 to keep features consistent)."
+  type        = string
+  default     = "M10"
+}
 
 variable "tags" {
   description = "Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster."
   type        = map(string)
-  default     = {}
+  default     = {
+    department  = "engineering"
+    team        = "platform"
+    application = "atlas-dev"
+    environment = "dev"
+    version     = "v1"
+    email       = "devnull@example.com"
+    criticality = "low"
+  }
 }

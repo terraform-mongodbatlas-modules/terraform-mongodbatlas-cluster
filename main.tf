@@ -1,6 +1,6 @@
 
 locals {
-  DEFAULT_INSTANCE_SIZE = "M10" # TODO: Suggestion to add warnings / errors conditional to the environment tag. If `environment` is production an error should raise if instance_size = M0 is set, and linked to Architecture Center.
+  DEFAULT_INSTANCE_SIZE = "M30"
 
   regions = coalesce(var.regions, [])
 

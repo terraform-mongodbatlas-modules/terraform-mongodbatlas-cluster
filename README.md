@@ -1,7 +1,8 @@
 # Cluster Module
 - This module maps all the attributes of [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to [variables.tf](variables.tf).
-- All deprecated fields are removed
+- All deprecated fields are not used
 - The module supports either `auto_scaling` or setting `instance_size` on root level or in each `region`
+- Default values are set for production environments. Examples and optional fields are provided to create cluster for development and test environments.
 
 
 ## Known Limitations (not prioritized due to limited time)
@@ -480,8 +481,8 @@ Type:
 ```hcl
 object({
     compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M60")
-    compute_min_instance_size  = optional(string, "M30")
+    compute_max_instance_size  = optional(string, null)
+    compute_min_instance_size  = optional(string, null)
     compute_scale_down_enabled = optional(bool, true)
     disk_gb_enabled            = optional(bool, true)
   })
@@ -492,7 +493,7 @@ Default:
 ```json
 {
   "compute_enabled": true,
-  "compute_max_instance_size": "M60",
+  "compute_max_instance_size": "M300",
   "compute_min_instance_size": "M30",
   "compute_scale_down_enabled": true,
   "disk_gb_enabled": true
