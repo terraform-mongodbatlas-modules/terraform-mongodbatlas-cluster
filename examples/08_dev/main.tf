@@ -4,6 +4,7 @@ module "cluster" {
   auto_scaling = {
     compute_enabled = false
   }
+
   name       = "dev"
   project_id = var.project_id
   regions = [
@@ -14,7 +15,6 @@ module "cluster" {
     }
   ]
   provider_name = "AWS"
-  tags          = var.tags
 }
 
 output "cluster" {

@@ -8,7 +8,6 @@ EOT
   type = string
 }
 
-
 variable "tags" {
   description = "Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster."
   type        = map(string)
