@@ -107,20 +107,6 @@ variable "auto_scaling_analytics" {
   default  = null
 }
 
-variable "tags_required" {
-  description = "List of required tag keys for enterprise compliance. Default matches Architecture Center recommendations."
-  type        = list(string)
-  default = [
-    "department",
-    "team",
-    "application",
-    "environment",
-    "version",
-    "email",
-    "criticality"
-  ]
-}
-
 variable "tags" {
   description = "Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster."
   type        = map(string)

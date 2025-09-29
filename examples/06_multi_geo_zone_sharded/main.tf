@@ -23,6 +23,7 @@ module "cluster" {
     compute_scale_down_enabled = true
     disk_gb_enabled            = true
   }
+
   tags = var.tags
 }
 

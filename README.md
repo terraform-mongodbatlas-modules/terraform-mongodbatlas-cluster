@@ -892,26 +892,6 @@ Type: `map(string)`
 
 Default: `{}`
 
-### <a name="input_tags_required"></a> [tags\_required](#input\_tags\_required)
-
-Description: List of required tag keys for enterprise compliance. Default matches [Architecture Center](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#resource-tagging) recommendations.
-
-Type: `list(string)`
-
-Default:
-
-```json
-[
-  "department",
-  "team",
-  "application",
-  "environment",
-  "version",
-  "email",
-  "criticality"
-]
-```
-
 ### <a name="input_termination_protection_enabled"></a> [termination\_protection\_enabled](#input\_termination\_protection\_enabled)
 
 Description: Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster.
