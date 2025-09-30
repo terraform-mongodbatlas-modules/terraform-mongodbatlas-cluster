@@ -5,7 +5,6 @@
 
 
 ## Known Limitations (not prioritized due to limited time)
-- Only supports `disk_size_gb` at root level
 - No support for `disk_iops` or `ebs_volume_type`
 
 <!-- BEGIN_DISCLAIMER -->
@@ -628,26 +627,6 @@ Default: `null`
 Description: Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false.
 
 Type: `bool`
-
-Default: `null`
-
-### <a name="input_disk_size_gb"></a> [disk\_size\_gb](#input\_disk\_size\_gb)
-
-Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
-
- This value must be equal for all shards and node types.
-
- This value is not configurable on M0/M2/M5 clusters.
-
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
-
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
-
- Storage charge calculations depend on whether you choose the default value or a custom value.
-
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
-
-Type: `number`
 
 Default: `null`
 
