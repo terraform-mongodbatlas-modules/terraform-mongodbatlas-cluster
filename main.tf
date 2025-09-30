@@ -114,7 +114,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   }
 
   cluster_type                                     = local.computed_cluster_type
-  name                                             = local.final_name
+  name                                             = var.name
   project_id                                       = var.project_id
   replication_specs                                = jsondecode(local.replication_specs_json)
   accept_data_risks_and_force_replica_set_reconfig = var.accept_data_risks_and_force_replica_set_reconfig
