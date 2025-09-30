@@ -370,15 +370,11 @@ The following requirements are needed by this module:
 
 - <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) (~> 2.0)
 
-- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.1)
-
 ## Providers
 
 The following providers are used by this module:
 
 - <a name="provider_mongodbatlas"></a> [mongodbatlas](#provider\_mongodbatlas) (2.0.0)
-
-- <a name="provider_random"></a> [random](#provider\_random) (3.7.2)
 
 ## Resources
 
@@ -386,8 +382,6 @@ The following resources are used by this module:
 
 - [mongodbatlas_advanced_cluster.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) (resource)
 
-# TODO: Removal and further considerations of usage of this resource will be addressed in CLOUDP-347041
-- [random_pet.generated_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/pet) (resource)
 - [mongodbatlas_advanced_clusters.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_clusters) (data source)
 
 ## Required Inputs
@@ -399,6 +393,12 @@ The following input variables are required:
 Description: Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
 
 **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
+
+Type: `string`
+
+### <a name="input_name"></a> [name](#input\_name)
+
+Description: Human-readable label that identifies this cluster.
 
 Type: `string`
 
@@ -700,22 +700,6 @@ On update: Increase version only by 1 major version at a time. If the cluster is
 Type: `string`
 
 Default: `null`
-
-### <a name="input_name"></a> [name](#input\_name)
-
-Description: Human-readable label that identifies this cluster.
-
-Type: `string`
-
-Default: `""`
-
-### <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix)
-
-Description: Prefix for the cluster name if not specified in the `name` variable.
-
-Type: `string`
-
-Default: `"lz-module-"`
 
 ### <a name="input_paused"></a> [paused](#input\_paused)
 

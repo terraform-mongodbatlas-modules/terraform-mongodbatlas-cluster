@@ -1,13 +1,6 @@
 variable "name" {
-  description = "Human-readable label that identifies this cluster. The module will create a name if not set."
+  description = "Human-readable label that identifies this cluster."
   type        = string
-  default     = ""
-}
-
-variable "name_prefix" {
-  description = "Prefix for the cluster name if not specified in the `name` variable."
-  type        = string
-  default     = "lz-module-"
 }
 
 variable "regions" {

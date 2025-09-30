@@ -1,7 +1,7 @@
 module "cluster" {
   source = "../.."
 
-  # name                   = "single-region"
+  name                   = "single-region"
   project_id             = var.project_id
   mongo_db_major_version = "8.0"
   regions = [
