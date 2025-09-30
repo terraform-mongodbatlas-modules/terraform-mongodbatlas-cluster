@@ -13,6 +13,7 @@ module "replication_var" {
       electable_specs = {
         instance_size = "M10"
         node_count    = 3
+        disk_size_gb  = 40
       }
     }]
   }]
