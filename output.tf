@@ -22,7 +22,7 @@ output "create_date" {
 
 output "cluster_name" {
   value       = mongodbatlas_advanced_cluster.this.name
-  description = "Name of the cluster that was set."
+  description = "MongoDB Atlast cluster name."
 }
 output "mongo_db_version" {
   description = "Version of MongoDB that the cluster runs."
