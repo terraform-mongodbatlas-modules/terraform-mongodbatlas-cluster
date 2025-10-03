@@ -4,9 +4,9 @@ locals {
 
   regions = coalesce(var.regions, [])
 
-  is_geosharded  = var.cluster_type == "GEOSHARDED"
-  is_sharded     = var.cluster_type == "SHARDED"
-  is_replicaset  = var.cluster_type == "REPLICASET"
+  is_geosharded = var.cluster_type == "GEOSHARDED"
+  is_sharded    = var.cluster_type == "SHARDED"
+  is_replicaset = var.cluster_type == "REPLICASET"
 
   unique_zone_names    = local.is_geosharded ? sort(distinct([for r in local.regions : r.zone_name if r.zone_name != null])) : []
   unique_shard_indices = local.is_sharded ? sort(distinct([for r in local.regions : r.shard_number if r.shard_number != null])) : []

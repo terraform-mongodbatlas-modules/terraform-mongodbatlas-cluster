@@ -1,8 +1,8 @@
 module "cluster" {
   source = "../.."
 
-  name       = "single-region-with-analytics"
-  project_id = var.project_id
+  name         = "single-region-with-analytics"
+  project_id   = var.project_id
   cluster_type = "REPLICASET"
   regions = [
     {

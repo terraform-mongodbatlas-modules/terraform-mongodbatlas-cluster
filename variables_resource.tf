@@ -49,7 +49,7 @@ variable "bi_connector_config" {
 variable "cluster_type" {
   description = "Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED"
   type        = string
-  
+
   validation {
     condition     = contains(["REPLICASET", "SHARDED", "GEOSHARDED"], var.cluster_type)
     error_message = "Invalid cluster type. Valid values are REPLICASET, SHARDED, GEOSHARDED."

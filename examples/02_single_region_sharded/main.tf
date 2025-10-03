@@ -4,19 +4,19 @@ module "cluster" {
   auto_scaling = {
     compute_enabled = false
   }
-  name       = "single-region-sharded"
-  project_id = var.project_id
+  name         = "single-region-sharded"
+  project_id   = var.project_id
   cluster_type = "SHARDED"
   regions = [
     {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number   = 1
+      shard_number  = 1
       instance_size = "M40"
       }, {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number   = 2
+      shard_number  = 2
       instance_size = "M30"
     }
   ]
