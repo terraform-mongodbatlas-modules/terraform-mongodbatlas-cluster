@@ -24,7 +24,7 @@ locals {
   grouped_regions = local.cluster_type_regions[local.computed_cluster_type]
 
   auto_scaling_compute = var.auto_scaling.compute_enabled
-  auto_scaling_compute_analytics = var.auto_scaling_analytics.compute_enabled
+  auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
 
 effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
   for k, v in var.auto_scaling :
@@ -32,18 +32,18 @@ effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
     "compute_max_instance_size",
     "compute_min_instance_size",
     "compute_scale_down_enabled"
-    # optionally: "disk_gb_enabled"
   ], k)
 }
 
-effective_auto_scaling_analytics = local.auto_scaling_compute_analytics ? var.auto_scaling_analytics : {
-  for k, v in var.auto_scaling_analytics :
-  k => v if !contains([
-    "compute_max_instance_size",
-    "compute_min_instance_size",
-    "compute_scale_down_enabled"
-  ], k)
-}
+effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? null : (
+  local.auto_scaling_compute_analytics ? var.auto_scaling_analytics : {
+    for k, v in var.auto_scaling_analytics :
+    k => v if !contains([
+      "compute_max_instance_size",
+      "compute_min_instance_size",
+      "compute_scale_down_enabled"
+    ], k)
+  })
 
   // Build replication_specs matching the provider schema
   replication_specs_built = tolist([
