@@ -23,32 +23,27 @@ locals {
 
   grouped_regions = local.cluster_type_regions[local.computed_cluster_type]
 
-  // Auto scaling
-  effective_auto_scaling = var.auto_scaling == null ? null : (
-    try(var.auto_scaling.compute_enabled, true) == false
-      ? { for k, v in var.auto_scaling :
-          k => v if !contains([
-            "compute_max_instance_size",
-            "compute_min_instance_size",
-            "compute_scale_down_enabled",
-            "disk_gb_enabled"
-          ], k)
-        }
-      : var.auto_scaling
-  )
+  auto_scaling_compute = var.auto_scaling.compute_enabled
+  auto_scaling_compute_analytics = var.auto_scaling_analytics.compute_enabled
 
-  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? null : (
-    try(var.auto_scaling_analytics.compute_enabled, true) == false
-      ? { for k, v in var.auto_scaling_analytics :
-          k => v if !contains([
-            "compute_max_instance_size",
-            "compute_min_instance_size",
-            "compute_scale_down_enabled",
-            "disk_gb_enabled"
-          ], k)
-        }
-      : var.auto_scaling_analytics
-  )
+effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
+  for k, v in var.auto_scaling :
+  k => v if !contains([
+    "compute_max_instance_size",
+    "compute_min_instance_size",
+    "compute_scale_down_enabled"
+    # optionally: "disk_gb_enabled"
+  ], k)
+}
+
+effective_auto_scaling_analytics = local.auto_scaling_compute_analytics ? var.auto_scaling_analytics : {
+  for k, v in var.auto_scaling_analytics :
+  k => v if !contains([
+    "compute_max_instance_size",
+    "compute_min_instance_size",
+    "compute_scale_down_enabled"
+  ], k)
+}
 
   // Build replication_specs matching the provider schema
   replication_specs_built = tolist([
@@ -63,7 +58,7 @@ locals {
           analytics_auto_scaling = local.effective_auto_scaling_analytics
           electable_specs = r.node_count != null ? {
             disk_size_gb = var.disk_size_gb
-            instance_size = try(local.effective_auto_scaling.compute_enabled, true) ? try(
+            instance_size = local.effective_auto_scaling.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -71,7 +66,7 @@ locals {
           } : null
           read_only_specs = r.node_count_read_only != null ? {
             disk_size_gb = var.disk_size_gb
-            instance_size = try(local.effective_auto_scaling.compute_enabled, true) ? try(
+            instance_size = local.effective_auto_scaling.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -79,7 +74,7 @@ locals {
           } : null
           analytics_specs = r.node_count_analytics != null ? {
             disk_size_gb = var.disk_size_gb
-            instance_size = try(local.effective_auto_scaling_analytics.compute_enabled, true) ? try(
+            instance_size = (local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled) ? try(
               local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
