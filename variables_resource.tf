@@ -51,7 +51,7 @@ variable "cluster_type" {
   type        = string
   
   validation {
-    condition     = contains(["REPLICASET", "SHARDED", "GEOSHARDED"], value)
+    condition     = contains(["REPLICASET", "SHARDED", "GEOSHARDED"], var.cluster_type)
     error_message = "Invalid cluster type. Valid values are REPLICASET, SHARDED, GEOSHARDED."
   }
 }
