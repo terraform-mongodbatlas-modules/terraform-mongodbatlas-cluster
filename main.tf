@@ -58,7 +58,7 @@ locals {
           analytics_auto_scaling = local.effective_auto_scaling_analytics
           electable_specs = r.node_count != null ? {
             disk_size_gb = var.disk_size_gb
-            instance_size = local.effective_auto_scaling.compute_enabled ? try(
+            instance_size = local.auto_scaling_compute ? try(
               local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -74,7 +74,7 @@ locals {
           } : null
           analytics_specs = r.node_count_analytics != null ? {
             disk_size_gb = var.disk_size_gb
-            instance_size = (local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled) ? try(
+            instance_size = (local.effective_auto_scaling_analytics != null && local.auto_scaling_compute_analytics) ? try(
               local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
