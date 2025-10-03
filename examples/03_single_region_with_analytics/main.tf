@@ -3,6 +3,7 @@ module "cluster" {
 
   name       = "single-region-with-analytics"
   project_id = var.project_id
+  cluster_type = "REPLICASET"
   regions = [
     {
       name                 = "US_EAST_1"
