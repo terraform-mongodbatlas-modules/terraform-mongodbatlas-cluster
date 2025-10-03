@@ -5,6 +5,7 @@ module "replication_var" {
   project_id             = var.project_id
   mongo_db_major_version = "8.0"
   regions                = []
+  cluster_type           = "REPLICASET"
   replication_specs = [{
     region_configs = [{
       priority      = 7

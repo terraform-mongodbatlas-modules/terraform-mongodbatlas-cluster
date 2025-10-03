@@ -7,7 +7,7 @@ variable "regions" {
   description = <<-EOT
 The simplest way to define your cluster topology.
 By default REPLICASET cluster.
-Use `shard_index` for SHARDED cluster.
+Use `shard_number` for SHARDED cluster.
 Use `zone_name` for GEOSHARDED cluster.
 
 EOT
@@ -15,7 +15,7 @@ EOT
   type = list(object({
     name                    = optional(string)
     node_count              = optional(number)
-    shard_index             = optional(number)
+    shard_number             = optional(number)
     provider_name           = optional(string)
     node_count_read_only    = optional(number)
     node_count_analytics    = optional(number)

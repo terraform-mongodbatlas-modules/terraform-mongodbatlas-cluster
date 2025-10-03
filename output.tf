@@ -35,6 +35,6 @@ output "state_name" {
   value       = mongodbatlas_advanced_cluster.this.state_name
 }
 
-output "connection_string_private_endpoint" {
-  value = mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint[0].connection_string
-}
+# output "connection_string_private_endpoint" {
+#   value = mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint[0].connection_string
+# }
