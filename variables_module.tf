@@ -77,7 +77,7 @@ variable "auto_scaling" {
     compute_scale_down_enabled = optional(bool, true)
     disk_gb_enabled            = optional(bool, true)
   })
-  nullable = true
+
   default = {
     compute_enabled            = true
     compute_max_instance_size  = "M60"
