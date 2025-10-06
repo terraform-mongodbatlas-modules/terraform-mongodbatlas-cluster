@@ -93,12 +93,12 @@ module "cluster" {
     {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number   = 0
+      shard_number  = 0
       instance_size = "M40"
       }, {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number   = 1
+      shard_number  = 1
       instance_size = "M30"
     }
   ]
@@ -197,12 +197,12 @@ module "cluster" {
   project_id = var.project_id
   regions = [
     {
-      name        = "US_EAST_1"
-      node_count  = 3
+      name         = "US_EAST_1"
+      node_count   = 3
       shard_number = 0
       }, {
-      name        = "EU_WEST_1"
-      node_count  = 2
+      name         = "EU_WEST_1"
+      node_count   = 2
       shard_number = 1
     }
   ]
@@ -268,26 +268,26 @@ module "cluster" {
     {
       name                 = "US_WEST_2"
       node_count           = 2
-      shard_number          = 0
+      shard_number         = 0
       node_count_read_only = 2
       provider_name        = "AZURE"
       }, {
       name                 = "US_EAST_2"
       node_count           = 1
-      shard_number          = 0
+      shard_number         = 0
       provider_name        = "AWS"
       node_count_read_only = 2
     },
     {
       name                 = "US_WEST_2"
       node_count           = 2
-      shard_number          = 1
+      shard_number         = 1
       node_count_read_only = 2
       provider_name        = "AZURE"
       }, {
       name                 = "US_EAST_2"
       node_count           = 1
-      shard_number          = 1
+      shard_number         = 1
       provider_name        = "AWS"
       node_count_read_only = 2
     }
@@ -404,10 +404,11 @@ Type: `string`
 
 ### <a name="input_regions"></a> [regions](#input\_regions)
 
-Description: The simplest way to define your cluster topology.  
-By default REPLICASET cluster.  
-Use `shard_number` for SHARDED cluster.  
-Use `zone_name` for GEOSHARDED cluster.
+Description: The simplest way to define your cluster topology:
+- For REPLICASET: omit both `shard_number` and `zone_name`.
+- For SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+
 
 Type:
 
@@ -415,7 +416,7 @@ Type:
 list(object({
     name                    = optional(string)
     node_count              = optional(number)
-    shard_number             = optional(number)
+    shard_number            = optional(number)
     provider_name           = optional(string)
     node_count_read_only    = optional(number)
     node_count_analytics    = optional(number)
