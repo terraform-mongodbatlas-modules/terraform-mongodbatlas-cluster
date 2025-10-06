@@ -56,7 +56,7 @@ locals {
           electable_specs = r.node_count != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.auto_scaling_compute ? try(
-              local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[shard_number].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
