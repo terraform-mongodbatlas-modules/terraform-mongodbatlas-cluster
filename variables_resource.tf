@@ -47,10 +47,13 @@ variable "bi_connector_config" {
 }
 
 variable "cluster_type" {
-  description = "Inferred if not set. REPLICASET/SHARDED/GEOSHARDED"
+  description = "Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED"
   type        = string
-  nullable    = true
-  default     = null
+
+  validation {
+    condition     = contains(["REPLICASET", "SHARDED", "GEOSHARDED"], var.cluster_type)
+    error_message = "Invalid cluster type. Valid values are REPLICASET, SHARDED, GEOSHARDED."
+  }
 }
 
 variable "config_server_management_mode" {

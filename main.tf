@@ -1,27 +1,24 @@
 
 locals {
-  DEFAULT_INSTANCE_SIZE = "M10" # TODO: Suggestion to add warnings / errors conditional to the environment tag. If `environment` is production an error should raise if instance_size = M0 is set, and linked to Architecture Center.
+  DEFAULT_INSTANCE_SIZE = "M10"
 
   regions = coalesce(var.regions, [])
 
-  is_geosharded = length(local.regions) > 0 && alltrue([for r in local.regions : r.zone_name != null])
-  is_sharded    = length(local.regions) > 0 && alltrue([for r in local.regions : r.shard_index != null])
+  is_geosharded = var.cluster_type == "GEOSHARDED"
+  is_sharded    = var.cluster_type == "SHARDED"
+  is_replicaset = var.cluster_type == "REPLICASET"
 
-  computed_cluster_type = var.cluster_type != null ? var.cluster_type : (
-    local.is_geosharded ? "GEOSHARDED" : (local.is_sharded ? "SHARDED" : "REPLICASET")
-  )
-
-  unique_zone_names    = local.computed_cluster_type == "GEOSHARDED" ? sort(distinct([for r in local.regions : r.zone_name if r.zone_name != null])) : []
-  unique_shard_indices = local.computed_cluster_type == "SHARDED" ? sort(distinct([for r in local.regions : r.shard_index if r.shard_index != null])) : []
+  unique_zone_names    = local.is_geosharded ? sort(distinct([for r in local.regions : r.zone_name if r.zone_name != null])) : []
+  unique_shard_indices = local.is_sharded ? sort(distinct([for r in local.regions : r.shard_number if r.shard_number != null])) : []
   # list of lists of regions, grouped by cluster type
   cluster_type_regions = {
     REPLICASET = [local.regions]
     # unique_shard_indices is a list of strings, so we need to use _ to ignore the value otherwise the comparision will not work leaving empty lists
-    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_index == idx]]
+    SHARDED    = [for idx, _ in local.unique_shard_indices : [for r in local.regions : r if r.shard_number == idx]]
     GEOSHARDED = [for z in local.unique_zone_names : [for r in local.regions : r if r.zone_name == z]]
   }
 
-  grouped_regions = local.cluster_type_regions[local.computed_cluster_type]
+  grouped_regions = local.cluster_type_regions[var.cluster_type]
 
   auto_scaling_compute           = var.auto_scaling.compute_enabled
   auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
@@ -47,19 +44,19 @@ locals {
 
   // Build replication_specs matching the provider schema
   replication_specs_built = tolist([
-    for shard_index, region_group in local.grouped_regions : {
-      zone_name = local.computed_cluster_type == "GEOSHARDED" ? region_group[0].zone_name : null
+    for shard_number, region_group in local.grouped_regions : {
+      zone_name = local.is_geosharded ? region_group[0].zone_name : null
       region_configs = tolist([
         for region_index, r in region_group : {
           provider_name          = r.provider_name != null ? r.provider_name : var.provider_name
           region_name            = r.name
-          priority               = 7 - region_index # TODO: Ensure it doesn't become negative for > 8 regions. Validate how this is handled.
+          priority               = max(7 - region_index, 0)
           auto_scaling           = local.effective_auto_scaling
           analytics_auto_scaling = local.effective_auto_scaling_analytics
           electable_specs = r.node_count != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.auto_scaling_compute ? try(
-              local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].electable_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[shard_number].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
@@ -67,7 +64,7 @@ locals {
           read_only_specs = r.node_count_read_only != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.auto_scaling_compute ? try(
-              local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].read_only_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[shard_number].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_read_only
@@ -75,7 +72,7 @@ locals {
           analytics_specs = r.node_count_analytics != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.effective_auto_scaling_analytics != null ? try(
-              local.existing_cluster.old_cluster.replication_specs[shard_index].region_configs[region_index].analytics_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[shard_number].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
@@ -108,16 +105,16 @@ locals {
     var.auto_scaling_analytics != null ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
 
     // Cluster type vs region fields
-    local.computed_cluster_type == "GEOSHARDED" ? concat(
+    local.is_geosharded ? concat(
       [for idx, r in local.regions : r.zone_name == null ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
-      [for idx, r in local.regions : r.shard_index != null ? "Geosharded cluster should not define shard_index: regions[${idx}].shard_index=${r.shard_index}" : ""]
+      [for idx, r in local.regions : r.shard_number != null ? "Geosharded cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""]
     ) : [],
-    local.computed_cluster_type == "SHARDED" ? concat(
-      [for idx, r in local.regions : r.shard_index == null ? "Must use regions[*].shard_index when cluster_type is SHARDED: shard_index missing @ index ${idx}" : ""],
+    local.is_sharded ? concat(
+      [for idx, r in local.regions : r.shard_number == null ? "Must use regions[*].shard_number when cluster_type is SHARDED: shard_number missing @ index ${idx}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Sharded cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
-    local.computed_cluster_type == "REPLICASET" ? concat(
-      [for idx, r in local.regions : r.shard_index != null ? "Replicaset cluster should not define shard_index: regions[${idx}].shard_index=${r.shard_index}" : ""],
+    local.is_replicaset ? concat(
+      [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
 
@@ -135,7 +132,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
     }
   }
 
-  cluster_type                                     = local.computed_cluster_type
+  cluster_type                                     = var.cluster_type
   name                                             = var.name
   project_id                                       = var.project_id
   replication_specs                                = jsondecode(local.replication_specs_json)

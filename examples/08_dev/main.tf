@@ -5,8 +5,9 @@ module "cluster" {
     compute_enabled = false
   }
 
-  name       = "dev"
-  project_id = var.project_id
+  name         = "dev"
+  project_id   = var.project_id
+  cluster_type = "REPLICASET"
   regions = [
     {
       name          = "US_EAST_1"
