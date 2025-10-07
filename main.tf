@@ -7,52 +7,63 @@ locals {
   is_sharded    = var.cluster_type == "SHARDED"
   is_replicaset = var.cluster_type == "REPLICASET"
 
-  unique_zone_names    = local.is_geosharded ? sort(distinct([for r in local.regions : r.zone_name if r.zone_name != null])) : []
-
-  zones_with_counts = local.is_geosharded ? {
-    for z in local.unique_zone_names :
-    z => {
-      with_sn    = length([for r in local.regions : r if r.zone_name == z && r.shard_number != null])
-      without_sn = length([for r in local.regions : r if r.zone_name == z && r.shard_number == null])
-    }
-  } : {}
-
-  # zones that violate "all-or-none" shard_number rule
-  invalid_geo_zones_mixed = local.is_geosharded ? [
-    for z, c in local.zones_with_counts :
-    z if(c.with_sn > 0 && c.without_sn > 0)
-  ] : []
-
-  # grouping keys for GEO shards: "zone||<sn>" (if zone uses numbered shards) or "zone||0" (if zone uses single shard)
-  geoshard_keys = local.is_geosharded ? flatten([
-    for z in local.unique_zone_names :
-    (
-      local.zones_with_counts[z].with_sn > 0 && local.zones_with_counts[z].without_sn == 0
-      ? [for sn in sort(distinct([for r in local.regions : r.shard_number if r.zone_name == z])) : "${z}||${tostring(sn)}"]
-      : ["${z}||0"]
-    )
-  ]) : []
+  grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
   unique_shard_numbers = local.is_sharded ? sort(distinct([for r in local.regions : r.shard_number if r.shard_number != null])) : []
-
-  grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
   grouped_regions_sharded = local.is_sharded ? [
     for sn in local.unique_shard_numbers :
     [for r in local.regions : r if r.shard_number == sn]
   ] : []
 
-  grouped_regions_geosharded = local.is_geosharded ? [
-    for key in local.geoshard_keys : [
-      for r in local.regions : r
-      if r.zone_name == split(key, "||")[0]
-      && (
-        (split(key, "||")[1] == "0" && r.shard_number == null) ||
-        (split(key, "||")[1] != "0" && tostring(r.shard_number) == split(key, "||")[1])
-      )
-    ]
+  geo_rows = local.is_geosharded ? [
+    for r in local.regions : r
+    if r.zone_name != null && trimspace(r.zone_name) != ""
   ] : []
 
+  unique_zone_names = local.is_geosharded ? sort(distinct([
+    for r in local.geo_rows : trimspace(r.zone_name)
+  ])) : []
+
+  # per-zone counts to ensure either "all-or-none" region blocks within each zone have shard_number set.
+  # if no regions in a zone have shard_number set, then they are all assigned to the one shard by default.
+  zones_with_counts = local.is_geosharded ? {
+    for z in local.unique_zone_names :
+    z => {
+      with_sn    = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number != null])
+      without_sn = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number == null])
+    }
+  } : {}
+
+  invalid_geo_zones_mixed = local.is_geosharded ? [
+    for z, c in local.zones_with_counts :
+    z if(c.with_sn > 0 && c.without_sn > 0)
+  ] : []
+
+  zones_numbered = local.is_geosharded ? {
+    for z, c in local.zones_with_counts : z => (c.with_sn > 0 && c.without_sn == 0)
+  } : {}
+
+  # compute a key per region block:
+  #  - numbered zone: "zone||<shard_number>"
+  #  - single-shard zone: "zone||0"
+  geo_keyed_rows = local.is_geosharded ? [
+    for r in local.geo_rows : {
+      key    = "${trimspace(r.zone_name)}||${local.zones_numbered[trimspace(r.zone_name)] ? tostring(r.shard_number) : "0"}"
+      region = r
+    }
+  ] : []
+
+  geoshard_keys = local.is_geosharded ? sort(distinct([
+    for x in local.geo_keyed_rows : x.key
+  ])) : []
+
+  # group by computed key: "zone||<shard_number>"
+  grouped_regions_geosharded = local.is_geosharded ? [
+    for key in local.geoshard_keys : [
+      for x in local.geo_keyed_rows : x.region if x.key == key
+    ]
+  ] : []
   cluster_type_regions = {
     REPLICASET = local.grouped_regions_replicaset
     SHARDED    = local.grouped_regions_sharded
@@ -91,52 +102,42 @@ locals {
     for idx, key in local.geoshard_keys : key => idx
   } : { "0" = 0 }
 
+  # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
-    for _group_i, region_group in local.grouped_regions : {
-      zone_name = local.is_geosharded ? region_group[0].zone_name : null
+    for gi in range(length(local.grouped_regions)) : {
+      zone_name = local.is_geosharded ? split("||", local.geoshard_keys[gi])[0] : null
+
 
       region_configs = tolist([
-        for region_index, r in region_group : {
+        for region_index, r in local.grouped_regions[gi] : {
           provider_name          = r.provider_name != null ? r.provider_name : var.provider_name
           region_name            = r.name
           priority               = max(7 - region_index, 0)
           auto_scaling           = local.effective_auto_scaling
           analytics_auto_scaling = local.effective_auto_scaling_analytics
-          
+
           electable_specs = r.node_count != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.auto_scaling_compute ? try(
-              local.existing_cluster.old_cluster.replication_specs[
-                local.is_replicaset ? 0 :
-                local.is_sharded ? lookup(local.shard_value_to_index, tostring(region_group[0].shard_number), 0) :
-                lookup(local.shard_value_to_index, "${region_group[0].zone_name}||${tostring(coalesce(region_group[0].shard_number, 0))}", 0)
-              ].region_configs[region_index].electable_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
           } : null
-          
+
           read_only_specs = r.node_count_read_only != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.auto_scaling_compute ? try(
-              local.existing_cluster.old_cluster.replication_specs[
-                local.is_replicaset ? 0 :
-                local.is_sharded ? lookup(local.shard_value_to_index, tostring(region_group[0].shard_number), 0) :
-                lookup(local.shard_value_to_index, "${region_group[0].zone_name}||${tostring(coalesce(region_group[0].shard_number, 0))}", 0)
-              ].region_configs[region_index].read_only_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_read_only
           } : null
-          
+
           analytics_specs = r.node_count_analytics != null ? {
             disk_size_gb = var.disk_size_gb
             instance_size = local.effective_auto_scaling_analytics != null ? try(
-              local.existing_cluster.old_cluster.replication_specs[
-                local.is_replicaset ? 0 :
-                local.is_sharded ? lookup(local.shard_value_to_index, tostring(region_group[0].shard_number), 0) :
-                lookup(local.shard_value_to_index, "${region_group[0].zone_name}||${tostring(coalesce(region_group[0].shard_number, 0))}", 0)
-              ].region_configs[region_index].analytics_specs.instance_size,
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
@@ -174,9 +175,9 @@ locals {
     // Cluster type vs region fields
     local.is_geosharded ? concat(
       [for idx, r in local.regions : r.zone_name == null ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
-      length(local.invalid_geo_zones_mixed) > 0 ? [ "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
+      length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
     ) : [],
-    
+
     local.is_sharded ? concat(
       [for idx, r in local.regions : r.shard_number == null ? "Must use regions[*].shard_number when cluster_type is SHARDED: shard_number missing @ index ${idx}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Sharded cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
@@ -186,6 +187,17 @@ locals {
       [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
+
+    local.is_geosharded ? [
+      for idx, r in local.regions :
+      (r.zone_name == null || trimspace(r.zone_name) == "")
+      ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing/blank @ index ${idx}"
+      : ""
+    ] : [],
+
+    local.is_geosharded && length(local.invalid_geo_zones_mixed) > 0 ? [
+      "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"
+    ] : [],
 
     // Provider name presence
     var.provider_name == null ? [for idx, r in local.regions : r.provider_name == null ? "Must use regions[*].provider_name when root provider_name is not specified: regions[${idx}].provider_name is missing" : ""] : []
