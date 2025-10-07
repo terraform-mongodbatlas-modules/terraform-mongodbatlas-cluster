@@ -9,11 +9,11 @@ locals {
 
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
-  unique_shard_numbers = local.is_sharded ? sort(distinct([for r in local.regions : r.shard_number if r.shard_number != null])) : []
+  unique_shard_numbers = local.is_sharded ? sort(distinct([for r in local.regions : format("%09d", r.shard_number) if r.shard_number != null])) : []
 
   grouped_regions_sharded = local.is_sharded ? [
     for sn in local.unique_shard_numbers :
-    [for r in local.regions : r if r.shard_number == sn]
+    [for r in local.regions : r if format("%09d", r.shard_number) == sn]
   ] : []
 
   geo_rows = local.is_geosharded ? [
@@ -47,12 +47,12 @@ locals {
   # compute a key per region block:
   #  - numbered zone: "zone||<shard_number>"
   #  - single-shard zone: "zone||0"
-  geo_keyed_rows = local.is_geosharded ? [
-    for r in local.geo_rows : {
-      key    = "${trimspace(r.zone_name)}||${local.zones_numbered[trimspace(r.zone_name)] ? tostring(r.shard_number) : "0"}"
-      region = r
-    }
-  ] : []
+geo_keyed_rows = local.is_geosharded ? [
+  for r in local.geo_rows : {
+    key    = local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}" : "${trimspace(r.zone_name)}||000000000"
+    region = r
+  }
+] : []
 
   geoshard_keys = local.is_geosharded ? sort(distinct([
     for x in local.geo_keyed_rows : x.key
@@ -94,13 +94,6 @@ locals {
       ], k)
     }
   )
-
-  # maintaining a contiguous index map for shards, so that it can be used to index the replication_specs
-  shard_value_to_index = local.is_sharded ? {
-    for idx, sn in local.unique_shard_numbers : tostring(sn) => idx
-    } : local.is_geosharded ? {
-    for idx, key in local.geoshard_keys : key => idx
-  } : { "0" = 0 }
 
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
@@ -174,7 +167,7 @@ locals {
 
     // Cluster type vs region fields
     local.is_geosharded ? concat(
-      [for idx, r in local.regions : r.zone_name == null ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
+      [for idx, r in local.regions : (r.zone_name == null || trimspace(r.zone_name) == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
       length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
     ) : [],
 
@@ -187,13 +180,6 @@ locals {
       [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
-
-    local.is_geosharded ? [
-      for idx, r in local.regions :
-      (r.zone_name == null || trimspace(r.zone_name) == "")
-      ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing/blank @ index ${idx}"
-      : ""
-    ] : [],
 
     local.is_geosharded && length(local.invalid_geo_zones_mixed) > 0 ? [
       "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"
