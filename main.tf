@@ -47,12 +47,12 @@ locals {
   # compute a key per region block:
   #  - numbered zone: "zone||<shard_number>"
   #  - single-shard zone: "zone||0"
-geo_keyed_rows = local.is_geosharded ? [
-  for r in local.geo_rows : {
-    key    = local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}" : "${trimspace(r.zone_name)}||000000000"
-    region = r
-  }
-] : []
+  geo_keyed_rows = local.is_geosharded ? [
+    for r in local.geo_rows : {
+      key    = local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}" : "${trimspace(r.zone_name)}||000000000"
+      region = r
+    }
+  ] : []
 
   geoshard_keys = local.is_geosharded ? sort(distinct([
     for x in local.geo_keyed_rows : x.key
