@@ -14,7 +14,7 @@ Note: The order in which region blocks are defined in this list determines their
 EOT
 
   type = list(object({
-    name                    = optional(string)
+    name                    = string
     node_count              = optional(number)
     shard_number            = optional(number)
     provider_name           = optional(string)
