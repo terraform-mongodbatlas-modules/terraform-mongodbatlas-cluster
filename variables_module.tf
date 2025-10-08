@@ -66,7 +66,7 @@ EOT
 }
 
 variable "disk_iops" {
-  type = number
+  type        = number
   description = <<-EOT
 Only valid for AWS and Azure instances.
 
@@ -98,14 +98,14 @@ The maximum input/output operations per second (IOPS) depend on the selected **.
 This parameter defaults to the cluster tier's standard IOPS value.
 Changing this value impacts cluster cost.
 EOT
-  nullable = true
-  default = null
+  nullable    = true
+  default     = null
 }
 
 variable "ebs_volume_type" {
-  type = string
-  nullable = true
-  default = null
+  type        = string
+  nullable    = true
+  default     = null
   description = <<-EOT
 Type of storage you want to attach to your AWS-provisioned cluster.\n\n- `STANDARD` volume types can't exceed the default input/output operations per second (IOPS) rate for the selected volume size. \n\n- `PROVISIONED` volume types must fall within the allowable IOPS range for the selected volume size. You must set this value to (`PROVISIONED`) for NVMe clusters.
 EOT

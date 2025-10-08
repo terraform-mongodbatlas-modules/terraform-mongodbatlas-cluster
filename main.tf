@@ -73,7 +73,7 @@ locals {
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
   auto_scaling_compute           = var.auto_scaling.compute_enabled
-  auto_scaling_disk           = var.auto_scaling.disk_gb_enabled
+  auto_scaling_disk              = var.auto_scaling.disk_gb_enabled
   auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
 
   effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
@@ -113,8 +113,8 @@ locals {
           electable_specs = r.node_count != null ? {
             # since disk_iops, disk_size_gb, ebs_volume_type are computed attributes setting them as null will not create a plan change even when API returns a different value
             # they are also not required by the API
-            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
-            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             # instance_size is required by the API until effctive fields are supported
             instance_size = local.auto_scaling_compute ? try(
@@ -125,8 +125,8 @@ locals {
           } : null
 
           read_only_specs = r.node_count_read_only != null ? {
-            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
-            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.auto_scaling_compute ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
@@ -136,8 +136,8 @@ locals {
           } : null
 
           analytics_specs = r.node_count_analytics != null ? {
-            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
-            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.effective_auto_scaling_analytics != null ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
@@ -165,13 +165,13 @@ locals {
     // Autoscaling vs fixed sizes
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
-    
+
     // Autoscaling vs fixed sizes disk_gb
-    local.auto_scaling_disk ? 
-      var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
+    local.auto_scaling_disk ?
+    var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
     : [],
     local.auto_scaling_disk ?
-      [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
+    [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
 
 
     // Requires
