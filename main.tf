@@ -73,6 +73,7 @@ locals {
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
   auto_scaling_compute           = var.auto_scaling.compute_enabled
+  auto_scaling_disk           = var.auto_scaling.disk_gb_enabled
   auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
 
   effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
@@ -161,6 +162,14 @@ locals {
     // Autoscaling vs fixed sizes
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
+    
+    // Autoscaling vs fixed sizes disk_gb
+    local.auto_scaling_disk ? 
+      var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
+    : [],
+    local.auto_scaling_disk ?
+      [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
+
 
     // Requires
     var.instance_size != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.instance_size without var.regions"] : [],
@@ -168,6 +177,7 @@ locals {
     var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
 
     // Per-region invalid instance_size when autoscaling is used
+    // Not sure about disk_iops and auto-scaling, choosing to have no validation errors for now
     var.auto_scaling.compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
     var.auto_scaling_analytics != null ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
 
