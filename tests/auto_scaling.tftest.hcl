@@ -1,19 +1,19 @@
-variables {
-  name          = "autoscaling-enabled"
-  provider_name = "AWS"
-  regions = [
-    {
-      name = "US_EAST_1",
-    node_count = 3 }
-  ]
-  cluster_type = "REPLICASET"
-}
-
-run "autoscaling_enabled" {
+run "autoscaling_enabled_default" {
   command = plan
 
   module {
     source = "../"
+  }
+
+  variables {
+    name          = "autoscaling-enabled"
+    provider_name = "AWS"
+    regions = [
+      {
+        name = "US_EAST_1",
+      node_count = 3 }
+    ]
+    cluster_type = "REPLICASET"
   }
 
   assert {
@@ -44,5 +44,38 @@ run "autoscaling_enabled" {
   assert {
     condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.node_count == 3
     error_message = "electable node_count should be 3"
+  }
+}
+
+run "autoscaling_disabled" {
+  command = plan
+
+  module {
+    source = "../"
+  }
+
+  variables {
+    name          = "autoscaling-disabled"
+    provider_name = "AWS"
+    instance_size = "M10"
+    regions = [
+      {
+        name = "US_EAST_1",
+      node_count = 3 }
+    ]
+    cluster_type = "REPLICASET"
+    auto_scaling = {
+      compute_enabled = false
+    }
+  }
+
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.compute_enabled == false
+    error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.compute_enabled to be false"
+  }
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size != null
+    error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size to not be null"
   }
 }
