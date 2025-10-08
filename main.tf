@@ -111,9 +111,12 @@ locals {
           analytics_auto_scaling = local.effective_auto_scaling_analytics
 
           electable_specs = r.node_count != null ? {
+            # since disk_iops, disk_size_gb, ebs_volume_type are computed attributes setting them as null will not create a plan change even when API returns a different value
+            # they are also not required by the API
             disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
+            # instance_size is required by the API until effctive fields are supported
             instance_size = local.auto_scaling_compute ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
