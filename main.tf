@@ -110,7 +110,9 @@ locals {
           analytics_auto_scaling = local.effective_auto_scaling_analytics
 
           electable_specs = r.node_count != null ? {
-            disk_size_gb = var.disk_size_gb
+            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.auto_scaling_compute ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
@@ -119,7 +121,9 @@ locals {
           } : null
 
           read_only_specs = r.node_count_read_only != null ? {
-            disk_size_gb = var.disk_size_gb
+            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.auto_scaling_compute ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
@@ -128,7 +132,9 @@ locals {
           } : null
 
           analytics_specs = r.node_count_analytics != null ? {
-            disk_size_gb = var.disk_size_gb
+            disk_iops = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.effective_auto_scaling_analytics != null ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size

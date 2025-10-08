@@ -15,13 +15,16 @@ EOT
 
   type = list(object({
     name                    = string
-    node_count              = optional(number)
-    shard_number            = optional(number)
-    provider_name           = optional(string)
-    node_count_read_only    = optional(number)
-    node_count_analytics    = optional(number)
+    disk_iops               = optional(number)
+    disk_size_gb            = optional(number)
+    ebs_volume_type         = optional(string)
     instance_size           = optional(string)
     instance_size_analytics = optional(string)
+    node_count              = optional(number)
+    node_count_analytics    = optional(number)
+    node_count_read_only    = optional(number)
+    provider_name           = optional(string)
+    shard_number            = optional(number)
     zone_name               = optional(string)
   }))
 }
@@ -61,6 +64,20 @@ EOT
   nullable = true
   default  = null
 }
+
+variable "disk_iops" {
+  type = number
+  description = "TODO"
+  nullable = true
+  default = null
+}
+
+variable "ebs_volume_type" {
+  type = string
+  nullable = true
+  default = null
+}
+
 
 variable "instance_size_analytics" {
   description = "Default instance_size in analytics specs. Do not set if using auto_scaling_analytics."
