@@ -25,8 +25,8 @@ EOT
   }))
 
   validation {
-    error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions: idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
-    condition = length([for idx, region in var.regions: idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
+    error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
+    condition     = length([for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
   }
 }
 
