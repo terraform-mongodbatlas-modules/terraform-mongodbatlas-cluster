@@ -72,16 +72,16 @@ variable "auto_scaling" {
   description = "Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults."
   type = object({
     compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M60")
-    compute_min_instance_size  = optional(string, "M30")
+    compute_max_instance_size  = optional(string, "M200")
+    compute_min_instance_size  = optional(string, "M10")
     compute_scale_down_enabled = optional(bool, true)
     disk_gb_enabled            = optional(bool, true)
   })
 
   default = {
     compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
+    compute_max_instance_size  = "M200"
+    compute_min_instance_size  = "M10"
     compute_scale_down_enabled = true
     disk_gb_enabled            = true
   }
