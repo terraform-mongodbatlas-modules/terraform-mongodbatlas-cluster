@@ -2,7 +2,7 @@ locals {
   # P = primary
   # S = secondary
   # - new region
-  
+
   # PSS - Single region
   small = [
     {
