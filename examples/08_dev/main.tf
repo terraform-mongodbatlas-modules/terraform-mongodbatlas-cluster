@@ -24,13 +24,16 @@ resource "random_pet" "generated_name" {
 module "cluster" {
   source = "../.."
 
+  # Disable default production values
   auto_scaling = {
     compute_enabled = false # use manual instance_size to avoid any accidental cost
   }
+  retain_backups_enabled = false # don't keep backups when deleting the cluster
+  backup_enabled         = false # skip backup
 
+  cluster_type = "REPLICASET"
   name         = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
   project_id   = var.project_id
-  cluster_type = "REPLICASET"
   regions = [
     {
       name          = "US_EAST_1" # https://www.mongodb.com/docs/atlas/cloud-providers-regions/
