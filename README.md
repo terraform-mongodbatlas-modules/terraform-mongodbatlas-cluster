@@ -507,7 +507,7 @@ Description: Unique 24-hexadecimal digit string that identifies the cluster.
 
 ### <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name)
 
-Description: MongoDB Atlast cluster name.
+Description: MongoDB Atlas cluster name.
 
 ### <a name="output_config_server_type"></a> [config\_server\_type](#output\_config\_server\_type)
 
