@@ -11,7 +11,6 @@ The simplest way to define your cluster topology:
 - GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 
 EOT
-
   type = list(object({
     name                    = optional(string)
     node_count              = optional(number)
@@ -23,6 +22,16 @@ EOT
     instance_size_analytics = optional(string)
     zone_name               = optional(string)
   }))
+
+  validation {
+    error_message = "FLEX cluster is not valid for this module. Use provider AWS/AZURE/GCP instead."
+    condition     = length([for region in var.regions : region if region.provider_name == "FLEX"]) == 0
+  }
+
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = length([for region in var.regions : region if region.instance_size != null && (region.instance_size == "M0" || region.instance_size == "M2" || region.instance_size == "M5")]) == 0
+  }
 }
 
 variable "provider_name" {
@@ -30,6 +39,11 @@ variable "provider_name" {
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    error_message = "FLEX cluster is not valid for this module. Use provider AWS/AZURE/GCP instead."
+    condition     = var.provider_name != "FLEX"
+  }
 }
 
 variable "instance_size" {
@@ -37,6 +51,11 @@ variable "instance_size" {
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = var.instance_size == null || (var.instance_size != "M0" && var.instance_size != "M2" && var.instance_size != "M5")
+  }
 }
 
 variable "disk_size_gb" {
@@ -66,6 +85,10 @@ variable "instance_size_analytics" {
   type        = string
   nullable    = true
   default     = null
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = var.instance_size_analytics == null || (var.instance_size_analytics != "M0" && var.instance_size_analytics != "M2" && var.instance_size_analytics != "M5")
+  }
 }
 
 variable "auto_scaling" {
