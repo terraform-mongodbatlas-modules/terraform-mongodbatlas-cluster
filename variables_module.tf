@@ -24,8 +24,8 @@ EOT
   }))
 
   validation {
-    error_message = "FLEX cluster is not valid for this module. Use provider AWS/AZURE/GCP instead."
-    condition     = length([for region in var.regions : region if region.provider_name == "FLEX"]) == 0
+    error_message = "Only provider_name AWS/AZURE/GCP are allowed."
+    condition     = length([for region in var.regions : region if region.provider_name != null && !contains(["AWS", "AZURE", "GCP"], region.provider_name)]) == 0
   }
 
   validation {
@@ -41,8 +41,8 @@ variable "provider_name" {
   default     = null
 
   validation {
-    error_message = "FLEX cluster is not valid for this module. Use provider AWS/AZURE/GCP instead."
-    condition     = var.provider_name != "FLEX"
+    error_message = "Only provider_name AWS/AZURE/GCP are allowed."
+    condition     = var.provider_name == null || contains(["AWS", "AZURE", "GCP"], var.provider_name)
   }
 }
 
