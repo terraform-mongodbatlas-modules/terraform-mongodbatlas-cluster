@@ -12,17 +12,9 @@ module "cluster" {
       }, {
       name         = "EU_WEST_1"
       node_count   = 2
-      shard_number = 1
+      shard_number = 0
     }
   ]
   provider_name = "AWS"
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-
   tags = var.tags
 }
