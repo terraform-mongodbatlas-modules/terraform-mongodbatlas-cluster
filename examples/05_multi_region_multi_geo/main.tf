@@ -16,5 +16,5 @@ module "cluster" {
     }
   ]
   provider_name = "AWS"
-  tags = var.tags
+  tags          = var.tags
 }
