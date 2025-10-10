@@ -8,9 +8,11 @@ variable "regions" {
 The simplest way to define your cluster topology:
 - For REPLICASET: omit both `shard_number` and `zone_name`.
 - For SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
-- GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- GEOSHARDED: set `zone_name` on each region; optionally set `shard_number` to classify shards within a zone. Regions with the same `zone_name` form one zone.
 
-Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
+NOTE: 
+- The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
+- Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 EOT
 
   type = list(object({
@@ -24,6 +26,16 @@ EOT
     instance_size_analytics = optional(string)
     zone_name               = optional(string)
   }))
+  validation {
+    condition = alltrue([
+      for r in var.regions :
+      (
+        r.shard_number == null
+        || (r.shard_number == floor(r.shard_number) && r.shard_number >= 0)
+      )
+    ])
+    error_message = "Each regions[*].shard_number must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
+  }
 }
 
 variable "provider_name" {
