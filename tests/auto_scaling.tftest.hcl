@@ -11,7 +11,8 @@ run "autoscaling_enabled_default" {
     regions = [
       {
         name = "US_EAST_1",
-      node_count = 3 }
+        node_count = 3 
+      }
     ]
     cluster_type = "REPLICASET"
   }
@@ -22,7 +23,7 @@ run "autoscaling_enabled_default" {
   }
 
   assert {
-    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.compute_enabled == true
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.disk_gb_enabled == true
     error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.compute_enabled to be true"
   }
 
@@ -64,7 +65,7 @@ run "autoscaling_disabled" {
     error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].auto_scaling.compute_enabled to be false"
   }
   assert {
-    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size != null
-    error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size to not be null"
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size == "M10"
+    error_message = "Expected mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size to be M10"
   }
 }
