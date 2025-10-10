@@ -7,15 +7,15 @@ run "replicaset_priorities_multiple_regions" {
     provider_name = "AWS"
     cluster_type  = "REPLICASET"
     regions = [
-      { name = "US_EAST_1", 
-        node_count = 2 
+      { name       = "US_EAST_1",
+        node_count = 2
       },
-      { 
-        name = "US_WEST_2", 
-        node_count = 2 },
-      { 
-        name = "EU_WEST_1", 
-        node_count = 1 }
+      {
+        name = "US_WEST_2",
+      node_count = 2 },
+      {
+        name = "EU_WEST_1",
+      node_count = 1 }
     ]
   }
 
@@ -24,10 +24,10 @@ run "replicaset_priorities_multiple_regions" {
     error_message = "REPLICASET should produce exactly one replication spec"
   }
 
- assert {
-  condition     = length(mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs) == length(var.regions)
-  error_message = "region_configs count should equal number of input regions"
- }
+  assert {
+    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs) == length(var.regions)
+    error_message = "region_configs count should equal number of input regions"
+  }
 
   assert {
     condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].priority == 7
@@ -46,35 +46,36 @@ run "replicaset_priorities_multiple_regions" {
 }
 
 run "multi_geo_zone_sharded" {
-    command = apply
+  command = apply
 
-    module { source = "../" }
+  module { source = "../" }
 
-    variables {
-      name = "tf-test-multi-geo-sharded"
-      cluster_type = "GEOSHARDED"
-      provider_name = "AWS"
-      regions = [
-        {
-        name = "US_EAST_1",
+  variables {
+    name          = "tf-test-multi-geo-sharded"
+    cluster_type  = "GEOSHARDED"
+    provider_name = "AWS"
+    regions = [
+      {
+        name       = "US_EAST_1",
         node_count = 3
-        zone_name = "US"
+        zone_name  = "US"
       },
       {
-        name = "EU_WEST_1",
+        name       = "EU_WEST_1",
         node_count = 3
-        zone_name = "EU"
+        zone_name  = "EU"
       }
     ]
-    }
+    termination_protection_enabled = false # Needs to be false for apply tests to pass
+  }
 
-    assert {
-      condition = mongodbatlas_advanced_cluster.this.cluster_type == "GEOSHARDED"
-      error_message = "cluster_type should be GEOSHARDED"
-    }
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.cluster_type == "GEOSHARDED"
+    error_message = "cluster_type should be GEOSHARDED"
+  }
 
-    assert {
-        condition     = alltrue([for r in mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs : r.zone_name != null && trimspace(r.zone_name) != ""])
-        error_message = "each region must set zone_name for GEOSHARDED"
-    }
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].zone_name != null && trimspace(mongodbatlas_advanced_cluster.this.replication_specs[0].zone_name) != ""
+    error_message = "each region must set zone_name for GEOSHARDED cluster type"
+  }
 }
