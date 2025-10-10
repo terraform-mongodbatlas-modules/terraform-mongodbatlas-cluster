@@ -33,6 +33,11 @@ EOT
     error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
     condition     = length([for region in var.regions : region if region.instance_size != null && (region.instance_size == "M0" || region.instance_size == "M2" || region.instance_size == "M5")]) == 0
   }
+
+  validation {
+    error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
+    condition     = length([for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
+  }
 }
 
 variable "provider_name" {
