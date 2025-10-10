@@ -3,7 +3,7 @@ run "replicaset_priorities_multiple_regions" {
   module { source = "../" }
 
   variables {
-    name          = "replicaset-multiple-regions"
+    name          = "tf-test-multi-regions"
     provider_name = "AWS"
     cluster_type  = "REPLICASET"
     regions = [
