@@ -1,8 +1,8 @@
 module "replication_var" {
   source = "../.."
 
-  name       = "replication-var"
-  project_id = var.project_id
+  name         = "replication-var"
+  project_id   = var.project_id
   regions      = []
   cluster_type = "REPLICASET"
   replication_specs = [{
