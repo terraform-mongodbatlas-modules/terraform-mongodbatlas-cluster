@@ -22,7 +22,7 @@ output "create_date" {
 
 output "cluster_name" {
   value       = mongodbatlas_advanced_cluster.this.name
-  description = "MongoDB Atlast cluster name."
+  description = "MongoDB Atlas cluster name."
 }
 output "mongo_db_version" {
   description = "Version of MongoDB that the cluster runs."
@@ -36,5 +36,5 @@ output "state_name" {
 }
 
 output "connection_string_private_endpoint" {
-  value = mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint[0].connection_string
+  value = try(mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint[0].connection_string, "")
 }
