@@ -45,3 +45,36 @@ run "replicaset_priorities_multiple_regions" {
   }
 }
 
+run "multi_geo_zone_sharded" {
+    command = apply
+
+    module { source = "../" }
+
+    variables {
+      name = "tf-test-multi-geo-sharded"
+      cluster_type = "GEOSHARDED"
+      provider_name = "AWS"
+      regions = [
+        {
+        name = "US_EAST_1",
+        node_count = 3
+        zone_name = "US"
+      },
+      {
+        name = "EU_WEST_1",
+        node_count = 3
+        zone_name = "EU"
+      }
+    ]
+    }
+
+    assert {
+      condition = mongodbatlas_advanced_cluster.this.cluster_type == "GEOSHARDED"
+      error_message = "cluster_type should be GEOSHARDED"
+    }
+
+    assert {
+        condition     = alltrue([for r in mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs : r.zone_name != null && trimspace(r.zone_name) != ""])
+        error_message = "each region must set zone_name for GEOSHARDED"
+    }
+}
