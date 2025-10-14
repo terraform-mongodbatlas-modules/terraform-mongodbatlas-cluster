@@ -14,7 +14,6 @@ NOTE:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 EOT
-
   type = list(object({
     name                    = optional(string)
     node_count              = optional(number)
@@ -26,6 +25,21 @@ EOT
     instance_size_analytics = optional(string)
     zone_name               = optional(string)
   }))
+
+  validation {
+    error_message = "Only provider_name AWS/AZURE/GCP are allowed."
+    condition     = length([for region in var.regions : region if region.provider_name != null && !contains(["AWS", "AZURE", "GCP"], region.provider_name)]) == 0
+  }
+
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = length([for region in var.regions : region if region.instance_size != null && (region.instance_size == "M0" || region.instance_size == "M2" || region.instance_size == "M5")]) == 0
+  }
+
+  validation {
+    error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
+    condition     = length([for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
+  }
   validation {
     condition = alltrue([
       for r in var.regions :
@@ -43,6 +57,11 @@ variable "provider_name" {
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    error_message = "Only provider_name AWS/AZURE/GCP are allowed."
+    condition     = var.provider_name == null || contains(["AWS", "AZURE", "GCP"], var.provider_name)
+  }
 }
 
 variable "instance_size" {
@@ -50,6 +69,11 @@ variable "instance_size" {
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = var.instance_size == null || (var.instance_size != "M0" && var.instance_size != "M2" && var.instance_size != "M5")
+  }
 }
 
 variable "disk_size_gb" {
@@ -79,22 +103,26 @@ variable "instance_size_analytics" {
   type        = string
   nullable    = true
   default     = null
+  validation {
+    error_message = "M0, M2, and M5 are not allowed for this module. Use M10 or higher instead."
+    condition     = var.instance_size_analytics == null || (var.instance_size_analytics != "M0" && var.instance_size_analytics != "M2" && var.instance_size_analytics != "M5")
+  }
 }
 
 variable "auto_scaling" {
   description = "Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults."
   type = object({
     compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M60")
-    compute_min_instance_size  = optional(string, "M30")
+    compute_max_instance_size  = optional(string, "M200")
+    compute_min_instance_size  = optional(string, "M10")
     compute_scale_down_enabled = optional(bool, true)
     disk_gb_enabled            = optional(bool, true)
   })
 
   default = {
     compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
+    compute_max_instance_size  = "M200"
+    compute_min_instance_size  = "M10"
     compute_scale_down_enabled = true
     disk_gb_enabled            = true
   }

@@ -47,319 +47,6 @@ graph TD
 ```
 <!-- END_MODULES -->
 
-<!-- BEGIN_TF_EXAMPLES -->
-# Examples
-## [01 Single Region](./examples/01_single_region)
-
-```terraform
-module "cluster" {
-  source = "../.." # TODO: Usage of published module instead of local one. Will be addressed in CLOUDP-347025
-
-  name                   = "single-region"
-  project_id             = var.project_id
-  mongo_db_major_version = "8.0"
-  regions = [
-    {
-      name          = "US_EAST_1"
-      node_count    = 3
-      provider_name = "AWS"
-    }
-  ]
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [02 Single Region Sharded](./examples/02_single_region_sharded)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name       = "single-region-sharded"
-  project_id = var.project_id
-  regions = [
-    {
-      name          = "US_EAST_1"
-      node_count    = 3
-      shard_number  = 0
-      instance_size = "M40"
-      }, {
-      name          = "US_EAST_1"
-      node_count    = 3
-      shard_number  = 1
-      instance_size = "M30"
-    }
-  ]
-  provider_name = "AWS"
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [03 Single Region With Analytics](./examples/03_single_region_with_analytics)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name       = "single-region-with-analytics"
-  project_id = var.project_id
-  regions = [
-    {
-      name                 = "US_EAST_1"
-      node_count           = 3
-      provider_name        = "AWS"
-      node_count_analytics = 1
-    }
-  ]
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-  auto_scaling_analytics = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M30"
-    compute_min_instance_size  = "M10"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [04 Multi Region Single Geo](./examples/04_multi_region_single_geo)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name                   = "multi-region-single-geo"
-  project_id             = var.project_id
-  mongo_db_major_version = "8.0"
-  regions = [
-    {
-      name       = "US_EAST_1"
-      node_count = 2
-      }, {
-      name                 = "US_EAST_2"
-      node_count           = 1
-      node_count_read_only = 2
-    }
-  ]
-  provider_name = "AWS"
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [05 Multi Region Multi Geo](./examples/05_multi_region_multi_geo)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name       = "multi-region-multi-geo"
-  project_id = var.project_id
-  regions = [
-    {
-      name         = "US_EAST_1"
-      node_count   = 3
-      shard_number = 0
-      }, {
-      name         = "EU_WEST_1"
-      node_count   = 2
-      shard_number = 1
-    }
-  ]
-  provider_name = "AWS"
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-```
-
-
-## [06 Multi Geo Zone Sharded](./examples/06_multi_geo_zone_sharded)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name                   = "multi-geo-zone-sharded"
-  project_id             = var.project_id
-  mongo_db_major_version = "8.0"
-  regions = [
-    {
-      name       = "US_EAST_1"
-      node_count = 3
-      zone_name  = "US"
-      }, {
-      name       = "EU_WEST_1"
-      node_count = 3
-      zone_name  = "EU"
-    }
-  ]
-  provider_name = "AWS"
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [07 Multi Cloud](./examples/07_multi_cloud)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name       = "multi-cloud"
-  project_id = var.project_id
-  regions = [
-    {
-      name                 = "US_WEST_2"
-      node_count           = 2
-      shard_number         = 0
-      node_count_read_only = 2
-      provider_name        = "AZURE"
-      }, {
-      name                 = "US_EAST_2"
-      node_count           = 1
-      shard_number         = 0
-      provider_name        = "AWS"
-      node_count_read_only = 2
-    },
-    {
-      name                 = "US_WEST_2"
-      node_count           = 2
-      shard_number         = 1
-      node_count_read_only = 2
-      provider_name        = "AZURE"
-      }, {
-      name                 = "US_EAST_2"
-      node_count           = 1
-      shard_number         = 1
-      provider_name        = "AWS"
-      node_count_read_only = 2
-    }
-  ]
-  auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M60"
-    compute_min_instance_size  = "M30"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [08 Dev](./examples/08_dev)
-
-```terraform
-module "cluster" {
-  source = "../.."
-
-  name       = "dev"
-  project_id = var.project_id
-  regions = [
-    {
-      name          = "US_EAST_1"
-      node_count    = 3
-      instance_size = "M10"
-    }
-  ]
-  provider_name = "AWS"
-}
-
-output "cluster" {
-  value = module.cluster
-}
-
-```
-
-
-## [09 Replication Var](./examples/09_replication_var)
-
-```terraform
-module "replication_var" {
-  source = "../.."
-
-  name                   = "replication-var"
-  project_id             = var.project_id
-  mongo_db_major_version = "8.0"
-  regions                = []
-  replication_specs = [{
-    region_configs = [{
-      priority      = 7
-      provider_name = "AWS"
-      region_name   = "US_EAST_1"
-      electable_specs = {
-        instance_size = "M10"
-        node_count    = 3
-      }
-    }]
-  }]
-}
-
-```
-
-
-<!-- END_TF_EXAMPLES -->
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -381,18 +68,15 @@ The following providers are used by this module:
 The following resources are used by this module:
 
 - [mongodbatlas_advanced_cluster.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) (resource)
-
 - [mongodbatlas_advanced_clusters.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_clusters) (data source)
 
 ## Required Inputs
 
 The following input variables are required:
 
-### <a name="input_project_id"></a> [project\_id](#input\_project\_id)
+### <a name="input_cluster_type"></a> [cluster\_type](#input\_cluster\_type)
 
-Description: Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
-
-**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
+Description: Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED
 
 Type: `string`
 
@@ -402,13 +86,20 @@ Description: Human-readable label that identifies this cluster.
 
 Type: `string`
 
+### <a name="input_project_id"></a> [project\_id](#input\_project\_id)
+
+Description: Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
+
+Type: `string`
+
 ### <a name="input_regions"></a> [regions](#input\_regions)
 
 Description: The simplest way to define your cluster topology:
 - For REPLICASET: omit both `shard_number` and `zone_name`.
 - For SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-
 
 Type:
 
@@ -474,15 +165,15 @@ Default:
 
 ### <a name="input_auto_scaling"></a> [auto\_scaling](#input\_auto\_scaling)
 
-Description: Auto scaling config for electable/read-only specs. Enabled by default with [Architecture Center](https://www.mongodb.com/docs/atlas/architecture/current/scalability/#all-deployment-paradigm-recommendations) recommended defaults.
+Description: Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults.
 
 Type:
 
 ```hcl
 object({
     compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M60")
-    compute_min_instance_size  = optional(string, "M30")
+    compute_max_instance_size  = optional(string, "M200")
+    compute_min_instance_size  = optional(string, "M10")
     compute_scale_down_enabled = optional(bool, true)
     disk_gb_enabled            = optional(bool, true)
   })
@@ -493,8 +184,8 @@ Default:
 ```json
 {
   "compute_enabled": true,
-  "compute_max_instance_size": "M60",
-  "compute_min_instance_size": "M30",
+  "compute_max_instance_size": "M200",
+  "compute_min_instance_size": "M10",
   "compute_scale_down_enabled": true,
   "disk_gb_enabled": true
 }
@@ -538,77 +229,6 @@ object({
     read_preference = optional(string)
   })
 ```
-
-Default: `null`
-
-### <a name="input_cloud_backup_schedule"></a> [cloud\_backup\_schedule](#input\_cloud\_backup\_schedule)
-
-Description: duplicate of the one in modules/cloud\_backup\_schedule/variables.tf
-
-Type:
-
-```hcl
-object({
-    auto_export_enabled                      = optional(bool)
-    reference_hour_of_day                    = optional(number)
-    reference_minute_of_hour                 = optional(number)
-    restore_window_days                      = optional(number)
-    update_snapshots                         = optional(bool)
-    use_org_and_group_names_in_export_prefix = optional(bool)
-    copy_settings = optional(list(object({
-      cloud_provider     = optional(string) # "AWS" | "GCP" | "AZURE"
-      frequencies        = optional(list(string))
-      region_name        = optional(string)
-      should_copy_oplogs = optional(bool)
-      zone_id            = optional(string)
-    })))
-    export = optional(list(object({
-      export_bucket_id = optional(string)
-      frequency_type   = optional(string)
-    })))
-    policy_item_daily = optional(list(object({
-      frequency_interval = number
-      retention_unit     = string
-      retention_value    = number
-    })))
-    policy_item_hourly = optional(list(object({
-      frequency_interval = number
-      retention_unit     = string
-      retention_value    = number
-    })))
-    policy_item_monthly = optional(list(object({
-      frequency_interval = number
-      retention_unit     = string
-      retention_value    = number
-    })))
-    policy_item_weekly = optional(list(object({
-      frequency_interval = number
-      retention_unit     = string
-      retention_value    = number
-    })))
-    policy_item_yearly = optional(list(object({
-      frequency_interval = number
-      retention_unit     = string
-      retention_value    = number
-    })))
-  })
-```
-
-Default: `null`
-
-### <a name="input_cloud_backup_schedule_enabled"></a> [cloud\_backup\_schedule\_enabled](#input\_cloud\_backup\_schedule\_enabled)
-
-Description: n/a
-
-Type: `bool`
-
-Default: `false`
-
-### <a name="input_cluster_type"></a> [cluster\_type](#input\_cluster\_type)
-
-Description: Inferred if not set. REPLICASET/SHARDED/GEOSHARDED
-
-Type: `string`
 
 Default: `null`
 
@@ -696,7 +316,7 @@ Description: MongoDB major version of the cluster.
 
 On creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).
 
-On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
+ On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
 
 Type: `string`
 
@@ -837,38 +457,6 @@ Type: `string`
 
 Default: `null`
 
-### <a name="input_search_deployment"></a> [search\_deployment](#input\_search\_deployment)
-
-Description: n/a
-
-Type:
-
-```hcl
-object({
-    specs = list(object({
-      instance_size = string
-      node_count    = number
-    }))
-    delete_on_create_timeout = optional(bool, true)
-    skip_wait_on_update      = optional(bool, false)
-    timeouts = optional(object({
-      create = optional(string)
-      delete = optional(string)
-      update = optional(string)
-    }))
-  })
-```
-
-Default: `null`
-
-### <a name="input_search_deployment_enabled"></a> [search\_deployment\_enabled](#input\_search\_deployment\_enabled)
-
-Description: # CONDITIONAL RESOURCES
-
-Type: `bool`
-
-Default: `false`
-
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
 Description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
@@ -919,7 +507,7 @@ Description: Unique 24-hexadecimal digit string that identifies the cluster.
 
 ### <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name)
 
-Description: Final name of the cluster, generated if not explicitly set in variables
+Description: MongoDB Atlas cluster name.
 
 ### <a name="output_config_server_type"></a> [config\_server\_type](#output\_config\_server\_type)
 
