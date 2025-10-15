@@ -6,30 +6,30 @@ module "cluster" {
   cluster_type = "SHARDED"
   regions = [
     {
+      shard_number         = 0
       name                 = "US_WEST_2"
       node_count           = 2
-      shard_number         = 0
       node_count_read_only = 2
       provider_name        = "AZURE"
       }, {
+      shard_number         = 0
       name                 = "US_EAST_2"
       node_count           = 1
-      shard_number         = 0
-      provider_name        = "AWS"
       node_count_read_only = 2
+      provider_name        = "AWS"
     },
     {
+      shard_number         = 1
       name                 = "US_WEST_2"
       node_count           = 2
-      shard_number         = 1
       node_count_read_only = 2
       provider_name        = "AZURE"
       }, {
+      shard_number         = 1
       name                 = "US_EAST_2"
       node_count           = 1
-      shard_number         = 1
-      provider_name        = "AWS"
       node_count_read_only = 2
+      provider_name        = "AWS"
     }
   ]
   tags = var.tags
