@@ -133,8 +133,8 @@ variable "pinned_fcv" {
 variable "pit_enabled" {
   description = "Flag that indicates whether the cluster uses continuous cloud backups."
   type        = bool
-  nullable    = true
-  default     = null
+  nullable    = false
+  default     = true
 }
 
 variable "project_id" {
