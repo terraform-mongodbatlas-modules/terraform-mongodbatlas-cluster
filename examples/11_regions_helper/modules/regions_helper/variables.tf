@@ -14,7 +14,8 @@ variable "shards" {
 }
 
 variable "regions_names" {
-  type        = list(string)
+  type = list(string)
+  # Company preferred regions, can be overwritten
   default     = ["US_EAST_1", "EU_WEST_2", "AP_SOUTHEAST_1"]
   description = "Atlas Regions used in cluster"
 }
