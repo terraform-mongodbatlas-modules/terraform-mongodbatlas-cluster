@@ -30,6 +30,7 @@ module "cluster" {
   }
   retain_backups_enabled = false # don't keep backups when deleting the cluster
   backup_enabled         = false # skip backup for dev cluster
+  pit_enabled            = false # skip pit_backup for dev cluster
 
   cluster_type = "REPLICASET"
   name         = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
