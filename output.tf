@@ -13,7 +13,8 @@ output "config_server_type" {
 
 output "connection_strings" {
   description = "Collection of Uniform Resource Locators that point to the MongoDB database."
-  value       = mongodbatlas_advanced_cluster.this.connection_strings
+  # TODO: CLOUDP-351551
+  value = mongodbatlas_advanced_cluster.this.connection_strings
 }
 output "create_date" {
   description = "Date and time when MongoDB Cloud created this cluster. This parameter expresses its value in ISO 8601 format in UTC."
@@ -33,8 +34,4 @@ output "mongo_db_version" {
 output "state_name" {
   description = "Human-readable label that indicates the current operating condition of this cluster."
   value       = mongodbatlas_advanced_cluster.this.state_name
-}
-
-output "connection_string_private_endpoint" {
-  value = try(mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint[0].connection_string, "")
 }
