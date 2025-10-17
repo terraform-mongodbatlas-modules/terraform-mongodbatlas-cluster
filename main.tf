@@ -72,11 +72,11 @@ locals {
 
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
-  auto_scaling_compute           = var.auto_scaling.compute_enabled
-  auto_scaling_disk              = var.auto_scaling.disk_gb_enabled
-  auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
+  auto_scaling_compute_enabled           = var.auto_scaling.compute_enabled
+  auto_scaling_disk_enabled              = var.auto_scaling.disk_gb_enabled
+  auto_scaling_compute_enabled_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
 
-  effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
+  effective_auto_scaling = local.auto_scaling_compute_enabled ? var.auto_scaling : {
     for k, v in var.auto_scaling :
     k => v if !contains([
       "compute_max_instance_size",
@@ -86,7 +86,7 @@ locals {
   }
 
   effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? null : (
-    local.auto_scaling_compute_analytics ? var.auto_scaling_analytics : {
+    local.auto_scaling_compute_enabled_analytics ? var.auto_scaling_analytics : {
       for k, v in var.auto_scaling_analytics :
       k => v if !contains([
         "compute_max_instance_size",
@@ -117,7 +117,7 @@ locals {
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             # instance_size is required by the API until effctive fields are supported
-            instance_size = local.auto_scaling_compute ? try(
+            instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -128,7 +128,7 @@ locals {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            instance_size = local.auto_scaling_compute ? try(
+            instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -167,10 +167,10 @@ locals {
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
 
     // Autoscaling vs fixed sizes disk_gb
-    local.auto_scaling_disk ?
+    local.auto_scaling_disk_enabled ?
     var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
     : [],
-    local.auto_scaling_disk ?
+    local.auto_scaling_disk_enabled ?
     [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
 
 
