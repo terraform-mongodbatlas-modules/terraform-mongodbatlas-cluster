@@ -133,8 +133,8 @@ variable "pinned_fcv" {
 variable "pit_enabled" {
   description = "Flag that indicates whether the cluster uses continuous cloud backups."
   type        = bool
-  nullable    = true
-  default     = null
+  nullable    = false
+  default     = true
 }
 
 variable "project_id" {
@@ -243,7 +243,7 @@ variable "termination_protection_enabled" {
   description = "Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster."
   type        = bool
   nullable    = true
-  default     = true # changed
+  default     = null
 }
 
 variable "timeouts" {

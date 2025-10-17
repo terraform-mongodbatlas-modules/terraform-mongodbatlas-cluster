@@ -1,16 +1,20 @@
-# Cluster Module
-- This module maps all the attributes of [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to [variables.tf](variables.tf).
+# MongoDB Atlas Cluster Module (Public Preview)
+
+This module heavily simplifies the MongoDB Atlas cluster resource.  More granular control is provided by replacing the simplified attributes with the standard resource attributes defined in [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster)
+
+## Public Preview Note
+
+The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments and embeds MongoDB's best practices as intelligent defaults. This preview will validate that these patterns meet the needs of most workloads without constant maintenance or rework. We welcome your feedback and contributions during this preview phase.  This module will be formally supported by MongoDB at V1 release.
+
+## Known Limitations
 - All deprecated fields are removed
-- The module supports either `auto_scaling` or setting `instance_size` on root level or in each `region`
-
-
-## Known Limitations (not prioritized due to limited time)
-- Only supports `disk_size_gb` at root level
+- Only supports `disk_size_gb` at root level (auto-scaling is recommended and default)
 - No support for `disk_iops` or `ebs_volume_type`
 
 <!-- BEGIN_DISCLAIMER -->
 ## Disclaimer
-TODO: Removal of this disclaimer should be considered, will be addressed in future PRs if needed ,or if some additional info will be added.
+
+One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. To achieve this, we will begin with a v0 release (public preview) focused on gathering feedback and refining the design. While this early version will help validate the approach, upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.  
 
 <!-- END_DISCLAIMER -->
 
