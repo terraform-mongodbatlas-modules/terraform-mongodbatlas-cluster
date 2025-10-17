@@ -13,14 +13,17 @@ The simplest way to define your cluster topology:
 Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 EOT
   type = list(object({
-    name                    = optional(string)
-    node_count              = optional(number)
-    shard_number            = optional(number)
-    provider_name           = optional(string)
-    node_count_read_only    = optional(number)
-    node_count_analytics    = optional(number)
+    name                    = string
+    disk_iops               = optional(number)
+    disk_size_gb            = optional(number)
+    ebs_volume_type         = optional(string)
     instance_size           = optional(string)
     instance_size_analytics = optional(string)
+    node_count              = optional(number)
+    node_count_analytics    = optional(number)
+    node_count_read_only    = optional(number)
+    provider_name           = optional(string)
+    shard_number            = optional(number)
     zone_name               = optional(string)
   }))
 
@@ -85,6 +88,53 @@ EOT
   nullable = true
   default  = null
 }
+
+variable "disk_iops" {
+  type        = number
+  description = <<-EOT
+Only valid for AWS and Azure instances.
+
+# AWS
+Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
+
+Change this parameter if you:
+
+- set `"replicationSpecs[n].regionConfigs[m].providerName" to "AWS"`.
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" to "M30"` or greater (not including `Mxx_NVME` tiers).
+
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
+
+The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+This parameter defaults to the cluster tier's standard IOPS value.
+Changing this value impacts cluster cost.
+MongoDB Cloud enforces minimum ratios of storage capacity to system memory for given cluster tiers. This keeps cluster performance consistent with large datasets.
+
+- Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
+- Instance sizes greater than `M40` have a ratio of 120:1.
+
+# Azure
+Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
+
+- set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
+
+The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+This parameter defaults to the cluster tier's standard IOPS value.
+Changing this value impacts cluster cost.
+EOT
+  nullable    = true
+  default     = null
+}
+
+variable "ebs_volume_type" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = <<-EOT
+Type of storage you want to attach to your AWS-provisioned cluster.\n\n- `STANDARD` volume types can't exceed the default input/output operations per second (IOPS) rate for the selected volume size. \n\n- `PROVISIONED` volume types must fall within the allowable IOPS range for the selected volume size. You must set this value to (`PROVISIONED`) for NVMe clusters.
+EOT
+}
+
 
 variable "instance_size_analytics" {
   description = "Default instance_size in analytics specs. Do not set if using auto_scaling_analytics."
