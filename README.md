@@ -77,29 +77,33 @@ The following resources are used by this module:
 ## Required Variables
 
 ### project_id
-Description: Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+Description: Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
 
 **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
 
 Type: `string`
 
 ### name
-Description: Human-readable label that identifies this cluster.
+Description: Human-readable label that identifies this cluster, for example: `my-product-cluster
 
 Type: `string`
-
-## Cluster Topology (required)
 
 ### cluster_type
 Description: Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED
 
 Type: `string`
 
-### regions (simplest option)
+## Cluster Topology `regions` (Option 1)
+
+### regions
 Description: The simplest way to define your cluster topology:
-- For REPLICASET: omit both `shard_number` and `zone_name`.
-- For SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
-- GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
+- Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
+- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
+- For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
+- For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- See auto_scaling vs manual scaling below
 
 Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 
@@ -107,20 +111,150 @@ Type:
 
 ```hcl
 list(object({
-    name                    = optional(string)
-    node_count              = optional(number)
-    shard_number            = optional(number)
-    provider_name           = optional(string)
-    node_count_read_only    = optional(number)
-    node_count_analytics    = optional(number)
+    name                    = string
+    disk_iops               = optional(number)
+    disk_size_gb            = optional(number)
+    ebs_volume_type         = optional(string)
     instance_size           = optional(string)
     instance_size_analytics = optional(string)
+    node_count              = optional(number)
+    node_count_analytics    = optional(number)
+    node_count_read_only    = optional(number)
+    provider_name           = optional(string)
+    shard_number            = optional(number)
     zone_name               = optional(string)
   }))
 ```
 
 
-### replication_specs (complex alternative for cluster topology)
+### provider_name
+Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`
+
+Type: `string`
+Default: `null`
+
+## Cluster Topology `regions` Auto Scaling
+
+### auto_scaling
+Description: Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults.
+
+Type:
+
+```hcl
+object({
+    compute_enabled            = optional(bool, true)
+    compute_max_instance_size  = optional(string, "M200")
+    compute_min_instance_size  = optional(string, "M10")
+    compute_scale_down_enabled = optional(bool, true)
+    disk_gb_enabled            = optional(bool, true)
+  })
+```
+
+Default:
+
+```hcl
+auto_scaling = {
+    compute_enabled            = true
+    compute_max_instance_size  = "M200"
+    compute_min_instance_size  = "M10"
+    compute_scale_down_enabled = true
+    disk_gb_enabled            = true
+  }
+```
+
+
+### auto_scaling_analytics
+Description: Auto scaling config for analytics specs.
+
+Type:
+
+```hcl
+object({
+    compute_enabled            = optional(bool)
+    compute_max_instance_size  = optional(string)
+    compute_min_instance_size  = optional(string)
+    compute_scale_down_enabled = optional(bool)
+    disk_gb_enabled            = optional(bool)
+  })
+```
+
+Default: `null`
+
+## Cluster Topology `regions` Manual Scaling
+
+### instance_size
+Description: Default instance_size in electable/read-only specs. Only used when auto_scaling.compute_enabled = false. Defaults to M10 if not specified.
+
+Type: `string`
+Default: `null`
+
+### instance_size_analytics
+Description: Default instance_size in analytics specs. Do not set if using auto_scaling_analytics.
+
+Type: `string`
+Default: `null`
+
+### disk_size_gb
+Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
+
+ This value must be equal for all shards and node types.
+
+ This value is not configurable on M0/M2/M5 clusters.
+
+ MongoDB Cloud requires this parameter if you set **replicationSpecs**.
+
+ If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
+
+ Storage charge calculations depend on whether you choose the default value or a custom value.
+
+ The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
+
+Type: `number`
+Default: `null`
+
+### disk_iops
+Description: Only valid for AWS and Azure instances.
+
+#### AWS
+Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
+
+Change this parameter if you:
+
+- set `"replicationSpecs[n].regionConfigs[m].providerName" to "AWS"`.
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" to "M30"` or greater (not including `Mxx_NVME` tiers).
+
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
+
+The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+This parameter defaults to the cluster tier's standard IOPS value.
+Changing this value impacts cluster cost.
+MongoDB Cloud enforces minimum ratios of storage capacity to system memory for given cluster tiers. This keeps cluster performance consistent with large datasets.
+
+- Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
+- Instance sizes greater than `M40` have a ratio of 120:1.
+
+#### Azure
+Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
+
+- set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
+- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
+
+The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+This parameter defaults to the cluster tier's standard IOPS value.
+Changing this value impacts cluster cost.
+
+Type: `number`
+Default: `null`
+
+### ebs_volume_type
+Description: Type of storage you want to attach to your AWS-provisioned cluster.\n\n- `STANDARD` volume types can't exceed the default input/output operations per second (IOPS) rate for the selected volume size. \n\n- `PROVISIONED` volume types must fall within the allowable IOPS range for the selected volume size. You must set this value to (`PROVISIONED`) for NVMe clusters.
+
+Type: `string`
+Default: `null`
+
+## Cluster Topology `replication_Specs` (Option 2)
+
+### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
 
 Type:
@@ -179,113 +313,7 @@ replication_specs = []
 ```
 
 
-## Regions Defaults
-Can be set to share defaults in `regions[i]`
-
-### provider_name
-Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`
-
-Type: `string`
-Default: `null`
-
-### instance_size
-Description: Default instance_size in electable/read-only specs. Only used when auto_scaling.compute_enabled = false. Defaults to M10 if not specified.
-
-Type: `string`
-Default: `null`
-
-### disk_size_gb
-Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
-
- This value must be equal for all shards and node types.
-
- This value is not configurable on M0/M2/M5 clusters.
-
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
-
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
-
- Storage charge calculations depend on whether you choose the default value or a custom value.
-
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
-
-Type: `number`
-Default: `null`
-
-### instance_size_analytics
-Description: Default instance_size in analytics specs. Do not set if using auto_scaling_analytics.
-
-Type: `string`
-Default: `null`
-
-### auto_scaling
-Description: Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults.
-
-Type:
-
-```hcl
-object({
-    compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M200")
-    compute_min_instance_size  = optional(string, "M10")
-    compute_scale_down_enabled = optional(bool, true)
-    disk_gb_enabled            = optional(bool, true)
-  })
-```
-
-Default:
-
-```hcl
-auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M200"
-    compute_min_instance_size  = "M10"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
-```
-
-
-### auto_scaling_analytics
-Description: Auto scaling config for analytics specs.
-
-Type:
-
-```hcl
-object({
-    compute_enabled            = optional(bool)
-    compute_max_instance_size  = optional(string)
-    compute_min_instance_size  = optional(string)
-    compute_scale_down_enabled = optional(bool)
-    disk_gb_enabled            = optional(bool)
-  })
-```
-
-Default: `null`
-
-## Production Recommendations
-
-### backup_enabled
-Description: Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups.
-
-Type: `bool`
-Default:
-
-```hcl
-backup_enabled = True
-```
-
-
-### retain_backups_enabled
-Description: Flag that indicates whether to retain backup snapshots for the deleted dedicated cluster.
-
-Type: `bool`
-Default:
-
-```hcl
-retain_backups_enabled = True
-```
-
+## Production Recommendations (Enabled By Default)
 
 ### advanced_configuration
 Description: Additional settings for an Atlas cluster.
@@ -321,33 +349,40 @@ advanced_configuration = {
 ```
 
 
-### tags
-Description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
-
-Type: `map(string)`
-Default:
-
-```hcl
-tags = {}
-```
-
-
-### termination_protection_enabled
-Description: Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster.
+### backup_enabled
+Description: Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups.
 
 Type: `bool`
 Default:
 
 ```hcl
-termination_protection_enabled = True
+backup_enabled = True
 ```
 
 
 ### pit_enabled
-Description: Flag that indicates whether the cluster uses continuous cloud backups.
+Description: Recommended for production clusters. Flag that indicates whether the cluster uses continuous cloud backups.
 
 Type: `bool`
-Default: `null`
+Default:
+
+```hcl
+pit_enabled = True
+```
+
+
+### retain_backups_enabled
+Description: Recommended for production clusters. Flag that indicates whether to retain backup snapshots for the deleted dedicated cluster.
+
+Type: `bool`
+Default:
+
+```hcl
+retain_backups_enabled = True
+```
+
+
+## Production Recommendations (Manually Configured)
 
 ### encryption_at_rest_provider
 Description: Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replicationSpecs[n].regionConfigs[m].{type}Specs.instanceSize** setting must be `M10` or higher and `\"backupEnabled\" : false` or omitted entirely.
@@ -371,6 +406,29 @@ Default:
 redact_client_log_data = True
 ```
 
+
+### tags
+Description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
+We recommend setting:
+Department, team name, application name, environment, version, email contact, criticality.
+These values can be used for:
+- Billing.
+- Data classification.
+- Regional compliance requirements for audit and governance purposes.
+
+Type: `map(string)`
+Default:
+
+```hcl
+tags = {}
+```
+
+
+### termination_protection_enabled
+Description: Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster.
+
+Type: `bool`
+Default: `null`
 
 ## Optional Variables
 
