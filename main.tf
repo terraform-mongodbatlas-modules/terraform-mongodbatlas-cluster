@@ -85,7 +85,9 @@ locals {
     ], k)
   }
 
-  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? null : (
+  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? (local.manual_compute_analytics ? {
+    compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
+    } : null) : (
     local.auto_scaling_compute_enabled_analytics ? var.auto_scaling_analytics : {
       for k, v in var.auto_scaling_analytics :
       k => v if !contains([
@@ -139,7 +141,7 @@ locals {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            instance_size = local.effective_auto_scaling_analytics != null ? try(
+            instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
@@ -154,7 +156,9 @@ locals {
   replication_specs_json              = local.replication_specs_resource_var_used ? jsonencode(var.replication_specs) : jsonencode(local.replication_specs_built) # avoids "Mismatched list element types"
   empty_region_configs                = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
   empty_regions                       = length(local.regions) == 0
-  manual_compute                      = var.instance_size != null || var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size != null || r.instance_size_analytics != null]) > 0
+  manual_compute_analytics            = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
+  manual_compute_electable            = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
+  manual_compute                      = local.manual_compute_electable || local.manual_compute_analytics
 
   // Validation messages (non-empty strings represent errors)
   validation_errors = compact(concat(
