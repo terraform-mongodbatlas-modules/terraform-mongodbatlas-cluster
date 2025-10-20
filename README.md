@@ -89,7 +89,7 @@ Description: Human-readable label that identifies this cluster, for example: `my
 Type: `string`
 
 ### cluster_type
-Description: Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED
+Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`
 
 Type: `string`
 
