@@ -127,7 +127,7 @@ just plan-examples <your-project-id>
 - **MongoDB Atlas Project ID**: Required for testing examples
 - **MongoDB Atlas API Keys**: Optional, for full end-to-end testing
 
-### Running Tests
+### Running Manual Examples
 
 ```bash
 # Initialize all examples
@@ -140,6 +140,23 @@ just plan-examples YOUR_PROJECT_ID
 cd examples/01_single_region
 terraform apply -var project_id=YOUR_PROJECT_ID -var-file=../tags.tfvars
 ```
+
+### Running Local Tests with `terraform test`
+
+The Terraform test framework allows to validate the module's functionality locally.
+Tests are defined under the [`/tests`](./tests) directory and can be executed in your terminal.
+
+For running the tests:
+
+- Run all tests: `just test YOUR_PROJECT_ID`
+- Run a specific test filter: `just test-filter YOUR_PROJECT_ID {{filter}}`
+
+**Test Types**:
+
+1. **Plan Tests**: Validate the module's configuration and expected plan output. No resources are created, these are considered Unit Tests.
+2. **Apply Tests**: Perform full integration tests by creating and destroying resources.
+
+**Important:** For `apply` tests, make sure you set `termination_protection_enabled = false` in the `variables` portion of the `run` block, otherwise the test will fail when trying to delete the cluster as part of cleanup stage of the test.
 
 ## Code Style and Standards
 

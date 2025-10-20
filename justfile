@@ -44,3 +44,13 @@ plan-examples project_id:
         echo "Planning $example"
         (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
     done
+
+# Run all tests
+test project-id:
+    cd tests && terraform init
+    cd tests && terraform test -var project_id={{project-id}}
+
+# Run tests matching a file/path/pattern
+test-filter project-id filter:
+    cd tests && terraform init
+    cd tests && terraform test -var project_id={{project-id}} -filter={{filter}}
