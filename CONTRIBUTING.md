@@ -143,18 +143,13 @@ terraform apply -var project_id=YOUR_PROJECT_ID -var-file=../tags.tfvars
 
 ### Running Local Tests with `terraform test`
 
-The Terraform test framework allows to validate the module’s functionality locally.
+The Terraform test framework allows to validate the module's functionality locally.
 Tests are defined under the [`/tests`](./tests) directory and can be executed in your terminal.
-
-Before running any tests, ensure you have:
-
-- Your environment initialized with the project ID variable: `export TF_VAR_project_id=<PROJECT_ID>`.
-- Initialize the test environment: `terraform init`.
 
 For running the tests:
 
-- Run all tests: `terraform test`
-- Run a specific file: `terraform test -filter=tests/<test_file_name>.tftest.hcl`
+- Run all tests: `just test YOUR_PROJECT_ID`
+- Run a specific test filter: `just test-filter YOUR_PROJECT_ID {{filter}}`
 
 **Test Types**:
 

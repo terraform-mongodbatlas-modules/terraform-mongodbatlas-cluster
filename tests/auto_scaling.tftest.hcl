@@ -7,6 +7,7 @@ run "autoscaling_enabled_default" {
 
   variables {
     name          = "tf-test-autoscaling-enabled"
+    project_id    = var.project_id
     provider_name = "AWS"
     regions = [
       {
@@ -47,6 +48,7 @@ run "autoscaling_disabled" {
 
   variables {
     name          = "tf-test-autoscaling-disabled"
+    project_id    = var.project_id
     provider_name = "AWS"
     instance_size = "M10"
     regions = [

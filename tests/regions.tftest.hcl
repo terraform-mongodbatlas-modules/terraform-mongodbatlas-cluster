@@ -4,6 +4,7 @@ run "replicaset_priorities_multiple_regions" {
 
   variables {
     name          = "tf-test-multi-regions"
+    project_id    = var.project_id
     provider_name = "AWS"
     cluster_type  = "REPLICASET"
     regions = [
@@ -55,6 +56,7 @@ run "multi_geo_zone_sharded" {
 
   variables {
     name          = "tf-test-multi-geo-sharded"
+    project_id    = var.project_id
     cluster_type  = "GEOSHARDED"
     provider_name = "AWS"
     regions = [
@@ -104,6 +106,7 @@ run "dev_cluster" {
 
   variables {
     name          = "tf-test-dev-cluster"
+    project_id    = var.project_id
     cluster_type  = "REPLICASET"
     regions = [
       {
@@ -117,8 +120,8 @@ run "dev_cluster" {
     }
     retain_backups_enabled = false
     backup_enabled         = false
+    pit_enabled            = false
     provider_name = "AWS"
-    termination_protection_enabled = false
   }
 
   assert {
