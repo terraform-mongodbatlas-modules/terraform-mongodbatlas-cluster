@@ -6,51 +6,12 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 
 The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments and embeds MongoDB's best practices as intelligent defaults. This preview will validate that these patterns meet the needs of most workloads without constant maintenance or rework. We welcome your feedback and contributions during this preview phase.  This module will be formally supported by MongoDB at V1 release.
 
-## Known Limitations
-- All deprecated fields are removed
-- Only supports `disk_size_gb` at root level (auto-scaling is recommended and default)
-- No support for `disk_iops` or `ebs_volume_type`
-
 <!-- BEGIN_DISCLAIMER -->
 ## Disclaimer
 
 One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. To achieve this, we will begin with a v0 release (public preview) focused on gathering feedback and refining the design. While this early version will help validate the approach, upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.  
 
 <!-- END_DISCLAIMER -->
-
-<!-- BEGIN_MODULES -->
-## Modules
-
-### Modules Instances
-```sh
-Module Instances
-├── 1️⃣  cloud_backup_schedule
-│   └── ./modules/cloud_backup_schedule
-└── 2️⃣  search_deployment
-    └── ./modules/search_deployment
-```
-### Module Definitions
-
-```sh
-cloud_backup_schedule (1️⃣)
-└── mongodbatlas_search_deployment.this
-search_deployment (2️⃣)
-└── mongodbatlas_search_deployment.this
-```
-
-### Graph with Dependencies
-Any resource without a number prefix is defined at the root level.
-
-```mermaid
-graph TD
-    cloud_backup_schedule["1️⃣ cloud_backup_schedule"]
-    mongodbatlas_advanced_cluster.this["mongodbatlas_advanced_cluster.this"]
-    search_deployment["2️⃣ search_deployment"]
-    mongodbatlas_advanced_cluster.this --> cloud_backup_schedule
-    mongodbatlas_advanced_cluster.this --> search_deployment
-```
-<!-- END_MODULES -->
-
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
