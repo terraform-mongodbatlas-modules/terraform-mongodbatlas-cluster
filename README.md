@@ -63,7 +63,7 @@ Description: Unique 24-hexadecimal digit string that identifies your project, fo
 Type: `string`
 
 ### name
-Description: Human-readable label that identifies this cluster, for example: `my-product-cluster
+Description: Human-readable label that identifies this cluster, for example: `my-product-cluster`.
 
 Type: `string`
 
@@ -72,7 +72,8 @@ Description: Type of the cluster that you want to create. Valid values are `REPL
 
 Type: `string`
 
-## Cluster Topology `regions` (Option 1)
+## Cluster Topology Option 1 - `regions` Variables
+This option is mutually exclusive with the `replication_specs` variable.
 
 ### regions
 Description: The simplest way to define your cluster topology:
@@ -231,7 +232,8 @@ Description: Type of storage you want to attach to your AWS-provisioned cluster.
 Type: `string`
 Default: `null`
 
-## Cluster Topology `replication_specs` (Option 2)
+## Cluster Topology Option 2 - `replication_specs` Variables
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`.
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
