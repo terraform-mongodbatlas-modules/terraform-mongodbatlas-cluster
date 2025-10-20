@@ -90,19 +90,19 @@ Type:
 
 ```hcl
 list(object({
-    name                    = string
-    disk_iops               = optional(number)
-    disk_size_gb            = optional(number)
-    ebs_volume_type         = optional(string)
-    instance_size           = optional(string)
-    instance_size_analytics = optional(string)
-    node_count              = optional(number)
-    node_count_analytics    = optional(number)
-    node_count_read_only    = optional(number)
-    provider_name           = optional(string)
-    shard_number            = optional(number)
-    zone_name               = optional(string)
-  }))
+  name                    = string
+  disk_iops               = optional(number)
+  disk_size_gb            = optional(number)
+  ebs_volume_type         = optional(string)
+  instance_size           = optional(string)
+  instance_size_analytics = optional(string)
+  node_count              = optional(number)
+  node_count_analytics    = optional(number)
+  node_count_read_only    = optional(number)
+  provider_name           = optional(string)
+  shard_number            = optional(number)
+  zone_name               = optional(string)
+}))
 ```
 
 
@@ -121,24 +121,24 @@ Type:
 
 ```hcl
 object({
-    compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M200")
-    compute_min_instance_size  = optional(string, "M10")
-    compute_scale_down_enabled = optional(bool, true)
-    disk_gb_enabled            = optional(bool, true)
-  })
+  compute_enabled            = optional(bool, true)
+  compute_max_instance_size  = optional(string, "M200")
+  compute_min_instance_size  = optional(string, "M10")
+  compute_scale_down_enabled = optional(bool, true)
+  disk_gb_enabled            = optional(bool, true)
+})
 ```
 
 Default:
 
 ```hcl
 auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M200"
-    compute_min_instance_size  = "M10"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
+  compute_enabled            = true
+  compute_max_instance_size  = "M200"
+  compute_min_instance_size  = "M10"
+  compute_scale_down_enabled = true
+  disk_gb_enabled            = true
+}
 ```
 
 
@@ -149,12 +149,12 @@ Type:
 
 ```hcl
 object({
-    compute_enabled            = optional(bool)
-    compute_max_instance_size  = optional(string)
-    compute_min_instance_size  = optional(string)
-    compute_scale_down_enabled = optional(bool)
-    disk_gb_enabled            = optional(bool)
-  })
+  compute_enabled            = optional(bool)
+  compute_max_instance_size  = optional(string)
+  compute_min_instance_size  = optional(string)
+  compute_scale_down_enabled = optional(bool)
+  disk_gb_enabled            = optional(bool)
+})
 ```
 
 Default: `null`
@@ -240,49 +240,49 @@ Type:
 
 ```hcl
 list(object({
-    region_configs = list(object({
-      analytics_auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      analytics_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      backing_provider_name = optional(string)
-      electable_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      priority      = number
-      provider_name = string
-      read_only_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      region_name = string
+  region_configs = list(object({
+    analytics_auto_scaling = optional(object({
+      compute_enabled            = optional(bool)
+      compute_max_instance_size  = optional(string)
+      compute_min_instance_size  = optional(string)
+      compute_scale_down_enabled = optional(bool)
+      disk_gb_enabled            = optional(bool)
     }))
-    zone_name = optional(string)
+    analytics_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    auto_scaling = optional(object({
+      compute_enabled            = optional(bool)
+      compute_max_instance_size  = optional(string)
+      compute_min_instance_size  = optional(string)
+      compute_scale_down_enabled = optional(bool)
+      disk_gb_enabled            = optional(bool)
+    }))
+    backing_provider_name = optional(string)
+    electable_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    priority      = number
+    provider_name = string
+    read_only_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    region_name = string
   }))
+  zone_name = optional(string)
+}))
 ```
 
 Default:
@@ -301,30 +301,30 @@ Type:
 
 ```hcl
 object({
-    change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
-    custom_openssl_cipher_config_tls12                             = optional(list(string))
-    default_max_time_ms                                            = optional(number)
-    default_write_concern                                          = optional(string, "majority")
-    javascript_enabled                                             = optional(bool, false)
-    minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
-    no_table_scan                                                  = optional(bool)
-    oplog_min_retention_hours                                      = optional(number)
-    oplog_size_mb                                                  = optional(number)
-    sample_refresh_interval_bi_connector                           = optional(number)
-    sample_size_bi_connector                                       = optional(number)
-    tls_cipher_config_mode                                         = optional(string)
-    transaction_lifetime_limit_seconds                             = optional(number)
-  })
+  change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
+  custom_openssl_cipher_config_tls12                             = optional(list(string))
+  default_max_time_ms                                            = optional(number)
+  default_write_concern                                          = optional(string, "majority")
+  javascript_enabled                                             = optional(bool, false)
+  minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
+  no_table_scan                                                  = optional(bool)
+  oplog_min_retention_hours                                      = optional(number)
+  oplog_size_mb                                                  = optional(number)
+  sample_refresh_interval_bi_connector                           = optional(number)
+  sample_size_bi_connector                                       = optional(number)
+  tls_cipher_config_mode                                         = optional(string)
+  transaction_lifetime_limit_seconds                             = optional(number)
+})
 ```
 
 Default:
 
 ```hcl
 advanced_configuration = {
-    default_write_concern        = "majority"
-    javascript_enabled           = false
-    minimum_enabled_tls_protocol = "TLS1_2"
-  }
+  default_write_concern        = "majority"
+  javascript_enabled           = false
+  minimum_enabled_tls_protocol = "TLS1_2"
+}
 ```
 
 
@@ -424,9 +424,9 @@ Type:
 
 ```hcl
 object({
-    enabled         = optional(bool)
-    read_preference = optional(string)
-  })
+  enabled         = optional(bool)
+  read_preference = optional(string)
+})
 ```
 
 Default: `null`
@@ -482,8 +482,8 @@ Type:
 
 ```hcl
 object({
-    expiration_date = string
-  })
+  expiration_date = string
+})
 ```
 
 Default: `null`
@@ -511,10 +511,10 @@ Type:
 
 ```hcl
 object({
-    create = optional(string)
-    delete = optional(string)
-    update = optional(string)
-  })
+  create = optional(string)
+  delete = optional(string)
+  update = optional(string)
+})
 ```
 
 Default: `null`
