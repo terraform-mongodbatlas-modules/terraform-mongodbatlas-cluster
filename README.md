@@ -103,7 +103,7 @@ Description: The simplest way to define your cluster topology:
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
 - For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-- See auto_scaling vs manual scaling below
+- See [auto_scaling](#auto-scaling) vs [manual scaling ](#manual-scaling) below.
 
 Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 
@@ -133,9 +133,9 @@ Description: AWS/AZURE/GCP, setting this on the root level, will use it inside o
 Type: `string`
 Default: `null`
 
-## Cluster Topology `regions` Auto Scaling
+### Auto Scaling
 
-### auto_scaling
+#### auto_scaling
 Description: Auto scaling config for electable/read-only specs. Enabled by default with Architecture Center recommended defaults.
 
 Type:
@@ -163,7 +163,7 @@ auto_scaling = {
 ```
 
 
-### auto_scaling_analytics
+#### auto_scaling_analytics
 Description: Auto scaling config for analytics specs.
 
 Type:
@@ -180,21 +180,21 @@ object({
 
 Default: `null`
 
-## Cluster Topology `regions` Manual Scaling
+### Manual Scaling
 
-### instance_size
+#### instance_size
 Description: Default instance_size in electable/read-only specs. Only used when auto_scaling.compute_enabled = false. Defaults to M10 if not specified.
 
 Type: `string`
 Default: `null`
 
-### instance_size_analytics
+#### instance_size_analytics
 Description: Default instance_size in analytics specs. Do not set if using auto_scaling_analytics.
 
 Type: `string`
 Default: `null`
 
-### disk_size_gb
+#### disk_size_gb
 Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
 
  This value must be equal for all shards and node types.
@@ -212,10 +212,10 @@ Description: Storage capacity of instance data volumes expressed in gigabytes. I
 Type: `number`
 Default: `null`
 
-### disk_iops
+#### disk_iops
 Description: Only valid for AWS and Azure instances.
 
-#### AWS
+##### AWS
 Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
 
 Change this parameter if you:
@@ -233,7 +233,7 @@ MongoDB Cloud enforces minimum ratios of storage capacity to system memory for g
 - Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
 - Instance sizes greater than `M40` have a ratio of 120:1.
 
-#### Azure
+##### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
 
 - set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
@@ -246,7 +246,7 @@ Changing this value impacts cluster cost.
 Type: `number`
 Default: `null`
 
-### ebs_volume_type
+#### ebs_volume_type
 Description: Type of storage you want to attach to your AWS-provisioned cluster.\n\n- `STANDARD` volume types can't exceed the default input/output operations per second (IOPS) rate for the selected volume size. \n\n- `PROVISIONED` volume types must fall within the allowable IOPS range for the selected volume size. You must set this value to (`PROVISIONED`) for NVMe clusters.
 
 Type: `string`
