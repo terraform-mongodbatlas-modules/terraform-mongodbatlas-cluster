@@ -13,11 +13,11 @@ run "replicaset_priorities_multiple_regions" {
         node_count = 2
       },
       {
-        name = "US_WEST_2",
+        name       = "US_WEST_2",
         node_count = 2
       },
       {
-        name = "EU_WEST_1",
+        name       = "EU_WEST_1",
         node_count = 1
       },
     ]
@@ -105,13 +105,13 @@ run "dev_cluster" {
   module { source = "../" }
 
   variables {
-    name          = "tf-test-dev-cluster"
-    project_id    = var.project_id
-    cluster_type  = "REPLICASET"
+    name         = "tf-test-dev-cluster"
+    project_id   = var.project_id
+    cluster_type = "REPLICASET"
     regions = [
       {
-        name       = "US_EAST_1",
-        node_count = 3
+        name          = "US_EAST_1",
+        node_count    = 3
         instance_size = "M10"
       }
     ]
@@ -121,7 +121,7 @@ run "dev_cluster" {
     retain_backups_enabled = false
     backup_enabled         = false
     pit_enabled            = false
-    provider_name = "AWS"
+    provider_name          = "AWS"
   }
 
   assert {

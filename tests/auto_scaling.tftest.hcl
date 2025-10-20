@@ -11,8 +11,8 @@ run "autoscaling_enabled_default" {
     provider_name = "AWS"
     regions = [
       {
-        name = "US_EAST_1",
-        node_count = 3 
+        name       = "US_EAST_1",
+        node_count = 3
       }
     ]
     cluster_type = "REPLICASET"
