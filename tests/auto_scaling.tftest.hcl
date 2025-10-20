@@ -86,7 +86,7 @@ run "autoscaling_analytics_disabled_when_using_manual_scaling" {
     regions = [
       {
         name                    = "US_EAST_1"
-        node_count              = 3 # elecable auto-scaled
+        node_count              = 3 # electable auto-scaled
         shard_number            = 1
         node_count_analytics    = 1
         instance_size_analytics = "M10" # use only M10 (less than M30) for analytics node
