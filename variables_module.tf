@@ -1,14 +1,18 @@
 variable "name" {
-  description = "Human-readable label that identifies this cluster."
+  description = "Human-readable label that identifies this cluster, for example: `my-product-cluster"
   type        = string
 }
 
 variable "regions" {
   description = <<-EOT
 The simplest way to define your cluster topology:
-- For REPLICASET: omit both `shard_number` and `zone_name`.
-- For SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
-- GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
+- Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
+- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
+- For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
+- For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- See auto_scaling vs manual scaling below
 
 Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 EOT
@@ -94,7 +98,7 @@ variable "disk_iops" {
   description = <<-EOT
 Only valid for AWS and Azure instances.
 
-# AWS
+#### AWS
 Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
 
 Change this parameter if you:
@@ -112,7 +116,7 @@ MongoDB Cloud enforces minimum ratios of storage capacity to system memory for g
 - Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
 - Instance sizes greater than `M40` have a ratio of 120:1.
 
-# Azure
+#### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
 
 - set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
@@ -180,7 +184,15 @@ variable "auto_scaling_analytics" {
 }
 
 variable "tags" {
-  description = "Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster."
+  description = <<-EOT
+Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
+We recommend setting:
+Department, team name, application name, environment, version, email contact, criticality. 
+These values can be used for:
+- Billing.
+- Data classification.
+- Regional compliance requirements for audit and governance purposes.
+EOT
   type        = map(string)
   default     = {}
 }
