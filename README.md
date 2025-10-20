@@ -2,6 +2,23 @@
 
 This module heavily simplifies the MongoDB Atlas cluster resource.  More granular control is provided by replacing the simplified attributes with the standard resource attributes defined in [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster)
 
+<!-- BEGIN_TOC -->
+- [Public Preview Note](#public-preview-note)
+- [Disclaimer](#disclaimer)
+- [Requirements](#requirements)
+- [Providers](#providers)
+- [Resources](#resources)
+- [Required Variables](#required-variables)
+- [Cluster Topology `regions` (Option 1)](#cluster-topology-regions-option-1)
+- [Cluster Topology `replication_specs` (Option 2)](#cluster-topology-replication_specs-option-2)
+- [Production Recommendations (Enabled By Default)](#production-recommendations-enabled-by-default)
+- [Production Recommendations (Manually Configured)](#production-recommendations-manually-configured)
+- [Optional Variables](#optional-variables)
+- [Outputs](#outputs)
+
+<!-- END_TOC -->
+
+
 ## Public Preview Note
 
 The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments and embeds MongoDB's best practices as intelligent defaults. This preview will validate that these patterns meet the needs of most workloads without constant maintenance or rework. We welcome your feedback and contributions during this preview phase.  This module will be formally supported by MongoDB at V1 release.
@@ -12,6 +29,7 @@ The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments
 One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. To achieve this, we will begin with a v0 release (public preview) focused on gathering feedback and refining the design. While this early version will help validate the approach, upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.  
 
 <!-- END_DISCLAIMER -->
+
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -213,7 +231,7 @@ Description: Type of storage you want to attach to your AWS-provisioned cluster.
 Type: `string`
 Default: `null`
 
-## Cluster Topology `replication_Specs` (Option 2)
+## Cluster Topology `replication_specs` (Option 2)
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
