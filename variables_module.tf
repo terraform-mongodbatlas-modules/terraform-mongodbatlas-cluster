@@ -17,6 +17,7 @@ The simplest way to define your cluster topology:
 NOTE: 
 - The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
+- `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 EOT
   type = list(object({
     name                    = string
