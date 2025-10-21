@@ -1,7 +1,8 @@
 formatter: markdown document
 sections:
   hide:
-  -  "modules"
+  - "modules"
+  - "inputs"
 output:
   file: "README.md"
   mode: inject
@@ -12,3 +13,13 @@ output:
 sort:
   enabled: true
   by: required
+content: |-
+  {{ .Requirements }}
+
+  {{ .Providers }}
+
+  {{ .Resources }}
+  
+  {{ include "docs/inputs.md" }}
+
+  {{ .Outputs }} 
