@@ -27,3 +27,38 @@ content: |-
   {{ include "docs/inputs.md" }}
 
   {{ .Outputs }} 
+tables:
+- name: Getting Started Examples
+  readme_template: docs/example.tmpl.md
+  resource_fields: ["cluster_type"]
+  link_column: purpose
+  example_rows:
+  - folder: 8
+    environment: Development
+    purpose: Development Cluster
+  - folder: 1
+    environment: Production
+    purpose: Production Cluster with Auto Scaling
+  - folder: 2
+    environment: Production
+    purpose: Production Cluster with Manual Scaling
+- folder: Examples
+  readme_template: docs/example.tmpl.md
+  resource_fields: ["cluster_type"]
+  link_column: purpose
+  example_rows:
+  - folder: 3
+    purpose: Cluster with Analytics Nodes
+  - folder: 4
+    purpose: Cluster with Multi Regions
+  - folder: 5
+    purpose: Cluster with Multi Regions in US+EU
+  - folder: 6
+    purpose: Cluster with Multi Zones (GEOSHARDED)
+  - folder: 7
+    purpose: Cluster with Multi Clouds (AWS+AZURE)
+  - folder: 9
+    purpose: Cluster using the `replication_specs` to define Cluster Topology
+  - folder: 10
+    purpose: Cluster with Multi Zone and each zone with multiple shards (Advanced)
+    
