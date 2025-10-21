@@ -3,13 +3,14 @@ module "cluster" {
 
   name         = "single-region-with-analytics"
   project_id   = var.project_id
-  cluster_type = "REPLICASET"
+  cluster_type = "SHARDED"
   regions = [
     {
       name                 = "US_EAST_1"
       node_count           = 3
       provider_name        = "AWS"
       node_count_analytics = 1
+      shard_number         = 1
     }
   ]
   auto_scaling_analytics = {
