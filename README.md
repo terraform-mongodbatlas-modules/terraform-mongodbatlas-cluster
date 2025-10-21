@@ -30,6 +30,30 @@ One of this project's primary objectives is to provide durable modules that supp
 
 <!-- END_DISCLAIMER -->
 
+<!-- BEGIN_TABLES -->
+## Getting Started Examples
+
+Cluster Type | Environment | Purpose
+--- | --- | ---
+REPLICASET | Development | [Development Cluster](./examples/08_dev)
+SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_single_region_auto_scaling)
+SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_single_region_manual_scaling)
+
+
+## Examples
+
+Cluster Type | Purpose
+--- | ---
+SHARDED | [Cluster with Analytics Nodes](./examples/03_single_region_with_analytics)
+REPLICASET | [Cluster with Multi Regions](./examples/04_multi_region_single_geo_replicaset)
+SHARDED | [Cluster with Multi Regions in US+EU](./examples/05_multi_region_multi_geo)
+GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_multi_geo_sharded)
+SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_multi_cloud)
+SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_replication_var)
+GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_multi_shard_multi_geo)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_regions_helper)
+
+<!-- END_TABLES -->
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

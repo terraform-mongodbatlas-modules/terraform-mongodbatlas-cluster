@@ -30,7 +30,7 @@ content: |-
 tables:
 - name: Getting Started Examples
   readme_template: docs/example.tmpl.md
-  resource_fields: ["cluster_type"]
+  columns: ["cluster_type", "environment", "purpose"]
   link_column: purpose
   example_rows:
   - folder: 8
@@ -42,9 +42,9 @@ tables:
   - folder: 2
     environment: Production
     purpose: Production Cluster with Manual Scaling
-- folder: Examples
+- name: Examples
   readme_template: docs/example.tmpl.md
-  resource_fields: ["cluster_type"]
+  columns: ["cluster_type", "purpose"]
   link_column: purpose
   example_rows:
   - folder: 3
@@ -63,4 +63,4 @@ tables:
     purpose: Cluster with Multi Zone and each zone with multiple shards (Advanced)
   - folder: 11
     purpose: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
-    
+    cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
