@@ -10,6 +10,8 @@ output:
     <!-- BEGIN_TF_DOCS -->
     {{ .Content }}
     <!-- END_TF_DOCS -->
+settings:
+  lockfile: false
 sort:
   enabled: true
   by: required
