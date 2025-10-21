@@ -75,6 +75,9 @@ locals {
   auto_scaling_compute_enabled           = var.auto_scaling.compute_enabled
   auto_scaling_disk_enabled              = var.auto_scaling.disk_gb_enabled
   auto_scaling_compute_enabled_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
+  manual_compute_analytics               = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
+  manual_compute_electable               = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
+  manual_compute                         = local.manual_compute_electable || local.manual_compute_analytics
 
   effective_auto_scaling = local.auto_scaling_compute_enabled ? var.auto_scaling : {
     for k, v in var.auto_scaling :
@@ -156,9 +159,6 @@ locals {
   replication_specs_json              = local.replication_specs_resource_var_used ? jsonencode(var.replication_specs) : jsonencode(local.replication_specs_built) # avoids "Mismatched list element types"
   empty_region_configs                = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
   empty_regions                       = length(local.regions) == 0
-  manual_compute_analytics            = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
-  manual_compute_electable            = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
-  manual_compute                      = local.manual_compute_electable || local.manual_compute_analytics
 
   // Validation messages (non-empty strings represent errors)
   validation_errors = compact(concat(
