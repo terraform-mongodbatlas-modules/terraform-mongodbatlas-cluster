@@ -61,4 +61,6 @@ tables:
     purpose: Cluster using the `replication_specs` to define Cluster Topology
   - folder: 10
     purpose: Cluster with Multi Zone and each zone with multiple shards (Advanced)
+  - folder: 11
+    purpose: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
     
