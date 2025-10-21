@@ -53,6 +53,8 @@ The following resources are used by this module:
 - [mongodbatlas_advanced_cluster.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) (resource)
 - [mongodbatlas_advanced_clusters.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_clusters) (data source)
 
+**NOTE**: The `data.mongodbatlas_advanced_clusters` is used by auto-scaled clusters to avoid unexpected plan changes when `instance_size` have updated.
+
 ## Required Variables
 
 ### project_id

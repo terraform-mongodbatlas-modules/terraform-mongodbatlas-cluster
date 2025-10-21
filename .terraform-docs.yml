@@ -22,6 +22,8 @@ content: |-
 
   {{ .Resources }}
   
+  **NOTE**: The `data.mongodbatlas_advanced_clusters` is used by auto-scaled clusters to avoid unexpected plan changes when `instance_size` have updated.
+  
   {{ include "docs/inputs.md" }}
 
   {{ .Outputs }} 
