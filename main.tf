@@ -32,9 +32,10 @@ locals {
     if r.zone_name != null && trimspace(r.zone_name) != ""
   ] : []
 
-  unique_zone_names = local.is_geosharded ? sort(distinct([
+  unique_zone_names = local.is_geosharded ? distinct([
     for r in local.geo_rows : trimspace(r.zone_name)
-  ])) : []
+  ]) : []
+
 
   # per-zone counts to ensure either "all-or-none" region blocks within each zone have shard_number set.
   # if no regions in a zone have shard_number set, then they are all assigned to the one shard by default.
