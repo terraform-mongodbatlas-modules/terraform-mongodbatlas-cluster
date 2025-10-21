@@ -10,6 +10,7 @@ module "replication_var" {
       priority      = 7
       provider_name = "AWS"
       region_name   = "US_EAST_1"
+      shard_number  = 1
       electable_specs = {
         instance_size = "M10"
         node_count    = 3

@@ -85,10 +85,14 @@ locals {
 
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
-  auto_scaling_compute           = var.auto_scaling.compute_enabled
-  auto_scaling_compute_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
+  auto_scaling_compute_enabled           = var.auto_scaling.compute_enabled
+  auto_scaling_disk_enabled              = var.auto_scaling.disk_gb_enabled
+  auto_scaling_compute_enabled_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
+  manual_compute_analytics               = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
+  manual_compute_electable               = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
+  manual_compute                         = local.manual_compute_electable || local.manual_compute_analytics
 
-  effective_auto_scaling = local.auto_scaling_compute ? var.auto_scaling : {
+  effective_auto_scaling = local.auto_scaling_compute_enabled ? var.auto_scaling : {
     for k, v in var.auto_scaling :
     k => v if !contains([
       "compute_max_instance_size",
@@ -97,8 +101,10 @@ locals {
     ], k)
   }
 
-  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? null : (
-    local.auto_scaling_compute_analytics ? var.auto_scaling_analytics : {
+  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? (local.manual_compute_analytics ? {
+    compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
+    } : null) : (
+    local.auto_scaling_compute_enabled_analytics ? var.auto_scaling_analytics : {
       for k, v in var.auto_scaling_analytics :
       k => v if !contains([
         "compute_max_instance_size",
@@ -123,8 +129,13 @@ locals {
           analytics_auto_scaling = local.effective_auto_scaling_analytics
 
           electable_specs = r.node_count != null ? {
-            disk_size_gb = var.disk_size_gb
-            instance_size = local.auto_scaling_compute ? try(
+            # since disk_iops, disk_size_gb, ebs_volume_type are computed attributes setting them as null will not create a plan change even when API returns a different value
+            # they are also not required by the API
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
+            # instance_size is required by the API until effctive fields are supported
+            instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -132,8 +143,10 @@ locals {
           } : null
 
           read_only_specs = r.node_count_read_only != null ? {
-            disk_size_gb = var.disk_size_gb
-            instance_size = local.auto_scaling_compute ? try(
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
+            instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
               local.effective_auto_scaling.compute_min_instance_size
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
@@ -141,8 +154,10 @@ locals {
           } : null
 
           analytics_specs = r.node_count_analytics != null ? {
-            disk_size_gb = var.disk_size_gb
-            instance_size = local.effective_auto_scaling_analytics != null ? try(
+            disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
+            disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
+            ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
+            instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
               local.effective_auto_scaling_analytics.compute_min_instance_size
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
@@ -169,14 +184,33 @@ locals {
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
 
-    // Requires
+    // Autoscaling vs fixed sizes disk_gb
+    local.auto_scaling_disk_enabled ?
+    var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
+    : [],
+    local.auto_scaling_disk_enabled ?
+    [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
+
+    // Missing compute specification
+    !local.manual_compute && !local.auto_scaling_compute_enabled && !local.auto_scaling_compute_enabled_analytics ? ["Must use auto-scaling or set instance_sizes"] : [],
+
+    // Root level without manual_compute
+    !local.manual_compute && var.disk_iops != null ? ["Cannot use disk_iops without setting instance_size (auto-scaling must be disabled)"] : [],
+    !local.manual_compute && var.ebs_volume_type != null ? ["Cannot use ebs_volume_type without setting instance_size (auto-scaling must be disabled)"] : [],
+
+    // Requires regions set
     var.instance_size != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.instance_size without var.regions"] : [],
     var.auto_scaling != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling without var.regions"] : [],
     var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
+    var.disk_iops != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.disk_iops without var.regions"] : [],
+    var.ebs_volume_type != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.ebs_volume_type without var.regions"] : [],
 
-    // Per-region invalid instance_size when autoscaling is used
-    var.auto_scaling.compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
-    var.auto_scaling_analytics != null ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
+    // Per-region invalid manual scaling parameters when autoscaling is used
+    local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
+    local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.disk_iops != null ? "Cannot use regions[*].disk_iops when auto_scaling is enabled: index ${idx} disk_iops=${r.disk_iops}" : ""] : [],
+    local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.ebs_volume_type != null ? "Cannot use regions[*].ebs_volume_type when auto_scaling is enabled: index ${idx} ebs_volume_type=${r.ebs_volume_type}" : ""] : [],
+
+    local.auto_scaling_compute_enabled_analytics ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
 
     // Cluster type vs region fields
     local.is_geosharded ? concat(

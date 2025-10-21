@@ -31,7 +31,7 @@ variable "advanced_configuration" {
 }
 
 variable "backup_enabled" {
-  description = "Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups."
+  description = "Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups."
   type        = bool
   default     = true
 }
@@ -131,15 +131,15 @@ variable "pinned_fcv" {
 }
 
 variable "pit_enabled" {
-  description = "Flag that indicates whether the cluster uses continuous cloud backups."
+  description = "Recommended for production clusters. Flag that indicates whether the cluster uses continuous cloud backups."
   type        = bool
-  nullable    = true
-  default     = null
+  nullable    = false
+  default     = true
 }
 
 variable "project_id" {
   description = <<-EOT
-Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
 
 **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
 EOT
@@ -227,7 +227,7 @@ variable "replication_specs" {
 }
 
 variable "retain_backups_enabled" {
-  description = "Flag that indicates whether to retain backup snapshots for the deleted dedicated cluster."
+  description = "Recommended for production clusters. Flag that indicates whether to retain backup snapshots for the deleted dedicated cluster."
   type        = bool
   default     = true
 }
@@ -240,10 +240,10 @@ variable "root_cert_type" {
 }
 
 variable "termination_protection_enabled" {
-  description = "Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster."
+  description = "Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster."
   type        = bool
   nullable    = true
-  default     = true # changed
+  default     = null
 }
 
 variable "timeouts" {
