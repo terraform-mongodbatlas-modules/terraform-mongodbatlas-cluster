@@ -48,16 +48,6 @@ EOT
     error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
     condition     = length([for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
   }
-  validation {
-    condition = alltrue([
-      for r in var.regions :
-      (
-        r.shard_number == null
-        || (r.shard_number == floor(r.shard_number) && r.shard_number >= 0)
-      )
-    ])
-    error_message = "Each regions[*].shard_number must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
-  }
 }
 
 variable "provider_name" {

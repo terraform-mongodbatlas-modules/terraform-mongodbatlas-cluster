@@ -9,13 +9,6 @@ locals {
 
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
-  # unique_shard_numbers = local.is_sharded ? sort(distinct([for r in local.regions : format("%09d", r.shard_number) if r.shard_number != null])) : []
-
-  # grouped_regions_sharded = local.is_sharded ? [
-  #   for sn in local.unique_shard_numbers :
-  #   [for r in local.regions : r if format("%09d", r.shard_number) == sn]
-  # ] : []
-
   unique_shard_numbers = local.is_sharded ? distinct([
     for r in local.regions : tostring(r.shard_number)
     if r.shard_number != null
