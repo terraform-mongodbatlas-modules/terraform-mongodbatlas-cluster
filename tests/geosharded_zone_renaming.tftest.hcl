@@ -1,11 +1,11 @@
 run "geo_zone_initial_apply" {
-  command = apply
+  command   = apply
   state_key = "geo_zone_renaming"
-  
+
   module {
     source = "../"
   }
-  variables  {
+  variables {
     name          = "tf-test-geo-zone"
     project_id    = var.project_id
     provider_name = "AWS"
@@ -20,14 +20,14 @@ run "geo_zone_initial_apply" {
 }
 
 run "geo_zone_rename_plan" {
-  command = plan
+  command   = plan
   state_key = "geo_zone_renaming"
-  
+
   module {
     source = "../"
   }
 
-  variables  {
+  variables {
     name          = "tf-test-geo-zone"
     project_id    = var.project_id
     provider_name = "AWS"

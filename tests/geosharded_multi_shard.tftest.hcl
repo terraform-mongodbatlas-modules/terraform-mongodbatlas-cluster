@@ -57,9 +57,9 @@ run "geo_multi_shards_in_zone" {
     cluster_type  = "GEOSHARDED"
 
     regions = [
-      { name = "US_EAST_1",  node_count = 3, zone_name = "US", shard_number = 0 },
-      { name = "US_WEST_1",  node_count = 3, zone_name = "US", shard_number = 1 },
-      { name = "EU_WEST_1",  node_count = 3, zone_name = "EU", shard_number = 0 },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_number = 0 },
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_number = 1 },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_number = 0 },
     ]
   }
 
