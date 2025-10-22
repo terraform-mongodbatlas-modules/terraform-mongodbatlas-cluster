@@ -7,7 +7,7 @@ If you are familiar with Terraform and already have a project configured in atla
 1. To run the `terraform` commands you need to install [Terraform](https://developer.hashicorp.com/terraform/install).
 2. Sign up for a [MongoDB Atlas Account](https://www.mongodb.com/products/integrations/hashicorp-terraform)
 3. Configure [authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication)
-4. Create a [MongoDB Atlas project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) see the [extra product resource example](#extra-product-resource-example).
+4. Create a [MongoDB Atlas project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) see the [extra project resource example](#extra-project-resource-example).
 
 ## Commands
 ```sh
@@ -29,7 +29,7 @@ terraform destroy -var-file vars.tfvars
 ## Feedback or Help
 - If you have any feedback or trouble please open a Github Issue
 
-## Extra Product Resource Example
+## Extra Project Resource Example
 ```hcl
 variable "org_id" {
   type    = string
