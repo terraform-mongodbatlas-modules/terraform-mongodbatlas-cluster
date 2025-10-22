@@ -1,8 +1,8 @@
 module "cluster" {
   source = "../.."
 
-  name         = "multi-geo-zone-sharded"
-  project_id   = var.project_id
+  name       = "multi-geo-zone-sharded"
+  project_id = var.project_id
   cluster_type = "GEOSHARDED"
   regions = [
     {

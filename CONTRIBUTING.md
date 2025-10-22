@@ -72,6 +72,9 @@ just lint
 
 # Generate documentation
 just docs
+# Note that some generation steps of the docs are in an alpha phase and will be followed up in CLOUDP-353173:  
+# - the generation of docs/inputs.md
+# - the README.md sections of <!-- BEGIN/END_TABLES --> and <!-- BEGIN/END_TOC -->
 
 # Run all checks (format, validate, lint, docs)
 just check

@@ -1,7 +1,8 @@
 formatter: markdown document
 sections:
   hide:
-  -  "modules"
+  - "modules"
+  - "inputs"
 output:
   file: "README.md"
   mode: inject
@@ -9,6 +10,57 @@ output:
     <!-- BEGIN_TF_DOCS -->
     {{ .Content }}
     <!-- END_TF_DOCS -->
+settings:
+  lockfile: false
 sort:
   enabled: true
   by: required
+content: |-
+  {{ .Requirements }}
+
+  {{ .Providers }}
+
+  {{ .Resources }}
+  
+  **NOTE**: The `data.mongodbatlas_advanced_clusters` is used by auto-scaled clusters to avoid unexpected plan changes when `instance_size` have updated.
+  
+  {{ include "docs/inputs.md" }}
+
+  {{ .Outputs }} 
+tables:
+- name: Getting Started Examples
+  readme_template: docs/example.tmpl.md
+  columns: ["cluster_type", "environment", "purpose"]
+  link_column: purpose
+  example_rows:
+  - folder: 8
+    environment: Development
+    purpose: Development Cluster
+  - folder: 1
+    environment: Production
+    purpose: Production Cluster with Auto Scaling
+  - folder: 2
+    environment: Production
+    purpose: Production Cluster with Manual Scaling
+- name: Examples
+  readme_template: docs/example.tmpl.md
+  columns: ["cluster_type", "purpose"]
+  link_column: purpose
+  example_rows:
+  - folder: 3
+    purpose: Cluster with Analytics Nodes
+  - folder: 4
+    purpose: Cluster with Multi Regions
+  - folder: 5
+    purpose: Cluster with Multi Regions in US+EU
+  - folder: 6
+    purpose: Cluster with Multi Zones (GEOSHARDED)
+  - folder: 7
+    purpose: Cluster with Multi Clouds (AWS+AZURE)
+  - folder: 9
+    purpose: Cluster using the `replication_specs` to define Cluster Topology
+  - folder: 10
+    purpose: Cluster with Multi Zone and each zone with multiple shards (Advanced)
+  - folder: 11
+    purpose: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
+    cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
