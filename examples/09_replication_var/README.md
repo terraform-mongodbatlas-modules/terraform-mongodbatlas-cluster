@@ -1,5 +1,5 @@
 <!-- This file is used to generate the examples/README.md files -->
-# {{ .NAME }}
+# Cluster using the `replication_specs` to define Cluster Topology
 
 ## Pre Requirements
 If you are familiar with Terraform and already have a project configured in atlas go to [commands](#commands)

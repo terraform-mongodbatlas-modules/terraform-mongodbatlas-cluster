@@ -1,5 +1,5 @@
 <!-- This file is used to generate the examples/README.md files -->
-# {{ .NAME }}
+# Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
 
 ## Pre Requirements
 If you are familiar with Terraform and already have a project configured in atlas go to [commands](#commands)

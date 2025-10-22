@@ -1,5 +1,5 @@
 <!-- This file is used to generate the examples/README.md files -->
-# {{ .NAME }}
+# Production Cluster with Manual Scaling
 
 ## Pre Requirements
 If you are familiar with Terraform and already have a project configured in atlas go to [commands](#commands)
