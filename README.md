@@ -33,7 +33,7 @@ One of this project's primary objectives is to provide durable modules that supp
 <!-- BEGIN_TABLES -->
 ## Getting Started Examples
 
-Cluster Type | Environment | Purpose
+Cluster Type | Environment | Name
 --- | --- | ---
 REPLICASET | Development | [Development Cluster](./examples/08_dev)
 SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_single_region_auto_scaling)
@@ -42,11 +42,11 @@ SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_si
 
 ## Examples
 
-Cluster Type | Purpose
+Cluster Type | Name
 --- | ---
 SHARDED | [Cluster with Analytics Nodes](./examples/03_single_region_with_analytics)
-REPLICASET | [Cluster with Multi Regions](./examples/04_multi_region_single_geo_replicaset)
-SHARDED | [Cluster with Multi Regions in US+EU](./examples/05_multi_region_multi_geo)
+REPLICASET | [Cluster with Multi Regions (US_EAST_1 + US_EAST_2)](./examples/04_multi_region_single_geo_replicaset)
+SHARDED | [Cluster with Multi Regions (US+EU)](./examples/05_multi_region_multi_geo)
 GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_multi_geo_sharded)
 SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_multi_cloud)
 SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_replication_var)

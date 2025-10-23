@@ -1,6 +1,7 @@
+# Step 1: Apply the initial configuration
 run "geo_zone_initial_apply" {
   command   = apply
-  state_key = "geo_zone_renaming"
+  state_key = "geo_zone_renaming" # used to ensure state is preserved between runs
 
   module {
     source = "../"
@@ -19,9 +20,10 @@ run "geo_zone_initial_apply" {
 
 }
 
+# Step 2: Test the plan for renaming the zone
 run "geo_zone_rename_plan" {
   command   = plan
-  state_key = "geo_zone_renaming"
+  state_key = "geo_zone_renaming" # used to ensure state is preserved between runs
 
   module {
     source = "../"
