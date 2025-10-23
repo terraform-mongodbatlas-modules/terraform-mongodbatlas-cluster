@@ -69,3 +69,5 @@ tables:
   - folder: 11
     name: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
     cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
+  - folder: 12
+    name: Cluster with uniform SHARDED topology using `shard_count`

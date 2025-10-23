@@ -10,9 +10,8 @@ The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-- See auto_scaling vs manual scaling below
 
 NOTE: 
 - The order in which region blocks are defined in this list determines their priority within each shard or zone. 
@@ -209,4 +208,28 @@ These values can be used for:
 EOT
   type        = map(string)
   default     = {}
+}
+
+variable "shard_count" {
+  description = <<-EOT
+Number of shards for SHARDED clusters.
+
+- When set, all shards share the same region topology (each shard gets the same regions list).
+- Do NOT set regions[*].shard_number when shard_count is set (they are mutually exclusive).
+- When unset, you must set regions[*].shard_number on every region to explicitly group regions into shards.
+
+EOT
+  type        = number
+  nullable    = true
+  default     = null
+
+  validation {
+    condition     = var.shard_count == null || (var.shard_count == floor(var.shard_count) && var.shard_count >= 1)
+    error_message = "shard_count must be ≥ 1 if set."
+  }
+
+  validation {
+    condition     = var.shard_count == null || var.cluster_type == "SHARDED"
+    error_message = "shard_count can only be set when cluster_type is SHARDED."
+  }
 }
