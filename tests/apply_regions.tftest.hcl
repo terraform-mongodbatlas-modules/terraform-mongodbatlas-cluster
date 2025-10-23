@@ -1,7 +1,18 @@
-mock_provider "mongodbatlas" {}
+variable "org_id" {
+  type = string
+}
 
-variables {
-  project_id = "000000000000000000000000"
+run "create_project" {
+    command = apply
+
+    module {
+        source = "./project_generator"
+    }
+
+    variables {
+      org_id = "669a791ba8805769fd97ba1a"
+      project_name = "tf-test-dev-project"
+    }
 }
 
 run "dev_cluster" {
@@ -11,7 +22,7 @@ run "dev_cluster" {
 
   variables {
     name         = "tf-test-dev-cluster"
-    project_id   = var.project_id
+    project_id   = run.create_project.project_id
     cluster_type = "REPLICASET"
     regions = [
       {
