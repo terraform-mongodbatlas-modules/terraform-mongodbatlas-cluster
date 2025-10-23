@@ -4,7 +4,7 @@ module "replication_var" {
   name         = "replication-var"
   project_id   = var.project_id
   regions      = []
-  cluster_type = "REPLICASET"
+  cluster_type = "SHARDED"
   replication_specs = [{
     region_configs = [{
       priority      = 7
