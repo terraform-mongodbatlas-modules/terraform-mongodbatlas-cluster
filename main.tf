@@ -7,6 +7,9 @@ locals {
   is_sharded    = var.cluster_type == "SHARDED"
   is_replicaset = var.cluster_type == "REPLICASET"
 
+  # ---- REPLICASET  ----
+  grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
+
   # ---- SHARDED  ----
   sharded_uniform          = local.is_sharded && var.shard_count != null
   sharded_explicit         = local.is_sharded && var.shard_count == null
@@ -26,8 +29,6 @@ locals {
     (local.sharded_uniform && length(var.regions) == 0)
     ? ["SHARDED: when shard_count is set, you must define at least one region."] : []
   )) : []
-
-  grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
   unique_shard_numbers = local.sharded_explicit ? distinct([
     for r in local.regions : tostring(r.shard_number)
