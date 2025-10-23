@@ -27,40 +27,45 @@ content: |-
   {{ include "docs/inputs.md" }}
 
   {{ .Outputs }} 
+examples_readme:
+  readme_template: docs/example_readme.md
+  versions_tf:
+    add: |
+      provider "mongodbatlas" {}
+    
 tables:
 - name: Getting Started Examples
-  readme_template: docs/example.tmpl.md
-  columns: ["cluster_type", "environment", "purpose"]
-  link_column: purpose
+  columns: ["cluster_type", "environment", "name"]
+  link_column: name
   example_rows:
   - folder: 8
     environment: Development
-    purpose: Development Cluster
+    name: Development Cluster
   - folder: 1
     environment: Production
-    purpose: Production Cluster with Auto Scaling
+    name: Production Cluster with Auto Scaling
   - folder: 2
     environment: Production
-    purpose: Production Cluster with Manual Scaling
+    name: Production Cluster with Manual Scaling
 - name: Examples
   readme_template: docs/example.tmpl.md
-  columns: ["cluster_type", "purpose"]
-  link_column: purpose
+  columns: ["cluster_type", "name"]
+  link_column: name
   example_rows:
   - folder: 3
-    purpose: Cluster with Analytics Nodes
+    name: Cluster with Analytics Nodes
   - folder: 4
-    purpose: Cluster with Multi Regions
+    name: Cluster with Multi Regions (US_EAST_1 + US_EAST_2)
   - folder: 5
-    purpose: Cluster with Multi Regions in US+EU
+    name: Cluster with Multi Regions (US+EU)
   - folder: 6
-    purpose: Cluster with Multi Zones (GEOSHARDED)
+    name: Cluster with Multi Zones (GEOSHARDED)
   - folder: 7
-    purpose: Cluster with Multi Clouds (AWS+AZURE)
+    name: Cluster with Multi Clouds (AWS+AZURE)
   - folder: 9
-    purpose: Cluster using the `replication_specs` to define Cluster Topology
+    name: Cluster using the `replication_specs` to define Cluster Topology
   - folder: 10
-    purpose: Cluster with Multi Zone and each zone with multiple shards (Advanced)
+    name: Cluster with Multi Zone and each zone with multiple shards (Advanced)
   - folder: 11
-    purpose: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
+    name: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
     cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
