@@ -14,7 +14,11 @@ The simplest way to define your cluster topology:
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 - See auto_scaling vs manual scaling below
 
-Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
+NOTE: 
+- The order in which region blocks are defined in this list determines their priority within each shard or zone. 
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+- Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
+- `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 EOT
   type = list(object({
     name                    = string
@@ -44,6 +48,16 @@ EOT
   validation {
     error_message = "no node count specified at indexes ${join(",", [for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])])}"
     condition     = length([for idx, region in var.regions : idx if alltrue([region.node_count == null, region.node_count_read_only == null, region.node_count_analytics == null])]) == 0
+  }
+  validation {
+    condition = alltrue([
+      for r in var.regions :
+      (
+        r.shard_number == null
+        || (r.shard_number == floor(r.shard_number) && r.shard_number >= 0)
+      )
+    ])
+    error_message = "Each regions[*].shard_number must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
   }
 }
 

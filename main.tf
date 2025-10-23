@@ -9,11 +9,14 @@ locals {
 
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
-  unique_shard_numbers = local.is_sharded ? sort(distinct([for r in local.regions : format("%09d", r.shard_number) if r.shard_number != null])) : []
+  unique_shard_numbers = local.is_sharded ? distinct([
+    for r in local.regions : tostring(r.shard_number)
+    if r.shard_number != null
+  ]) : []
 
   grouped_regions_sharded = local.is_sharded ? [
     for sn in local.unique_shard_numbers :
-    [for r in local.regions : r if format("%09d", r.shard_number) == sn]
+    [for r in local.regions : r if tostring(r.shard_number) == sn]
   ] : []
 
   geo_rows = local.is_geosharded ? [
@@ -21,9 +24,9 @@ locals {
     if r.zone_name != null && trimspace(r.zone_name) != ""
   ] : []
 
-  unique_zone_names = local.is_geosharded ? sort(distinct([
+  unique_zone_names = local.is_geosharded ? distinct([
     for r in local.geo_rows : trimspace(r.zone_name)
-  ])) : []
+  ]) : []
 
   # per-zone counts to ensure either "all-or-none" region blocks within each zone have shard_number set.
   # if no regions in a zone have shard_number set, then they are all assigned to the one shard by default.
@@ -54,9 +57,9 @@ locals {
     }
   ] : []
 
-  geoshard_keys = local.is_geosharded ? sort(distinct([
+  geoshard_keys = local.is_geosharded ? distinct([
     for x in local.geo_keyed_rows : x.key
-  ])) : []
+  ]) : []
 
   # group by computed key: "zone||<shard_number>"
   grouped_regions_geosharded = local.is_geosharded ? [

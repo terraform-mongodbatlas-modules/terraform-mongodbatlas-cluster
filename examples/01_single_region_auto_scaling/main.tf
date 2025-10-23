@@ -1,10 +1,9 @@
 module "cluster" {
   source = "../.."
 
-  name                   = "single-region"
-  project_id             = var.project_id
-  mongo_db_major_version = "8.0"
-  cluster_type           = "SHARDED"
+  name         = "single-region"
+  project_id   = var.project_id
+  cluster_type = "SHARDED"
   regions = [
     {
       name          = "US_EAST_1"
