@@ -33,7 +33,7 @@ EOT
 
   validation {
     error_message = "Only provider_name AWS/AZURE/GCP are allowed."
-    condition     = length([for region in var.regions : region if region.provider_name != null && !contains(["AWS", "AZURE", "GCP"], coalesce(region.provider_name, "AWS"))]) == 0 # coalesce avoids `Invalid value for "value" parameter: argument must not be null.` in terraform CLI 1.11 and earlier
+    condition     = length([for region in var.regions : region if region.provider_name != null && !contains(["AWS", "AZURE", "GCP"], coalesce(region.provider_name, "AWS"))]) == 0 # (1) coalesce avoids `Invalid value for "value" parameter: argument must not be null.` in terraform CLI 1.11 and earlier (2) using `AWS` as default since a null value is OK (notice ! before contains)
   }
 
   validation {
