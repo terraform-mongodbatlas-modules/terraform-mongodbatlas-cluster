@@ -10,7 +10,7 @@ run "create_project" {
     }
 
     variables {
-      org_id = "669a791ba8805769fd97ba1a"
+      org_id = var.org_id
       project_name = "tf-test-dev-project"
     }
 }
