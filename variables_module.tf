@@ -10,7 +10,7 @@ The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 
 NOTE: 

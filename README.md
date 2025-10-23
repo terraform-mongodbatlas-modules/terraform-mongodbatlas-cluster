@@ -52,6 +52,7 @@ SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_multi_cloud)
 SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_replication_var)
 GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_multi_shard_multi_geo)
 Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_regions_helper)
+SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_multi_shard_uniform_topology)
 
 <!-- END_TABLES -->
 
@@ -107,7 +108,7 @@ Description: The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 - See [auto_scaling](#auto-scaling) vs [manual scaling ](#manual-scaling) below.
 
