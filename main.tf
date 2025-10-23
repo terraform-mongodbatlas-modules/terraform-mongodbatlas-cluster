@@ -7,18 +7,43 @@ locals {
   is_sharded    = var.cluster_type == "SHARDED"
   is_replicaset = var.cluster_type == "REPLICASET"
 
+  # ---- SHARDED  ----
+  sharded_uniform          = local.is_sharded && var.shard_count != null
+  sharded_explicit         = local.is_sharded && var.shard_count == null
+  has_any_zone_in_shard    = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && trimspace(r.zone_name) != ""])
+  has_any_number_in_shard  = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
+  all_have_number_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([for r in var.regions : r.shard_number != null])
+  sharded_validation_errors = local.is_sharded ? compact(concat(
+    local.has_any_zone_in_shard
+    ? ["SHARDED validation: do not set regions[*].zone_name."] : [],
+
+    (local.sharded_uniform && local.has_any_number_in_shard)
+    ? ["SHARDED validation: when shard_count is set, do not set regions[*].shard_number."] : [],
+
+    (!local.sharded_uniform && !local.all_have_number_in_shard)
+    ? ["SHARDED validation: set regions[*].shard_number on every region (or use shard_count)."] : [],
+
+    (local.sharded_uniform && length(var.regions) == 0)
+    ? ["SHARDED: when shard_count is set, you must define at least one region."] : []
+  )) : []
+
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
-  unique_shard_numbers = local.is_sharded ? distinct([
+  unique_shard_numbers = local.sharded_explicit ? distinct([
     for r in local.regions : tostring(r.shard_number)
     if r.shard_number != null
   ]) : []
 
-  grouped_regions_sharded = local.is_sharded ? [
+  grouped_regions_sharded_explicit = local.sharded_explicit ? [
     for sn in local.unique_shard_numbers :
     [for r in local.regions : r if tostring(r.shard_number) == sn]
   ] : []
 
+  grouped_regions_sharded_uniform = local.sharded_uniform ? [
+    for _i in range(var.shard_count) : local.regions
+  ] : []
+
+  # ---- GEOSHARDED  ----
   geo_rows = local.is_geosharded ? [
     for r in local.regions : r
     if r.zone_name != null && trimspace(r.zone_name) != ""
@@ -69,7 +94,7 @@ locals {
   ] : []
   cluster_type_regions = {
     REPLICASET = local.grouped_regions_replicaset
-    SHARDED    = local.grouped_regions_sharded
+    SHARDED    = local.sharded_uniform ? local.grouped_regions_sharded_uniform : local.grouped_regions_sharded_explicit
     GEOSHARDED = local.grouped_regions_geosharded
   }
 
@@ -208,10 +233,7 @@ locals {
       length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
     ) : [],
 
-    local.is_sharded ? concat(
-      [for idx, r in local.regions : r.shard_number == null ? "Must use regions[*].shard_number when cluster_type is SHARDED: shard_number missing @ index ${idx}" : ""],
-      [for idx, r in local.regions : r.zone_name != null ? "Sharded cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
-    ) : [],
+    local.sharded_validation_errors,
 
     local.is_replicaset ? concat(
       [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
