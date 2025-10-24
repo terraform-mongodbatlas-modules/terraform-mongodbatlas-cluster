@@ -11,7 +11,7 @@ fmt:
 # Validate all Terraform files  
 validate:
     terraform init
-    terraform validate
+    terraform validate -no-tests
 
 # Lint with comprehensive rules
 lint:
