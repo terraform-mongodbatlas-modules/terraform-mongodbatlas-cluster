@@ -1,6 +1,5 @@
-variables {
-  # Default placeholder; overridden via `-var 'org_id="..."'` or justfile
-  org_id = ""
+variable "org_id" {
+  type = string
 }
 
 run "generate_random_name" {

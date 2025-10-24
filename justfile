@@ -48,9 +48,9 @@ plan-examples project_id:
 # Run all tests (expects ORG_ID env var)
 test:
     terraform -chdir=tests init
-    terraform -chdir=tests test -var 'org_id="{{env_var("MONGODB_ATLAS_ORG_ID")}}"'
+    terraform -chdir=tests test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 # Run tests matching a file/path/pattern
 test-filter filter:
     terraform -chdir=tests init
-    terraform -chdir=tests test -run {{filter}} -var org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}
+    terraform -chdir=tests test {{filter}} -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
