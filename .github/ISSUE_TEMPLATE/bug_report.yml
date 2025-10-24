@@ -47,7 +47,6 @@ body:
         - Terraform Open Source (OSS)
         - Terraform Enterprise
         - Terraform Cloud
-        - Open Tofu
       default: 0
     validations:
       required: true
