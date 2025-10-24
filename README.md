@@ -5,6 +5,8 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 <!-- BEGIN_TOC -->
 - [Public Preview Note](#public-preview-note)
 - [Disclaimer](#disclaimer)
+- [Getting Started Examples](#getting-started-examples)
+- [Examples](#examples)
 - [Requirements](#requirements)
 - [Providers](#providers)
 - [Resources](#resources)
@@ -100,7 +102,7 @@ Description: Type of the cluster that you want to create. Valid values are `REPL
 Type: `string`
 
 ## Cluster Topology Option 1 - `regions` Variables
-This option is mutually exclusive with the `replication_specs` variable.
+This option is mutually exclusive with the `replication_specs` variable. See also [why two options?](#why-two-options-for-cluster-topology)
 
 ### regions
 Description: The simplest way to define your cluster topology:
@@ -274,7 +276,7 @@ Type: `string`
 Default: `null`
 
 ## Cluster Topology Option 2 - `replication_specs` Variables
-This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`.
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`. See also [why two options?](#why-two-options-for-cluster-topology)
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
@@ -599,3 +601,12 @@ Description: Version of MongoDB that the cluster runs.
 
 Description: Human-readable label that indicates the current operating condition of this cluster. 
 <!-- END_TF_DOCS -->
+
+## FAQ
+
+### Why two options for Cluster Topology?
+- Defining a MongoDB Atlas Cluster using the `replication_spec` variable ([option 2](#cluster-topology-option-2---replication_specs-variables)) requires understanding the full nested schema and knowing which are valid cluster topologies.
+- Therefore, this module introduces the [option 1](#cluster-topology-option-1---regions-variables) `regions` variable and associated variables to simplify the complexity by offering a flat simpler schema.
+- Moreover, the [auto_scaling](#auto_scaling), [auto_scaling_analytics](#auto_scaling_analytics), and [provider_name](#provider_name) help reduce the duplication of config attributes by defining common values at the root level.
+- For `SHARDED` clusters, we allow the [shard_count](#shard_count) to easily add/remove shards to a cluster.
+- We decided to keep the `replication_spec` variable for existing users already familiar with the nested schema and for users migrating from an existing [mongodbatlas_advanced_cluster](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to this module.
