@@ -1,18 +1,23 @@
-variable "org_id" {
-  type = string
+variables {
+  # Default placeholder; overridden via `-var 'org_id="..."'` or justfile
+  org_id = ""
+}
+
+run "generate_random_name" {
+  module {
+    source = "./random_name_generator"
+  }
 }
 
 run "create_project" {
-    command = apply
+  module {
+    source = "./project_generator"
+  }
 
-    module {
-        source = "./project_generator"
-    }
-
-    variables {
-      org_id = var.org_id
-      project_name = "tf-test-dev-project"
-    }
+  variables {
+    org_id       = var.org_id
+    project_name = "test-cluster-module-tf-${run.generate_random_name.name_project}"
+  }
 }
 
 run "dev_cluster" {
@@ -22,7 +27,7 @@ run "dev_cluster" {
 
   variables {
     name         = "tf-test-dev-cluster"
-    project_id   = run.create_project.project_id
+   project_id = run.create_project.project_id
     cluster_type = "REPLICASET"
     regions = [
       {
