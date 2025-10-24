@@ -27,7 +27,7 @@ run "dev_cluster" {
 
   variables {
     name         = "tf-test-dev-cluster"
-   project_id = run.create_project.project_id
+    project_id   = run.create_project.project_id
     cluster_type = "REPLICASET"
     regions = [
       {
