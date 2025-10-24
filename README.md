@@ -5,6 +5,8 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 <!-- BEGIN_TOC -->
 - [Public Preview Note](#public-preview-note)
 - [Disclaimer](#disclaimer)
+- [Getting Started Examples](#getting-started-examples)
+- [Examples](#examples)
 - [Requirements](#requirements)
 - [Providers](#providers)
 - [Resources](#resources)
@@ -15,6 +17,7 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 - [Production Recommendations (Manually Configured)](#production-recommendations-manually-configured)
 - [Optional Variables](#optional-variables)
 - [Outputs](#outputs)
+- [FAQ](#faq)
 
 <!-- END_TOC -->
 
@@ -100,7 +103,7 @@ Description: Type of the cluster that you want to create. Valid values are `REPL
 Type: `string`
 
 ## Cluster Topology Option 1 - `regions` Variables
-This option is mutually exclusive with the `replication_specs` variable.
+This option is mutually exclusive with the `replication_specs` variable. See also [why two options?](#why-two-options-for-cluster-topology)
 
 ### regions
 Description: The simplest way to define your cluster topology:
@@ -108,11 +111,15 @@ Description: The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.SHARDED: set `shard_number` on each region or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-- See [auto_scaling](#auto-scaling) vs [manual scaling ](#manual-scaling) below.
+- See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 
-Note: The order in which region blocks are defined in this list determines their priority within each shard or zone. The first region gets priority 7 (maximum), the next 6, and so on (minimum 0).
+NOTE:
+- The order in which region blocks are defined in this list determines their priority within each shard or zone.
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+- Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
+- `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 
 Type:
 
@@ -138,6 +145,16 @@ list(object({
 Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`
 
 Type: `string`
+Default: `null`
+
+### shard_count
+Description: Number of shards for SHARDED clusters.
+
+- When set, all shards share the same region topology (each shard gets the same regions list).
+- Do NOT set regions[*].shard_number when shard_count is set (they are mutually exclusive).
+- When unset, you must set regions[*].shard_number on every region to explicitly group regions into shards.
+
+Type: `number`
 Default: `null`
 
 ### Auto Scaling
@@ -260,7 +277,7 @@ Type: `string`
 Default: `null`
 
 ## Cluster Topology Option 2 - `replication_specs` Variables
-This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`.
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`. See also [why two options?](#why-two-options-for-cluster-topology)
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
@@ -585,3 +602,18 @@ Description: Version of MongoDB that the cluster runs.
 
 Description: Human-readable label that indicates the current operating condition of this cluster. 
 <!-- END_TF_DOCS -->
+
+## FAQ
+
+### Why two options for Cluster Topology?
+- Defining a MongoDB Atlas Cluster using the `replication_spec` variable ([option 2](#cluster-topology-option-2---replication_specs-variables)) requires understanding the full nested schema and knowing which are valid cluster topologies.
+- Therefore, this module introduces the [option 1](#cluster-topology-option-1---regions-variables) `regions` variable and associated variables to simplify the complexity by offering a flat simpler schema.
+- Moreover, the [auto_scaling](#auto_scaling), [auto_scaling_analytics](#auto_scaling_analytics), and [provider_name](#provider_name) help reduce the duplication of config attributes by defining common values at the root level.
+- For `SHARDED` clusters, we allow the [shard_count](#shard_count) to easily add/remove shards to a cluster.
+- We decided to keep the `replication_spec` variable for existing users already familiar with the nested schema and for users migrating from an existing [mongodbatlas_advanced_cluster](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to this module.
+
+### What is the `provider_meta "mongodbatlas"` doing?
+- This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
+  - `User-Agent: terraform-provider-mongodbatlas/2.1.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
+- Note: We **do not** send any configuration-specific values, only these values to help us track feature adoption.
+- You can use `export TF_LOG=debug` to see the API requests with headers and their responses.
