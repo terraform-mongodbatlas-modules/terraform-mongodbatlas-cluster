@@ -1,3 +1,9 @@
+mock_provider "mongodbatlas" {}
+
+variables {
+  project_id = "000000000000000000000000"
+}
+
 run "autoscaling_enabled_default" {
   command = plan
 
