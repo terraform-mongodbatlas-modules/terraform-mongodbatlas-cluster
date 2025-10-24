@@ -125,7 +125,8 @@ just plan-examples <your-project-id>
 ### Prerequisites for Testing
 
 - **MongoDB Atlas Project ID**: Required for testing examples
-- **MongoDB Atlas API Keys**: Optional, for full end-to-end testing
+- **Atlas Service Account credentials** (for provider auth during tests): client id/secret
+- **Atlas Organization ID** (for apply tests): where the test project will be created
 
 ### Running Manual Examples
 
@@ -143,13 +144,25 @@ terraform apply -var project_id=YOUR_PROJECT_ID -var-file=../tags.tfvars
 
 ### Running Local Tests with `terraform test`
 
-The Terraform test framework allows to validate the module's functionality locally.
-Tests are defined under the [`/tests`](./tests) directory and can be executed in your terminal.
+The Terraform test framework validates the module locally. Tests are defined under [`/tests`](./tests).
 
-For running the tests:
+1. Export provider authentication via environment variables:
 
-- Run all tests: `just test YOUR_PROJECT_ID`
-- Run a specific test filter: `just test-filter YOUR_PROJECT_ID {{filter}}`
+```bash
+export MONGODB_ATLAS_CLIENT_ID=your_sa_client_id
+export MONGODB_ATLAS_CLIENT_SECRET=your_sa_client_secret
+# Optional:
+export MONGODB_ATLAS_BASE_URL=https://cloud.mongodb.com/
+```
+
+2. Provide org id to tests via CLI variable (no TF_VAR):
+
+```bash
+export MONGODB_ATLAS_ORG_ID=<YOUR_MONGODB_ATLAS_ORG_ID>
+
+just test
+just test-filter {{file_test_name.tftest.hcl}}
+```
 
 **Test Types**:
 
