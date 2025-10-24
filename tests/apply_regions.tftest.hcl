@@ -1,6 +1,6 @@
-variables {
-  org_id = "dummy"
-}
+# variables {
+#   org_id = "dummy"
+# }
 run "generate_random_name" {
   module {
     source = "./tests/random_name_generator"
@@ -13,7 +13,7 @@ run "create_project" {
   }
 
   variables {
-    org_id       = var.org_id
+    # org_id       = var.org_id
     project_name = "test-cluster-module-tf-${run.generate_random_name.name_project}"
   }
 }
