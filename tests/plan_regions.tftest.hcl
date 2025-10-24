@@ -6,7 +6,7 @@ variables {
 
 run "replicaset_priorities_multiple_regions" {
   command = plan
-  module { source = "../" }
+  module { source = "./." }
 
   variables {
     name          = "tf-test-multi-regions"
@@ -58,7 +58,7 @@ run "replicaset_priorities_multiple_regions" {
 run "multi_geo_zone_sharded" {
   command = plan
 
-  module { source = "../" }
+  module { source = "./." }
 
   variables {
     name          = "tf-test-multi-geo-sharded"

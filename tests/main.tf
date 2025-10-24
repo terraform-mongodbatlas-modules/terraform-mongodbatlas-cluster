@@ -18,3 +18,7 @@ provider "mongodbatlas" {
   # MONGODB_ATLAS_CLIENT_ID / MONGODB_ATLAS_CLIENT_SECRET or MONGODB_ATLAS_ACCESS_TOKEN
   # Optionally override base URL via MONGODB_ATLAS_BASE_URL
 }
+
+variable "org_id" {
+  type = string
+}

@@ -8,7 +8,7 @@ run "autoscaling_enabled_default" {
   command = plan
 
   module {
-    source = "../"
+    source = "./."
   }
 
   variables {
@@ -49,7 +49,7 @@ run "autoscaling_disabled" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -82,7 +82,7 @@ run "autoscaling_analytics_disabled_when_using_manual_scaling" {
   command = plan
 
   module {
-    source = "../"
+    source = "./."
   }
   variables {
     name          = "single-region-with-analytics2"
