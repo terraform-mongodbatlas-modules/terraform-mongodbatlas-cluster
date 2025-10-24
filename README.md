@@ -17,6 +17,7 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 - [Production Recommendations (Manually Configured)](#production-recommendations-manually-configured)
 - [Optional Variables](#optional-variables)
 - [Outputs](#outputs)
+- [FAQ](#faq)
 
 <!-- END_TOC -->
 
