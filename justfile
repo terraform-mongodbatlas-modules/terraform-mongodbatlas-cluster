@@ -47,10 +47,10 @@ plan-examples project_id:
 
 # Run all tests (expects ORG_ID env var)
 test:
-    terraform -chdir=tests init
-    terraform -chdir=tests test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+    terraform init
+    terraform test -filter=tests/apply_regions.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 # Run tests matching a file/path/pattern
 unit-plan-tests:
     terraform init
-    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl
