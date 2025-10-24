@@ -611,3 +611,9 @@ Description: Human-readable label that indicates the current operating condition
 - Moreover, the [auto_scaling](#auto_scaling), [auto_scaling_analytics](#auto_scaling_analytics), and [provider_name](#provider_name) help reduce the duplication of config attributes by defining common values at the root level.
 - For `SHARDED` clusters, we allow the [shard_count](#shard_count) to easily add/remove shards to a cluster.
 - We decided to keep the `replication_spec` variable for existing users already familiar with the nested schema and for users migrating from an existing [mongodbatlas_advanced_cluster](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster) to this module.
+
+### What is the `provider_meta "mongodbatlas"` doing?
+- This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
+  - `User-Agent: terraform-provider-mongodbatlas/2.1.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
+- Note: We **do not** send any configuration-specific values, only these values to help us track feature adoption.
+- You can use `export TF_LOG=debug` to see the API requests with headers and their responses.
