@@ -11,7 +11,7 @@ fmt:
 # Validate all Terraform files  
 validate:
     terraform init
-    terraform validate
+    terraform validate -no-tests
 
 # Lint with comprehensive rules
 lint:
@@ -51,6 +51,6 @@ test:
     terraform -chdir=tests test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 # Run tests matching a file/path/pattern
-test-filter filter:
-    terraform -chdir=tests init
-    terraform -chdir=tests test {{filter}} -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+unit-plan-tests:
+    terraform init
+    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'

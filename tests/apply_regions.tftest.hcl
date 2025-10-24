@@ -1,16 +1,15 @@
-variable "org_id" {
-  type = string
+variables {
+  org_id = "dummy"
 }
-
 run "generate_random_name" {
   module {
-    source = "./random_name_generator"
+    source = "./tests/random_name_generator"
   }
 }
 
 run "create_project" {
   module {
-    source = "./project_generator"
+    source = "./tests/project_generator"
   }
 
   variables {
@@ -22,7 +21,7 @@ run "create_project" {
 run "dev_cluster" {
   command = apply
 
-  module { source = "../" }
+  module { source = "./." }
 
   variables {
     name         = "tf-test-dev-cluster"
