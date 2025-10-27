@@ -32,7 +32,7 @@ Description: The simplest way to define your cluster topology:
 
 NOTE:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
-  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 
