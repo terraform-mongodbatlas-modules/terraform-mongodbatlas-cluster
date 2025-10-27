@@ -155,19 +155,25 @@ export MONGODB_ATLAS_CLIENT_SECRET=your_sa_client_secret
 export MONGODB_ATLAS_BASE_URL=https://cloud.mongodb.com/
 ```
 
-2. Provide org id to tests via CLI variable (no TF_VAR):
+2. Provide org id to tests via environment variable:
 
 ```bash
 export MONGODB_ATLAS_ORG_ID=<YOUR_MONGODB_ATLAS_ORG_ID>
 
+# Run all tests (unit + integration)
 just test
-just test-filter {{file_test_name.tftest.hcl}}
+
+# Run only unit/plan tests (no resources created)
+just unit-plan-tests
+
+# Run only integration/apply tests (creates and destroys resources)
+just integration-tests
 ```
 
 **Test Types**:
 
-1. **Plan Tests**: Validate the module's configuration and expected plan output. No resources are created, these are considered Unit Tests.
-2. **Apply Tests**: Perform full integration tests by creating and destroying resources.
+1. **Unit Tests** (`unit-plan-tests`): Validate the module's configuration and expected plan output. No resources are created.
+2. **Integration Tests** (`integration-tests`): Perform full integration tests by creating and destroying resources.
 
 **Important:** For `apply` tests, make sure you set `termination_protection_enabled = false` in the `variables` portion of the `run` block, otherwise the test will fail when trying to delete the cluster as part of cleanup stage of the test.
 

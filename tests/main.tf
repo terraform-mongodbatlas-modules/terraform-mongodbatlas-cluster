@@ -15,7 +15,7 @@ variable "base_url" {
 
 provider "mongodbatlas" {
   # Credentials come from env vars, using Service Accounts:
-  # MONGODB_ATLAS_CLIENT_ID / MONGODB_ATLAS_CLIENT_SECRET or MONGODB_ATLAS_ACCESS_TOKEN
+  # MONGODB_ATLAS_CLIENT_ID / MONGODB_ATLAS_CLIENT_SECRET
   # Optionally override base URL via MONGODB_ATLAS_BASE_URL
 }
 
