@@ -8,7 +8,7 @@ run "autoscaling_enabled_default" {
   command = plan
 
   module {
-    source = "./."
+    source = "./"
   }
 
   variables {

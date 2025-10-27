@@ -1,4 +1,4 @@
-run "generate_random_name" {
+run "apply_dev_cluster" {
   module {
     source = "./tests/random_name_generator"
   }
@@ -10,7 +10,7 @@ run "create_project" {
   }
 
   variables {
-    project_name = "test-cluster-module-tf-${run.generate_random_name.name_project}"
+    project_name = "test-cluster-module-tf-${run.apply_dev_cluster.name_project}"
   }
 }
 

@@ -11,7 +11,7 @@ fmt:
 # Validate all Terraform files  
 validate:
     terraform init
-    terraform validate -no-tests
+    terraform validate
 
 # Lint with comprehensive rules
 lint:
@@ -45,7 +45,7 @@ plan-examples project_id:
         (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
     done
 
-# Run all integration tests (expects ORG_ID env var)
+# Run all integration tests (expects org_id env var)
 integration-tests:
     terraform init
     terraform test -filter=tests/apply_regions.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
