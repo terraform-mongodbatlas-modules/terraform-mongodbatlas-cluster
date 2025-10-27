@@ -128,7 +128,8 @@ just plan-examples <your-project-id>
 ### Prerequisites for Testing
 
 - **MongoDB Atlas Project ID**: Required for testing examples
-- **MongoDB Atlas API Keys**: Optional, for full end-to-end testing
+- **Atlas Service Account credentials** (for provider auth during tests): client id/secret
+- **Atlas Organization ID** (for apply tests): where the test project will be created
 
 ### Running Manual Examples
 
@@ -146,18 +147,36 @@ terraform apply -var project_id=YOUR_PROJECT_ID -var-file=../tags.tfvars
 
 ### Running Local Tests with `terraform test`
 
-The Terraform test framework allows to validate the module's functionality locally.
-Tests are defined under the [`/tests`](./tests) directory and can be executed in your terminal.
+The Terraform test framework validates the module locally. Tests are defined under [`/tests`](./tests).
 
-For running the tests:
+1. Export provider authentication via environment variables:
 
-- Run all tests: `just test YOUR_PROJECT_ID`
-- Run a specific test filter: `just test-filter YOUR_PROJECT_ID {{filter}}`
+```bash
+export MONGODB_ATLAS_CLIENT_ID=your_sa_client_id
+export MONGODB_ATLAS_CLIENT_SECRET=your_sa_client_secret
+# Optional:
+export MONGODB_ATLAS_BASE_URL=https://cloud.mongodb.com/
+```
+
+2. Provide org id to tests via environment variable:
+
+```bash
+export MONGODB_ATLAS_ORG_ID=<YOUR_MONGODB_ATLAS_ORG_ID>
+
+# Run all tests (unit + integration)
+just test
+
+# Run only unit/plan tests (no resources created)
+just unit-plan-tests
+
+# Run only integration/apply tests (creates and destroys resources)
+just integration-tests
+```
 
 **Test Types**:
 
-1. **Plan Tests**: Validate the module's configuration and expected plan output. No resources are created, these are considered Unit Tests.
-2. **Apply Tests**: Perform full integration tests by creating and destroying resources.
+1. **Unit Tests** (`unit-plan-tests`): Validate the module's configuration and expected plan output. No resources are created.
+2. **Integration Tests** (`integration-tests`): Perform full integration tests by creating and destroying resources.
 
 **Important:** For `apply` tests, make sure you set `termination_protection_enabled = false` in the `variables` portion of the `run` block, otherwise the test will fail when trying to delete the cluster as part of cleanup stage of the test.
 
