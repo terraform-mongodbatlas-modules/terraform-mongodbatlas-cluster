@@ -5,11 +5,12 @@ terraform {
       version = "3.6.2"
     }
   }
+  required_version = ">= 1.6"
 }
 
 resource "random_string" "name_project" {
   keepers = {
-    first = "${timestamp()}"
+    first = timestamp()
   }
   length  = 16
   special = false

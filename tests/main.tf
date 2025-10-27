@@ -8,17 +8,8 @@ terraform {
   required_version = ">= 1.6"
 }
 
-variable "base_url" {
-  type    = string
-  default = "https://cloud.mongodb.com/"
-}
-
 provider "mongodbatlas" {
   # Credentials come from env vars, using Service Accounts:
   # MONGODB_ATLAS_CLIENT_ID / MONGODB_ATLAS_CLIENT_SECRET
   # Optionally override base URL via MONGODB_ATLAS_BASE_URL
-}
-
-variable "org_id" {
-  type = string
 }
