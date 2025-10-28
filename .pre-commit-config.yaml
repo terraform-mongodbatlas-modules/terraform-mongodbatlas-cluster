@@ -1,0 +1,100 @@
+# Pre-commit hooks for Terraform module
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Terraform formatting and validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      - id: terraform_fmt
+        name: Terraform format
+        description: Rewrites all Terraform configuration files to canonical format
+
+      - id: terraform_validate
+        name: Terraform validate
+        description: Validates all Terraform configuration files
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+
+      - id: terraform_docs
+        name: Terraform docs
+        description: Inserts/updates documentation in Terraform modules
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+
+      - id: terraform_tflint
+        name: Terraform lint
+        description: Lints Terraform configuration files with TFLint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--format=compact
+          - --args=--minimum-failure-severity=warning
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        description: Trims trailing whitespace from files
+
+      - id: end-of-file-fixer
+        name: Fix end of files
+        description: Ensures files end with a newline
+
+      - id: check-yaml
+        name: Check YAML
+        description: Checks yaml files for parseable syntax
+        exclude: ^\.github/workflows/
+
+      - id: check-added-large-files
+        name: Check for large files
+        description: Prevents giant files from being committed
+        args: ['--maxkb=1000']
+
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        description: Checks for files that contain merge conflict strings
+
+      - id: detect-private-key
+        name: Detect private keys
+        description: Detects the presence of private keys
+
+      - id: mixed-line-ending
+        name: Mixed line ending
+        description: Checks for mixed line endings
+
+  # Markdown linting
+  - repo: https://github.com/markdownlint/markdownlint
+    rev: v0.12.0
+    hooks:
+      - id: markdownlint
+        name: Markdown lint
+        description: Lints markdown files
+        args: ['--rules', '~MD013,~MD033,~MD041']
+        files: \.(md|markdown)$
+
+  # Security checks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: Detect secrets
+        description: Detects hardcoded secrets using Gitleaks
+
+# Global settings
+default_stages: [commit]
+fail_fast: false
+
+# File excludes
+exclude: |
+  (?x)^(
+    \.terraform/.*|
+    \.git/.*|
+    examples/.*/\.terraform\.lock\.hcl|
+    tests/.*/\.terraform\.lock\.hcl
+  )$

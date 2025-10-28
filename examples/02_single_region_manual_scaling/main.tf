@@ -23,6 +23,9 @@ module "cluster" {
   provider_name = "AWS"
 
   tags = var.tags
+
+  # Recommended for production: prevent accidental cluster deletion
+  termination_protection_enabled = true
 }
 
 output "cluster" {

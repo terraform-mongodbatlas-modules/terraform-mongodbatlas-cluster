@@ -13,8 +13,9 @@ output "config_server_type" {
 
 output "connection_strings" {
   description = "Collection of Uniform Resource Locators that point to the MongoDB database."
-  # TODO: CLOUDP-351551
-  value = mongodbatlas_advanced_cluster.this.connection_strings
+  # TODO: CLOUDP-351551 - Evaluate if this output should be restructured for better usability
+  value     = mongodbatlas_advanced_cluster.this.connection_strings
+  sensitive = true
 }
 output "create_date" {
   description = "Date and time when MongoDB Cloud created this cluster. This parameter expresses its value in ISO 8601 format in UTC."

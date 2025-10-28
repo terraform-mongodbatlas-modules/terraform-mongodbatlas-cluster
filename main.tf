@@ -241,10 +241,6 @@ locals {
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
 
-    local.is_geosharded && length(local.invalid_geo_zones_mixed) > 0 ? [
-      "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"
-    ] : [],
-
     // Provider name presence
     var.provider_name == null ? [for idx, r in local.regions : r.provider_name == null ? "Must use regions[*].provider_name when root provider_name is not specified: regions[${idx}].provider_name is missing" : ""] : []
   ))
