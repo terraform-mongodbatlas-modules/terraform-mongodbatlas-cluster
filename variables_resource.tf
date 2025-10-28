@@ -224,6 +224,16 @@ variable "replication_specs" {
     zone_name = optional(string)
   }))
   default = []
+
+  validation {
+    condition = alltrue([
+      for spec in var.replication_specs : alltrue([
+        for region_config in spec.region_configs :
+        (region_config.auto_scaling == null || region_config.auto_scaling.compute_enabled == false) && (region_config.analytics_auto_scaling == null || region_config.analytics_auto_scaling.compute_enabled == false)
+      ])
+    ])
+    error_message = "This module doesn't support auto_scaling for `replication_specs` variable, please use `regions` and `auto_scaling` variables instead."
+  }
 }
 
 variable "retain_backups_enabled" {
