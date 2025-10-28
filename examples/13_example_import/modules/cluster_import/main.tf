@@ -71,7 +71,8 @@ locals {
       node_count_analytics    = region.node_count_analytics > 0 ? region.node_count_analytics : null
       instance_size           = region.instance_size != "" ? region.instance_size : null
       instance_size_analytics = region.node_count_analytics > 0 && region.instance_size_analytics != "" ? region.instance_size_analytics : null
-      disk_size_gb            = region.disk_size_gb > 0 ? region.disk_size_gb : null
+      # Don't include disk_size_gb if disk auto-scaling is enabled
+      disk_size_gb    = !region.auto_scaling.disk_gb_enabled && region.disk_size_gb > 0 ? region.disk_size_gb : null
       # Only include disk_iops and ebs_volume_type if ebs_volume_type is PROVISIONED
       disk_iops       = region.ebs_volume_type == "PROVISIONED" && region.disk_iops > 0 ? region.disk_iops : null
       ebs_volume_type = region.ebs_volume_type == "PROVISIONED" ? "PROVISIONED" : null
@@ -88,7 +89,8 @@ locals {
   common_instance_size   = local.first_electable_region.auto_scaling.compute_enabled ? null : local.first_electable_region.instance_size
 
   # Get disk configuration from first electable region
-  common_disk_size_gb = local.first_electable_region.disk_size_gb
+  # Don't include disk_size_gb if disk auto-scaling is enabled
+  common_disk_size_gb = !local.first_electable_region.auto_scaling.disk_gb_enabled ? local.first_electable_region.disk_size_gb : null
   # Only include disk_iops and ebs_volume_type if ebs_volume_type is PROVISIONED
   common_ebs_volume_type = local.first_electable_region.ebs_volume_type == "PROVISIONED" ? "PROVISIONED" : null
   common_disk_iops       = local.first_electable_region.ebs_volume_type == "PROVISIONED" && local.first_electable_region.disk_iops > 0 ? local.first_electable_region.disk_iops : null
