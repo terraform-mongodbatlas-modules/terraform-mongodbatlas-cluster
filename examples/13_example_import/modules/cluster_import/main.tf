@@ -223,7 +223,6 @@ ${local.common_provider_name != null ? format("\n  provider_name = %q", local.co
 output "${replace(local.cluster.name, "-", "_")}_connection_strings" {
   description = "Connection strings for ${local.cluster.name}"
   value       = module.${replace(local.cluster.name, "-", "_")}.connection_strings
-  sensitive   = true
 }
 EOT
 }
