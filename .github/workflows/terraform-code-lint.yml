@@ -1,4 +1,4 @@
-name: Validate and Lint
+name: Code Health
 
 on:
   push:
