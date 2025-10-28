@@ -103,7 +103,7 @@ Description: Type of the cluster that you want to create. Valid values are `REPL
 Type: `string`
 
 ## Cluster Topology Option 1 - `regions` Variables
-This option is mutually exclusive with the `replication_specs` variable. See also [why two options?](#why-two-options-for-cluster-topology)
+This option is mutually exclusive with the `replication_specs` variable. See also [why two options?](#why-two-options-for-cluster-topology).
 
 ### regions
 Description: The simplest way to define your cluster topology:
@@ -117,7 +117,7 @@ Description: The simplest way to define your cluster topology:
 
 NOTE:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
-  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 
@@ -277,7 +277,7 @@ Type: `string`
 Default: `null`
 
 ## Cluster Topology Option 2 - `replication_specs` Variables
-This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`. See also [why two options?](#why-two-options-for-cluster-topology)
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`. See also [why two options?](#why-two-options-for-cluster-topology).
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
