@@ -1,5 +1,5 @@
 variable "accept_data_risks_and_force_replica_set_reconfig" {
-  description = "If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology. Forcedreconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. MongoDB Atlas docs contain more information. To proceed with an operation which carries that risk, set **acceptDataRisksAndForceReplicaSetReconfig** to the current date."
+  description = "If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology. Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. MongoDB Atlas docs contain more information. To proceed with an operation which carries that risk, set **acceptDataRisksAndForceReplicaSetReconfig** to the current date."
   type        = string
   nullable    = true
   default     = null
@@ -47,7 +47,7 @@ variable "bi_connector_config" {
 }
 
 variable "cluster_type" {
-  description = "Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED"
+  description = "Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED."
   type        = string
 
   validation {

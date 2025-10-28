@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Human-readable label that identifies this cluster, for example: `my-product-cluster"
+  description = "Human-readable label that identifies this cluster, for example: `my-product-cluster`."
   type        = string
 }
 
@@ -13,8 +13,8 @@ The simplest way to define your cluster topology:
 - For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 
-NOTE: 
-- The order in which region blocks are defined in this list determines their priority within each shard or zone. 
+NOTE:
+- The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
@@ -61,7 +61,7 @@ EOT
 }
 
 variable "provider_name" {
-  description = "AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`"
+  description = "AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`."
   type        = string
   nullable    = true
   default     = null

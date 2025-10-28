@@ -18,7 +18,7 @@ Description: Type of the cluster that you want to create. Valid values are `REPL
 Type: `string`
 
 ## Cluster Topology Option 1 - `regions` Variables
-This option is mutually exclusive with the `replication_specs` variable.
+This option is mutually exclusive with the `replication_specs` variable. See also [why two options?](#why-two-options-for-cluster-topology).
 
 ### regions
 Description: The simplest way to define your cluster topology:
@@ -192,7 +192,7 @@ Type: `string`
 Default: `null`
 
 ## Cluster Topology Option 2 - `replication_specs` Variables
-This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`.
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`. See also [why two options?](#why-two-options-for-cluster-topology).
 
 ### replication_specs
 Description: List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
