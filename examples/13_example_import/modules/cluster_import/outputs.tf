@@ -1,7 +1,7 @@
 # Core module variables
 output "name" {
   description = "Cluster name"
-  value       = var.cluster.name
+  value       = local.cluster.name
 }
 
 output "regions" {
@@ -57,7 +57,7 @@ output "auto_scaling_analytics" {
 
 output "tags" {
   description = "Resource tags (null if empty)"
-  value       = length(var.cluster.tags) > 0 ? var.cluster.tags : null
+  value       = length(local.cluster.tags) > 0 ? local.cluster.tags : null
 }
 
 output "shard_count" {
@@ -69,47 +69,47 @@ output "shard_count" {
 
 output "cluster_type" {
   description = "Cluster type (REPLICASET, SHARDED, or GEOSHARDED)"
-  value       = var.cluster.cluster_type
+  value       = local.cluster.cluster_type
 }
 
 output "mongo_db_major_version" {
   description = "MongoDB major version (null if empty)"
-  value       = var.cluster.mongo_db_major_version != "" ? var.cluster.mongo_db_major_version : null
+  value       = local.cluster.mongo_db_major_version != "" ? local.cluster.mongo_db_major_version : null
 }
 
 output "backup_enabled" {
   description = "Whether backup is enabled (null if matches default of true)"
-  value       = var.cluster.backup_enabled != true ? var.cluster.backup_enabled : null
+  value       = local.cluster.backup_enabled != true ? local.cluster.backup_enabled : null
 }
 
 output "pit_enabled" {
   description = "Whether point-in-time restore is enabled (null if matches default of true)"
-  value       = var.cluster.pit_enabled != true ? var.cluster.pit_enabled : null
+  value       = local.cluster.pit_enabled != true ? local.cluster.pit_enabled : null
 }
 
 output "termination_protection_enabled" {
   description = "Whether termination protection is enabled (null if not set)"
-  value       = var.cluster.termination_protection_enabled
+  value       = local.cluster.termination_protection_enabled
 }
 
 output "redact_client_log_data" {
   description = "Whether to redact client log data (null if matches default of true)"
-  value       = var.cluster.redact_client_log_data != true ? var.cluster.redact_client_log_data : null
+  value       = local.cluster.redact_client_log_data != true ? local.cluster.redact_client_log_data : null
 }
 
 output "encryption_at_rest_provider" {
   description = "Encryption at rest provider (null if NONE or empty)"
-  value       = var.cluster.encryption_at_rest_provider != "NONE" && var.cluster.encryption_at_rest_provider != "" ? var.cluster.encryption_at_rest_provider : null
+  value       = local.cluster.encryption_at_rest_provider != "NONE" && local.cluster.encryption_at_rest_provider != "" ? local.cluster.encryption_at_rest_provider : null
 }
 
 output "version_release_system" {
   description = "Version release system (LTS or CONTINUOUS, null if empty or default LTS)"
-  value       = var.cluster.version_release_system != "" && var.cluster.version_release_system != "LTS" ? var.cluster.version_release_system : null
+  value       = local.cluster.version_release_system != "" && local.cluster.version_release_system != "LTS" ? local.cluster.version_release_system : null
 }
 
 output "replica_set_scaling_strategy" {
   description = "Replica set scaling strategy (null if not set)"
-  value       = var.cluster.replica_set_scaling_strategy != "" ? var.cluster.replica_set_scaling_strategy : null
+  value       = local.cluster.replica_set_scaling_strategy != "" ? local.cluster.replica_set_scaling_strategy : null
 }
 
 output "advanced_configuration" {
@@ -119,25 +119,25 @@ output "advanced_configuration" {
 
 output "bi_connector_config" {
   description = "BI Connector configuration (null if disabled)"
-  value = var.cluster.bi_connector_config.enabled ? {
-    enabled         = var.cluster.bi_connector_config.enabled
-    read_preference = var.cluster.bi_connector_config.read_preference
+  value = local.cluster.bi_connector_config.enabled ? {
+    enabled         = local.cluster.bi_connector_config.enabled
+    read_preference = local.cluster.bi_connector_config.read_preference
   } : null
 }
 
 output "global_cluster_self_managed_sharding" {
   description = "Global cluster self-managed sharding (null if false or not applicable)"
-  value       = var.cluster.global_cluster_self_managed_sharding ? var.cluster.global_cluster_self_managed_sharding : null
+  value       = local.cluster.global_cluster_self_managed_sharding ? local.cluster.global_cluster_self_managed_sharding : null
 }
 
 # Summary output for easy review
 output "summary" {
   description = "Human-readable summary of the cluster configuration"
   value = {
-    cluster_name         = var.cluster.name
-    cluster_type         = var.cluster.cluster_type
-    mongodb_version      = var.cluster.mongo_db_major_version
-    number_of_shards     = length(var.cluster.replication_specs)
+    cluster_name         = local.cluster.name
+    cluster_type         = local.cluster.cluster_type
+    mongodb_version      = local.cluster.mongo_db_major_version
+    number_of_shards     = length(local.cluster.replication_specs)
     number_of_regions    = length(local.all_regions_with_shard_info)
     region_names         = distinct([for r in local.all_regions_with_shard_info : r.name])
     providers            = distinct([for r in local.all_regions_with_shard_info : r.provider_name])
