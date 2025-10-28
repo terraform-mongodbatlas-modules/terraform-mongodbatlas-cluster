@@ -3,9 +3,10 @@ locals {
 
   regions = coalesce(var.regions, [])
 
-  is_geosharded = var.cluster_type == "GEOSHARDED"
-  is_sharded    = var.cluster_type == "SHARDED"
-  is_replicaset = var.cluster_type == "REPLICASET"
+  is_geosharded                       = var.cluster_type == "GEOSHARDED"
+  is_sharded                          = var.cluster_type == "SHARDED"
+  is_replicaset                       = var.cluster_type == "REPLICASET"
+  replication_specs_resource_var_used = length(var.replication_specs) > 0
 
   # ---- REPLICASET  ----
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
@@ -16,7 +17,7 @@ locals {
   has_any_zone_in_shard    = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && trimspace(r.zone_name) != ""])
   has_any_number_in_shard  = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
   all_have_number_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([for r in var.regions : r.shard_number != null])
-  sharded_validation_errors = local.is_sharded ? compact(concat(
+  sharded_validation_errors = local.is_sharded && !local.replication_specs_resource_var_used ? compact(concat(
     local.has_any_zone_in_shard
     ? ["SHARDED validation: do not set regions[*].zone_name."] : [],
 
@@ -184,10 +185,9 @@ locals {
     }
   ])
 
-  replication_specs_resource_var_used = length(var.replication_specs) > 0
-  replication_specs_json              = local.replication_specs_resource_var_used ? jsonencode(var.replication_specs) : jsonencode(local.replication_specs_built) # avoids "Mismatched list element types"
-  empty_region_configs                = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
-  empty_regions                       = length(local.regions) == 0
+  replication_specs_json = local.replication_specs_resource_var_used ? jsonencode(var.replication_specs) : jsonencode(local.replication_specs_built) # avoids "Mismatched list element types"
+  empty_region_configs   = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
+  empty_regions          = length(local.regions) == 0
 
   // Validation messages (non-empty strings represent errors)
   validation_errors = compact(concat(
