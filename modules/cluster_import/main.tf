@@ -249,18 +249,39 @@ locals {
   # Format regions list - only include non-null values
   regions_hcl = join("", [
     for region in local.regions_transformed :
-    <<-EOT
-    {
-      name          = ${format("%q", region.name)}${region.provider_name != null ? format("\n      provider_name = %q", region.provider_name) : ""}${region.node_count != null ? format("\n      node_count    = %v", region.node_count) : ""}${region.node_count_read_only != null ? format("\n      node_count_read_only = %v", region.node_count_read_only) : ""}${region.node_count_analytics != null ? format("\n      node_count_analytics = %v", region.node_count_analytics) : ""}${region.instance_size != null ? format("\n      instance_size = %q", region.instance_size) : ""}${region.instance_size_analytics != null ? format("\n      instance_size_analytics = %q", region.instance_size_analytics) : ""}${region.disk_size_gb != null ? format("\n      disk_size_gb  = %v", region.disk_size_gb) : ""}${region.disk_iops != null ? format("\n      disk_iops     = %v", region.disk_iops) : ""}${region.ebs_volume_type != null ? format("\n      ebs_volume_type = %q", region.ebs_volume_type) : ""}${region.shard_number != null ? format("\n      shard_number  = %v", region.shard_number) : ""}${region.zone_name != null ? format("\n      zone_name     = %q", region.zone_name) : ""}
-    },
-    EOT
+    format("{\n  %s\n},\n", join("", compact(concat(
+      [format("name          = %q", region.name)],
+      [region.provider_name != null ? format("\n  provider_name = %q", region.provider_name) : ""],
+      [region.node_count != null ? format("\n  node_count    = %v", region.node_count) : ""],
+      [region.node_count_read_only != null ? format("\n  node_count_read_only = %v", region.node_count_read_only) : ""],
+      [region.node_count_analytics != null ? format("\n  node_count_analytics = %v", region.node_count_analytics) : ""],
+      [region.instance_size != null ? format("\n  instance_size = %q", region.instance_size) : ""],
+      [region.instance_size_analytics != null ? format("\n  instance_size_analytics = %q", region.instance_size_analytics) : ""],
+      [region.disk_size_gb != null ? format("\n  disk_size_gb  = %v", region.disk_size_gb) : ""],
+      [region.disk_iops != null ? format("\n  disk_iops     = %v", region.disk_iops) : ""],
+      [region.ebs_volume_type != null ? format("\n  ebs_volume_type = %q", region.ebs_volume_type) : ""],
+      [region.shard_number != null ? format("\n  shard_number  = %v", region.shard_number) : ""],
+      [region.zone_name != null ? format("\n  zone_name     = %q", region.zone_name) : ""]
+    ))))
   ])
 
   # Format auto_scaling block as proper HCL
-  auto_scaling_hcl = local.auto_scaling != null ? "\n\n  auto_scaling = {\n    compute_enabled            = ${local.auto_scaling.compute_enabled}${local.auto_scaling.compute_max_instance_size != null ? format("\n    compute_max_instance_size  = %q", local.auto_scaling.compute_max_instance_size) : ""}${local.auto_scaling.compute_min_instance_size != null ? format("\n    compute_min_instance_size  = %q", local.auto_scaling.compute_min_instance_size) : ""}\n    compute_scale_down_enabled = ${local.auto_scaling.compute_scale_down_enabled}\n    disk_gb_enabled            = ${local.auto_scaling.disk_gb_enabled}\n  }" : ""
+  auto_scaling_hcl = local.auto_scaling != null ? format("\n\n  auto_scaling = {\n%s\n  }", join("", compact(concat(
+    [format("    compute_enabled            = %v", local.auto_scaling.compute_enabled)],
+    [local.auto_scaling.compute_max_instance_size != null ? format("\n    compute_max_instance_size  = %q", local.auto_scaling.compute_max_instance_size) : ""],
+    [local.auto_scaling.compute_min_instance_size != null ? format("\n    compute_min_instance_size  = %q", local.auto_scaling.compute_min_instance_size) : ""],
+    [format("\n    compute_scale_down_enabled = %v", local.auto_scaling.compute_scale_down_enabled)],
+    [format("\n    disk_gb_enabled            = %v", local.auto_scaling.disk_gb_enabled)]
+  )))) : ""
 
   # Format auto_scaling_analytics block as proper HCL
-  auto_scaling_analytics_hcl = local.analytics_auto_scaling != null ? "\n\n  auto_scaling_analytics = {\n    compute_enabled            = ${local.analytics_auto_scaling.compute_enabled}${local.analytics_auto_scaling.compute_max_instance_size != null ? format("\n    compute_max_instance_size  = %q", local.analytics_auto_scaling.compute_max_instance_size) : ""}${local.analytics_auto_scaling.compute_min_instance_size != null ? format("\n    compute_min_instance_size  = %q", local.analytics_auto_scaling.compute_min_instance_size) : ""}\n    compute_scale_down_enabled = ${local.analytics_auto_scaling.compute_scale_down_enabled}\n    disk_gb_enabled            = ${local.analytics_auto_scaling.disk_gb_enabled}\n  }" : ""
+  auto_scaling_analytics_hcl = local.analytics_auto_scaling != null ? format("\n\n  auto_scaling_analytics = {\n%s\n  }", join("", compact(concat(
+    [format("    compute_enabled            = %v", local.analytics_auto_scaling.compute_enabled)],
+    [local.analytics_auto_scaling.compute_max_instance_size != null ? format("\n    compute_max_instance_size  = %q", local.analytics_auto_scaling.compute_max_instance_size) : ""],
+    [local.analytics_auto_scaling.compute_min_instance_size != null ? format("\n    compute_min_instance_size  = %q", local.analytics_auto_scaling.compute_min_instance_size) : ""],
+    [format("\n    compute_scale_down_enabled = %v", local.analytics_auto_scaling.compute_scale_down_enabled)],
+    [format("\n    disk_gb_enabled            = %v", local.analytics_auto_scaling.disk_gb_enabled)]
+  )))) : ""
 
   module_instance_name = replace(local.cluster.name, "-", "_")
 
@@ -274,6 +295,9 @@ locals {
     [local.common_ebs_volume_type != null ? format("\n  ebs_volume_type = %q", local.common_ebs_volume_type) : ""],
     [local.common_instance_size_analytics != null ? format("\n  instance_size_analytics = %q", local.common_instance_size_analytics) : ""],
     [local.use_shard_count && local.shard_count != null ? format("\n  shard_count = %v", local.shard_count) : ""],
+    [local.auto_scaling_hcl],
+    [local.auto_scaling_analytics_hcl],
+    ["\n"],
     [local.cluster.mongo_db_major_version != "" ? format("\n  mongo_db_major_version = %q", local.cluster.mongo_db_major_version) : ""],
     [local.cluster.backup_enabled != true ? format("\n  backup_enabled = %v", local.cluster.backup_enabled) : ""],
     [local.cluster.pit_enabled != true ? format("\n  pit_enabled = %v", local.cluster.pit_enabled) : ""],
@@ -285,8 +309,6 @@ locals {
     [local.cluster.global_cluster_self_managed_sharding ? format("\n  global_cluster_self_managed_sharding = %v", local.cluster.global_cluster_self_managed_sharding) : ""],
     [length(local.cluster.tags) > 0 ? format("\n  tags = %s", jsonencode(local.cluster.tags)) : ""],
     [length(local.cluster.tags) == 0 ? format("\n  tags = null") : ""],
-    [local.auto_scaling_hcl],
-    [local.auto_scaling_analytics_hcl],
     [local.advanced_configuration_has_values ? format("\n\n  advanced_configuration = %s", jsonencode(local.advanced_configuration_filtered)) : ""],
     [local.cluster.bi_connector_config.enabled ? format("\n\n  bi_connector_config = %s", jsonencode({ enabled = local.cluster.bi_connector_config.enabled, read_preference = local.cluster.bi_connector_config.read_preference })) : ""]
   )))
