@@ -40,3 +40,17 @@ output "replication_specs" {
   description = "List of settings of your configured cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations."
   value       = mongodbatlas_advanced_cluster.this.replication_specs
 }
+
+output "cluster_count" {
+  value = length(data.mongodbatlas_advanced_clusters.this.results)
+}
+
+
+output "data_mongodbatlas_advanced_clusters" {
+  value = data.mongodbatlas_advanced_clusters.this
+
+}
+
+output "data_mongodbatlas_advanced_cluster" {
+  value = data.mongodbatlas_advanced_cluster.this
+}

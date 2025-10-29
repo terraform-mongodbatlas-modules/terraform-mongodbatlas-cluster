@@ -53,7 +53,8 @@ integration-tests:
 # Run tests matching a file/path/pattern
 unit-plan-tests:
     terraform init
-    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl
+    # terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_auto_scaling_mock_data.tftest.hcl
+    terraform test -filter=tests/plan_auto_scaling_mock_data.tftest.hcl -verbose
 
 # Run all tests
 test: unit-plan-tests integration-tests
