@@ -71,11 +71,44 @@ locals {
   # Determine shard_count for SHARDED clusters (if all shards have same topology)
   shard_count = local.is_sharded ? length(local.cluster.replication_specs) : null
 
+  # Auto scaling configuration from first region
+  auto_scaling_raw                       = local.first_electable_region.auto_scaling
+  auto_scaling_compute_enabled           = local.auto_scaling_raw != null && local.auto_scaling_raw.compute_enabled
+  auto_scaling_disk_enabled = local.auto_scaling_raw != null && local.auto_scaling_raw.disk_gb_enabled
+  analytics_auto_scaling                 = local.first_analytics_region != null ? local.first_analytics_region.analytics_auto_scaling : null
+  auto_scaling_compute_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.compute_enabled
+  auto_scaling_disk_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.disk_gb_enabled
+
   # Check if all shards have the same region topology
+  # The comparison varies based on auto-scaling settings:
+  # - With compute auto-scaling: ignore instance_size (it varies)
+  # - With disk auto-scaling: ignore disk_size_gb (it varies)
+  # - Without auto-scaling: check everything
   all_shards_same_topology = local.is_sharded ? (
     length(distinct([
       for spec in local.cluster.replication_specs :
-      join(",", sort([for rc in spec.region_configs : rc.region_name]))
+      # Create a signature for each shard's configuration
+      join("|", sort([
+        for rc in spec.region_configs :
+        format("%s:%d:%d:%d%s%s%s%s",
+          # Always check: region name and node counts
+          rc.region_name,
+          rc.electable_specs.node_count,
+          rc.read_only_specs.node_count,
+          rc.analytics_specs.node_count,
+          # Instance sizes: only check if compute auto-scaling is disabled
+          local.auto_scaling_compute_enabled ? "" : format(":%s:%s",
+            rc.electable_specs.instance_size,
+            rc.analytics_specs.instance_size
+          ),
+          # Disk size: only check if disk auto-scaling is disabled
+          local.auto_scaling_disk_enabled ? "" : format(":%s", rc.electable_specs.disk_size_gb),
+          # Disk IOPS: only check if not using PROVISIONED or if needed
+          rc.electable_specs.ebs_volume_type == "PROVISIONED" ? format(":%s", rc.electable_specs.disk_iops) : "",
+          # EBS volume type: always check
+          format(":%s", rc.electable_specs.ebs_volume_type),
+        )
+      ]))
     ])) == 1
   ) : false
 
@@ -128,11 +161,6 @@ locals {
   first_analytics_region         = length([for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0]) > 0 ? [for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0][0] : null
   common_instance_size_analytics = local.first_analytics_region != null && (local.first_analytics_region.analytics_auto_scaling == null || !local.first_analytics_region.analytics_auto_scaling.compute_enabled) ? local.first_analytics_region.instance_size_analytics : null
 
-  # Auto scaling configuration from first region
-  auto_scaling_raw                       = local.first_electable_region.auto_scaling
-  auto_scaling_compute_enabled           = local.auto_scaling_raw != null && local.auto_scaling_raw.compute_enabled
-  analytics_auto_scaling                 = local.first_analytics_region != null ? local.first_analytics_region.analytics_auto_scaling : null
-  auto_scaling_compute_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.compute_enabled
 
   # Check if auto_scaling matches defaults
   auto_scaling_is_default = (
