@@ -22,16 +22,34 @@ variable "project_id" {
   type        = string
 }
 
-variable "cluster_name" {
-  description = "Name of the cluster to import"
-  type        = string
+data "mongodbatlas_advanced_clusters" "this" {
+  project_id = var.project_id
 }
 
 # Import cluster by name
 module "cluster_import" {
-  source = "./modules/cluster_import"
+  source = "../../modules/cluster_import"
 
-  cluster_name     = var.cluster_name
+  for_each = {
+    for cluster in data.mongodbatlas_advanced_clusters.this.results : cluster.name => cluster
+  }
+
+  cluster_name     = each.key
   project_id       = var.project_id
-  output_directory = path.module
+  output_directory = "${path.module}/clusters"
+}
+
+output "summaries" {
+  description = "Summary of the imported clusters"
+  value = {
+    for cluster in module.cluster_import : cluster.name => cluster.summary
+  }
+}
+
+output "filepaths" {
+  description = "Filepath of the imported clusters"
+  value = {
+    for cluster in module.cluster_import : cluster.name => cluster.filepath
+  }
+
 }

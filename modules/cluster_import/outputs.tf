@@ -145,3 +145,8 @@ output "summary" {
     auto_scaling_enabled = local.auto_scaling_raw.compute_enabled
   }
 }
+
+output "filepath" {
+  description = "Filepath of the generated terraform file"
+  value       = local.filepath
+}

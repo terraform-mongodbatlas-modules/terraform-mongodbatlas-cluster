@@ -1,17 +1,3 @@
-terraform {
-  required_version = ">= 1.6"
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "2.4.1"
-    }
-  }
-}
-
 # Fetch cluster data by name
 data "mongodbatlas_advanced_cluster" "this" {
   project_id = var.project_id
@@ -181,7 +167,7 @@ locals {
   ])
 
   # Determine output filename
-  output_filename = coalesce(var.filename, local.cluster.name)
+  output_filename = coalesce(var.filename, "cluster_${local.cluster.name}")
 
   # Format regions list - only include non-null values
   regions_hcl = join("", [
@@ -199,14 +185,21 @@ locals {
   # Format auto_scaling_analytics block as proper HCL
   auto_scaling_analytics_hcl = local.analytics_auto_scaling != null ? "\n\n  auto_scaling_analytics = {\n    compute_enabled            = ${local.analytics_auto_scaling.compute_enabled}${local.analytics_auto_scaling.compute_max_instance_size != null ? format("\n    compute_max_instance_size  = %q", local.analytics_auto_scaling.compute_max_instance_size) : ""}${local.analytics_auto_scaling.compute_min_instance_size != null ? format("\n    compute_min_instance_size  = %q", local.analytics_auto_scaling.compute_min_instance_size) : ""}\n    compute_scale_down_enabled = ${local.analytics_auto_scaling.compute_scale_down_enabled}\n    disk_gb_enabled            = ${local.analytics_auto_scaling.disk_gb_enabled}\n  }" : ""
 
+  module_instance_name = replace(local.cluster.name, "-", "_")
+
   # Generate the complete .tf file content
   terraform_file_content = <<-EOT
 # Auto-generated from existing cluster: ${local.cluster.name}
 # Cluster Type: ${local.cluster_type}
 # Generated: ${timestamp()}
 
-module "${replace(local.cluster.name, "-", "_")}" {
-  source = "../../"  # Adjust path to your cluster module
+import {
+  id = "$${var.project_id}-${local.cluster.name}"
+  to = module.${local.module_instance_name}.mongodbatlas_advanced_cluster.this
+}
+
+module "${local.module_instance_name}" {
+  source = "../../../"  # Adjust path to your cluster module
 
   project_id = var.project_id
 
@@ -220,15 +213,16 @@ ${local.common_provider_name != null ? format("\n  provider_name = %q", local.co
 }
 
 # Outputs
-output "${replace(local.cluster.name, "-", "_")}_connection_strings" {
+output "${local.module_instance_name}_connection_strings" {
   description = "Connection strings for ${local.cluster.name}"
-  value       = module.${replace(local.cluster.name, "-", "_")}.connection_strings
+  value       = module.${local.module_instance_name}.connection_strings
 }
 EOT
+  filepath               = "${var.output_directory}/${local.output_filename}.tf"
 }
 
 # Write the generated terraform file
 resource "local_file" "cluster_config" {
   content  = local.terraform_file_content
-  filename = "${var.output_directory}/${local.output_filename}.tf"
+  filename = local.filepath
 }
