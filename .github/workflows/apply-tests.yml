@@ -1,0 +1,21 @@
+name: Apply Tests
+
+on:
+    push:
+      branches:
+        - main
+    pull_request: {}
+    workflow_dispatch: {}
+
+jobs:
+  apply-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
+        with:
+          terraform_wrapper: false
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        with:
+          just-version: '1.40.0'
+      - run: echo "Skipping integration tests due to boilerplate configuration - Additional setup required"
