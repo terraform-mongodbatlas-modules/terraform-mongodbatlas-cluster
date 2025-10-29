@@ -109,27 +109,18 @@ locals {
   manual_compute_electable               = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
   manual_compute                         = local.manual_compute_electable || local.manual_compute_analytics
 
-  effective_auto_scaling = local.auto_scaling_compute_enabled ? var.auto_scaling : {
-    for k, v in var.auto_scaling :
-    k => v if !contains([
-      "compute_max_instance_size",
-      "compute_min_instance_size",
-      "compute_scale_down_enabled"
-    ], k)
-  }
-
+  excluded_auto_scaling_fields = concat(
+    local.auto_scaling_compute_enabled ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
+    local.auto_scaling_compute_enabled && var.auto_scaling.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
+  )
+  effective_auto_scaling = { for k, v in var.auto_scaling : k => v if !contains(local.excluded_auto_scaling_fields, k) }
+  excluded_auto_scaling_analytics_fields = concat(
+    local.auto_scaling_compute_enabled_analytics ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
+    local.auto_scaling_compute_enabled_analytics && var.auto_scaling_analytics.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
+  )
   effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? (local.manual_compute_analytics ? {
     compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
-    } : null) : (
-    local.auto_scaling_compute_enabled_analytics ? var.auto_scaling_analytics : {
-      for k, v in var.auto_scaling_analytics :
-      k => v if !contains([
-        "compute_max_instance_size",
-        "compute_min_instance_size",
-        "compute_scale_down_enabled"
-      ], k)
-    }
-  )
+  } : null) : { for k, v in var.auto_scaling_analytics : k => v if !contains(local.excluded_auto_scaling_analytics_fields, k) }
 
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
@@ -154,7 +145,7 @@ locals {
             # instance_size is required by the API until effctive fields are supported
             instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
-              local.effective_auto_scaling.compute_min_instance_size
+              var.auto_scaling.compute_min_instance_size, # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
           } : null
@@ -165,7 +156,7 @@ locals {
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.auto_scaling_compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
-              local.effective_auto_scaling.compute_min_instance_size
+              var.auto_scaling.compute_min_instance_size, # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_read_only
           } : null
@@ -176,7 +167,7 @@ locals {
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
-              local.effective_auto_scaling_analytics.compute_min_instance_size
+              coalesce(var.auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE)
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
           } : null
