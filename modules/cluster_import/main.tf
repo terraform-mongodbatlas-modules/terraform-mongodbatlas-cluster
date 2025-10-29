@@ -68,11 +68,31 @@ locals {
   is_sharded    = local.cluster_type == "SHARDED"
   is_geosharded = local.cluster_type == "GEOSHARDED"
 
+  # Determine shard_count for SHARDED clusters (if all shards have same topology)
+  shard_count = local.is_sharded ? length(local.cluster.replication_specs) : null
+
+  # Check if all shards have the same region topology
+  all_shards_same_topology = local.is_sharded ? (
+    length(distinct([
+      for spec in local.cluster.replication_specs :
+      join(",", sort([for rc in spec.region_configs : rc.region_name]))
+    ])) == 1
+  ) : false
+
+  # Use shard_count only if all shards have identical topology
+  use_shard_count = local.all_shards_same_topology
+
+  # For uniform sharded clusters, only include regions from the first shard
+  # For non-uniform sharded clusters, include all regions
+  regions_to_use = local.all_shards_same_topology ? [
+    for region in local.all_regions_with_shard_info : region if region.shard_number == 0
+  ] : local.all_regions_with_shard_info
+
   # For REPLICASET, remove shard_number (set to null)
   # For SHARDED, keep shard_number but remove zone_name
   # For GEOSHARDED, keep both zone_name and optionally shard_number
   regions_transformed = [
-    for region in local.all_regions_with_shard_info : {
+    for region in local.regions_to_use : {
       name                    = region.name
       provider_name           = region.provider_name
       node_count              = region.node_count > 0 ? region.node_count : null
@@ -132,20 +152,6 @@ locals {
     disk_gb_enabled            = local.auto_scaling_raw.disk_gb_enabled
   }
 
-  # Determine shard_count for SHARDED clusters (if all shards have same topology)
-  shard_count = local.is_sharded ? length(local.cluster.replication_specs) : null
-
-  # Check if all shards have the same region topology
-  all_shards_same_topology = local.is_sharded ? (
-    length(distinct([
-      for spec in local.cluster.replication_specs :
-      join(",", sort([for rc in spec.region_configs : rc.region_name]))
-    ])) == 1
-  ) : false
-
-  # Use shard_count only if all shards have identical topology
-  use_shard_count = local.all_shards_same_topology
-
   # Filter advanced_configuration to only include non-default values
   advanced_configuration_filtered = {
     change_stream_options_pre_and_post_images_expire_after_seconds = local.cluster.advanced_configuration.change_stream_options_pre_and_post_images_expire_after_seconds != -1 ? local.cluster.advanced_configuration.change_stream_options_pre_and_post_images_expire_after_seconds : null
@@ -191,6 +197,7 @@ locals {
 
   # Build optional module attributes
   module_optional_attributes = join("", compact(concat(
+    [format("\n  retain_backups_enabled = null # Retain backups after cluster deletion")],
     [local.common_provider_name != null ? format("\n  provider_name = %q", local.common_provider_name) : ""],
     [local.common_instance_size != null ? format("\n  instance_size = %q", local.common_instance_size) : ""],
     [local.common_disk_size_gb != null ? format("\n  disk_size_gb  = %v", local.common_disk_size_gb) : ""],
@@ -208,6 +215,7 @@ locals {
     [local.cluster.replica_set_scaling_strategy != "" ? format("\n  replica_set_scaling_strategy = %q", local.cluster.replica_set_scaling_strategy) : ""],
     [local.cluster.global_cluster_self_managed_sharding ? format("\n  global_cluster_self_managed_sharding = %v", local.cluster.global_cluster_self_managed_sharding) : ""],
     [length(local.cluster.tags) > 0 ? format("\n  tags = %s", jsonencode(local.cluster.tags)) : ""],
+    [length(local.cluster.tags) == 0 ? format("\n  tags = null") : ""],
     [local.auto_scaling_hcl],
     [local.auto_scaling_analytics_hcl],
     [local.advanced_configuration_has_values ? format("\n\n  advanced_configuration = %s", jsonencode(local.advanced_configuration_filtered)) : ""],
