@@ -122,22 +122,42 @@ locals {
   ] : local.all_regions_with_shard_info
 
   # Extract common values across all regions BEFORE transforming them
+  # Only set a value as "common" if ALL regions have the same value
   common_provider_name = length(distinct([for r in local.all_regions_with_shard_info : r.provider_name])) == 1 ? local.all_regions_with_shard_info[0].provider_name : null
 
-  # Get instance size from first electable region (if not using autoscaling)
+  # Get instance size - only common if ALL electable regions have the same value (and not using autoscaling)
   first_electable_region = [for r in local.all_regions_with_shard_info : r if r.node_count > 0][0]
-  common_instance_size   = local.first_electable_region.auto_scaling.compute_enabled ? null : local.first_electable_region.instance_size
+  electable_regions      = [for r in local.all_regions_with_shard_info : r if r.node_count > 0]
+  common_instance_size = (
+    !local.auto_scaling_compute_enabled &&
+    length(distinct([for r in local.electable_regions : r.instance_size])) == 1
+  ) ? local.first_electable_region.instance_size : null
 
-  # Get disk configuration from first electable region
-  # Don't include disk_size_gb if disk auto-scaling is enabled
-  common_disk_size_gb = !local.first_electable_region.auto_scaling.disk_gb_enabled ? local.first_electable_region.disk_size_gb : null
-  # Only include disk_iops and ebs_volume_type if ebs_volume_type is PROVISIONED
-  common_ebs_volume_type = local.first_electable_region.ebs_volume_type == "PROVISIONED" ? "PROVISIONED" : null
-  common_disk_iops       = local.first_electable_region.ebs_volume_type == "PROVISIONED" && local.first_electable_region.disk_iops > 0 ? local.first_electable_region.disk_iops : null
+  # Get disk configuration - only common if ALL electable regions have the same values
+  common_disk_size_gb = (
+    !local.auto_scaling_disk_enabled &&
+    length(distinct([for r in local.electable_regions : r.disk_size_gb])) == 1
+  ) ? local.first_electable_region.disk_size_gb : null
 
-  # Get analytics instance size from first analytics region (if any)
-  first_analytics_region         = length([for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0]) > 0 ? [for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0][0] : null
-  common_instance_size_analytics = local.first_analytics_region != null && (local.first_analytics_region.analytics_auto_scaling == null || !local.first_analytics_region.analytics_auto_scaling.compute_enabled) ? local.first_analytics_region.instance_size_analytics : null
+  common_ebs_volume_type = (
+    length(distinct([for r in local.electable_regions : r.ebs_volume_type])) == 1 &&
+    local.first_electable_region.ebs_volume_type == "PROVISIONED"
+  ) ? "PROVISIONED" : null
+
+  common_disk_iops = (
+    local.common_ebs_volume_type == "PROVISIONED" &&
+    length(distinct([for r in local.electable_regions : r.disk_iops])) == 1 &&
+    local.first_electable_region.disk_iops > 0
+  ) ? local.first_electable_region.disk_iops : null
+
+  # Get analytics instance size - only common if ALL analytics regions have the same value
+  analytics_regions      = [for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0]
+  first_analytics_region = length(local.analytics_regions) > 0 ? local.analytics_regions[0] : null
+  common_instance_size_analytics = (
+    local.first_analytics_region != null &&
+    !local.auto_scaling_compute_analytics_enabled &&
+    length(distinct([for r in local.analytics_regions : r.instance_size_analytics])) == 1
+  ) ? local.first_analytics_region.instance_size_analytics : null
 
   # For REPLICASET, remove shard_number (set to null)
   # For SHARDED, keep shard_number but remove zone_name
