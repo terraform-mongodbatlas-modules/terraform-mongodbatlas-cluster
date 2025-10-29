@@ -1,175 +1,112 @@
-# Cluster Import Example
+# Import Existing Clusters (Experimental)
 
-Generate Terraform configuration from existing MongoDB Atlas clusters.
+⚠️ **Experimental Feature**: This example demonstrates how to import existing MongoDB Atlas clusters into Terraform management using the cluster module.
 
-## Quick Start
+## Pre Requirements
 
-```bash
-cd examples/13_example_import
+If you are familiar with Terraform and already have clusters in MongoDB Atlas, go to [commands](#commands)
 
-# Import a specific cluster by name
+1. To run the `terraform` commands you need to install [Terraform](https://developer.hashicorp.com/terraform/install).
+2. Sign up for a [MongoDB Atlas Account](https://www.mongodb.com/products/integrations/hashicorp-terraform)
+3. Configure [authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication)
+4. An existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) with at least one cluster
+
+## Commands
+
+```sh
 terraform init
-terraform apply -var="project_id=YOUR_PROJECT_ID" -var="cluster_name=my-cluster"
-
-# The cluster configuration is automatically written to {cluster-name}.tf
+# configure authentication env-vars (MONGODB_ATLAS_XXX)
+# configure your `vars.tfvars` with `project_id={PROJECT_ID}`
+terraform apply -var-file vars.tfvars
+# This generates .tf files in the ./clusters/ directory
 ```
 
-## What It Does
+The generated files will be in `./clusters/` - one `.tf` file per cluster found in your project.
 
-This module:
-1. Fetches cluster data from MongoDB Atlas by name
-2. Transforms it into clean Terraform configuration
-3. Automatically writes it to `{cluster-name}.tf` in the specified directory
+## Review and Refine Generated Configuration
 
-## Usage
+After generation, follow these steps:
 
-### Basic Usage
+### 1. Review Generated Files
 
-```hcl
-module "import_cluster" {
-  source = "./modules/cluster_import"
-
-  cluster_name     = "my-production-cluster"
-  project_id       = "664619d870c247237f4b86a6"
-  output_directory = path.module
-}
+```sh
+cd clusters
+ls -la  # See generated cluster configuration files
 ```
 
-### Custom Filename
+### 2. Iterate to Achieve No Plan Changes
 
-```hcl
-module "import_cluster" {
-  source = "./modules/cluster_import"
+**Critical Step**: Before importing, you must refine the generated configuration until `terraform plan` shows no changes.
 
-  cluster_name     = "my-cluster"
-  project_id       = var.project_id
-  output_directory = path.module
-  filename         = "imported-cluster"  # Creates imported-cluster.tf
-}
+```sh
+terraform plan  # Check what Terraform wants to change
+# Adjust the generated .tf files as needed
+# Repeat until you see "No changes. Your infrastructure matches the configuration."
 ```
 
-### Import Multiple Clusters
+See [clusters/README.md](./clusters/README.md) for detailed guidance on this iterative process.
 
-```hcl
-locals {
-  clusters = ["prod-cluster", "staging-cluster", "dev-cluster"]
-}
+### 3. Import Clusters
 
-module "import_clusters" {
-  for_each = toset(local.clusters)
+Once plan shows no changes:
 
-  source = "./modules/cluster_import"
-
-  cluster_name     = each.value
-  project_id       = var.project_id
-  output_directory = "${path.module}/imported"
-}
+```sh
+terraform apply  # Execute the import blocks
 ```
 
-## Smart Filtering
+### 4. Verify
 
-The generated configuration only includes values that matter, automatically filtering out:
+```sh
+terraform plan  # Should show "No changes"
+```
 
-### Defaults
-- ✅ `auto_scaling` with default values (enabled, M10-M200, disk auto-scaling)
-- ✅ `backup_enabled = true` / `pit_enabled = true` / `redact_client_log_data = true`
-- ✅ `version_release_system = "LTS"` (default)
-- ✅ Advanced configuration fields matching defaults
+## What Gets Generated
 
-### Auto-Scaling Related
-- ✅ `disk_size_gb` when disk auto-scaling is enabled
-- ✅ `instance_size` when compute auto-scaling is enabled
-- ✅ `instance_size_analytics` when no analytics nodes exist
+For each cluster in your project, a `.tf` file is created with:
 
-### Provider-Specific
-- ✅ `ebs_volume_type` and `disk_iops` when not using PROVISIONED volumes
+- **Import block** - Associates the existing cluster with the Terraform module
+- **Module configuration** - Uses the cluster module with your existing cluster settings
+- **Output block** - Exposes connection strings
 
-### Empty Values
-- ✅ Empty `tags = {}`
-- ✅ Zero node counts
-- ✅ Null/empty strings
-
-## Example Output
-
-For a basic M10 replica set:
+Example generated file structure:
 
 ```hcl
-# Auto-generated from existing cluster: my-cluster
-# Cluster Type: REPLICASET
-# Generated: 2025-10-28T12:00:00Z
+import {
+  id = "${var.project_id}-my-cluster"
+  to = module.my_cluster.mongodbatlas_advanced_cluster.this
+}
 
 module "my_cluster" {
-  source = "../../"
-
-  project_id = var.project_id
-
+  source = "../../../"
+  
+  project_id   = var.project_id
   name         = "my-cluster"
   cluster_type = "REPLICASET"
-
+  
   regions = [
     {
-      name          = "US_EAST_1"
-      node_count    = 3
-      instance_size = "M10"
+      name       = "US_EAST_1"
+      node_count = 3
     },
   ]
-
+  
   provider_name = "AWS"
   instance_size = "M10"
-
-  # Clean output - only non-default values shown
-  backup_enabled = false  # Only shown because it differs from default (true)
 }
 
-# Outputs
 output "my_cluster_connection_strings" {
   description = "Connection strings for my-cluster"
   value       = module.my_cluster.connection_strings
-  sensitive   = true
 }
 ```
 
-## Module Parameters
+## Important Notes
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `cluster_name` | **Yes** | - | Name of the cluster to import. |
-| `project_id` | **Yes** | - | MongoDB Atlas project ID. |
-| `output_directory` | **Yes** | - | Directory where the .tf file will be written. |
-| `filename` | No | cluster name | Custom filename (without .tf extension). |
+- **Experimental**: Generated configuration may require manual adjustments
+- **Test first**: Use a non-production project for initial testing
+- **Defaults omitted**: The generator attempts to omit default values, but you may need to add fields that differ from module defaults
+- **Iterative process**: Achieving a clean import requires iteration - see [clusters/README.md](./clusters/README.md)
 
-## Use Cases
+## Feedback or Help
 
-1. **Import existing clusters** into Terraform management
-2. **Document cluster configuration** in version control
-3. **Clone clusters** with slight modifications
-4. **Migrate clusters** between projects/accounts
-5. **Generate IaC from UI-created clusters**
-
-## Architecture
-
-```text
-13_example_import/
-├── main.tf                      # Example usage (by name or first cluster)
-├── outputs.tf                   # Simple outputs
-└── modules/
-    └── cluster_import/          # Self-contained import module
-        ├── main.tf              # Data source, transformation, file generation
-        ├── variables.tf         # Flexible input options
-        ├── outputs.tf           # Filtered outputs
-        └── README.md            # Module documentation
-```
-
-## Requirements
-
-- Terraform >= 1.6
-- mongodbatlas provider ~> 2.0
-- local provider 2.4.1
-- MongoDB Atlas credentials configured
-
-## Notes
-
-- Generated files include timestamp and cluster metadata as comments
-- Module name in generated file: `{cluster_name_with_underscores}`
-- Output name: `{cluster_name_with_underscores}_connection_strings`
-- File is written during `terraform apply`, not `terraform plan`
+- If you have any feedback or trouble please open a Github Issue
