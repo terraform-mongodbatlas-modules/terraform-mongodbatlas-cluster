@@ -77,7 +77,6 @@ locals {
   auto_scaling_disk_enabled              = local.auto_scaling_raw != null && local.auto_scaling_raw.disk_gb_enabled
   analytics_auto_scaling                 = local.first_analytics_region != null ? local.first_analytics_region.analytics_auto_scaling : null
   auto_scaling_compute_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.compute_enabled
-  auto_scaling_disk_analytics_enabled    = local.analytics_auto_scaling != null && local.analytics_auto_scaling.disk_gb_enabled
 
   # Check if all shards have the same region topology
   # The comparison varies based on auto-scaling settings:
