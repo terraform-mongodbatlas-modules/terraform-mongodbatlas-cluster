@@ -19,12 +19,33 @@ This module helps migrate existing MongoDB Atlas clusters to use the cluster mod
 
 ### 1. Configure the Import Module
 
-Create a `main.tf` file that uses this module to scan your project:
+Create a `main.tf` file that uses this module to import a specific cluster:
 
 ```hcl
 module "cluster_import" {
   source = "../../modules/cluster_import"
   
+  cluster_name     = "my-cluster-name"
+  project_id       = var.project_id
+  output_directory = "./clusters"
+}
+```
+
+To import multiple clusters, use `for_each`:
+
+```hcl
+data "mongodbatlas_advanced_clusters" "this" {
+  project_id = var.project_id
+}
+
+module "cluster_import" {
+  for_each = {
+    for cluster in data.mongodbatlas_advanced_clusters.this.results : cluster.name => cluster
+  }
+  
+  source = "../../modules/cluster_import"
+  
+  cluster_name     = each.key
   project_id       = var.project_id
   output_directory = "./clusters"
 }
