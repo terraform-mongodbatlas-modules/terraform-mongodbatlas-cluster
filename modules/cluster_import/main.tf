@@ -74,10 +74,10 @@ locals {
   # Auto scaling configuration from first region
   auto_scaling_raw                       = local.first_electable_region.auto_scaling
   auto_scaling_compute_enabled           = local.auto_scaling_raw != null && local.auto_scaling_raw.compute_enabled
-  auto_scaling_disk_enabled = local.auto_scaling_raw != null && local.auto_scaling_raw.disk_gb_enabled
+  auto_scaling_disk_enabled              = local.auto_scaling_raw != null && local.auto_scaling_raw.disk_gb_enabled
   analytics_auto_scaling                 = local.first_analytics_region != null ? local.first_analytics_region.analytics_auto_scaling : null
   auto_scaling_compute_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.compute_enabled
-  auto_scaling_disk_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.disk_gb_enabled
+  auto_scaling_disk_analytics_enabled    = local.analytics_auto_scaling != null && local.analytics_auto_scaling.disk_gb_enabled
 
   # Check if all shards have the same region topology
   # The comparison varies based on auto-scaling settings:
@@ -121,29 +121,7 @@ locals {
     for region in local.all_regions_with_shard_info : region if region.shard_number == 0
   ] : local.all_regions_with_shard_info
 
-  # For REPLICASET, remove shard_number (set to null)
-  # For SHARDED, keep shard_number but remove zone_name
-  # For GEOSHARDED, keep both zone_name and optionally shard_number
-  regions_transformed = [
-    for region in local.regions_to_use : {
-      name                    = region.name
-      provider_name           = region.provider_name
-      node_count              = region.node_count > 0 ? region.node_count : null
-      node_count_read_only    = region.node_count_read_only > 0 ? region.node_count_read_only : null
-      node_count_analytics    = region.node_count_analytics > 0 ? region.node_count_analytics : null
-      instance_size           = region.instance_size != "" && !local.auto_scaling_compute_enabled ? region.instance_size : null
-      instance_size_analytics = region.node_count_analytics > 0 && region.instance_size_analytics != "" && !local.auto_scaling_compute_analytics_enabled ? region.instance_size_analytics : null
-      # Don't include disk_size_gb if disk auto-scaling is enabled
-      disk_size_gb = !region.auto_scaling.disk_gb_enabled && region.disk_size_gb > 0 ? region.disk_size_gb : null
-      # Only include disk_iops and ebs_volume_type if ebs_volume_type is PROVISIONED
-      disk_iops       = region.ebs_volume_type == "PROVISIONED" && region.disk_iops > 0 ? region.disk_iops : null
-      ebs_volume_type = region.ebs_volume_type == "PROVISIONED" ? "PROVISIONED" : null
-      shard_number    = local.is_replicaset || local.all_shards_same_topology ? null : region.shard_number
-      zone_name       = local.is_geosharded ? region.zone_name : null
-    }
-  ]
-
-  # Extract common values across all regions
+  # Extract common values across all regions BEFORE transforming them
   common_provider_name = length(distinct([for r in local.all_regions_with_shard_info : r.provider_name])) == 1 ? local.all_regions_with_shard_info[0].provider_name : null
 
   # Get instance size from first electable region (if not using autoscaling)
@@ -160,6 +138,49 @@ locals {
   # Get analytics instance size from first analytics region (if any)
   first_analytics_region         = length([for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0]) > 0 ? [for r in local.all_regions_with_shard_info : r if r.node_count_analytics > 0][0] : null
   common_instance_size_analytics = local.first_analytics_region != null && (local.first_analytics_region.analytics_auto_scaling == null || !local.first_analytics_region.analytics_auto_scaling.compute_enabled) ? local.first_analytics_region.instance_size_analytics : null
+
+  # For REPLICASET, remove shard_number (set to null)
+  # For SHARDED, keep shard_number but remove zone_name
+  # For GEOSHARDED, keep both zone_name and optionally shard_number
+  # Also: exclude fields from regions if they're set at root level as common values
+  regions_transformed = [
+    for region in local.regions_to_use : {
+      name = region.name
+      # Only include provider_name in region if there's no common provider_name
+      provider_name        = local.common_provider_name == null ? region.provider_name : null
+      node_count           = region.node_count > 0 ? region.node_count : null
+      node_count_read_only = region.node_count_read_only > 0 ? region.node_count_read_only : null
+      node_count_analytics = region.node_count_analytics > 0 ? region.node_count_analytics : null
+      # Only include instance_size if not using compute auto-scaling AND not set at root level
+      instance_size = (
+        region.instance_size != "" && !local.auto_scaling_compute_enabled &&
+        local.common_instance_size == null
+      ) ? region.instance_size : null
+      # Only include instance_size_analytics if not using analytics auto-scaling AND not set at root level
+      instance_size_analytics = (
+        region.node_count_analytics > 0 && region.instance_size_analytics != "" &&
+        !local.auto_scaling_compute_analytics_enabled &&
+        local.common_instance_size_analytics == null
+      ) ? region.instance_size_analytics : null
+      # Only include disk_size_gb if not using disk auto-scaling AND not set at root level
+      disk_size_gb = (
+        !region.auto_scaling.disk_gb_enabled && region.disk_size_gb > 0 &&
+        local.common_disk_size_gb == null
+      ) ? region.disk_size_gb : null
+      # Only include disk_iops if using PROVISIONED volumes AND not set at root level
+      disk_iops = (
+        region.ebs_volume_type == "PROVISIONED" && region.disk_iops > 0 &&
+        local.common_disk_iops == null
+      ) ? region.disk_iops : null
+      # Only include ebs_volume_type if PROVISIONED AND not set at root level
+      ebs_volume_type = (
+        region.ebs_volume_type == "PROVISIONED" &&
+        local.common_ebs_volume_type == null
+      ) ? "PROVISIONED" : null
+      shard_number = local.is_replicaset || local.all_shards_same_topology ? null : region.shard_number
+      zone_name    = local.is_geosharded ? region.zone_name : null
+    }
+  ]
 
 
   # Check if auto_scaling matches defaults
