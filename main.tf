@@ -110,12 +110,12 @@ locals {
   manual_compute                         = local.manual_compute_electable || local.manual_compute_analytics
 
   excluded_auto_scaling_fields = concat(
-    local.auto_scaling_compute_enabled ? [] : ["compute_max_instance_size", "compute_min_instance_size"],
+    local.auto_scaling_compute_enabled ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
     local.auto_scaling_compute_enabled && var.auto_scaling.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
   )
   effective_auto_scaling = { for k, v in var.auto_scaling : k => v if !contains(local.excluded_auto_scaling_fields, k) }
   excluded_auto_scaling_analytics_fields = concat(
-    local.auto_scaling_compute_enabled_analytics ? [] : ["compute_max_instance_size", "compute_min_instance_size"],
+    local.auto_scaling_compute_enabled_analytics ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
     local.auto_scaling_compute_enabled_analytics && var.auto_scaling_analytics.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
   )
   effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? (local.manual_compute_analytics ? {
