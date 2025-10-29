@@ -78,14 +78,14 @@ locals {
       node_count              = region.node_count > 0 ? region.node_count : null
       node_count_read_only    = region.node_count_read_only > 0 ? region.node_count_read_only : null
       node_count_analytics    = region.node_count_analytics > 0 ? region.node_count_analytics : null
-      instance_size           = region.instance_size != "" ? region.instance_size : null
-      instance_size_analytics = region.node_count_analytics > 0 && region.instance_size_analytics != "" ? region.instance_size_analytics : null
+      instance_size           = region.instance_size != "" && !local.auto_scaling_compute_enabled ? region.instance_size : null
+      instance_size_analytics = region.node_count_analytics > 0 && region.instance_size_analytics != "" && !local.auto_scaling_compute_analytics_enabled ? region.instance_size_analytics : null
       # Don't include disk_size_gb if disk auto-scaling is enabled
       disk_size_gb = !region.auto_scaling.disk_gb_enabled && region.disk_size_gb > 0 ? region.disk_size_gb : null
       # Only include disk_iops and ebs_volume_type if ebs_volume_type is PROVISIONED
       disk_iops       = region.ebs_volume_type == "PROVISIONED" && region.disk_iops > 0 ? region.disk_iops : null
       ebs_volume_type = region.ebs_volume_type == "PROVISIONED" ? "PROVISIONED" : null
-      shard_number    = local.is_replicaset ? null : region.shard_number
+      shard_number    = local.is_replicaset || local.all_shards_same_topology ? null : region.shard_number
       zone_name       = local.is_geosharded ? region.zone_name : null
     }
   ]
@@ -110,7 +110,9 @@ locals {
 
   # Auto scaling configuration from first region
   auto_scaling_raw       = local.first_electable_region.auto_scaling
+  auto_scaling_compute_enabled = local.auto_scaling_raw != null && local.auto_scaling_raw.compute_enabled
   analytics_auto_scaling = local.first_analytics_region != null ? local.first_analytics_region.analytics_auto_scaling : null
+  auto_scaling_compute_analytics_enabled = local.analytics_auto_scaling != null && local.analytics_auto_scaling.compute_enabled
 
   # Check if auto_scaling matches defaults
   auto_scaling_is_default = (
@@ -202,9 +204,7 @@ module "${local.module_instance_name}" {
   source = "../../../"  # Adjust path to your cluster module
 
   project_id = var.project_id
-
   name = ${format("%q", local.cluster.name)}
-  
   cluster_type = ${format("%q", local.cluster_type)}
 
   regions = [
