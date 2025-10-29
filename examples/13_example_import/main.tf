@@ -1,5 +1,5 @@
 # Example: Import a cluster by name
-# The module will fetch the cluster data and generate a .tf file
+# The module will fetch the cluster data and generate one .tf file per cluster
 
 terraform {
   required_version = ">= 1.6"
@@ -26,7 +26,6 @@ data "mongodbatlas_advanced_clusters" "this" {
   project_id = var.project_id
 }
 
-# Import cluster by name
 module "cluster_import" {
   source = "../../modules/cluster_import"
 
