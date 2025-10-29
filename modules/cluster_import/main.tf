@@ -282,21 +282,26 @@ locals {
     [format("\n    compute_scale_down_enabled = %v", local.analytics_auto_scaling.compute_scale_down_enabled)],
     [format("\n    disk_gb_enabled            = %v", local.analytics_auto_scaling.disk_gb_enabled)]
   )))) : ""
-
-  module_instance_name = replace(local.cluster.name, "-", "_")
-
-  # Build optional module attributes
-  module_optional_attributes = join("", compact(concat(
-    [format("\n  retain_backups_enabled = null # Retain backups after cluster deletion")],
+  topology_hcl = join("", compact(concat(
+    [local.use_shard_count && local.shard_count != null ? format("\n  shard_count = %v", local.shard_count) : ""],
     [local.common_provider_name != null ? format("\n  provider_name = %q", local.common_provider_name) : ""],
     [local.common_instance_size != null ? format("\n  instance_size = %q", local.common_instance_size) : ""],
     [local.common_disk_size_gb != null ? format("\n  disk_size_gb  = %v", local.common_disk_size_gb) : ""],
     [local.common_disk_iops != null ? format("\n  disk_iops     = %v", local.common_disk_iops) : ""],
     [local.common_ebs_volume_type != null ? format("\n  ebs_volume_type = %q", local.common_ebs_volume_type) : ""],
     [local.common_instance_size_analytics != null ? format("\n  instance_size_analytics = %q", local.common_instance_size_analytics) : ""],
-    [local.use_shard_count && local.shard_count != null ? format("\n  shard_count = %v", local.shard_count) : ""],
     [local.auto_scaling_hcl],
     [local.auto_scaling_analytics_hcl],
+  )))
+
+  module_instance_name = replace(local.cluster.name, "-", "_")
+
+  # Build optional module attributes
+  module_optional_attributes = join("", compact(concat(
+    ["  # (Start) These attributes are set to null to avoid unnecessary changes to the cluster after import, double-check if you need to set them to a specific value"],
+    [format("\n  retain_backups_enabled = null # Retain backups after cluster deletion")],
+    [length(local.cluster.tags) == 0 ? format("\n  tags = null") : ""],
+    ["\n  # (End) These attributes are set to null to avoid unnecessary changes to the cluster after import, double-check if you need to set them to a specific value"],
     ["\n"],
     [local.cluster.mongo_db_major_version != "" ? format("\n  mongo_db_major_version = %q", local.cluster.mongo_db_major_version) : ""],
     [local.cluster.backup_enabled != true ? format("\n  backup_enabled = %v", local.cluster.backup_enabled) : ""],
@@ -308,7 +313,6 @@ locals {
     [local.cluster.replica_set_scaling_strategy != "" ? format("\n  replica_set_scaling_strategy = %q", local.cluster.replica_set_scaling_strategy) : ""],
     [local.cluster.global_cluster_self_managed_sharding ? format("\n  global_cluster_self_managed_sharding = %v", local.cluster.global_cluster_self_managed_sharding) : ""],
     [length(local.cluster.tags) > 0 ? format("\n  tags = %s", jsonencode(local.cluster.tags)) : ""],
-    [length(local.cluster.tags) == 0 ? format("\n  tags = null") : ""],
     [local.advanced_configuration_has_values ? format("\n\n  advanced_configuration = %s", jsonencode(local.advanced_configuration_filtered)) : ""],
     [local.cluster.bi_connector_config.enabled ? format("\n\n  bi_connector_config = %s", jsonencode({ enabled = local.cluster.bi_connector_config.enabled, read_preference = local.cluster.bi_connector_config.read_preference })) : ""]
   )))
@@ -331,8 +335,12 @@ module "${local.module_instance_name}" {
   name = ${format("%q", local.cluster.name)}
   cluster_type = ${format("%q", local.cluster_type)}
 
+  # (Start) Cluster Topology
   regions = [
 ${local.regions_hcl}  ]
+${local.topology_hcl}
+  # (End) Cluster Topology
+
 ${local.module_optional_attributes}
 }
 
