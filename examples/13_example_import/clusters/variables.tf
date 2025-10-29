@@ -1,3 +1,4 @@
+# tflint-ignore: terraform_unused_declarations
 variable "project_id" {
   description = <<-EOT
 Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
