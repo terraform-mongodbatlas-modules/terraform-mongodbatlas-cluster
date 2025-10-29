@@ -1,14 +1,20 @@
 name: Apply Tests
 
 on:
-    push:
-      branches:
-        - main
-    pull_request: {}
-    workflow_dispatch: {}
+  push:
+    branches:
+      - main
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      org_id:
+        description: 'MongoDB Atlas Organization ID'
+        required: false
+        type: string
 
 jobs:
-  apply-tests:
+  dev-cluster-test:
+    name: Dev Cluster Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
@@ -18,4 +24,13 @@ jobs:
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
         with:
           just-version: '1.40.0'
-      - run: echo "Skipping integration tests due to boilerplate configuration - Additional setup required"
+
+      - name: Run Dev Cluster Test
+        env:
+          MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+          MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+          MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+        run: |
+          terraform init
+          terraform test -filter=tests/apply_regions.tftest.hcl -var "org_id=${{ secrets.MONGODB_ATLAS_ORG_ID }}"
