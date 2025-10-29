@@ -1,92 +1,77 @@
-# Cluster Import Transformation Module
+# Cluster Import Helper Module (Experimental)
 
-This submodule contains the core logic for transforming MongoDB Atlas cluster data source output into the cluster module's variable format.
+⚠️ **Experimental Feature**: This module is under active development. The generated configuration may require manual adjustments.
 
-## Purpose
+## Overview
 
-This module performs the heavy lifting of:
-1. Flattening nested `replication_specs[].region_configs[]` into a flat `regions` list
-2. Filtering out null values and empty strings
-3. Removing values that match module defaults to keep configuration clean
-4. Handling cluster-type-specific logic (REPLICASET, SHARDED, GEOSHARDED)
+This module helps migrate existing MongoDB Atlas clusters to use the cluster module by:
+- Reading your existing cluster configuration from the MongoDB Atlas API
+- Generating Terraform configuration files in the cluster module format
+- Creating import blocks to bring existing clusters under Terraform management
 
-## Inputs
+## Pre Requirements
 
-- `cluster`: Complete cluster object from `mongodbatlas_advanced_clusters` data source
+1. Install [Terraform](https://developer.hashicorp.com/terraform/install)
+2. Configure [authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication)
+3. Have existing clusters in MongoDB Atlas that you want to import
 
-## Outputs
+## Usage Steps
 
-All outputs are filtered to exclude null values and values matching module defaults:
+### 1. Configure the Import Module
 
-- `name`: Cluster name
-- `regions`: Transformed regions list
-- `provider_name`: Common provider (if all regions use same)
-- `instance_size`: Instance size (if not auto-scaling)
-- `disk_size_gb`: Disk size
-- `disk_iops`: Disk IOPS
-- `ebs_volume_type`: EBS volume type
-- `instance_size_analytics`: Analytics instance size
-- `auto_scaling`: Auto-scaling config (null if matches defaults)
-- `auto_scaling_analytics`: Analytics auto-scaling config
-- `tags`: Tags (null if empty)
-- `shard_count`: Shard count (for uniform shards)
-- Plus additional cluster properties
+Create a `main.tf` file that uses this module to scan your project:
 
-## Default Filtering
+```hcl
+module "cluster_import" {
+  source = "../../modules/cluster_import"
+  
+  project_id       = var.project_id
+  output_directory = "./clusters"
+}
+```
 
-The module filters out these defaults:
+### 2. Generate Configuration Files
 
-### Auto Scaling
-If auto_scaling matches ALL of these defaults, it returns null:
-- `compute_enabled = true`
-- `compute_max_instance_size = "M200"` (or empty)
-- `compute_min_instance_size = "M10"` (or empty)
-- `compute_scale_down_enabled = true`
-- `disk_gb_enabled = true`
+```sh
+terraform init
+# configure authentication env-vars (MONGODB_ATLAS_XXX)
+terraform apply -var="project_id=YOUR_PROJECT_ID"
+```
 
-### Resource Defaults
-- `backup_enabled = true` → null
-- `pit_enabled = true` → null
-- `redact_client_log_data = true` → null
+This will create `.tf` files in the `./clusters/` directory, one per cluster.
 
-### Advanced Configuration Defaults
-- `default_write_concern = "majority"` → null
-- `javascript_enabled = false` → null
-- `minimum_enabled_tls_protocol = "TLS1_2"` → null
-- `tls_cipher_config_mode = "DEFAULT"` → null
+### 3. Review and Adjust Generated Configuration
 
-### Empty Values
-- Empty strings → null
-- Zero values → null
-- Empty lists/sets → null
-- Empty maps → null (for most fields) or {} (for tags)
+- Review each generated file in `./clusters/`
+- The module attempts to omit default values, but you may need to adjust the configuration
+- **Goal**: Achieve an empty plan (`No changes`) before importing
+- Run `terraform plan` iteratively and add/remove fields as needed to match your existing cluster
 
-## Logic Details
+### 4. Import Clusters
 
-### Cluster Type Handling
+Once your plan shows no changes:
 
-**REPLICASET**:
-- `shard_number` → null on all regions
-- `zone_name` → null on all regions
-- `shard_count` → null
+```sh
+terraform apply  # This will execute the import blocks
+```
 
-**SHARDED**:
-- `shard_number` → index of shard (0, 1, 2...)
-- `zone_name` → null on all regions
-- `shard_count` → number of shards (only if all shards have identical topology)
+### 5. Verify Import
 
-**GEOSHARDED**:
-- `shard_number` → preserved per zone
-- `zone_name` → from replication_spec
-- `shard_count` → null
+```sh
+terraform plan  # Should show "No changes"
+```
 
-### Common Values Extraction
+## What This Module Does
 
-The module extracts common values that apply to all regions:
-- `provider_name`: Set if all regions use same provider
-- `instance_size`: From first electable region (if not auto-scaling)
-- `disk_size_gb`: From first electable region
-- `disk_iops`: From first electable region (if > 0)
-- `ebs_volume_type`: From first electable region
+- Flattens complex `replication_specs` into the module's simplified `regions` format
+- Filters out default values to keep configuration minimal
+- Handles different cluster types (REPLICASET, SHARDED, GEOSHARDED)
+- Extracts common settings to module-level variables when possible
+- Generates `import` blocks for Terraform
 
-This allows cleaner configuration at the module level rather than repeating values in each region.
+## Important Notes
+
+- Generated configuration is a starting point - manual review is required
+- Some cluster configurations may require additional adjustments
+- Test in a non-production environment first
+- See the [example](../../examples/13_example_import/) for a complete working example
