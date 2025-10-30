@@ -55,19 +55,25 @@ tables:
   - folder: 3
     name: Cluster with Analytics Nodes
   - folder: 4
-    name: Cluster with Multi Regions (US_EAST_1 + US_EAST_2)
+    name: Cluster with Multi Regions Local
+    title_suffix: (US_EAST_1 + US_EAST_2)
   - folder: 5
-    name: Cluster with Multi Regions (US+EU)
+    name: Cluster with Multi Regions Global
+    title_suffix: (US+EU)
   - folder: 6
-    name: Cluster with Multi Zones (GEOSHARDED)
+    name: Cluster with Multi Zones
+    title_suffix: (GEOSHARDED)
   - folder: 7
-    name: Cluster with Multi Clouds (AWS+AZURE)
+    name: Cluster with Multi Clouds
+    title_suffix: (AWS+AZURE)
   - folder: 9
     name: Cluster using the `replication_specs` to define Cluster Topology
   - folder: 10
-    name: Cluster with Multi Zone and each zone with multiple shards (Advanced)
+    name: Cluster with Multi Zone and each zone with multiple shards
+    title_suffix: (Advanced)
   - folder: 11
-    name: Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
+    name: Demonstrate how to create a module "on-top" of the module with a simplified interface
+    title_suffix: (cluster_size=S/M/L)
     cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
   - folder: 12
     name: Cluster with uniform SHARDED topology using `shard_count`

@@ -25,11 +25,35 @@ def load_template(template_path: Path) -> str:
     return template_path.read_text(encoding="utf-8")
 
 
-def get_example_name(folder_name: str) -> str:
-    """Extract example name from folder name (e.g., '01_single_region' -> 'Single Region')."""
-    # Remove leading number and underscore
+def get_example_name_from_config(folder_number: int, config: dict) -> str | None:
+    """Get example name from config (name + title_suffix if present)."""
+    for table in config.get("tables", []):
+        for example_row in table.get("example_rows", []):
+            if example_row.get("folder") == folder_number:
+                name = example_row.get("name", "")
+                title_suffix = example_row.get("title_suffix", "")
+                if title_suffix:
+                    return f"{name} {title_suffix}"
+                return name
+    return None
+
+
+def get_example_name(folder_name: str, config: dict) -> str:
+    """
+    Get example name from config, or extract from folder name as fallback.
+
+    E.g., '01_production_cluster' -> 'Production Cluster'
+    """
+    # Extract folder number
+    match = re.match(r"^(\d+)_", folder_name)
+    if match:
+        folder_number = int(match.group(1))
+        config_name = get_example_name_from_config(folder_number, config)
+        if config_name:
+            return config_name
+
+    # Fallback: extract from folder name
     name_without_number = re.sub(r"^\d+_", "", folder_name)
-    # Replace underscores with spaces and title case
     return name_without_number.replace("_", " ").title()
 
 
@@ -73,6 +97,7 @@ def process_example(
     template: str,
     base_versions_tf: str,
     provider_config: str,
+    config: dict,
     dry_run: bool = False,
     skip_readme: bool = False,
     skip_versions: bool = False,
@@ -83,7 +108,7 @@ def process_example(
     Returns:
         Tuple of (readme_generated, versions_generated)
     """
-    example_name = get_example_name(example_dir.name)
+    example_name = get_example_name(example_dir.name, config)
 
     readme_generated = False
     versions_generated = False
@@ -202,6 +227,7 @@ def main() -> None:
             template,
             base_versions_tf,
             provider_config,
+            config,
             dry_run=args.dry_run,
             skip_readme=args.skip_readme,
             skip_versions=args.skip_versions,
