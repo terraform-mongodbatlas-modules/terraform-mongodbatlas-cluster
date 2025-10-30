@@ -50,6 +50,60 @@ def get_commit_sha(ref: str) -> Optional[str]:
         return None
 
 
+def is_valid_tag(tag: str) -> bool:
+    """Check if a string is a valid git tag."""
+    try:
+        subprocess.run(
+            ["git", "rev-parse", f"refs/tags/{tag}"],
+            capture_output=True,
+            check=True,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def generate_notes_from_git_log(from_ref: str, to_ref: str) -> str:
+    """Generate release notes using git log when tags don't exist."""
+    try:
+        from_sha = get_commit_sha(from_ref)
+        to_sha = get_commit_sha(to_ref)
+
+        if not from_sha:
+            return f"Error: Could not resolve reference '{from_ref}'"
+        if not to_sha:
+            return f"Error: Could not resolve reference '{to_ref}'"
+
+        # Get commit log
+        result = subprocess.run(
+            [
+                "git",
+                "log",
+                f"{from_sha}..{to_sha}",
+                "--pretty=format:* %s (%h)",
+                "--no-merges",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        commits = result.stdout.strip()
+
+        if not commits:
+            return "No changes found between the specified commits."
+
+        # Build release notes
+        notes = "## What's Changed\n\n"
+        notes += commits + "\n\n"
+        notes += f"**Commits**: {from_sha[:8]}...{to_sha[:8]}\n"
+
+        return notes
+    except subprocess.CalledProcessError as e:
+        print(f"Error generating notes from git log: {e}", file=sys.stderr)
+        return "Unable to generate release notes."
+
+
 def generate_release_notes_api(
     repo: str, current_version: str, previous_tag: str, target_ref: str
 ) -> str:
@@ -165,21 +219,47 @@ def main() -> None:
 
     print(f"Comparing {previous_tag} → {current_version}", file=sys.stderr)
 
-    # Generate release notes via GitHub API (compares the two tags directly)
-    try:
-        notes = generate_release_notes_api(
-            repo, current_version, previous_tag, current_version
-        )
+    # Check if both are valid tags - GitHub API requires actual tags
+    current_is_tag = is_valid_tag(current_version)
+    previous_is_tag = is_valid_tag(previous_tag)
+
+    if not current_is_tag or not previous_is_tag:
+        # Fall back to git log for commit-to-commit comparison
+        if not current_is_tag:
+            print(
+                f"Note: '{current_version}' is not a tag, using git log for comparison",
+                file=sys.stderr,
+            )
+        if not previous_is_tag:
+            print(
+                f"Note: '{previous_tag}' is not a tag, using git log for comparison",
+                file=sys.stderr,
+            )
+
+        notes = generate_notes_from_git_log(previous_tag, current_version)
         print(notes)
-    except subprocess.CalledProcessError as e:
-        print(
-            "\nError: Failed to generate release notes via GitHub API", file=sys.stderr
-        )
-        print("Make sure the commits exist on GitHub (push first).", file=sys.stderr)
-        print(
-            f"\nGitHub API error: {e.stderr if e.stderr else str(e)}", file=sys.stderr
-        )
-        sys.exit(1)
+    else:
+        # Both are tags - use GitHub API for better formatting
+        try:
+            notes = generate_release_notes_api(
+                repo, current_version, previous_tag, current_version
+            )
+            print(notes)
+        except subprocess.CalledProcessError as e:
+            print(
+                "\nError: Failed to generate release notes via GitHub API",
+                file=sys.stderr,
+            )
+            print(
+                "Make sure the commits exist on GitHub (push first).", file=sys.stderr
+            )
+            print(
+                f"\nGitHub API error: {e.stderr if e.stderr else str(e)}",
+                file=sys.stderr,
+            )
+            print("\nFalling back to git log...", file=sys.stderr)
+            notes = generate_notes_from_git_log(previous_tag, current_version)
+            print(notes)
 
 
 if __name__ == "__main__":
