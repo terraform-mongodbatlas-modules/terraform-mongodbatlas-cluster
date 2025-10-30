@@ -174,6 +174,11 @@ def main() -> None:
         action="store_true",
         help="Skip updating TABLES section",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check if documentation is up-to-date (exits with code 1 if changes needed)",
+    )
 
     args = parser.parse_args()
 
@@ -192,12 +197,15 @@ def main() -> None:
         return
 
     # Load files
-    readme_content = readme_path.read_text(encoding="utf-8")
+    original_readme_content = readme_path.read_text(encoding="utf-8")
+    readme_content = original_readme_content
     config = load_config(config_path)
 
     print("Root README.md Generator")
     if args.dry_run:
         print("Mode: DRY RUN (no files will be modified)")
+    if args.check:
+        print("Mode: CHECK (verifying documentation is up-to-date)")
     print()
 
     modified = False
@@ -229,6 +237,20 @@ def main() -> None:
         )
         print("✓ TABLES generated")
         modified = True
+
+    # Check mode: compare and exit with error if different
+    if args.check:
+        if readme_content != original_readme_content:
+            print()
+            print("❌ ERROR: README.md is out of date!")
+            print("Run 'just gen-readme' to update documentation")
+            import sys
+
+            sys.exit(1)
+        else:
+            print()
+            print("✓ README.md is up to date")
+            return
 
     # Write changes
     if modified and not args.dry_run:

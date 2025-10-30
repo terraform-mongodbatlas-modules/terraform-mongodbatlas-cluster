@@ -101,24 +101,34 @@ def process_example(
     dry_run: bool = False,
     skip_readme: bool = False,
     skip_versions: bool = False,
-) -> tuple[bool, bool]:
+    check: bool = False,
+) -> tuple[bool, bool, bool]:
     """
     Process a single example directory.
 
     Returns:
-        Tuple of (readme_generated, versions_generated)
+        Tuple of (readme_generated, versions_generated, has_changes)
     """
     example_name = get_example_name(example_dir.name, config)
 
     readme_generated = False
     versions_generated = False
+    has_changes = False
 
     # Generate README.md
     if not skip_readme:
         readme_path = example_dir / "README.md"
         readme_content = generate_readme(template, example_name)
 
-        if not dry_run:
+        # Check mode: compare with existing
+        if check and readme_path.exists():
+            existing_content = readme_path.read_text(encoding="utf-8")
+            if existing_content != readme_content:
+                has_changes = True
+        elif check and not readme_path.exists():
+            has_changes = True
+
+        if not dry_run and not check:
             readme_path.write_text(readme_content, encoding="utf-8")
         readme_generated = True
 
@@ -127,11 +137,19 @@ def process_example(
         versions_path = example_dir / "versions.tf"
         versions_content = generate_versions_tf(base_versions_tf, provider_config)
 
-        if not dry_run:
+        # Check mode: compare with existing
+        if check and versions_path.exists():
+            existing_content = versions_path.read_text(encoding="utf-8")
+            if existing_content != versions_content:
+                has_changes = True
+        elif check and not versions_path.exists():
+            has_changes = True
+
+        if not dry_run and not check:
             versions_path.write_text(versions_content, encoding="utf-8")
         versions_generated = True
 
-    return readme_generated, versions_generated
+    return readme_generated, versions_generated, has_changes
 
 
 def main() -> None:
@@ -158,6 +176,11 @@ def main() -> None:
         "--no-skip",
         action="store_true",
         help="Process all examples (don't skip default excluded examples)",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check if documentation is up-to-date (exits with code 1 if changes needed)",
     )
 
     args = parser.parse_args()
@@ -202,6 +225,8 @@ def main() -> None:
     print(f"Template: {template_path_str}")
     if args.dry_run:
         print("Mode: DRY RUN (no files will be modified)")
+    if args.check:
+        print("Mode: CHECK (verifying documentation is up-to-date)")
     if skip_list:
         print(f"Skipping examples: {', '.join(skip_list)}")
     print()
@@ -215,6 +240,7 @@ def main() -> None:
     total_readme = 0
     total_versions = 0
     total_skipped = 0
+    examples_with_changes = []
 
     for example_dir in example_folders:
         if should_skip_example(example_dir.name, skip_list):
@@ -222,7 +248,7 @@ def main() -> None:
             print(f"⊘ {example_dir.name} (skipped)")
             continue
 
-        readme_gen, versions_gen = process_example(
+        readme_gen, versions_gen, has_changes = process_example(
             example_dir,
             template,
             base_versions_tf,
@@ -231,12 +257,15 @@ def main() -> None:
             dry_run=args.dry_run,
             skip_readme=args.skip_readme,
             skip_versions=args.skip_versions,
+            check=args.check,
         )
 
         if readme_gen:
             total_readme += 1
         if versions_gen:
             total_versions += 1
+        if has_changes:
+            examples_with_changes.append(example_dir.name)
 
         files = []
         if readme_gen:
@@ -244,15 +273,35 @@ def main() -> None:
         if versions_gen:
             files.append("versions.tf")
 
-        prefix = "→" if args.dry_run else "✓"
+        if args.check:
+            prefix = "❌" if has_changes else "✓"
+        else:
+            prefix = "→" if args.dry_run else "✓"
         files_str = ", ".join(files) if files else "no files"
         print(f"{prefix} {example_dir.name} ({files_str})")
 
     print()
-    action = "would be generated" if args.dry_run else "generated"
-    print(
-        f"Summary: {total_readme} READMEs {action}, {total_versions} versions.tf {action}, {total_skipped} skipped"
-    )
+
+    # Check mode: exit with error if any changes detected
+    if args.check:
+        if examples_with_changes:
+            print(
+                f"❌ ERROR: {len(examples_with_changes)} example(s) have outdated documentation:"
+            )
+            for example_name in examples_with_changes:
+                print(f"  - {example_name}")
+            print()
+            print("Run 'just gen-examples' to update documentation")
+            import sys
+
+            sys.exit(1)
+        else:
+            print("✓ All example documentation is up to date")
+    else:
+        action = "would be generated" if args.dry_run else "generated"
+        print(
+            f"Summary: {total_readme} READMEs {action}, {total_versions} versions.tf {action}, {total_skipped} skipped"
+        )
 
 
 if __name__ == "__main__":
