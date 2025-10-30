@@ -1,5 +1,5 @@
 <!-- This file is used to generate the examples/README.md files -->
-# Cluster with Multi Regions (US+EU)
+# Cluster with Multi Regions Global (US+EU)
 
 ## Pre Requirements
 If you are familiar with Terraform and already have a project configured in MongoDB Atlas go to [commands](#commands)
