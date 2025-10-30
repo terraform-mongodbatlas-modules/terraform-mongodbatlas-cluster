@@ -82,42 +82,18 @@ check-docs:
 
 # Create release branch with version-specific documentation
 release-commit version:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    
-    # Validate version format (vX.Y.Z)
-    if [[ ! "{{version}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Version must be in format vX.Y.Z (e.g., v1.0.0)"
-        exit 1
-    fi
-    
-    # Extract version without 'v' prefix for module_version
-    module_version="$(echo '{{version}}' | sed 's/^v//')"
-    
-    echo "Creating release {{version}}..."
-    
-    # Create and checkout release branch
+    @echo "Creating release {{version}}..."
+    @uv run python .github/validate_version.py {{version}}
     git checkout -b {{version}}
-    
-    # Update root versions.tf module_version
-    sed -i '' "s/module_version = \"[^\"]*\"/module_version = \"${module_version}\"/" versions.tf
-    
-    # Regenerate all docs with version
+    @uv run python .github/update_version.py {{version}}
     just gen-examples --version {{version}}
     just gen-readme
-    
-    # Convert links to absolute (using tag that will be created)
-    python .github/md_link_absolute.py {{version}}
-    
-    # Format everything
+    just md-link {{version}}
     just fmt
-    
-    # Commit and tag
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
-    
-    echo ""
-    echo "✓ Release branch {{version}} ready with tag"
-    echo "  Review changes, then push:"
-    echo "  git push origin {{version}} --tags"
+    @echo ""
+    @echo "✓ Release branch {{version}} ready with tag"
+    @echo "  Review changes, then push:"
+    @echo "  git push origin {{version}} --tags"

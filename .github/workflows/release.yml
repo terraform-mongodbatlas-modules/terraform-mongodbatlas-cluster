@@ -30,58 +30,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Validate version format
-        run: |
-          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Version must be in format vX.Y.Z (e.g., v1.0.0)"
-            exit 1
-          fi
-      
-      - name: Check if version already exists
-        run: |
-          if git rev-parse "${{ inputs.version }}" >/dev/null 2>&1; then
-            echo "Error: Tag ${{ inputs.version }} already exists"
-            exit 1
-          fi
-          if git rev-parse "origin/${{ inputs.version }}" >/dev/null 2>&1; then
-            echo "Error: Branch ${{ inputs.version }} already exists on remote"
-            exit 1
-          fi
-      
       - name: Create release branch and prepare release
         run: |
-          # Extract version without 'v' prefix for module_version
-          module_version="$(echo '${{ inputs.version }}' | sed 's/^v//')"
-          
-          echo "Creating release ${{ inputs.version }}..."
-          
-          # Create and checkout release branch
-          git checkout -b ${{ inputs.version }}
-          
-          # Update root versions.tf module_version
-          sed -i 's/module_version = "[^"]*"/module_version = "'"${module_version}"'"/' versions.tf
-          
-          # Regenerate all docs with version
-          just gen-examples --version ${{ inputs.version }}
-          just gen-readme
-          
-          # Convert links to absolute (using tag that will be created)
-          just md-link ${{ inputs.version }}
-          
-          # Format everything
-          just fmt
-          
-          # Show what changed
-          git status
-          git diff --stat
-      
-      - name: Commit and tag release
-        run: |
-          git add .
-          git commit -m "chore: release ${{ inputs.version }}"
-          git tag ${{ inputs.version }}
-          
-          echo "✓ Release branch ${{ inputs.version }} created with tag"
+          just release-commit ${{ inputs.version }}
       
       - name: Push release branch and tag
         run: |
