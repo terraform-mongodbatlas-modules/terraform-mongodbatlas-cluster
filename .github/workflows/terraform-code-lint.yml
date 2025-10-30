@@ -24,6 +24,19 @@ jobs:
       - run: just validate
       - run: just lint
 
+  docs-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        with:
+          just-version: '1.40.0'
+      - name: Check documentation is up-to-date
+        run: just check-docs
+
   plan-tests:
     runs-on: ubuntu-latest
     steps:
