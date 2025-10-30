@@ -7,6 +7,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Files to skip by default (relative to repo root)
+DEFAULT_SKIP_FILES = [
+    "CONTRIBUTING.md",
+    "docs/example_readme.md",
+]
+
 
 def get_git_remote_url() -> str:
     """Get the GitHub repository URL from git remote."""
@@ -35,7 +41,7 @@ def validate_tag_version(tag: str) -> bool:
     return bool(re.match(pattern, tag))
 
 
-def find_markdown_files(root_dir: Path) -> list[Path]:
+def find_markdown_files(root_dir: Path, skip_files: list[str]) -> list[Path]:
     """Find all tracked markdown files in the repository (respects .gitignore)."""
     try:
         # Use git ls-files to get only tracked files, which respects .gitignore
@@ -47,17 +53,21 @@ def find_markdown_files(root_dir: Path) -> list[Path]:
             cwd=root_dir,
         )
 
-        # Convert relative paths to Path objects
+        # Convert relative paths to Path objects and filter out skip files
         md_files = []
         for line in result.stdout.strip().split("\n"):
             if line:  # Skip empty lines
-                md_files.append(root_dir / line)
+                # Normalize path for comparison
+                if line not in skip_files:
+                    md_files.append(root_dir / line)
 
         return md_files
     except subprocess.CalledProcessError:
         # Fallback to glob if git command fails
         print("Warning: git ls-files failed, using glob (may include ignored files)")
-        return list(root_dir.glob("**/*.md"))
+        all_files = list(root_dir.glob("**/*.md"))
+        # Filter out skip files in fallback mode too
+        return [f for f in all_files if str(f.relative_to(root_dir)) not in skip_files]
 
 
 def resolve_relative_path(md_file: Path, relative_link: str, root_dir: Path) -> str:
@@ -159,10 +169,16 @@ def main() -> None:
         action="store_true",
         help="Preview changes without modifying files",
     )
+    parser.add_argument(
+        "--no-skip",
+        action="store_true",
+        help="Process all files (don't skip default excluded files)",
+    )
 
     args = parser.parse_args()
     tag_version = args.tag_version
     dry_run = args.dry_run
+    skip_files = [] if args.no_skip else DEFAULT_SKIP_FILES
 
     if not validate_tag_version(tag_version):
         print(
@@ -185,11 +201,13 @@ def main() -> None:
     print(f"Tag version: {tag_version}")
     if dry_run:
         print("Mode: DRY RUN (no files will be modified)")
+    if skip_files:
+        print(f"Skipping files: {', '.join(skip_files)}")
     print()
 
     # Find all markdown files
-    md_files = find_markdown_files(root_dir)
-    print(f"Found {len(md_files)} markdown files")
+    md_files = find_markdown_files(root_dir, skip_files)
+    print(f"Found {len(md_files)} markdown files to process")
     print()
 
     # Process each file
