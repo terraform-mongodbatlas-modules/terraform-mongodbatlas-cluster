@@ -97,7 +97,7 @@ def generate_notes_from_git_log(from_ref: str, to_ref: str) -> str:
         # Build release notes
         notes = "## What's Changed\n\n"
         notes += commits + "\n\n"
-        notes += f"**Full Changelog**: {from_ref}...{to_ref}\n"
+        notes += f"**Full Changelog**: {compare_from}...{compare_to}\n"
 
         return notes
     except subprocess.CalledProcessError as e:

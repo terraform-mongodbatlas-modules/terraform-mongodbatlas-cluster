@@ -7,14 +7,23 @@ import sys
 
 
 def get_git_remote_url() -> str:
-    """Get the GitHub repository URL from git remote."""
-    result = subprocess.run(
-        ["git", "remote", "get-url", "origin"],
-        capture_output=True,
-        text=True,
-        check=True,
+    """Get the GitHub repository URL from git remote, preferring upstream over origin."""
+    # Try origin first (for forks), then fall back to upstream to allow publishing from a fork
+    for remote in ["origin", "upstream"]:
+        try:
+            result = subprocess.run(
+                ["git", "remote", "get-url", remote],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError:
+            continue
+
+    raise subprocess.CalledProcessError(
+        1, "git remote get-url", "No upstream or origin remote found"
     )
-    return result.stdout.strip()
 
 
 def parse_github_repo(remote_url: str) -> tuple[str, str]:
@@ -49,7 +58,7 @@ def parse_github_repo(remote_url: str) -> tuple[str, str]:
     return parts[0], parts[1]
 
 
-def compute_registry_source(repo_name: str) -> str:
+def compute_registry_source(owner: str, repo_name: str) -> str:
     """
     Compute Terraform Registry source from repository name.
 
@@ -72,8 +81,7 @@ def compute_registry_source(repo_name: str) -> str:
     module_name = match.group(2)
 
     # Construct registry source
-    namespace = f"terraform-{provider}-modules"
-    registry_source = f"{namespace}/{module_name}/{provider}"
+    registry_source = f"{owner}/{module_name}/{provider}"
 
     return registry_source
 
@@ -86,7 +94,7 @@ def main() -> None:
         owner, repo_name = parse_github_repo(remote_url)
 
         # Compute registry source
-        registry_source = compute_registry_source(repo_name)
+        registry_source = compute_registry_source(owner, repo_name)
 
         # Output only the registry source
         print(registry_source)

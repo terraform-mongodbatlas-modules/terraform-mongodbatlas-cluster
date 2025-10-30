@@ -1,5 +1,5 @@
 name: Release
-
+run-name: 'Release ${{ inputs.version }}'
 on:
   workflow_dispatch:
     inputs:
@@ -38,8 +38,7 @@ jobs:
       
       - name: Push release branch and tag
         run: |
-          git push origin ${{ inputs.version }}
-          git push origin ${{ inputs.version }} --tags
+          git push origin --tags
           
           echo "✓ Release ${{ inputs.version }} pushed successfully"
           echo "  Branch: https://github.com/${{ github.repository }}/tree/${{ inputs.version }}"
@@ -64,13 +63,8 @@ jobs:
         uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048  # v2.2.0
         with:
           tag_name: ${{ inputs.version }}
-          name: Release ${{ inputs.version }}
-          target_commitish: ${{ inputs.version }}  # Point to release branch, not main
+          name: ${{ inputs.version }}
           body: |
-            ## Release ${{ inputs.version }}
-            
-            This release includes version-specific documentation with absolute links.
-            
             ### Installation
             
             ```hcl
