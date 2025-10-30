@@ -61,3 +61,7 @@ test: unit-plan-tests integration-tests
 # Convert relative markdown links to absolute GitHub URLs
 md-link tag_version *args:
     python .github/md_link_absolute.py {{tag_version}} {{args}}
+
+# Generate README.md and versions.tf files for examples
+gen-examples *args:
+    uv run --with pyyaml python .github/examples_readme.py {{args}}
