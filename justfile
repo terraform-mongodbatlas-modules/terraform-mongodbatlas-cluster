@@ -24,7 +24,7 @@ docs: gen-readme gen-examples
     @echo "Documentation generated successfully"
 
 # Run all validation checks
-check: fmt validate lint docs
+check: fmt validate lint check-docs
     @echo "All checks passed successfully"
 
 # Initialize examples
