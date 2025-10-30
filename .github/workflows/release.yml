@@ -52,11 +52,22 @@ jobs:
           echo "registry_source=${REGISTRY_SOURCE}" >> $GITHUB_OUTPUT
           echo "Terraform Registry source: ${REGISTRY_SOURCE}"
       
+      - name: Generate release notes
+        id: release_notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=$(just release-notes ${{ inputs.version }})
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048  # v2.2.0
         with:
           tag_name: ${{ inputs.version }}
           name: Release ${{ inputs.version }}
+          target_commitish: ${{ inputs.version }}  # Point to release branch, not main
           body: |
             ## Release ${{ inputs.version }}
             
@@ -83,9 +94,9 @@ jobs:
             - [Examples](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/examples/)
             - [Contributing Guide](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/CONTRIBUTING.md)
             
-            ### Changes
+            ---
             
-            See the commit history for details on what changed in this release.
+            ${{ steps.release_notes.outputs.notes }}
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false  # Using custom generation to handle branch-based releases
