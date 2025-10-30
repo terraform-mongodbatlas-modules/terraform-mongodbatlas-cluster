@@ -8,6 +8,8 @@ on:
         required: true
         type: string
 
+# Permissions required:
+# - contents: write - to create release branch, push tags, and create GitHub releases
 permissions:
   contents: write
 
