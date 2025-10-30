@@ -36,10 +36,35 @@ def get_previous_tag(current_version: str) -> Optional[str]:
         return None
 
 
+def get_commit_sha(ref: str) -> Optional[str]:
+    """Get commit SHA for a given ref (tag, branch, or commit)."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", ref],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
 def generate_release_notes_api(
-    repo: str, current_version: str, previous_tag: str, target_branch: str
+    repo: str, current_version: str, previous_tag: str, target_ref: str
 ) -> str:
-    """Generate release notes using GitHub API."""
+    """
+    Generate release notes using GitHub API.
+
+    Note: This requires the commits to exist on GitHub remote.
+    If tags don't exist yet, commit SHAs are used as fallback.
+    """
+    # Try to use tags first, fall back to commit SHAs if needed
+    current_sha = get_commit_sha(target_ref) or target_ref
+    previous_sha = get_commit_sha(previous_tag) or previous_tag
+
+    print(f"Using commits: {previous_sha[:8]} → {current_sha[:8]}", file=sys.stderr)
+
     result = subprocess.run(
         [
             "gh",
@@ -48,7 +73,7 @@ def generate_release_notes_api(
             "-f",
             f"tag_name={current_version}",
             "-f",
-            f"target_commitish={target_branch}",
+            f"target_commitish={current_sha}",
             "-f",
             f"previous_tag_name={previous_tag}",
             "--jq",
@@ -91,32 +116,70 @@ def get_repo_name() -> str:
 
 def main() -> None:
     """Main function to generate release notes."""
-    if len(sys.argv) != 2:
-        print("Usage: release_notes.py <version>", file=sys.stderr)
-        print("Example: release_notes.py v1.0.0", file=sys.stderr)
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: release_notes.py <new_version> [old_version]", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Examples:", file=sys.stderr)
+        print(
+            "  release_notes.py v1.0.0              # Auto-detect previous release",
+            file=sys.stderr,
+        )
+        print(
+            "  release_notes.py v1.1.0 v1.0.0       # Compare specific versions",
+            file=sys.stderr,
+        )
+        print(
+            "  release_notes.py v1.0.0 abc123       # Compare with specific commit",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        print("Note: This requires the commits to exist on GitHub.", file=sys.stderr)
+        print("      Run after pushing the release branch and tag.", file=sys.stderr)
         sys.exit(1)
 
     current_version = sys.argv[1]
+    previous_version = sys.argv[2] if len(sys.argv) == 3 else None
 
     # Get repository information
     repo = get_repo_name()
     print(f"Generating release notes for {current_version}...", file=sys.stderr)
 
     # Find previous release
-    previous_tag = get_previous_tag(current_version)
-
-    if not previous_tag:
-        print("No previous release found - this is the first release", file=sys.stderr)
-        print("Initial release of terraform-mongodbatlas-cluster module.")
-        return
+    if previous_version:
+        print(f"Using specified previous version: {previous_version}", file=sys.stderr)
+        previous_tag = previous_version
+    else:
+        previous_tag = get_previous_tag(current_version)
+        if not previous_tag:
+            print(
+                "No previous release found - this is the first release", file=sys.stderr
+            )
+            print("", file=sys.stderr)
+            print("Tip: Specify a commit/tag to compare against:", file=sys.stderr)
+            print(
+                f"     just release-notes {current_version} <previous_commit>",
+                file=sys.stderr,
+            )
+            print("Initial release of terraform-mongodbatlas-cluster module.")
+            return
 
     print(f"Comparing {previous_tag} → {current_version}", file=sys.stderr)
 
     # Generate release notes via GitHub API (compares the two tags directly)
-    notes = generate_release_notes_api(
-        repo, current_version, previous_tag, current_version
-    )
-    print(notes)
+    try:
+        notes = generate_release_notes_api(
+            repo, current_version, previous_tag, current_version
+        )
+        print(notes)
+    except subprocess.CalledProcessError as e:
+        print(
+            "\nError: Failed to generate release notes via GitHub API", file=sys.stderr
+        )
+        print("Make sure the commits exist on GitHub (push first).", file=sys.stderr)
+        print(
+            f"\nGitHub API error: {e.stderr if e.stderr else str(e)}", file=sys.stderr
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
