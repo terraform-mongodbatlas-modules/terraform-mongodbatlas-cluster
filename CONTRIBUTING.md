@@ -5,8 +5,11 @@ Quick guide for contributing to this Terraform module.
 ## Quick Start
 
 ```bash
-# Install required tools (macOS)
+# Install required tools (macOS with Homebrew)
 brew install just terraform tflint terraform-docs uv
+
+# Or use mise for automated tool management
+mise install
 
 # Clone and setup
 git clone <repo-url>
@@ -19,7 +22,7 @@ just
 just check
 ```
 
-**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/)
+**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/) • [mise](https://mise.jdx.dev/) (optional)
 
 ## Prerequisites
 
@@ -32,9 +35,11 @@ just check
 
 ```bash
 # Daily workflow
-just fmt                      # Format code
-just lint                     # Run linters
-just check                    # Run all checks (fmt, validate, lint, check-docs)
+just fmt                      # Format Terraform code
+just lint                     # Run Terraform linters
+just py-fmt                   # Format Python code
+just py-check                 # Lint Python code
+just check                    # Run all checks (fmt, validate, lint, check-docs, py-check)
 
 # Documentation
 just docs                     # Generate all docs
@@ -47,6 +52,8 @@ just test                     # Run unit + integration tests
 
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
+just release-notes v1.0.0     # Generate release notes
+just tf-registry-source       # Show Terraform Registry source
 ```
 
 Run `just --list` for all commands.
@@ -56,19 +63,23 @@ Run `just --list` for all commands.
 ### Setup
 
 ```bash
-# Required for tests (see Atlas Provider authentication docs)
+# Required for all tests (authentication)
 export MONGODB_ATLAS_CLIENT_ID=your_sa_client_id
 export MONGODB_ATLAS_CLIENT_SECRET=your_sa_client_secret
+
+# Required for integration tests (creates test project)
+export MONGODB_ATLAS_ORG_ID=your_org_id
+
 # Optional:
 export MONGODB_ATLAS_BASE_URL=https://cloud.mongodb.com/
 
 # Run tests
-just test                # All tests
+just test                # All tests (unit + integration)
 just unit-plan-tests     # Plan-only (no resources)
 just integration-tests   # Apply tests (creates resources)
 ```
 
-**Note**: Integration tests set `termination_protection_enabled = false` to allow cleanup.
+**Note**: Integration tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
 
 See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) for more details.
 
@@ -88,9 +99,13 @@ Documentation is auto-generated. Run `just check` before committing - it regener
 3. Run `just docs`
 
 **Scripts** (in `.github/`, [Python](https://www.python.org/) 3.10+):
-- `root_readme.py` - Generates TOC and tables
+- `root_readme.py` - Generates root README TOC and tables
 - `examples_readme.py` - Generates example docs
-- `md_link_absolute.py` - Converts links for releases
+- `md_link_absolute.py` - Converts relative links to absolute GitHub URLs for releases
+- `tf_registry_source.py` - Shows Terraform Registry source for the module
+- `release_notes.py` - Generates release notes from GitHub commits
+- `update_version.py` - Updates module version in versions.tf
+- `validate_version.py` - Validates version format for releases
 
 ## Release Process (Maintainers)
 
