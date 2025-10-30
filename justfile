@@ -48,7 +48,7 @@ plan-examples project_id:
 # Run all integration tests (expects org_id env var)
 integration-tests:
     terraform init
-    terraform test -filter=tests/apply_regions.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 # Run tests matching a file/path/pattern
 unit-plan-tests:

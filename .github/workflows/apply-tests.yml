@@ -13,6 +13,12 @@ on:
         type: boolean
         default: false
 
+env:
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+
 jobs:
   dev-cluster-test:
     name: Dev Cluster Test
@@ -28,14 +34,9 @@ jobs:
           just-version: '1.40.0'
 
       - name: Run Dev Cluster Test
-        env:
-          MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-          MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
-          MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
-          MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
         run: |
           terraform init
-          terraform test -filter=tests/apply_regions.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
+          terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
 
   full-test-suite:
     name: Full Test Suite
@@ -51,9 +52,4 @@ jobs:
           just-version: '1.40.0'
 
       - name: Run Full Test Suite
-        env:
-          MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-          MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
-          MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
-          MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
         run: just integration-tests
