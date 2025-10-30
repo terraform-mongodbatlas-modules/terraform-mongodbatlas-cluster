@@ -65,6 +65,7 @@ md-link tag_version *args:
 # Generate README.md and versions.tf files for examples
 gen-examples *args:
     uv run --with pyyaml python .github/examples_readme.py {{args}}
+    just fmt
 
 # Generate root README.md TOC and TABLES sections
 gen-readme *args:
