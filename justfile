@@ -19,7 +19,7 @@ lint:
     terraform fmt -check -recursive
 
 # Generate documentation
-docs:
+docs: gen-readme gen-examples
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
 
