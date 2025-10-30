@@ -7,14 +7,16 @@ on:
   pull_request: {}
   workflow_dispatch:
     inputs:
-      org_id:
-        description: 'MongoDB Atlas Organization ID'
+      run_full_suite:
+        description: 'Run full test suite (all apply tests)'
         required: false
-        type: string
+        type: boolean
+        default: false
 
 jobs:
   dev-cluster-test:
     name: Dev Cluster Test
+    if: ${{ !inputs.run_full_suite }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
@@ -33,4 +35,25 @@ jobs:
           MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
         run: |
           terraform init
-          terraform test -filter=tests/apply_regions.tftest.hcl -var "org_id=${{ secrets.MONGODB_ATLAS_ORG_ID }}"
+          terraform test -filter=tests/apply_regions.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
+
+  full-test-suite:
+    name: Full Test Suite
+    if: ${{ inputs.run_full_suite }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
+        with:
+          terraform_wrapper: false
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        with:
+          just-version: '1.40.0'
+
+      - name: Run Full Test Suite
+        env:
+          MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+          MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+          MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+        run: just integration-tests
