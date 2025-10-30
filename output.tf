@@ -35,8 +35,3 @@ output "state_name" {
   description = "Human-readable label that indicates the current operating condition of this cluster."
   value       = mongodbatlas_advanced_cluster.this.state_name
 }
-
-output "replication_specs" {
-  description = "List of settings of your configured cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations."
-  value       = mongodbatlas_advanced_cluster.this.replication_specs
-}
