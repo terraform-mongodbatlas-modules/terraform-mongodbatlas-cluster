@@ -18,13 +18,19 @@ lint:
     tflint -f compact --recursive --minimum-failure-severity=warning 
     terraform fmt -check -recursive
 
+py-check:
+    uv run ruff check .github
+
+py-fmt:
+    uv run ruff format .github
+
 # Generate documentation
 docs: gen-readme gen-examples
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
 
 # Run all validation checks
-check: fmt validate lint check-docs
+check: fmt validate lint check-docs py-check
     @echo "All checks passed successfully"
 
 # Initialize examples
