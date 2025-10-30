@@ -36,8 +36,28 @@ def validate_tag_version(tag: str) -> bool:
 
 
 def find_markdown_files(root_dir: Path) -> list[Path]:
-    """Find all markdown files in the repository."""
-    return list(root_dir.glob("**/*.md"))
+    """Find all tracked markdown files in the repository (respects .gitignore)."""
+    try:
+        # Use git ls-files to get only tracked files, which respects .gitignore
+        result = subprocess.run(
+            ["git", "ls-files", "*.md", "**/*.md"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=root_dir,
+        )
+
+        # Convert relative paths to Path objects
+        md_files = []
+        for line in result.stdout.strip().split("\n"):
+            if line:  # Skip empty lines
+                md_files.append(root_dir / line)
+
+        return md_files
+    except subprocess.CalledProcessError:
+        # Fallback to glob if git command fails
+        print("Warning: git ls-files failed, using glob (may include ignored files)")
+        return list(root_dir.glob("**/*.md"))
 
 
 def resolve_relative_path(md_file: Path, relative_link: str, root_dir: Path) -> str:
