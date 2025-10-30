@@ -57,3 +57,7 @@ unit-plan-tests:
 
 # Run all tests
 test: unit-plan-tests integration-tests
+
+# Convert relative markdown links to absolute GitHub URLs
+md-link tag_version *args:
+    python .github/md_link_absolute.py {{tag_version}} {{args}}
