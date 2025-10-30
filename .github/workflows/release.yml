@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          fetch-depth: 0  # Fetch all history for git operations
+      
+      - uses: ./.github/actions/setup-base
+      
+      - uses: ./.github/actions/setup-terraform
+      
+      - uses: ./.github/actions/setup-docs
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version must be in format vX.Y.Z (e.g., v1.0.0)"
+            exit 1
+          fi
+      
+      - name: Check if version already exists
+        run: |
+          if git rev-parse "${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "Error: Tag ${{ inputs.version }} already exists"
+            exit 1
+          fi
+          if git rev-parse "origin/${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "Error: Branch ${{ inputs.version }} already exists on remote"
+            exit 1
+          fi
+      
+      - name: Create release branch and prepare release
+        run: |
+          # Extract version without 'v' prefix for module_version
+          module_version="$(echo '${{ inputs.version }}' | sed 's/^v//')"
+          
+          echo "Creating release ${{ inputs.version }}..."
+          
+          # Create and checkout release branch
+          git checkout -b ${{ inputs.version }}
+          
+          # Update root versions.tf module_version
+          sed -i 's/module_version = "[^"]*"/module_version = "'"${module_version}"'"/' versions.tf
+          
+          # Regenerate all docs
+          just gen-examples
+          just gen-readme
+          
+          # Convert links to absolute (using tag that will be created)
+          just md-link ${{ inputs.version }}
+          
+          # Format everything
+          just fmt
+          
+          # Show what changed
+          git status
+          git diff --stat
+      
+      - name: Commit and tag release
+        run: |
+          git add .
+          git commit -m "chore: release ${{ inputs.version }}"
+          git tag ${{ inputs.version }}
+          
+          echo "✓ Release branch ${{ inputs.version }} created with tag"
+      
+      - name: Push release branch and tag
+        run: |
+          git push origin ${{ inputs.version }}
+          git push origin ${{ inputs.version }} --tags
+          
+          echo "✓ Release ${{ inputs.version }} pushed successfully"
+          echo "  Branch: https://github.com/${{ github.repository }}/tree/${{ inputs.version }}"
+          echo "  Tag: https://github.com/${{ github.repository }}/releases/tag/${{ inputs.version }}"
+      
+      - name: Compute Terraform Registry source
+        id: registry
+        run: |
+          REGISTRY_SOURCE=$(just tf-registry-source)
+          echo "registry_source=${REGISTRY_SOURCE}" >> $GITHUB_OUTPUT
+          echo "Terraform Registry source: ${REGISTRY_SOURCE}"
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: Release ${{ inputs.version }}
+          body: |
+            ## Release ${{ inputs.version }}
+            
+            This release includes version-specific documentation with absolute links.
+            
+            ### Installation
+            
+            ```hcl
+            module "cluster" {
+              source  = "${{ steps.registry.outputs.registry_source }}"
+              version = "${{ inputs.version }}"
+              
+              # Your configuration here
+              project_id   = "your-project-id"
+              name         = "my-cluster"
+              cluster_type = "SHARDED"
+              # ... additional configuration
+            }
+            ```
+            
+            ### Documentation
+            
+            - [README](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/README.md)
+            - [Examples](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/examples/)
+            - [Contributing Guide](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/CONTRIBUTING.md)
+            
+            ### Changes
+            
+            See the commit history for details on what changed in this release.
+          draft: false
+          prerelease: false
+          generate_release_notes: true

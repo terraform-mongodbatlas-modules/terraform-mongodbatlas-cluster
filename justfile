@@ -60,7 +60,7 @@ test: unit-plan-tests integration-tests
 
 # Convert relative markdown links to absolute GitHub URLs
 md-link tag_version *args:
-    python .github/md_link_absolute.py {{tag_version}} {{args}}
+    uv run python .github/md_link_absolute.py {{tag_version}} {{args}}
 
 # Generate README.md and versions.tf files for examples
 gen-examples *args:
@@ -70,6 +70,10 @@ gen-examples *args:
 # Generate root README.md TOC and TABLES sections
 gen-readme *args:
     uv run --with pyyaml python .github/root_readme.py {{args}}
+
+# Show Terraform Registry source for this module
+tf-registry-source:
+    @uv run python .github/tf_registry_source.py
 
 # Check if documentation is up-to-date (for CI)
 check-docs:
