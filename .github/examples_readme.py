@@ -9,7 +9,7 @@ import yaml
 
 # Files/folders to skip by default
 DEFAULT_SKIP_EXAMPLES = [
-    "08_dev",  # Has custom versions.tf and README
+    "08_development_cluster",  # Has custom versions.tf and README
     "13_example_import",  # Different structure
 ]
 
