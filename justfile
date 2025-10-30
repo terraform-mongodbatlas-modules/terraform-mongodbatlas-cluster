@@ -102,8 +102,8 @@ release-commit version:
     # Update root versions.tf module_version
     sed -i '' "s/module_version = \"[^\"]*\"/module_version = \"${module_version}\"/" versions.tf
     
-    # Regenerate all docs
-    just gen-examples
+    # Regenerate all docs with version
+    just gen-examples --version {{version}}
     just gen-readme
     
     # Convert links to absolute (using tag that will be created)

@@ -22,6 +22,91 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "cluster" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "multi-zone-geo-sharded"
+  project_id   = var.project_id
+  cluster_type = "GEOSHARDED"
+  regions = [
+    { # zone: US, shard: 0
+      name         = "US_EAST_1"
+      node_count   = 3
+      zone_name    = "US"
+      shard_number = 0
+    },
+    {
+      name         = "US_EAST_2"
+      node_count   = 2
+      zone_name    = "US"
+      shard_number = 0
+    },
+    {
+      name         = "US_WEST_2"
+      node_count   = 2
+      zone_name    = "US"
+      shard_number = 0
+    },
+    { # zone: US, shard: 1
+      name         = "US_EAST_1"
+      node_count   = 3
+      zone_name    = "US"
+      shard_number = 1
+    },
+    {
+      name         = "US_EAST_2"
+      node_count   = 2
+      zone_name    = "US"
+      shard_number = 1
+    },
+    {
+      name         = "US_WEST_2"
+      node_count   = 2
+      zone_name    = "US"
+      shard_number = 1
+    },
+    { # zone: EU, shard: 0
+      name                 = "EU_WEST_1"
+      node_count           = 3
+      node_count_read_only = 2
+      zone_name            = "EU"
+      shard_number         = 0
+    },
+    { # zone: EU2, shard: 0
+      name                 = "EU_WEST_2"
+      node_count           = 3
+      node_count_read_only = 2
+      zone_name            = "EU2"
+      shard_number         = 0
+    }
+  ]
+  provider_name = "AWS"
+  auto_scaling = {
+    compute_enabled            = true
+    compute_max_instance_size  = "M60"
+    compute_min_instance_size  = "M30"
+    compute_scale_down_enabled = true
+    disk_gb_enabled            = true
+  }
+
+  tags = var.tags
+}
+
+output "cluster" {
+  value = module.cluster
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.

@@ -22,6 +22,58 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "cluster" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "multi-cloud"
+  project_id   = var.project_id
+  cluster_type = "SHARDED"
+  regions = [
+    {
+      shard_number         = 0
+      name                 = "US_WEST_2"
+      node_count           = 2
+      node_count_read_only = 2
+      provider_name        = "AZURE"
+      }, {
+      shard_number         = 0
+      name                 = "US_EAST_2"
+      node_count           = 1
+      node_count_read_only = 2
+      provider_name        = "AWS"
+    },
+    {
+      shard_number         = 1
+      name                 = "US_WEST_2"
+      node_count           = 2
+      node_count_read_only = 2
+      provider_name        = "AZURE"
+      }, {
+      shard_number         = 1
+      name                 = "US_EAST_2"
+      node_count           = 1
+      node_count_read_only = 2
+      provider_name        = "AWS"
+    }
+  ]
+  tags = var.tags
+}
+
+output "cluster" {
+  value = module.cluster
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.

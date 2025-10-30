@@ -22,6 +22,46 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "cluster" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "single-region-with-analytics"
+  project_id   = var.project_id
+  cluster_type = "SHARDED"
+  regions = [
+    {
+      name                 = "US_EAST_1"
+      node_count           = 3
+      provider_name        = "AWS"
+      node_count_analytics = 1
+      shard_number         = 1
+    }
+  ]
+  auto_scaling_analytics = {
+    compute_enabled            = true
+    compute_max_instance_size  = "M30"
+    compute_min_instance_size  = "M10"
+    compute_scale_down_enabled = true
+    disk_gb_enabled            = true
+  }
+  tags = var.tags
+}
+
+output "cluster" {
+  value = module.cluster
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.

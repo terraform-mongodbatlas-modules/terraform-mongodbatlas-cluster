@@ -22,6 +22,39 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "replication_var" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "replication-var"
+  project_id   = var.project_id
+  regions      = []
+  cluster_type = "SHARDED"
+  replication_specs = [{
+    region_configs = [{
+      priority      = 7
+      provider_name = "AWS"
+      region_name   = "US_EAST_1"
+      shard_number  = 1
+      electable_specs = {
+        instance_size = "M10"
+        node_count    = 3
+      }
+    }]
+  }]
+  tags = var.tags
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.

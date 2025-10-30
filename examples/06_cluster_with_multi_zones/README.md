@@ -22,6 +22,42 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "cluster" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "multi-geo-zone-sharded"
+  project_id   = var.project_id
+  cluster_type = "GEOSHARDED"
+  regions = [
+    {
+      name       = "US_EAST_1"
+      node_count = 3
+      zone_name  = "US"
+      }, {
+      name       = "EU_WEST_1"
+      node_count = 3
+      zone_name  = "EU"
+    }
+  ]
+  provider_name = "AWS"
+  tags          = var.tags
+}
+
+output "cluster" {
+  value = module.cluster
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.

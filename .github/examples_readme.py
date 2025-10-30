@@ -3,6 +3,8 @@
 
 import argparse
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import yaml
@@ -57,9 +59,121 @@ def get_example_name(folder_name: str, config: dict) -> str:
     return name_without_number.replace("_", " ").title()
 
 
-def generate_readme(template: str, example_name: str) -> str:
+def get_registry_source() -> str:
+    """Get Terraform Registry source by calling justfile command."""
+    result = subprocess.run(
+        ["just", "tf-registry-source"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def get_example_terraform_files(example_dir: Path) -> dict[str, str]:
+    """
+    Get Terraform files in example directory.
+
+    Returns dict with:
+    - main_tf: content of main.tf
+    - other_files: list of other .tf filenames
+    """
+    main_tf = example_dir / "main.tf"
+    main_content = main_tf.read_text(encoding="utf-8") if main_tf.exists() else ""
+
+    # Find all .tf files except main.tf
+    other_files = [
+        f.name for f in sorted(example_dir.glob("*.tf")) if f.name != "main.tf"
+    ]
+
+    return {"main_tf": main_content, "other_files": other_files}
+
+
+def transform_main_tf_for_registry(
+    main_tf_content: str, registry_source: str, version: str | None = None
+) -> str:
+    """
+    Transform main.tf to use registry source instead of local path.
+
+    Replaces:
+        source = "../.."
+    With:
+        source  = "registry_source"
+        version = "version"  # if version provided
+    """
+    # Replace source = "../.." with registry source
+    transformed = re.sub(
+        r'source\s*=\s*"\.\.\/\.\."',
+        f'source  = "{registry_source}"',
+        main_tf_content,
+    )
+
+    # Add version after source if provided
+    if version:
+        # Find the source line and add version after it
+        transformed = re.sub(
+            rf'(source\s*=\s*"{re.escape(registry_source)}")',
+            rf'\1\n  version = "{version}"',
+            transformed,
+        )
+
+    return transformed
+
+
+def generate_code_snippet(
+    example_dir: Path, registry_source: str, version: str | None = None
+) -> str:
+    """Generate code snippet section for README."""
+    tf_files = get_example_terraform_files(example_dir)
+    main_tf = tf_files["main_tf"]
+    other_files = tf_files["other_files"]
+
+    if not main_tf:
+        return ""
+
+    # Transform main.tf for registry usage
+    transformed_main = transform_main_tf_for_registry(main_tf, registry_source, version)
+
+    # Build code snippet section
+    snippet = "## Code Snippet\n\n"
+    snippet += "Copy and use this code to get started quickly:\n\n"
+    snippet += "**main.tf**\n"
+    snippet += "```hcl\n"
+    snippet += transformed_main
+    snippet += "```\n\n"
+
+    # Add links to other files
+    if other_files:
+        snippet += "**Additional files needed:**\n"
+        for filename in other_files:
+            snippet += f"- [{filename}](./{filename})\n"
+        snippet += "\n"
+
+    return snippet
+
+
+def generate_readme(
+    template: str,
+    example_name: str,
+    example_dir: Path,
+    registry_source: str,
+    version: str | None = None,
+) -> str:
     """Generate README content by replacing template variables."""
     content = template.replace("{{ .NAME }}", example_name)
+
+    # Generate and insert code snippet
+    code_snippet = generate_code_snippet(example_dir, registry_source, version)
+
+    # Insert code snippet after the commands section (before Production Considerations)
+    # Find the position to insert
+    insert_marker = "## Production Considerations"
+    if insert_marker in content:
+        content = content.replace(insert_marker, f"{code_snippet}{insert_marker}")
+    else:
+        # Fallback: add at the end before any final sections
+        content = content.rstrip() + "\n\n" + code_snippet
+
     return content
 
 
@@ -98,6 +212,8 @@ def process_example(
     base_versions_tf: str,
     provider_config: str,
     config: dict,
+    registry_source: str,
+    version: str | None = None,
     dry_run: bool = False,
     skip_readme: bool = False,
     skip_versions: bool = False,
@@ -118,7 +234,9 @@ def process_example(
     # Generate README.md
     if not skip_readme:
         readme_path = example_dir / "README.md"
-        readme_content = generate_readme(template, example_name)
+        readme_content = generate_readme(
+            template, example_name, example_dir, registry_source, version
+        )
 
         # Check mode: compare with existing
         if check and readme_path.exists():
@@ -182,6 +300,12 @@ def main() -> None:
         action="store_true",
         help="Check if documentation is up-to-date (exits with code 1 if changes needed)",
     )
+    parser.add_argument(
+        "--version",
+        type=str,
+        default=None,
+        help="Module version to include in code snippets (e.g., v1.0.0) empty for latest",
+    )
 
     args = parser.parse_args()
 
@@ -221,8 +345,18 @@ def main() -> None:
     # Determine skip list
     skip_list = [] if args.no_skip else DEFAULT_SKIP_EXAMPLES
 
+    # Get registry source for code snippets
+    try:
+        registry_source = get_registry_source()
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Failed to get registry source: {e}", file=sys.stderr)
+        return
+
     print("Example README Generator")
     print(f"Template: {template_path_str}")
+    print(f"Registry source: {registry_source}")
+    if args.version:
+        print(f"Version: {args.version}")
     if args.dry_run:
         print("Mode: DRY RUN (no files will be modified)")
     if args.check:
@@ -254,6 +388,8 @@ def main() -> None:
             base_versions_tf,
             provider_config,
             config,
+            registry_source,
+            version=args.version,
             dry_run=args.dry_run,
             skip_readme=args.skip_readme,
             skip_versions=args.skip_versions,
@@ -292,8 +428,6 @@ def main() -> None:
                 print(f"  - {example_name}")
             print()
             print("Run 'just gen-examples' to update documentation")
-            import sys
-
             sys.exit(1)
         else:
             print("✓ All example documentation is up to date")
