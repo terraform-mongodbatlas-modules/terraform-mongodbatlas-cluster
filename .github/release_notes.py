@@ -89,26 +89,6 @@ def get_repo_name() -> str:
         sys.exit(1)
 
 
-def get_repo_server_url() -> str:
-    """Get the GitHub server URL."""
-    try:
-        result = subprocess.run(
-            ["git", "remote", "get-url", "origin"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        remote_url = result.stdout.strip()
-
-        if "github.com" in remote_url:
-            return "https://github.com"
-
-        return "https://github.com"  # Default
-    except subprocess.CalledProcessError:
-        return "https://github.com"
-
-
 def main() -> None:
     """Main function to generate release notes."""
     if len(sys.argv) != 2:
@@ -120,8 +100,6 @@ def main() -> None:
 
     # Get repository information
     repo = get_repo_name()
-    server_url = get_repo_server_url()
-
     print(f"Generating release notes for {current_version}...", file=sys.stderr)
 
     # Find previous release
