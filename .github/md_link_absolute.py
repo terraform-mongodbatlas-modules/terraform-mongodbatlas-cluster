@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Convert relative links in markdown files to absolute GitHub URLs."""
 
+import argparse
 import re
 import subprocess
 import sys
@@ -126,12 +127,22 @@ def process_markdown_file(
 
 def main() -> None:
     """Main function."""
-    if len(sys.argv) < 2:
-        print("Usage: python md_link_absolute.py <tag_version>", file=sys.stderr)
-        print("Example: python md_link_absolute.py v1.0.0", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Convert relative links in markdown files to absolute GitHub URLs"
+    )
+    parser.add_argument(
+        "tag_version",
+        help="Git tag version in format vX.Y.Z (e.g., v1.0.0)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without modifying files",
+    )
 
-    tag_version = sys.argv[1]
+    args = parser.parse_args()
+    tag_version = args.tag_version
+    dry_run = args.dry_run
 
     if not validate_tag_version(tag_version):
         print(
@@ -152,6 +163,8 @@ def main() -> None:
 
     print(f"Repository: {github_url}")
     print(f"Tag version: {tag_version}")
+    if dry_run:
+        print("Mode: DRY RUN (no files will be modified)")
     print()
 
     # Find all markdown files
@@ -165,18 +178,20 @@ def main() -> None:
 
     for md_file in md_files:
         was_modified, num_links = process_markdown_file(
-            md_file, github_url, tag_version, root_dir
+            md_file, github_url, tag_version, root_dir, dry_run=dry_run
         )
 
         if was_modified:
             total_modified += 1
             total_links_converted += num_links
             rel_path = md_file.relative_to(root_dir)
-            print(f"✓ {rel_path} ({num_links} converted)")
+            prefix = "→" if dry_run else "✓"
+            print(f"{prefix} {rel_path} ({num_links} converted)")
 
     print()
+    action = "would be modified" if dry_run else "modified"
     print(
-        f"Summary: Modified {total_modified} files, converted {total_links_converted} links"
+        f"Summary: {total_modified} files {action}, {total_links_converted} links converted"
     )
 
 
