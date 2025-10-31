@@ -1,12 +1,7 @@
-module "regions_replicaset_small" {
-  source = "./modules/regions_helper"
+module "cluster_small" {
+  source = "./modules/cluster_wrapper"
 
   cluster_size = "small"
-}
-
-module "cluster_small" {
-  source = "../.."
-
   tags          = var.tags
   regions       = module.regions_replicaset_small.regions
   name          = "small"
@@ -19,19 +14,11 @@ output "cluster_small" {
   value = module.cluster_small
 }
 
-module "regions_sharded_medium" {
-  source = "./modules/regions_helper"
+module "cluster_medium_sharded" {
+  source = "./modules/cluster_wrapper"
 
   cluster_size = "medium"
   shards       = 3
-}
-
-output "regions_cluster_medium_sharded" {
-  value = module.regions_sharded_medium.regions
-}
-
-module "cluster_medium_sharded" {
-  source = "../.."
 
   tags          = var.tags
   regions       = module.regions_sharded_medium.regions
@@ -45,8 +32,9 @@ output "cluster_medium_sharded" {
   value = module.cluster_medium_sharded
 }
 
-module "regions_cluster_geosharded" {
-  source = "./modules/regions_helper"
+
+module "cluster_geosharded" {
+  source = "./modules/cluster_wrapper"
 
   zones = {
     EU = {
@@ -69,15 +57,6 @@ module "regions_cluster_geosharded" {
       shards = 1
     }
   }
-
-}
-
-output "regions_geosharded" {
-  value = module.regions_cluster_geosharded
-}
-
-module "cluster_geosharded" {
-  source = "../.."
 
   tags          = var.tags
   regions       = module.regions_cluster_geosharded.regions
