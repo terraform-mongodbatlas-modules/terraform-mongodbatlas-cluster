@@ -4,7 +4,13 @@ on:
   push:
     branches:
       - main
-  pull_request: {}
+    paths:
+      - '**.tf'
+      - '**.tftest.hcl'
+  pull_request:
+    paths:
+      - '**.tf'
+      - '**.tftest.hcl'
   workflow_dispatch:
     inputs:
       run_full_suite:
