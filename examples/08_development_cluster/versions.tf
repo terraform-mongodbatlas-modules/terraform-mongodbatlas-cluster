@@ -5,6 +5,11 @@ terraform {
       source  = "mongodb/mongodbatlas"
       version = "~> 2.0"
     }
+    # used if the var.cluster_name is not provided
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 2.0"
+    }
   }
   required_version = ">= 1.6"
 
@@ -14,3 +19,5 @@ terraform {
     module_version = "local"
   }
 }
+
+provider "mongodbatlas" {}

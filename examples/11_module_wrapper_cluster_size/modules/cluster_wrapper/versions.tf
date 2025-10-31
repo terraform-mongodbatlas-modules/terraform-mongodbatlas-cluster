@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     mongodbatlas = {
@@ -11,6 +10,6 @@ terraform {
   # These values are used in the User-Agent Header
   provider_meta "mongodbatlas" {
     module_name    = "cluster"
-    module_version = "local"
+    module_version = "0.1.0"
   }
 }

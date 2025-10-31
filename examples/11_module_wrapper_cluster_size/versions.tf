@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     mongodbatlas = {
@@ -14,3 +13,5 @@ terraform {
     module_version = "local"
   }
 }
+
+provider "mongodbatlas" {}

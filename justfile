@@ -18,13 +18,19 @@ lint:
     tflint -f compact --recursive --minimum-failure-severity=warning 
     terraform fmt -check -recursive
 
+py-check:
+    uv run ruff check .github
+
+py-fmt:
+    uv run ruff format .github
+
 # Generate documentation
-docs:
+docs: gen-readme gen-examples
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
 
 # Run all validation checks
-check: fmt validate lint docs
+check: fmt validate lint check-docs py-check
     @echo "All checks passed successfully"
 
 # Initialize examples
@@ -57,3 +63,47 @@ unit-plan-tests:
 
 # Run all tests
 test: unit-plan-tests integration-tests
+
+# Convert relative markdown links to absolute GitHub URLs
+md-link tag_version *args:
+    uv run python .github/md_link_absolute.py {{tag_version}} {{args}}
+
+# Generate README.md and versions.tf files for examples
+gen-examples *args:
+    uv run --with pyyaml python .github/examples_readme.py {{args}}
+    just fmt
+
+# Generate root README.md TOC and TABLES sections
+gen-readme *args:
+    uv run --with pyyaml python .github/root_readme.py {{args}}
+
+# Show Terraform Registry source for this module
+tf-registry-source:
+    @uv run python .github/tf_registry_source.py
+
+# Generate release notes for a version (requires commits on GitHub)
+release-notes new_version old_version="":
+    @uv run python .github/release_notes.py {{new_version}} {{old_version}}
+
+# Check if documentation is up-to-date (for CI)
+check-docs:
+    uv run --with pyyaml python .github/root_readme.py --check
+    uv run --with pyyaml python .github/examples_readme.py --check
+
+# Create release branch with version-specific documentation
+release-commit version:
+    @echo "Creating release {{version}}..."
+    @uv run python .github/validate_version.py {{version}}
+    git checkout -b {{version}}
+    @uv run python .github/update_version.py {{version}}
+    just gen-examples --version {{version}}
+    just gen-readme
+    just md-link {{version}}
+    just fmt
+    git add .
+    git commit -m "chore: release {{version}}"
+    git tag {{version}}
+    @echo ""
+    @echo "✓ Release branch {{version}} ready with tag"
+    @echo "  Review changes, then push:"
+    @echo "  git push origin {{version}} --tags"

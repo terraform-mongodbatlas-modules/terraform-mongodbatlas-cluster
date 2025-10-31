@@ -1,0 +1,94 @@
+name: Release
+run-name: 'Release ${{ inputs.version }}'
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# Permissions required:
+# - contents: write - to create release branch, push tags, and create GitHub releases
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0  # Fetch all history for git operations
+      
+      - uses: ./.github/actions/setup-base
+      
+      - uses: ./.github/actions/setup-terraform
+      
+      - uses: ./.github/actions/setup-docs
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Create release branch and prepare release
+        run: |
+          just release-commit ${{ inputs.version }}
+      
+      - name: Push release branch and tag
+        run: |
+          git push origin --tags
+          
+          echo "✓ Release ${{ inputs.version }} pushed successfully"
+          echo "  Branch: https://github.com/${{ github.repository }}/tree/${{ inputs.version }}"
+          echo "  Tag: https://github.com/${{ github.repository }}/releases/tag/${{ inputs.version }}"
+      
+      - name: Compute Terraform Registry source
+        id: registry
+        run: |
+          REGISTRY_SOURCE=$(just tf-registry-source)
+          echo "registry_source=${REGISTRY_SOURCE}" >> $GITHUB_OUTPUT
+          echo "Terraform Registry source: ${REGISTRY_SOURCE}"
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          NOTES=$(just release-notes ${{ inputs.version }})
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048  # v2.2.0
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          body: |
+            ### Installation
+            
+            ```hcl
+            module "cluster" {
+              source  = "${{ steps.registry.outputs.registry_source }}"
+              version = "${{ inputs.version }}"
+              
+              # Your configuration here
+              project_id   = "your-project-id"
+              name         = "my-cluster"
+              cluster_type = "SHARDED"
+              # ... additional configuration
+            }
+            ```
+            
+            ### Documentation
+            
+            - [README](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/README.md)
+            - [Examples](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/examples/)
+            - [Contributing Guide](https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/CONTRIBUTING.md)
+            
+            ---
+            
+            ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false  # Using custom generation to handle branch-based releases

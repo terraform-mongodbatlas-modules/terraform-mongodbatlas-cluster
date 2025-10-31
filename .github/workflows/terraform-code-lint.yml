@@ -11,27 +11,25 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
-      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
-        with:
-          terraform_wrapper: false
-      - name: Install tflint
-        run: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
-        with:
-          just-version: '1.40.0'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: ./.github/actions/setup-base
+      - uses: ./.github/actions/setup-terraform
       - run: just validate
       - run: just lint
+
+  docs-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: ./.github/actions/setup-base
+      - uses: ./.github/actions/setup-docs
+      - name: Check documentation is up-to-date
+        run: just check-docs
 
   plan-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
-      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
-        with:
-          terraform_wrapper: false
-      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
-        with:
-          just-version: '1.40.0'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: ./.github/actions/setup-base
+      - uses: ./.github/actions/setup-terraform
       - run: just unit-plan-tests

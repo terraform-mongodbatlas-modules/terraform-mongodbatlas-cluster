@@ -1,5 +1,5 @@
 <!-- This file is used to generate the examples/README.md files -->
-# {{ .NAME }}
+# Production Cluster with Auto Scaling
 
 ## Pre Requirements
 If you are familiar with Terraform and already have a project configured in MongoDB Atlas go to [commands](#commands)
@@ -14,7 +14,7 @@ If you are familiar with Terraform and already have a project configured in Mong
 terraform init # this will download the required providers and create a `terraform.lock.hcl` file.
 # configure authentication env-vars (MONGODB_ATLAS_XXX)
 # configure your `vars.tfvars` with `project_id={PROJECT_ID}`
-{{ .PRODUCTION_CONSIDERATIONS_COMMENT }}
+# if your cluster will be used in production, please read the "Production Considerations" below
 terraform apply -var-file vars.tfvars
 # Find the connection string (will not include the username and password, see the [database_user](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/database_user) documentation to configure your app's access)
 terraform output cluster.connection_strings
@@ -22,8 +22,42 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
-{{ .CODE_SNIPPET }}
-{{ .PRODUCTION_CONSIDERATIONS }}
+## Code Snippet
+
+Copy and use this code to get started quickly:
+
+**main.tf**
+```hcl
+module "cluster" {
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+
+  name         = "single-region"
+  project_id   = var.project_id
+  cluster_type = "SHARDED"
+  regions = [
+    {
+      name          = "US_EAST_1"
+      node_count    = 3
+      provider_name = "AWS"
+      shard_number  = 1
+    }
+  ]
+  tags = var.tags
+}
+
+output "cluster" {
+  value = module.cluster
+}
+```
+
+**Additional files needed:**
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
+
+
+## Production Considerations
+- This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
+- However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.
 
 ## Feedback or Help
 - If you have any feedback or trouble please open a Github Issue
