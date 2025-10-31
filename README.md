@@ -7,10 +7,10 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 - [Disclaimer](#disclaimer)
 - [Getting Started Examples](#getting-started-examples)
 - [Examples](#examples)
+- [Cluster Topology Configuration](#cluster-topology-configuration)
 - [Requirements](#requirements)
 - [Providers](#providers)
 - [Resources](#resources)
-- [Cluster Topology Configuration](#cluster-topology-configuration)
 - [Required Variables](#required-variables)
 - [Cluster Topology Option 1 - `regions` Variables](#cluster-topology-option-1---regions-variables)
 - [Cluster Topology Option 2 - `replication_specs` Variables](#cluster-topology-option-2---replication_specs-variables)
@@ -38,25 +38,31 @@ One of this project's primary objectives is to provide durable modules that supp
 
 Cluster Type | Environment | Name
 --- | --- | ---
-REPLICASET | Development | [Development Cluster](./examples/08_development_cluster)
+ | Development | [Development Cluster](./examples/08_dev)
 SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_production_cluster_with_auto_scaling)
-SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_production_cluster_with_manual_scaling)
+ | Production | [Production Cluster with Manual Scaling](./examples/02_single_region_manual_scaling)
 
 ## Examples
 
 Cluster Type | Name
 --- | ---
-SHARDED | [Cluster with Analytics Nodes](./examples/03_cluster_with_analytics_nodes)
+ | [Cluster with Analytics Nodes](./examples/03_single_region_with_analytics)
 REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](./examples/04_cluster_with_multi_regions_local)
 SHARDED | [Cluster with Multi Regions Global (US+EU)](./examples/05_cluster_with_multi_regions_global)
-GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_cluster_with_multi_zones)
-SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_cluster_with_multi_clouds)
-SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_cluster_using_replication_specs)
+ | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_multi_geo_sharded)
+ | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_multi_cloud)
+ | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_replication_var)
 GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
-Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_regions_helper)
 SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
 
 <!-- END_TABLES -->
+
+## Cluster Topology Configuration
+
+📖 **For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](./docs/cluster_topology.md)**
+
+This module offers two mutually exclusive ways to configure cluster topology. See the [guide](./docs/cluster_topology.md) for detailed explanations, examples, and migration instructions.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -81,12 +87,6 @@ The following resources are used by this module:
 - [mongodbatlas_advanced_clusters.this](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_clusters) (data source)
 
 **NOTE**: The `data.mongodbatlas_advanced_clusters` is used by auto-scaled clusters to avoid unexpected plan changes when `instance_size` have updated.
-
-## Cluster Topology Configuration
-
-📖 **For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](./docs/cluster_topology.md)**
-
-This module offers two mutually exclusive ways to configure cluster topology. See the [guide](./docs/cluster_topology.md) for detailed explanations, examples, and migration instructions.
 
 ## Required Variables
 
@@ -609,7 +609,7 @@ Description: List of settings of your configured cluster regions. This array has
 
 ### <a name="output_state_name"></a> [state\_name](#output\_state\_name)
 
-Description: Human-readable label that indicates the current operating condition of this cluster.
+Description: Human-readable label that indicates the current operating condition of this cluster. 
 <!-- END_TF_DOCS -->
 
 ## FAQ
@@ -619,17 +619,17 @@ Description: Human-readable label that indicates the current operating condition
 The module provides two approaches to accommodate different user needs and migration paths:
 
 **Simplified Configuration (`regions`):**
+- Recommended for new deployments and most use cases
 - Offers a flat, intuitive schema that's easier to understand and maintain
 - Automatically generates the complex `replication_specs` structure
-- Supports auto-scaling with automatic instance size persistence
+- Supports auto-scaling with managed instance size properties
 - Includes helpful abstractions like `shard_count` for uniform topologies
-- Recommended for new deployments and most use cases
 
 **Direct Configuration (`replication_specs`):**
+- Useful for advanced configurations not yet abstracted by simplified variables
 - Provides full control using the native provider schema
 - Easier migration path from existing `mongodbatlas_advanced_cluster` resources
 - Ideal for users already familiar with the resource structure
-- Useful for advanced configurations not yet abstracted by simplified variables
 
 📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
 

@@ -152,8 +152,8 @@ When using the simplified `regions` approach, these variables are available:
   
 - **`shard_count`** (optional) - Number of uniform shards to create
   - Each shard will contain all regions defined in `regions`
-  - Cannot be used with manual Independent Shard Scaling (ISS), auto-scaling will use ISS
-  - Useful for clusters with many identical shards
+  - Auto-scaling continues to use [Independent Shard Scaling (ISS)](https://www.mongodb.com/docs/atlas/cluster-autoscaling/#scaling-a-sharded-cluster)
+  - Cannot be used with manual Independent Shard Scaling (ISS) since each shard must be set explicitly
 
 #### Scaling & Sizing
 
