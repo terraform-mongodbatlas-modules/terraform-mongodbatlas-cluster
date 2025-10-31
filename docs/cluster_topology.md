@@ -123,18 +123,16 @@ The module validates your configuration and provides clear error messages if you
 
 **Use `regions` (simplified configuration) if you:**
 
-✅ Are creating a new cluster deployment  
-✅ Want auto-scaling capabilities (recommended for production)  
-✅ Prefer module-managed configuration that handles complexity  
-✅ Want simplified multi-region or multi-cloud setup
+- Are creating a new cluster deployment  
+- Want auto-scaling capabilities (recommended for production)  
+- Prefer module-managed configuration that handles complexity
 
 **Use `replication_specs` (direct configuration) if you:**
 
-✅ Are migrating from an existing `mongodbatlas_advanced_cluster` resource  
-✅ Already have working `replication_specs` configuration to reuse  
-✅ Need manual scaling control only (auto-scaling not supported)  
-✅ Prefer working directly with the provider schema
-✅ Need configuration options not exposed by simplified variables
+- Are migrating from an existing `mongodbatlas_advanced_cluster` resource  
+- Already have working `replication_specs` configuration to reuse  
+- Need manual scaling control only (auto-scaling not supported)  
+- Prefer working directly with the provider schema
 
 ## Key Variables Reference
 
@@ -408,11 +406,10 @@ This automatic persistence is one of the key benefits of using the simplified co
 The module validates your configuration and provides specific error messages to help you fix issues quickly:
 
 **Common validation checks:**
-- ✅ Ensuring `regions` and `replication_specs` are not used together
-- ✅ Verifying that simplified variables are not used with `replication_specs`
-- ✅ Checking that `regions = []` is set when using `replication_specs`
-- ✅ Validating cluster type combinations and required fields
-- ✅ Detecting incompatible configuration options (e.g., ISS with `shard_count`)
+- Ensuring `regions` and `replication_specs` are not used together
+- Verifying that simplified variables are not used with `replication_specs`
+- Checking that `regions = []` is set when using `replication_specs`
+- Validating cluster type combinations and required fields
 
 **Error message examples:**
 ```
