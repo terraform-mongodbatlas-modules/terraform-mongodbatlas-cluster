@@ -1,14 +1,34 @@
 name: Apply Tests
 
 on:
-    push:
-      branches:
-        - main
-    pull_request: {}
-    workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths:
+      - '**.tf'
+      - '**.tftest.hcl'
+  pull_request:
+    paths:
+      - '**.tf'
+      - '**.tftest.hcl'
+  workflow_dispatch:
+    inputs:
+      run_full_suite:
+        description: 'Run full test suite (all apply tests)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
 
 jobs:
-  apply-tests:
+  dev-cluster-test:
+    name: Dev Cluster Test
+    if: ${{ !inputs.run_full_suite }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
@@ -18,4 +38,24 @@ jobs:
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
         with:
           just-version: '1.40.0'
-      - run: echo "Skipping integration tests due to boilerplate configuration - Additional setup required"
+
+      - name: Run Dev Cluster Test
+        run: |
+          terraform init
+          terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
+
+  full-test-suite:
+    name: Full Test Suite
+    if: ${{ inputs.run_full_suite }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
+        with:
+          terraform_wrapper: false
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        with:
+          just-version: '1.40.0'
+
+      - name: Run Full Test Suite
+        run: just integration-tests
