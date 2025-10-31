@@ -11,7 +11,6 @@ import yaml
 
 # Files/folders to skip by default
 DEFAULT_SKIP_EXAMPLES = [
-    "08_development_cluster",  # Has custom versions.tf and README
     "13_example_import",  # Different structure
 ]
 
@@ -70,7 +69,7 @@ def get_registry_source() -> str:
     return result.stdout.strip()
 
 
-def get_example_terraform_files(example_dir: Path) -> dict[str, str]:
+def get_example_terraform_files(example_dir: Path) -> tuple[str, list[str]]:
     """
     Get Terraform files in example directory.
 
@@ -86,7 +85,7 @@ def get_example_terraform_files(example_dir: Path) -> dict[str, str]:
         f.name for f in sorted(example_dir.glob("*.tf")) if f.name != "main.tf"
     ]
 
-    return {"main_tf": main_content, "other_files": other_files}
+    return main_content, other_files
 
 
 def transform_main_tf_for_registry(
@@ -124,10 +123,7 @@ def generate_code_snippet(
     example_dir: Path, registry_source: str, version: str | None = None
 ) -> str:
     """Generate code snippet section for README."""
-    tf_files = get_example_terraform_files(example_dir)
-    main_tf = tf_files["main_tf"]
-    other_files = tf_files["other_files"]
-
+    main_tf, other_files = get_example_terraform_files(example_dir)
     if not main_tf:
         return ""
 
@@ -157,6 +153,7 @@ def generate_readme(
     example_name: str,
     example_dir: Path,
     registry_source: str,
+    template_vars: dict[str, str],
     version: str | None = None,
 ) -> str:
     """Generate README content by replacing template variables."""
@@ -164,16 +161,12 @@ def generate_readme(
 
     # Generate and insert code snippet
     code_snippet = generate_code_snippet(example_dir, registry_source, version)
-
-    # Insert code snippet after the commands section (before Production Considerations)
-    # Find the position to insert
-    insert_marker = "## Production Considerations"
-    if insert_marker in content:
-        content = content.replace(insert_marker, f"{code_snippet}{insert_marker}")
-    else:
-        # Fallback: add at the end before any final sections
-        content = content.rstrip() + "\n\n" + code_snippet
-
+    content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
+    is_development = "development" in example_name.lower()
+    for key, value in template_vars.items():
+        if is_development and key.startswith("production"):
+            value = ""
+        content = content.replace("{{ .%s }}"%key.upper(), value.rstrip('\n'))
     return content
 
 
@@ -209,6 +202,7 @@ def should_skip_example(folder_name: str, skip_list: list[str]) -> bool:
 def process_example(
     example_dir: Path,
     template: str,
+    template_vars: dict[str, str],
     base_versions_tf: str,
     provider_config: str,
     config: dict,
@@ -235,7 +229,7 @@ def process_example(
     if not skip_readme:
         readme_path = example_dir / "README.md"
         readme_content = generate_readme(
-            template, example_name, example_dir, registry_source, version
+            template, example_name, example_dir, registry_source, template_vars, version
         )
 
         # Check mode: compare with existing
@@ -251,7 +245,7 @@ def process_example(
         readme_generated = True
 
     # Generate versions.tf
-    if not skip_versions:
+    if not skip_versions and "development" not in example_name.lower():
         versions_path = example_dir / "versions.tf"
         versions_content = generate_versions_tf(base_versions_tf, provider_config)
 
@@ -322,6 +316,8 @@ def main() -> None:
     config = load_config(config_path)
     examples_readme_config = config.get("examples_readme", {})
 
+    template_vars = examples_readme_config.get("template_vars", {})
+
     # Get template path
     template_path_str = examples_readme_config.get("readme_template", "")
     if not template_path_str:
@@ -385,6 +381,7 @@ def main() -> None:
         readme_gen, versions_gen, has_changes = process_example(
             example_dir,
             template,
+            template_vars,
             base_versions_tf,
             provider_config,
             config,

@@ -14,7 +14,7 @@ If you are familiar with Terraform and already have a project configured in Mong
 terraform init # this will download the required providers and create a `terraform.lock.hcl` file.
 # configure authentication env-vars (MONGODB_ATLAS_XXX)
 # configure your `vars.tfvars` with `project_id={PROJECT_ID}`
-# if your cluster will be used in production, please read the "Production Considerations" below
+{{ .PRODUCTION_CONSIDERATIONS_COMMENT }}
 terraform apply -var-file vars.tfvars
 # Find the connection string (will not include the username and password, see the [database_user](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/database_user) documentation to configure your app's access)
 terraform output cluster.connection_strings
@@ -22,9 +22,8 @@ terraform output cluster.connection_strings
 terraform destroy -var-file vars.tfvars
 ```
 
-## Production Considerations
-- This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
-- However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.
+{{ .CODE_SNIPPET }}
+{{ .PRODUCTION_CONSIDERATIONS }}
 
 ## Feedback or Help
 - If you have any feedback or trouble please open a Github Issue

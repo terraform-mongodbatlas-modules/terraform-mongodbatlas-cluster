@@ -47,7 +47,9 @@ def main() -> None:
 
     repo_root = Path(__file__).parent.parent
     for version_file in repo_root.rglob("versions.tf"):
-        update_versions_tf(version_file, version, str(version_file.relative_to(repo_root)))
+        update_versions_tf(
+            version_file, version, str(version_file.relative_to(repo_root))
+        )
 
 
 if __name__ == "__main__":
