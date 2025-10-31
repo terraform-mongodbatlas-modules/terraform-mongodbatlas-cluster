@@ -19,10 +19,8 @@ resource "random_pet" "generated_name" {
   }
 }
 
-# POST: HTTP 400 Bad Request (Error code: "CLUSTER_NAME_PREFIX_INVALID") Detail: Cluster name "more-than-twenty-three-check-long-name-very-long-even--chars" is invalid.
-# Atlas truncates cluster names to 23 characters which results in an invalid hostname due to a trailing "-" in the generated cluster name 
 module "cluster" {
-  source = "../.." # "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+  source = "../.."
 
   # Disable default production values
   auto_scaling = {
@@ -33,8 +31,10 @@ module "cluster" {
   pit_enabled            = false # skip pit_backup for dev cluster
 
   cluster_type = "REPLICASET"
-  name         = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
-  project_id   = var.project_id
+
+  # Atlas truncates cluster names to 23 characters which results in an invalid hostname due to a trailing "-" in the generated cluster name 
+  name       = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
+  project_id = var.project_id
   regions = [
     {
       name          = "US_EAST_1" # https://www.mongodb.com/docs/atlas/cloud-providers-regions/

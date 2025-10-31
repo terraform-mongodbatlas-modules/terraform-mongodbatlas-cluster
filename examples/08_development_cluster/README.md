@@ -14,6 +14,7 @@ If you are familiar with Terraform and already have a project configured in Mong
 terraform init # this will download the required providers and create a `terraform.lock.hcl` file.
 # configure authentication env-vars (MONGODB_ATLAS_XXX)
 # configure your `vars.tfvars` with `project_id={PROJECT_ID}`
+
 terraform apply -var-file vars.tfvars
 # Find the connection string (will not include the username and password, see the [database_user](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/database_user) documentation to configure your app's access)
 terraform output cluster.connection_strings
@@ -60,8 +61,10 @@ module "cluster" {
   pit_enabled            = false # skip pit_backup for dev cluster
 
   cluster_type = "REPLICASET"
-  name         = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
-  project_id   = var.project_id
+
+  # Atlas truncates cluster names to 23 characters which results in an invalid hostname due to a trailing "-" in the generated cluster name 
+  name       = coalesce(var.cluster_name, substr(trim(random_pet.generated_name.id, "-"), 0, 23))
+  project_id = var.project_id
   regions = [
     {
       name          = "US_EAST_1" # https://www.mongodb.com/docs/atlas/cloud-providers-regions/
@@ -81,6 +84,9 @@ output "cluster" {
 **Additional files needed:**
 - [variables.tf](./variables.tf)
 - [versions.tf](./versions.tf)
+
+
+
 
 ## Feedback or Help
 - If you have any feedback or trouble please open a Github Issue

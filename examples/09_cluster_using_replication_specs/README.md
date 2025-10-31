@@ -55,6 +55,7 @@ module "replication_var" {
 - [variables.tf](./variables.tf)
 - [versions.tf](./versions.tf)
 
+
 ## Production Considerations
 - This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
 - However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.
