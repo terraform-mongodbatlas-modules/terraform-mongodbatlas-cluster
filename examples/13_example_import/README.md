@@ -24,6 +24,7 @@ terraform apply -var-file vars.tfvars
 The generated files will be in `./clusters/` - one `.tf` file per cluster found in your project.
 
 ## Review and Refine Generated Configuration
+See the [cluster import module](../../modules/cluster_import/README.md) for more details on how to generate the cluster terraform configurations.
 
 After generation, follow these steps:
 
