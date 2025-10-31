@@ -2,12 +2,10 @@ module "cluster_small" {
   source = "./modules/cluster_wrapper"
 
   cluster_size = "small"
-  tags          = var.tags
-  regions       = module.regions_replicaset_small.regions
-  name          = "small"
-  provider_name = "AWS"
-  cluster_type  = "REPLICASET"
-  project_id    = var.project_id
+  name         = "small"
+  cluster_type = "REPLICASET"
+  tags         = var.tags
+  project_id   = var.project_id
 }
 
 output "cluster_small" {
@@ -18,14 +16,12 @@ module "cluster_medium_sharded" {
   source = "./modules/cluster_wrapper"
 
   cluster_size = "medium"
-  shards       = 3
+  shard_count  = 3
 
-  tags          = var.tags
-  regions       = module.regions_sharded_medium.regions
-  name          = "medium-sharded"
-  provider_name = "AWS"
-  cluster_type  = "SHARDED"
-  project_id    = var.project_id
+  tags         = var.tags
+  name         = "medium-sharded"
+  cluster_type = "SHARDED"
+  project_id   = var.project_id
 }
 
 output "cluster_medium_sharded" {
@@ -42,7 +38,7 @@ module "cluster_geosharded" {
         name       = "EU_WEST_1"
         node_count = 3
       }]
-      shards = 2
+      shard_count = 2
     }
     US = {
       regions = [{
@@ -54,16 +50,14 @@ module "cluster_geosharded" {
         node_count = 2
         }
       ]
-      shards = 1
+      shard_count = 1
     }
   }
 
-  tags          = var.tags
-  regions       = module.regions_cluster_geosharded.regions
-  name          = "geosharded"
-  cluster_type  = "GEOSHARDED"
-  provider_name = "AWS"
-  project_id    = var.project_id
+  tags         = var.tags
+  name         = "geosharded"
+  cluster_type = "GEOSHARDED"
+  project_id   = var.project_id
 }
 
 output "cluster_geosharded" {

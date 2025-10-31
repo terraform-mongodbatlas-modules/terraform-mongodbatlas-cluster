@@ -1,3 +1,3 @@
-output "regions" {
-  value = coalescelist(local.regions_sharded, local.regions, local.regions_zones)
+output "cluster_module" {
+  value = module.cluster
 }
