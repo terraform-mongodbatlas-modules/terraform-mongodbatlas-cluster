@@ -109,6 +109,12 @@ Documentation is auto-generated. Run `just check` before committing - it regener
 
 ## Release Process (Maintainers)
 
+### Version Placeholder
+
+During development, `module_version` in `versions.tf` is set to `"local"` as a placeholder. This indicates you're working with a development version and helps distinguish it from released versions. The release process automatically replaces `"local"` with the actual version number.
+
+### Creating a Release
+
 ```bash
 # Create release branch with version-specific docs
 just release-commit v1.0.0
@@ -119,13 +125,13 @@ git push origin v1.0.0 --tags
 
 **What happens**:
 1. Creates release branch `v1.0.0`
-2. Updates `module_version` in `versions.tf`
+2. Updates `module_version` in `versions.tf` from `"local"` to `"v1.0.0"`
 3. Regenerates all docs with absolute links
 4. Commits and tags
 
 **Why separate branches?**
-- Main uses relative links (dev-friendly)
-- Release branches use absolute links (stable docs for that version)
+- Main uses relative links (dev-friendly) and `module_version = "local"`
+- Release branches use absolute links (stable docs for that version) and actual version numbers
 
 ## Submitting Changes
 
