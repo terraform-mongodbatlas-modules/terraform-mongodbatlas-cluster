@@ -47,7 +47,7 @@ variable "bi_connector_config" {
 }
 
 variable "cluster_type" {
-  description = "Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED."
+  description = "Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`."
   type        = string
 
   validation {
