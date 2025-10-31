@@ -13,7 +13,7 @@ def extract_version_number(version: str) -> str:
     return version
 
 
-def update_versions_tf(file_path: Path, version: str) -> None:
+def update_versions_tf(file_path: Path, version: str, relative_path: str) -> None:
     """Update module_version in versions.tf file."""
     if not file_path.exists():
         print(f"Error: File not found: {file_path}", file=sys.stderr)
@@ -28,12 +28,12 @@ def update_versions_tf(file_path: Path, version: str) -> None:
 
     if content == new_content:
         print(
-            f"Warning: No module_version found or already set to {version}",
+            f"Warning: No module_version found or already set to {version} in {relative_path}",
             file=sys.stderr,
         )
 
     file_path.write_text(new_content, encoding="utf-8")
-    print(f'✓ Updated versions.tf: module_version = "{version}"')
+    print(f'✓ Updated {relative_path}: module_version = "{version}"')
 
 
 def main() -> None:
@@ -45,9 +45,9 @@ def main() -> None:
     version_with_v = sys.argv[1]
     version = extract_version_number(version_with_v)
 
-    # Assume we're in the repo root
-    versions_file = Path("versions.tf")
-    update_versions_tf(versions_file, version)
+    repo_root = Path(__file__).parent.parent
+    for version_file in repo_root.rglob("versions.tf"):
+        update_versions_tf(version_file, version, str(version_file.relative_to(repo_root)))
 
 
 if __name__ == "__main__":
