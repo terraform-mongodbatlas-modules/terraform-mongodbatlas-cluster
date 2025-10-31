@@ -13,7 +13,7 @@ Description: Human-readable label that identifies this cluster, for example: `my
 Type: `string`
 
 ### cluster_type
-Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`
+Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`.
 
 Type: `string`
 
@@ -57,7 +57,7 @@ list(object({
 
 
 ### provider_name
-Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`
+Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`.
 
 Type: `string`
 Default: `null`
