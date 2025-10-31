@@ -1,52 +1,36 @@
-module "regions_replicaset_small" {
-  source = "./modules/regions_helper"
+module "cluster_small" {
+  source = "./modules/cluster_wrapper"
 
   cluster_size = "small"
-}
-
-module "cluster_small" {
-  source = "../.."
-
-  tags          = var.tags
-  regions       = module.regions_replicaset_small.regions
-  name          = "small"
-  provider_name = "AWS"
-  cluster_type  = "REPLICASET"
-  project_id    = var.project_id
+  name         = "small"
+  cluster_type = "REPLICASET"
+  tags         = var.tags
+  project_id   = var.project_id
 }
 
 output "cluster_small" {
   value = module.cluster_small
 }
 
-module "regions_sharded_medium" {
-  source = "./modules/regions_helper"
+module "cluster_medium_sharded" {
+  source = "./modules/cluster_wrapper"
 
   cluster_size = "medium"
-  shards       = 3
-}
+  shard_count  = 3
 
-output "regions_cluster_medium_sharded" {
-  value = module.regions_sharded_medium.regions
-}
-
-module "cluster_medium_sharded" {
-  source = "../.."
-
-  tags          = var.tags
-  regions       = module.regions_sharded_medium.regions
-  name          = "medium-sharded"
-  provider_name = "AWS"
-  cluster_type  = "SHARDED"
-  project_id    = var.project_id
+  tags         = var.tags
+  name         = "medium-sharded"
+  cluster_type = "SHARDED"
+  project_id   = var.project_id
 }
 
 output "cluster_medium_sharded" {
   value = module.cluster_medium_sharded
 }
 
-module "regions_cluster_geosharded" {
-  source = "./modules/regions_helper"
+
+module "cluster_geosharded" {
+  source = "./modules/cluster_wrapper"
 
   zones = {
     EU = {
@@ -54,7 +38,7 @@ module "regions_cluster_geosharded" {
         name       = "EU_WEST_1"
         node_count = 3
       }]
-      shards = 2
+      shard_count = 2
     }
     US = {
       regions = [{
@@ -66,25 +50,14 @@ module "regions_cluster_geosharded" {
         node_count = 2
         }
       ]
-      shards = 1
+      shard_count = 1
     }
   }
 
-}
-
-output "regions_geosharded" {
-  value = module.regions_cluster_geosharded
-}
-
-module "cluster_geosharded" {
-  source = "../.."
-
-  tags          = var.tags
-  regions       = module.regions_cluster_geosharded.regions
-  name          = "geosharded"
-  cluster_type  = "GEOSHARDED"
-  provider_name = "AWS"
-  project_id    = var.project_id
+  tags         = var.tags
+  name         = "geosharded"
+  cluster_type = "GEOSHARDED"
+  project_id   = var.project_id
 }
 
 output "cluster_geosharded" {

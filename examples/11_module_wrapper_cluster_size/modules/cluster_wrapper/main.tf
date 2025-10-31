@@ -45,4 +45,32 @@ locals {
     medium = local.medium
     large  = local.large
   }
+
+  regions = [for region in lookup(local.sizes, var.cluster_size, []) : merge(region, var.region_extra)]
+  regions_zones = flatten(
+    [for zone_name, zone_config in var.zones :
+      flatten([for shard in range(zone_config.shard_count) :
+        [for region_config in zone_config.regions :
+          merge({
+            zone_name    = zone_name
+            shard_number = shard
+        }, region_config)]
+      ])
+    ]
+  )
+  final_regions = length(local.regions) > 0 ? local.regions : local.regions_zones
+}
+
+
+module "cluster" {
+  source = "../../../.."
+
+  name         = var.name
+  project_id   = var.project_id
+  cluster_type = var.cluster_type
+
+  regions       = local.final_regions
+  shard_count   = var.shard_count
+  provider_name = "AWS" # Opinionated company default provider
+  tags          = var.tags
 }
