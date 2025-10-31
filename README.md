@@ -38,22 +38,22 @@ One of this project's primary objectives is to provide durable modules that supp
 
 Cluster Type | Environment | Name
 --- | --- | ---
- | Development | [Development Cluster](./examples/08_dev)
+REPLICASET | Development | [Development Cluster](./examples/08_development_cluster)
 SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_production_cluster_with_auto_scaling)
- | Production | [Production Cluster with Manual Scaling](./examples/02_single_region_manual_scaling)
+SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_production_cluster_with_manual_scaling)
 
 ## Examples
 
 Cluster Type | Name
 --- | ---
- | [Cluster with Analytics Nodes](./examples/03_single_region_with_analytics)
+SHARDED | [Cluster with Analytics Nodes](./examples/03_cluster_with_analytics_nodes)
 REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](./examples/04_cluster_with_multi_regions_local)
 SHARDED | [Cluster with Multi Regions Global (US+EU)](./examples/05_cluster_with_multi_regions_global)
- | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_multi_geo_sharded)
- | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_multi_cloud)
- | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_replication_var)
+GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_cluster_with_multi_zones)
+SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_cluster_with_multi_clouds)
+SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_cluster_using_replication_specs)
 GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
-Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_regions_helper)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
 SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
 
 <!-- END_TABLES -->
