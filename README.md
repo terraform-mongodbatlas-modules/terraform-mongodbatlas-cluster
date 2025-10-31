@@ -38,31 +38,31 @@ One of this project's primary objectives is to provide durable modules that supp
 
 Cluster Type | Environment | Name
 --- | --- | ---
-REPLICASET | Development | [Development Cluster](./examples/08_development_cluster)
-SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_production_cluster_with_auto_scaling)
-SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_production_cluster_with_manual_scaling)
+REPLICASET | Development | [Development Cluster](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/08_development_cluster)
+SHARDED | Production | [Production Cluster with Auto Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/01_production_cluster_with_auto_scaling)
+SHARDED | Production | [Production Cluster with Manual Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/02_production_cluster_with_manual_scaling)
 
 ## Examples
 
 Cluster Type | Name
 --- | ---
-SHARDED | [Cluster with Analytics Nodes](./examples/03_cluster_with_analytics_nodes)
-REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](./examples/04_cluster_with_multi_regions_local)
-SHARDED | [Cluster with Multi Regions Global (US+EU)](./examples/05_cluster_with_multi_regions_global)
-GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_cluster_with_multi_zones)
-SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_cluster_with_multi_clouds)
-SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_cluster_using_replication_specs)
-GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
-Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
-SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
+SHARDED | [Cluster with Analytics Nodes](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/03_cluster_with_analytics_nodes)
+REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/04_cluster_with_multi_regions_local)
+SHARDED | [Cluster with Multi Regions Global (US+EU)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/05_cluster_with_multi_regions_global)
+GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/06_cluster_with_multi_zones)
+SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/07_cluster_with_multi_clouds)
+SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/09_cluster_using_replication_specs)
+GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/10_cluster_with_multi_zone_multi_shards)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/11_module_wrapper_cluster_size)
+SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/12_cluster_uniform_sharded_topology)
 
 <!-- END_TABLES -->
 
 ## Cluster Topology Configuration
 
-📖 **For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](./docs/cluster_topology.md)**
+📖 **For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/docs/cluster_topology.md)**
 
-This module offers two mutually exclusive ways to configure cluster topology. See the [guide](./docs/cluster_topology.md) for detailed explanations, examples, and migration instructions.
+This module offers two mutually exclusive ways to configure cluster topology. See the [guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/docs/cluster_topology.md) for detailed explanations, examples, and migration instructions.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -631,7 +631,7 @@ The module provides two approaches to accommodate different user needs and migra
 - Easier migration path from existing `mongodbatlas_advanced_cluster` resources
 - Ideal for users already familiar with the resource structure
 
-📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
+📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/docs/cluster_topology.md)**
 
 ### What is the `provider_meta "mongodbatlas"` doing?
 - This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:

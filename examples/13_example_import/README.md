@@ -24,7 +24,7 @@ terraform apply -var-file vars.tfvars
 The generated files will be in `./clusters/` - one `.tf` file per cluster found in your project.
 
 ## Review and Refine Generated Configuration
-See the [cluster import module](../../modules/cluster_import/README.md) for more details on how to generate the cluster terraform configurations.
+See the [cluster import module](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/modules/cluster_import/README.md) for more details on how to generate the cluster terraform configurations.
 
 After generation, follow these steps:
 
@@ -45,7 +45,7 @@ terraform plan  # Check what Terraform wants to change
 # Repeat until you see "No changes. Your infrastructure matches the configuration."
 ```
 
-See [clusters/README.md](./clusters/README.md) for detailed guidance on this iterative process.
+See [clusters/README.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/13_example_import/clusters/README.md) for detailed guidance on this iterative process.
 
 ### 3. Import Clusters
 
@@ -106,7 +106,7 @@ output "my_cluster_connection_strings" {
 - **Experimental**: Generated configuration may require manual adjustments
 - **Test first**: Use a non-production project for initial testing
 - **Defaults omitted**: The generator attempts to omit default values, but you may need to add fields that differ from module defaults
-- **Iterative process**: Achieving a clean import requires iteration - see [clusters/README.md](./clusters/README.md)
+- **Iterative process**: Achieving a clean import requires iteration - see [clusters/README.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.1.0/examples/13_example_import/clusters/README.md)
 
 ## Feedback or Help
 
