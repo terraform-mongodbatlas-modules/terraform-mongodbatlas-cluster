@@ -53,7 +53,7 @@ EOT
       for r in var.regions :
       (
         r.shard_number == null
-        || (r.shard_number == floor(r.shard_number) && r.shard_number >= 0)
+        || try(r.shard_number == floor(r.shard_number) && r.shard_number >= 0, false)
       )
     ])
     error_message = "Each regions[*].shard_number must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
@@ -224,7 +224,7 @@ EOT
   default     = null
 
   validation {
-    condition     = var.shard_count == null || (var.shard_count == floor(var.shard_count) && var.shard_count >= 1)
+    condition     = var.shard_count == null || try(var.shard_count == floor(var.shard_count) && var.shard_count >= 1, false)
     error_message = "shard_count must be ≥ 1 if set."
   }
 
