@@ -181,7 +181,7 @@ locals {
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
-              coalesce(local.effective_auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE)
+              try(var.auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE), # not using effective_auto_scaling_analytics since the value might be filtered out if compute_scale_down is false
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
           } : null
