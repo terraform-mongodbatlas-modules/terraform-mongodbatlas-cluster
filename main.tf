@@ -102,26 +102,40 @@ locals {
 
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
-  auto_scaling_compute_enabled           = var.auto_scaling.compute_enabled
-  auto_scaling_disk_enabled              = var.auto_scaling.disk_gb_enabled
-  auto_scaling_compute_enabled_analytics = var.auto_scaling_analytics == null ? false : var.auto_scaling_analytics.compute_enabled
-  manual_compute_analytics               = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
-  manual_compute_electable               = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
-  manual_compute                         = local.manual_compute_electable || local.manual_compute_analytics
+  # auto scaling for electable nodes
+  auto_scaling_compute_enabled = var.auto_scaling.compute_enabled
+  auto_scaling_disk_enabled    = var.auto_scaling.disk_gb_enabled
+  manual_compute_electable     = var.instance_size != null || length([for idx, r in local.regions : idx if r.instance_size != null]) > 0
 
   excluded_auto_scaling_fields = concat(
     local.auto_scaling_compute_enabled ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
     local.auto_scaling_compute_enabled && var.auto_scaling.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
   )
   effective_auto_scaling = { for k, v in var.auto_scaling : k => v if !contains(local.excluded_auto_scaling_fields, k) }
+  # auto scaling for analytics nodes
+  manual_compute_analytics         = var.instance_size_analytics != null || length([for idx, r in local.regions : idx if r.instance_size_analytics != null]) > 0
+  analytics_auto_scaling_undefined = var.auto_scaling_analytics == null && !local.manual_compute_analytics
+  auto_scaling_compute_enabled_analytics = coalesce(
+    local.manual_compute_analytics ? false : null,
+    try(var.auto_scaling_analytics.compute_enabled, null),
+    local.analytics_auto_scaling_undefined ? local.auto_scaling_compute_enabled : null,
+  )
   excluded_auto_scaling_analytics_fields = concat(
     local.auto_scaling_compute_enabled_analytics ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
-    local.auto_scaling_compute_enabled_analytics && var.auto_scaling_analytics.compute_scale_down_enabled ? [] : ["compute_min_instance_size"],
+    local.auto_scaling_compute_enabled_analytics && try(var.auto_scaling_analytics.compute_scale_down_enabled, true) ? [] : ["compute_min_instance_size"],
   )
-  effective_auto_scaling_analytics = var.auto_scaling_analytics == null ? (local.manual_compute_analytics ? {
-    compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
-  } : null) : { for k, v in var.auto_scaling_analytics : k => v if !contains(local.excluded_auto_scaling_analytics_fields, k) }
+  analytics_auto_scaling_options = {
+    undefined = local.effective_auto_scaling # if neither instance_size_analytics or auto_scaling_analytics is set, use the same auto_scaling config for analytics nodes as the electable nodes
+    manual = {
+      compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
+    }
+    user_defined = var.auto_scaling_analytics != null ? { for k, v in var.auto_scaling_analytics : k => v if !contains(local.excluded_auto_scaling_analytics_fields, k) } : null
+  }
+  analytics_auto_scaling_active_option = local.analytics_auto_scaling_undefined ? "undefined" : local.manual_compute_analytics ? "manual" : "user_defined"
+  effective_auto_scaling_analytics     = local.analytics_auto_scaling_options[local.analytics_auto_scaling_active_option]
 
+  # manual compute for electable or analytics nodes
+  manual_compute = local.manual_compute_electable || local.manual_compute_analytics
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
@@ -167,7 +181,7 @@ locals {
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
             instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
               local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
-              coalesce(var.auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE)
+              coalesce(local.effective_auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE)
             ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count_analytics
           } : null
