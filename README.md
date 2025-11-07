@@ -69,7 +69,7 @@ This module offers two mutually exclusive ways to configure cluster topology. Se
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.6)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9)
 
 - <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) (~> 2.0)
 
@@ -603,13 +603,9 @@ Description: Date and time when MongoDB Cloud created this cluster. This paramet
 
 Description: Version of MongoDB that the cluster runs.
 
-### <a name="output_replication_specs"></a> [replication\_specs](#output\_replication\_specs)
-
-Description: List of settings of your configured cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
-
 ### <a name="output_state_name"></a> [state\_name](#output\_state\_name)
 
-Description: Human-readable label that indicates the current operating condition of this cluster.
+Description: Human-readable label that indicates the current operating condition of this cluster. 
 <!-- END_TF_DOCS -->
 
 ## FAQ
