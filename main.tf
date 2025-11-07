@@ -177,67 +177,62 @@ locals {
   ])
 
   replication_specs_json = local.replication_specs_resource_var_used ? jsonencode(var.replication_specs) : jsonencode(local.replication_specs_built) # avoids "Mismatched list element types"
-  empty_region_configs   = local.replication_specs_resource_var_used ? [] : [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0]
   empty_regions          = length(local.regions) == 0
-
-  // Validation messages (non-empty strings represent errors)
-  validation_errors = compact(concat(
-    local.empty_region_configs,
-
-    // Mutual exclusivity
-    length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
-
-    // Autoscaling vs fixed sizes
+  # Validation messages (non-empty strings represent errors)
+  validation_errors_regions_usage = local.replication_specs_resource_var_used ? [] : compact(concat(
+    # Regions variable usage validations
+    [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0],
+    # Autoscaling vs fixed sizes
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
 
-    // Autoscaling vs fixed sizes disk_gb
+    # Autoscaling vs fixed sizes disk_gb
     local.auto_scaling_disk_enabled ?
     var.disk_size_gb != null ? ["Cannot set var.disk_size_gb when auto_scaling_disk is enabled. Set auto_scaling_disk=false to use fixed disk sizes"] : []
     : [],
     local.auto_scaling_disk_enabled ?
     [for idx, r in local.regions : r.disk_size_gb != null ? "Cannot use regions[*].disk_size_gb when auto_scaling_disk is enabled: index ${idx} disk_size_gb=${r.disk_size_gb}" : ""] : [],
 
-    // Missing compute specification
+    # Missing compute specification
     !local.manual_compute && !local.auto_scaling_compute_enabled && !local.auto_scaling_compute_enabled_analytics ? ["Must use auto-scaling or set instance_sizes"] : [],
 
-    // Root level without manual_compute
+    # Root level without manual_compute
     !local.manual_compute && var.disk_iops != null ? ["Cannot use disk_iops without setting instance_size (auto-scaling must be disabled)"] : [],
     !local.manual_compute && var.ebs_volume_type != null ? ["Cannot use ebs_volume_type without setting instance_size (auto-scaling must be disabled)"] : [],
+    # Requires regions set
+    var.instance_size != null && local.empty_regions ? ["Cannot use var.instance_size without var.regions"] : [],
+    var.auto_scaling != null && local.empty_regions ? ["Cannot use var.auto_scaling without var.regions"] : [],
+    var.auto_scaling_analytics != null && local.empty_regions ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
+    var.disk_iops != null && local.empty_regions ? ["Cannot use var.disk_iops without var.regions"] : [],
+    var.ebs_volume_type != null && local.empty_regions ? ["Cannot use var.ebs_volume_type without var.regions"] : [],
 
-    // Requires regions set
-    var.instance_size != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.instance_size without var.regions"] : [],
-    var.auto_scaling != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling without var.regions"] : [],
-    var.auto_scaling_analytics != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.auto_scaling_analytics without var.regions"] : [],
-    var.disk_iops != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.disk_iops without var.regions"] : [],
-    var.ebs_volume_type != null && local.empty_regions && !local.replication_specs_resource_var_used ? ["Cannot use var.ebs_volume_type without var.regions"] : [],
-
-    // Per-region invalid manual scaling parameters when autoscaling is used
+    # Per-region invalid manual scaling parameters when autoscaling is used
     local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.instance_size != null ? "Cannot use regions[*].instance_size when auto_scaling is enabled: index ${idx} instance_size=${r.instance_size}" : ""] : [],
     local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.disk_iops != null ? "Cannot use regions[*].disk_iops when auto_scaling is enabled: index ${idx} disk_iops=${r.disk_iops}" : ""] : [],
     local.auto_scaling_compute_enabled ? [for idx, r in local.regions : r.ebs_volume_type != null ? "Cannot use regions[*].ebs_volume_type when auto_scaling is enabled: index ${idx} ebs_volume_type=${r.ebs_volume_type}" : ""] : [],
 
     local.auto_scaling_compute_enabled_analytics ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
-
-    // Cluster type vs region fields
+    # Cluster type vs region fields
     local.is_geosharded ? concat(
       [for idx, r in local.regions : (r.zone_name == null || trimspace(r.zone_name) == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
       length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
     ) : [],
-
-    local.sharded_validation_errors,
-
     local.is_replicaset ? concat(
       [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
-
     local.is_geosharded && length(local.invalid_geo_zones_mixed) > 0 ? [
       "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"
     ] : [],
+    # Provider name presence
+    var.provider_name == null ? [for idx, r in local.regions : r.provider_name == null ? "Must use regions[*].provider_name when root provider_name is not specified: regions[${idx}].provider_name is missing" : ""] : [],
+    local.sharded_validation_errors,
+  ))
 
-    // Provider name presence
-    var.provider_name == null ? [for idx, r in local.regions : r.provider_name == null ? "Must use regions[*].provider_name when root provider_name is not specified: regions[${idx}].provider_name is missing" : ""] : []
+  validation_errors = compact(concat(
+    # Mutual exclusivity
+    length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
+    local.validation_errors_regions_usage,
   ))
 }
 
