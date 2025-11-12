@@ -122,10 +122,14 @@ locals {
   )
   excluded_auto_scaling_analytics_fields = concat(
     local.auto_scaling_compute_enabled_analytics ? [] : ["compute_max_instance_size", "compute_min_instance_size", "compute_scale_down_enabled"],
+    # When compute_scale_down_enabled is not specified in auto_scaling_analytics, default to true
+    # (consistent with electable nodes default behavior)
     local.auto_scaling_compute_enabled_analytics && try(var.auto_scaling_analytics.compute_scale_down_enabled, true) ? [] : ["compute_min_instance_size"],
   )
   analytics_auto_scaling_options = {
-    undefined = local.effective_auto_scaling # if neither instance_size_analytics or auto_scaling_analytics is set, use the same auto_scaling config for analytics nodes as the electable nodes
+    # When auto_scaling_analytics is null and no manual instance_size_analytics is set,
+    # inherit the electable auto_scaling configuration for analytics nodes
+    undefined = local.effective_auto_scaling
     manual = {
       compute_enabled = false # Avoids the ANALYTICS_AUTO_SCALING_AMBIGUOUS error when auto_scaling is used for electable and manual instance size used for analytics
     }
