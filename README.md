@@ -373,6 +373,8 @@ replication_specs = []
 
 ## Production Recommendations (Enabled By Default)
 
+These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
+
 ### advanced_configuration
 
 Description: Additional settings for an Atlas cluster.
@@ -444,6 +446,8 @@ retain_backups_enabled = True
 ```
 
 ## Production Recommendations (Manually Configured)
+
+These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
 
 ### encryption_at_rest_provider
 
