@@ -230,7 +230,7 @@ locals {
   ))
 
   validation_errors = compact(concat(
-    # Mutual exclusivity
+    # Mutual exclusivity: regions vs replication_specs
     length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
     local.validation_errors_regions_usage,
   ))
