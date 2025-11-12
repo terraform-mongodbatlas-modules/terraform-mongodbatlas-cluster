@@ -605,7 +605,7 @@ Description: Version of MongoDB that the cluster runs.
 
 ### <a name="output_state_name"></a> [state\_name](#output\_state\_name)
 
-Description: Human-readable label that indicates the current operating condition of this cluster. 
+Description: Human-readable label that indicates the current operating condition of this cluster.
 <!-- END_TF_DOCS -->
 
 ## FAQ
@@ -628,6 +628,12 @@ The module provides two approaches to accommodate different user needs and migra
 - Ideal for users already familiar with the resource structure
 
 📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
+
+### Why does this module require Terraform 1.9+ when the provider supports 1.7.x+?
+
+This module requires Terraform 1.9+ due to the use of cross-variable validation references, which are only supported in Terraform 1.9 and later. While the [MongoDB Atlas Provider](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix) supports Terraform 1.7.x+, this module's validation patterns require 1.9+.
+
+See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
 
 ### What is the `provider_meta "mongodbatlas"` doing?
 - This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
