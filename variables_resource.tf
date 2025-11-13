@@ -234,6 +234,59 @@ variable "replication_specs" {
     ])
     error_message = "This module doesn't support auto_scaling for `replication_specs` variable, please use `regions` and `auto_scaling` variables instead."
   }
+
+  validation {
+    # var.auto_scaling should be the default value for the auto_scaling variable
+    condition = length(var.replication_specs) == 0 || var.auto_scaling == {
+      compute_enabled            = true
+      compute_max_instance_size  = "M200"
+      compute_min_instance_size  = "M10"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+
+    error_message = "Cannot use var.auto_scaling when var.replication_specs is used. Configure auto_scaling within replication_specs[*].region_configs[*].auto_scaling instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.auto_scaling_analytics == null
+    error_message = "Cannot use var.auto_scaling_analytics when var.replication_specs is used. Configure auto_scaling_analytics within replication_specs[*].region_configs[*].analytics_auto_scaling instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.instance_size == null
+    error_message = "Cannot use var.instance_size when var.replication_specs is used. Configure instance_size within replication_specs[*].region_configs[*].electable_specs.instance_size or read_only_specs.instance_size instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.instance_size_analytics == null
+    error_message = "Cannot use var.instance_size_analytics when var.replication_specs is used. Configure instance_size within replication_specs[*].region_configs[*].analytics_specs.instance_size instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.disk_iops == null
+    error_message = "Cannot use var.disk_iops when var.replication_specs is used. Configure disk_iops within replication_specs[*].region_configs[*].electable_specs.disk_iops, read_only_specs.disk_iops, or analytics_specs.disk_iops instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.disk_size_gb == null
+    error_message = "Cannot use var.disk_size_gb when var.replication_specs is used. Configure disk_size_gb within replication_specs[*].region_configs[*].electable_specs.disk_size_gb, read_only_specs.disk_size_gb, or analytics_specs.disk_size_gb instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.ebs_volume_type == null
+    error_message = "Cannot use var.ebs_volume_type when var.replication_specs is used. Configure ebs_volume_type within replication_specs[*].region_configs[*].electable_specs.ebs_volume_type, read_only_specs.ebs_volume_type, or analytics_specs.ebs_volume_type instead."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.shard_count == null
+    error_message = "Cannot use var.shard_count when var.replication_specs is used. Shard configuration is defined by the number of replication_specs provided."
+  }
+
+  validation {
+    condition     = length(var.replication_specs) == 0 || var.provider_name == null
+    error_message = "Cannot use var.provider_name when var.replication_specs is used. Configure provider_name within replication_specs[*].region_configs[*].provider_name instead."
+  }
 }
 
 variable "retain_backups_enabled" {

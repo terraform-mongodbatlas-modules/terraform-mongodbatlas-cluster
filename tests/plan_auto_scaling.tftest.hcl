@@ -210,3 +210,161 @@ run "scale_down_enabled_should_set_compute_min_instance_size" {
     error_message = "Expected compute_min_instance_size to be M10 when compute_scale_down_enabled = true"
   }
 }
+
+run "analytics_scale_down_disabled_should_not_set_compute_min_instance_size" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-analytics-scale-down-disabled"
+    project_id    = var.project_id
+    cluster_type  = "SHARDED"
+    provider_name = "AWS"
+    regions = [
+      {
+        name                 = "US_EAST_1"
+        node_count           = 3
+        shard_number         = 1
+        node_count_analytics = 1
+      }
+    ]
+    # Enable auto-scaling for electable nodes
+    auto_scaling = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M10"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+    # Enable analytics auto-scaling but disable scale down
+    auto_scaling_analytics = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M10"
+      compute_scale_down_enabled = false
+    }
+  }
+
+  # When scale_down_enabled = false for analytics, compute_scale_down_enabled should be false
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_scale_down_enabled == false
+    error_message = "Expected analytics compute_scale_down_enabled to be false"
+  }
+
+  # Verify other analytics auto-scaling settings are still applied
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_enabled == true
+    error_message = "Expected analytics compute_enabled to be true"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_max_instance_size == "M50"
+    error_message = "Expected analytics compute_max_instance_size to be M50"
+  }
+}
+
+run "analytics_scale_down_enabled_should_set_compute_min_instance_size" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-analytics-scale-down-enabled"
+    project_id    = var.project_id
+    cluster_type  = "SHARDED"
+    provider_name = "AWS"
+    regions = [
+      {
+        name                 = "US_EAST_1"
+        node_count           = 3
+        shard_number         = 1
+        node_count_analytics = 1
+      }
+    ]
+    # Enable auto-scaling for electable nodes
+    auto_scaling = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M10"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+    # Enable analytics auto-scaling with scale down enabled
+    auto_scaling_analytics = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M10"
+      compute_scale_down_enabled = true
+    }
+  }
+
+  # When scale_down_enabled = true for analytics, compute_min_instance_size should be set
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_scale_down_enabled == true
+    error_message = "Expected analytics compute_scale_down_enabled to be true"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_min_instance_size == "M10"
+    error_message = "Expected analytics compute_min_instance_size to be M10 when compute_scale_down_enabled = true"
+  }
+}
+
+run "analytics_auto_scaling_undefined_inherits_from_electable" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-analytics-inherit"
+    project_id    = var.project_id
+    cluster_type  = "SHARDED"
+    provider_name = "AWS"
+    regions = [
+      {
+        name                 = "US_EAST_1"
+        node_count           = 3
+        shard_number         = 1
+        node_count_analytics = 1
+      }
+    ]
+    # Enable auto-scaling for electable nodes
+    auto_scaling = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M30"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+    # Do not set auto_scaling_analytics or instance_size_analytics
+    # This should inherit the auto_scaling settings from electable nodes
+  }
+
+  # Analytics should inherit auto-scaling settings from electable nodes
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_enabled == true
+    error_message = "Expected analytics compute_enabled to inherit from electable (true)"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_min_instance_size == "M30"
+    error_message = "Expected analytics compute_min_instance_size to inherit from electable (M30)"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_max_instance_size == "M50"
+    error_message = "Expected analytics compute_max_instance_size to inherit from electable (M50)"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_auto_scaling.compute_scale_down_enabled == true
+    error_message = "Expected analytics compute_scale_down_enabled to inherit from electable (true)"
+  }
+}
