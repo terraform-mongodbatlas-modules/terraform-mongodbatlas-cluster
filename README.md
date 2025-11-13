@@ -71,7 +71,7 @@ This module offers two mutually exclusive ways to configure cluster topology:
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.6)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9)
 
 - <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) (~> 2.0)
 
@@ -699,6 +699,12 @@ The module provides two approaches to accommodate different user needs and migra
 - Ideal for users already familiar with the resource structure
 
 📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
+
+### Why does this module require Terraform 1.9+ when the provider supports 1.7.x+?
+
+This module requires Terraform 1.9+ due to the use of cross-variable validation references, which are only supported in Terraform 1.9 and later. While the [MongoDB Atlas Provider](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix) supports Terraform 1.7.x+, this module's validation patterns require 1.9+.
+
+See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
 
 ### What is the `provider_meta "mongodbatlas"` doing?
 

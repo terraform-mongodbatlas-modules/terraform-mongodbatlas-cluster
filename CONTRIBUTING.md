@@ -83,6 +83,38 @@ just integration-tests   # Apply tests (creates resources)
 
 See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) for more details.
 
+## Variable Validation Patterns
+
+When adding or modifying variable validations, follow these patterns:
+
+### Handling Null Values with `try()`
+
+When validating numeric values that might be `null`, wrap `floor()` comparisons with `try()` to handle null values gracefully:
+
+```hcl
+validation {
+  condition = var.value == null || try(var.value == floor(var.value) && var.value >= 0, false)
+  error_message = "value must be a non-negative integer if provided."
+}
+```
+
+**Why?** In Terraform 1.9-1.11, short-circuit evaluation behavior changed. The `try()` function ensures that if `floor()` receives a `null` value, it returns `false` instead of causing an error, allowing the validation to pass when the value is `null` (first clause will be `true`).
+
+### Cross-Variable Validation References
+
+This module uses cross-variable validation references (requires Terraform 1.9+):
+
+```hcl
+variable "shard_count" {
+  validation {
+    condition     = var.shard_count == null || var.cluster_type == "SHARDED"
+    error_message = "shard_count can only be set when cluster_type is SHARDED."
+  }
+}
+```
+
+**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
+
 ## Documentation
 
 Documentation is auto-generated. Run `just check` before committing - it regenerates all docs and verifies they're up-to-date.
