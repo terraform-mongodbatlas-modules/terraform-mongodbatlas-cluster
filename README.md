@@ -5,6 +5,7 @@ This module heavily simplifies the MongoDB Atlas cluster resource.  More granula
 <!-- BEGIN_TOC -->
 - [Public Preview Note](#public-preview-note)
 - [Disclaimer](#disclaimer)
+- [Getting Started](#getting-started)
 - [Getting Started Examples](#getting-started-examples)
 - [Examples](#examples)
 - [Cluster Topology Configuration](#cluster-topology-configuration)
@@ -100,7 +101,7 @@ Perform the following steps to create a new cluster using the cluster module:
 Run `terraform destroy` to undo all changes that Terraform did on your infrastructure.
 
 <!-- BEGIN_TABLES -->
-### Cluster Examples
+## Getting Started Examples
 
 Cluster Type | Environment | Name
 --- | --- | ---
