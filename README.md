@@ -45,11 +45,6 @@ Perform the following steps to download and configure the tools required to crea
 
 1. Install [Terraform](https://developer.hashicorp.com/terraform/install).
 
-    ```sh
-    brew tap hashicorp/tap
-    brew install hashicorp/tap/terraform
-    ```
-
 2. [Sign in](https://account.mongodb.com/account/login) or [create](https://account.mongodb.com/account/register) your MongoDB Atlas Account.
 
 3. Configure your [authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) method.
@@ -78,8 +73,8 @@ Perform the following steps to create a new cluster using the cluster module:
 3. Configure your authentication environment variables.
   
     ```sh
-    export MONGODB_ATLAS_PUBLIC_KEY="your-new-public-key-goes-here"
-    export MONGODB_ATLAS_PRIVATE_KEY="your-new-private-key-goes-here"
+    export MONGODB_ATLAS_CLIENT_ID="your-client-id-goes-here"
+    export MONGODB_ATLAS_CLIENT_SECRET="your-client-secret-goes-here"
     ```
 
 4. Preview your configuration to ensure it works correctly.
