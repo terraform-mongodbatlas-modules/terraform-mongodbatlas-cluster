@@ -5,6 +5,7 @@ This module simplifies the MongoDB Atlas cluster resource. Obtain more granular 
 <!-- BEGIN_TOC -->
 - [Public Preview Note](#public-preview-note)
 - [Disclaimer](#disclaimer)
+- [Getting Started](#getting-started)
 - [Getting Started Examples](#getting-started-examples)
 - [Examples](#examples)
 - [Cluster Topology Configuration](#cluster-topology-configuration)
@@ -31,6 +32,68 @@ The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments
 One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. The v0 release (public preview) of the MongoDB Atlas Cluster Module focuses on gathering feedback and refining the design. Upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.  
 
 <!-- END_DISCLAIMER -->
+
+## Getting Started
+
+This section guides you through the basic steps to set up Terraform and run this module to create a new [development cluster](./examples/08_development_cluster) as a practical example.
+
+### Pre Requirements
+
+**NOTE**: If you are familiar with Terraform and already have a project configured in MongoDB Atlas, go to [Create a New Cluster](#create-a-new-cluster)
+
+Perform the following steps to download and configure the tools required to create a new MongoDB Atlas development cluster:
+
+1. Install [Terraform](https://developer.hashicorp.com/terraform/install).
+
+2. [Sign in](https://account.mongodb.com/account/login) or [create](https://account.mongodb.com/account/register) your MongoDB Atlas Account.
+
+3. Configure your [authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) method.
+
+   **NOTE**: Service Accounts (SA) is the preferred authentication method. See [Grant Programatic Access to an Organization](https://www.mongodb.com/docs/atlas/configure-api-access/#grant-programmatic-access-to-an-organization) in the MongoDB Atlas documentation for detailed instructions on configuring SA access to your project.
+
+4. Use an existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) or [create a new Atlas Project](./examples/08_development_cluster/README.md/#optionally-create-a-new-atlas-project-resource).
+
+### Create a New Cluster
+
+Perform the following steps to create a new cluster using the cluster module:
+
+1. Create your Terraform configuration files.
+  Ensure your files contain the code provided in this repository:
+  
+   - [main.tf](./examples/08_development_cluster/README.md/#code-snippet)
+   - [variables.tf](./examples/08_development_cluster/variables.tf)
+   - [versions.tf](examples/08_development_cluster/versions.tf)
+
+2. Initialize Terraform.
+  
+    ```sh
+    terraform init # download the required providers and create a `terraform.lock.hcl` file.
+    ```
+
+3. Configure your authentication environment variables.
+  
+    ```sh
+    export MONGODB_ATLAS_CLIENT_ID="your-client-id-goes-here"
+    export MONGODB_ATLAS_CLIENT_SECRET="your-client-secret-goes-here"
+    ```
+
+4. Preview your configuration to ensure it works correctly.
+
+    ```sh
+    terraform plan
+    ```
+
+5. Create your new cluster.
+
+    ```sh
+    terraform apply
+    ```
+
+   Terraform creates the new cluster in your MongoDB Atlas infrastructure.
+
+### Clean up your configuration
+
+Run `terraform destroy` to undo all changes that Terraform did on your infrastructure.
 
 <!-- BEGIN_TABLES -->
 ## Getting Started Examples
