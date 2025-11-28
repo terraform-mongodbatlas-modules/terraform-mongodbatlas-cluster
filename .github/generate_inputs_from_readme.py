@@ -242,13 +242,12 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
                     "Default:"
                 ):
                     break
-                if stripped_inner:
-                    description_lines.append(line.strip())
+                description_lines.append(line.rstrip())
                 i += 1
 
             type_value, default_value, i = _parse_type_and_default(lines, i)
 
-            description = " ".join(description_lines).strip()
+            description = "\n".join(description_lines).rstrip()
             variables.append(
                 Variable(
                     name=var_name,
@@ -342,14 +341,25 @@ def render_grouped_markdown(
             lines.append("")
             continue
 
-        lines.append("| Name | Description | Type | Default | Required |")
-        lines.append("| --- | --- | --- | --- | --- |")
+        variable_heading_level = min(level + 1, 6)
+
         for var in section_vars:
-            default_value = var.default if var.default else "`null`"
-            required_value = "yes" if var.required else "no"
-            lines.append(
-                f"| `{var.name}` | {var.description} | `{var.type}` | {default_value} | {required_value} |"
-            )
+            lines.append(f"{'#' * variable_heading_level} {var.name}")
+            lines.append("")
+            if var.description:
+                for desc_line in var.description.splitlines():
+                    if desc_line.strip():
+                        lines.append(desc_line.rstrip())
+                lines.append("")
+
+            if var.type:
+                lines.append(f"Type: {var.type}")
+                lines.append("")
+
+            if var.default:
+                lines.append(f"Default: {var.default}")
+                lines.append("")
+
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
