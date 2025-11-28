@@ -665,9 +665,10 @@ Default: `null`
 <!-- BEGIN_GENERATED_INPUTS -->
 ## Required Variables
 
-### cluster_type
+### project_id
 
-Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`.
+Description: Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
+**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
 
 Type: `string`
 
@@ -677,10 +678,9 @@ Description: Human-readable label that identifies this cluster, for example: `my
 
 Type: `string`
 
-### project_id
+### cluster_type
 
-Description: Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
-**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
+Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`.
 
 Type: `string`
 
@@ -739,6 +739,36 @@ Default: `null`
 
 ### Manual Scaling
 
+#### instance_size
+
+Description: Default instance\_size in electable/read-only specs. Only used when auto\_scaling.compute\_enabled = false. Defaults to M10 if not specified.
+
+Type: `string`
+
+Default: `null`
+
+#### instance_size_analytics
+
+Description: Default instance\_size in analytics specs. Do not set if using auto\_scaling\_analytics.
+
+Type: `string`
+
+Default: `null`
+
+#### disk_size_gb
+
+Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
+ This value must be equal for all shards and node types.
+ This value is not configurable on M0/M2/M5 clusters.
+ MongoDB Cloud requires this parameter if you set **replicationSpecs**.
+ If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
+ Storage charge calculations depend on whether you choose the default value or a custom value.
+ The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
+
+Type: `number`
+
+Default: `null`
+
 #### disk_iops
 
 Description: Only valid for AWS and Azure instances.
@@ -766,39 +796,9 @@ Type: `number`
 
 Default: `null`
 
-#### disk_size_gb
-
-Description: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
- This value must be equal for all shards and node types.
- This value is not configurable on M0/M2/M5 clusters.
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
- Storage charge calculations depend on whether you choose the default value or a custom value.
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
-
-Type: `number`
-
-Default: `null`
-
 #### ebs_volume_type
 
 Description: Type of storage you want to attach to your AWS-provisioned cluster.\n\n- `STANDARD` volume types can't exceed the default input/output operations per second (IOPS) rate for the selected volume size. \n\n- `PROVISIONED` volume types must fall within the allowable IOPS range for the selected volume size. You must set this value to (`PROVISIONED`) for NVMe clusters.
-
-Type: `string`
-
-Default: `null`
-
-#### instance_size
-
-Description: Default instance\_size in electable/read-only specs. Only used when auto\_scaling.compute\_enabled = false. Defaults to M10 if not specified.
-
-Type: `string`
-
-Default: `null`
-
-#### instance_size_analytics
-
-Description: Default instance\_size in analytics specs. Do not set if using auto\_scaling\_analytics.
 
 Type: `string`
 

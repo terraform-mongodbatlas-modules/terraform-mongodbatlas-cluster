@@ -3,7 +3,10 @@ sections:
     title: "Required Variables"
     level: 2
     match:
-      required: true
+      names:
+        - project_id
+        - name
+        - cluster_type
 
   - id: cluster_topology_regions
     title: "Cluster Topology Option 1 - `regions` Variables"

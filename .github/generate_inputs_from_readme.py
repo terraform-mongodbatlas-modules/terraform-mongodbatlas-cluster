@@ -341,6 +341,20 @@ def render_grouped_markdown(
             lines.append("")
             continue
 
+        match = section.get("match", {}) or {}
+        names_order = match.get("names", [])
+        if isinstance(names_order, list) and names_order:
+            vars_by_name: dict[str, Variable] = {v.name: v for v in section_vars}
+            ordered_vars: list[Variable] = []
+            for name in names_order:
+                var = vars_by_name.pop(name, None)
+                if var is not None:
+                    ordered_vars.append(var)
+            for var in section_vars:
+                if var.name in vars_by_name:
+                    ordered_vars.append(var)
+            section_vars = ordered_vars
+
         variable_heading_level = min(level + 1, 6)
 
         for var in section_vars:
