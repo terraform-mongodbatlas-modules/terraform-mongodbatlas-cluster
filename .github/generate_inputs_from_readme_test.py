@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import textwrap
 
-import pytest
-
 import generate_inputs_from_readme as mod
+import pytest
 
 
 def _dedent(s: str) -> str:
@@ -103,9 +102,43 @@ def test_parse_terraform_docs_inputs_preserves_fenced_type_and_default() -> None
 
 
 def test_parse_terraform_docs_inputs_raises_on_empty_block() -> None:
-    empty_block = "## Required Inputs\n\nThe following input variables are required:\n\n"
+    empty_block = (
+        "## Required Inputs\n\nThe following input variables are required:\n\n"
+    )
 
     with pytest.raises(SystemExit) as exc_info:
         mod.parse_terraform_docs_inputs(empty_block)
 
     assert "No variables were parsed" in str(exc_info.value)
+
+
+def test_render_grouped_markdown_with_section_description() -> None:
+    """Test that section descriptions from YAML config are rendered correctly."""
+    variables = [
+        mod.Variable(
+            name="test_var",
+            description="A test variable",
+            type="`string`",
+            default="`null`",
+            required=False,
+        )
+    ]
+
+    sections = [
+        {
+            "id": "test_section",
+            "title": "Test Section",
+            "level": 2,
+            "description": "This is a section description.\nIt can span multiple lines.",
+            "match": {"names": ["test_var"]},
+        }
+    ]
+
+    output = mod.render_grouped_markdown(variables, sections)
+
+    assert "## Test Section" in output
+    assert "This is a section description." in output
+    assert "It can span multiple lines." in output
+    assert "### test_var" in output
+    # Description should appear before variables
+    assert output.find("This is a section description") < output.find("### test_var")

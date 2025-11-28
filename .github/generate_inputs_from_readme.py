@@ -278,7 +278,12 @@ def render_grouped_markdown(
         lines.append("")
 
         if isinstance(description, str) and description.strip():
-            lines.append(textwrap.dedent(description).strip())
+            # Handle multi-line descriptions - preserve formatting
+            # YAML multi-line strings often have leading whitespace that should be dedented
+            dedented = textwrap.dedent(description).strip()
+            # Preserve line breaks and formatting
+            for desc_line in dedented.splitlines():
+                lines.append(desc_line.rstrip())
             lines.append("")
 
         section_vars = grouped.get(title, [])

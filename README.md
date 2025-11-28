@@ -177,6 +177,9 @@ Type: `string`
 
 ## Cluster Topology Option 1 - `regions` Variables
 
+This option is mutually exclusive with the `replication_specs` variable options and requires setting `replication_specs = []`.
+See also [why two options?](#why-two-options-for-cluster-topology).
+
 ### regions
 
 The simplest way to define your cluster topology:
@@ -352,6 +355,9 @@ Default: `null`
 
 ## Cluster Topology Option 2 - `replication_specs` Variables
 
+This option is mutually exclusive with the `regions` variable options and requires setting `regions = []`.
+See also [why two options?](#why-two-options-for-cluster-topology).
+
 ### replication_specs
 
 List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations.
@@ -409,6 +415,8 @@ Default: `[]`
 
 
 ## Production Recommendations (Enabled By Default)
+
+These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
 
 ### advanced_configuration
 
@@ -470,6 +478,8 @@ Default: `true`
 
 
 ## Production Recommendations (Manually Configured)
+
+These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
 
 ### encryption_at_rest_provider
 
