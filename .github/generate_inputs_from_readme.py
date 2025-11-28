@@ -405,35 +405,9 @@ def main() -> None:
     variables = parse_terraform_docs_inputs(inputs_block)
     sections = load_group_config(args.config)
     output_markdown = render_grouped_markdown(variables, sections)
-
-    begin_generated = "<!-- BEGIN_GENERATED_INPUTS -->"
-    end_generated = "<!-- END_GENERATED_INPUTS -->"
-
-    begin_index = readme_content.find(begin_generated)
-    end_index = readme_content.find(end_generated)
-
-    if begin_index != -1 and end_index != -1:
-        end_index += len(end_generated)
-        new_block = f"{begin_generated}\n{output_markdown}{end_generated}"
-        updated_readme = (
-            readme_content[:begin_index] + new_block + readme_content[end_index:]
-        )
-    else:
-        end_inputs_index = readme_content.find(END_MARKER)
-        if end_inputs_index == -1:
-            msg = (
-                "Could not find END_TF_INPUTS_RAW marker in README.md when inserting "
-                "generated inputs section."
-            )
-            raise SystemExit(msg)
-        insert_pos = end_inputs_index + len(END_MARKER)
-        insertion = f"\n\n{begin_generated}\n{output_markdown}{end_generated}\n"
-        updated_readme = (
-            readme_content[:insert_pos] + insertion + readme_content[insert_pos:]
-        )
-
+    new_content = readme_content.replace(inputs_block, output_markdown)
     try:
-        args.readme.write_text(updated_readme, encoding="utf-8")
+        args.readme.write_text(new_content, encoding="utf-8")
     except OSError as exc:
         msg = f"Failed to update README.md with grouped inputs: {exc}"
         raise SystemExit(msg) from exc
