@@ -2,7 +2,6 @@ formatter: markdown document
 sections:
   hide:
   - "modules"
-  - "inputs"
 output:
   file: "README.md"
   mode: inject
@@ -21,12 +20,16 @@ content: |-
   {{ .Providers }}
 
   {{ .Resources }}
-  
+
   **NOTE**: The `data.mongodbatlas_advanced_clusters` is used by auto-scaled clusters to avoid unexpected plan changes when `instance_size` have updated.
-  
+
   {{ include "docs/inputs.md" }}
 
-  {{ .Outputs }} 
+  <!-- BEGIN_TF_INPUTS_RAW -->
+  {{ .Inputs }}
+  <!-- END_TF_INPUTS_RAW -->
+
+  {{ .Outputs }}
 examples_readme:
   readme_template: docs/example_readme.md
   template_vars:

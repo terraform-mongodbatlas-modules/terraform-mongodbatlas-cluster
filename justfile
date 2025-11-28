@@ -28,6 +28,8 @@ py-fmt:
 docs: gen-readme gen-examples
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
+    uv run --with pyyaml python .github/generate_inputs_from_readme.py
+    @echo "Inputs documentation updated successfully"
 
 # Run all validation checks
 check: fmt validate lint check-docs py-check

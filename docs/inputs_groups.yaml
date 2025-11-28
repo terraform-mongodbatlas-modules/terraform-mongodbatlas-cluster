@@ -1,0 +1,65 @@
+sections:
+  - id: required
+    title: "Required Variables"
+    level: 2
+    match:
+      required: true
+
+  - id: cluster_topology_regions
+    title: "Cluster Topology Option 1 - `regions` Variables"
+    level: 2
+    match:
+      names:
+        - "regions"
+        - "provider_name"
+        - "shard_count"
+
+  - id: auto_scaling
+    title: "Auto Scaling"
+    level: 3
+    match:
+      names:
+        - "auto_scaling"
+        - "auto_scaling_analytics"
+
+  - id: manual_scaling
+    title: "Manual Scaling"
+    level: 3
+    match:
+      names:
+        - "instance_size"
+        - "instance_size_analytics"
+        - "disk_size_gb"
+        - "disk_iops"
+        - "ebs_volume_type"
+
+  - id: cluster_topology_replication_specs
+    title: "Cluster Topology Option 2 - `replication_specs` Variables"
+    level: 2
+    match:
+      names:
+        - "replication_specs"
+
+  - id: production_recommendations_default
+    title: "Production Recommendations (Enabled By Default)"
+    level: 2
+    match:
+      names:
+        - "advanced_configuration"
+        - "backup_enabled"
+        - "pit_enabled"
+        - "retain_backups_enabled"
+
+  - id: production_recommendations_manual
+    title: "Production Recommendations (Manually Configured)"
+    level: 2
+    match:
+      names:
+        - "encryption_at_rest_provider"
+        - "redact_client_log_data"
+        - "tags"
+        - "termination_protection_enabled"
+
+  - id: optional
+    title: "Optional Variables"
+    level: 2
