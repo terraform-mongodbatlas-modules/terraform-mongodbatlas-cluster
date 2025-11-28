@@ -47,85 +47,6 @@ def extract_inputs_block(readme_content: str) -> str:
     return block
 
 
-def parse_terraform_docs_table(inputs_block: str) -> list[Variable]:
-    """
-    Parse the standard terraform-docs Inputs markdown table.
-
-    Expects content like:
-
-    ## Inputs
-    | Name | Description | Type | Default | Required |
-    |------|-------------|------|---------|:--------:|
-    | name | ...         | ...  | ...     | yes      |
-    """
-    lines = [line.rstrip() for line in inputs_block.splitlines()]
-
-    try:
-        header_index = next(
-            idx
-            for idx, line in enumerate(lines)
-            if line.strip().lower().startswith("## inputs")
-        )
-    except StopIteration as exc:
-        msg = "Could not find '## Inputs' heading in terraform-docs inputs block."
-        raise SystemExit(msg) from exc
-
-    table_lines: list[str] = []
-    in_table = False
-
-    for line in lines[header_index + 1 :]:
-        if not line.strip():
-            if in_table:
-                break
-            continue
-
-        if line.lstrip().startswith("|"):
-            in_table = True
-            table_lines.append(line)
-        elif in_table:
-            break
-
-    if len(table_lines) < 3:
-        msg = "Terraform-docs inputs table appears malformed or empty."
-        raise SystemExit(msg)
-
-    header = [col.strip().lower() for col in table_lines[0].split("|")[1:-1]]
-    expected_header = ["name", "description", "type", "default", "required"]
-    if header != expected_header:
-        msg = (
-            "Unexpected terraform-docs inputs table header. "
-            f"Expected '{expected_header}', got '{header}'. "
-            "Ensure terraform-docs is using the default markdown table format for Inputs."
-        )
-        raise SystemExit(msg)
-
-    variables: list[Variable] = []
-
-    for row in table_lines[2:]:
-        cells = [col.strip() for col in row.split("|")[1:-1]]
-        if len(cells) != 5:
-            # Skip rows that do not match the expected shape; this is strict-on-structure but
-            # avoids partially parsed variables.
-            continue
-
-        name, description, type_, default, required = cells
-        variables.append(
-            Variable(
-                name=name,
-                description=description,
-                type=type_,
-                default=default,
-                required=required.lower() == "yes",
-            )
-        )
-
-    if not variables:
-        msg = "No variables were parsed from the terraform-docs inputs table."
-        raise SystemExit(msg)
-
-    return variables
-
-
 def _parse_type_and_default(
     lines: list[str],
     start_index: int,
@@ -142,34 +63,48 @@ def _parse_type_and_default(
         if stripped.startswith("Type:"):
             value = stripped[len("Type:") :].strip()
             i += 1
-            if not value and i < len(lines) and lines[i].strip().startswith("```"):
-                fence = lines[i].strip()
-                fence_prefix = fence[:3]
-                i += 1
-                code_lines: list[str] = []
-                while i < len(lines) and not lines[i].strip().startswith(fence_prefix):
-                    code_lines.append(lines[i].rstrip())
+            if not value:
+                # Skip blank lines until we find the fenced block
+                while i < len(lines) and not lines[i].strip():
                     i += 1
-                if i < len(lines) and lines[i].strip().startswith(fence_prefix):
+                if i < len(lines) and lines[i].strip().startswith("```"):
+                    fence = lines[i].rstrip()
+                    fence_prefix = fence[:3]
                     i += 1
-                value = " ".join(code_lines).strip()
+                    code_lines: list[str] = []
+                    while i < len(lines) and not lines[i].strip().startswith(
+                        fence_prefix
+                    ):
+                        code_lines.append(lines[i].rstrip())
+                        i += 1
+                    if i < len(lines) and lines[i].strip().startswith(fence_prefix):
+                        i += 1
+                    # Preserve full fenced block to mimic original formatting
+                    value = "\n".join([fence, *code_lines, fence_prefix]).rstrip()
             type_value = value or type_value
             continue
 
         if stripped.startswith("Default:"):
             value = stripped[len("Default:") :].strip()
             i += 1
-            if not value and i < len(lines) and lines[i].strip().startswith("```"):
-                fence = lines[i].strip()
-                fence_prefix = fence[:3]
-                i += 1
-                code_lines = []
-                while i < len(lines) and not lines[i].strip().startswith(fence_prefix):
-                    code_lines.append(lines[i].rstrip())
+            if not value:
+                # Skip blank lines until we find the fenced block
+                while i < len(lines) and not lines[i].strip():
                     i += 1
-                if i < len(lines) and lines[i].strip().startswith(fence_prefix):
+                if i < len(lines) and lines[i].strip().startswith("```"):
+                    fence = lines[i].rstrip()
+                    fence_prefix = fence[:3]
                     i += 1
-                value = " ".join(code_lines).strip()
+                    code_lines = []
+                    while i < len(lines) and not lines[i].strip().startswith(
+                        fence_prefix
+                    ):
+                        code_lines.append(lines[i].rstrip())
+                        i += 1
+                    if i < len(lines) and lines[i].strip().startswith(fence_prefix):
+                        i += 1
+                    # Preserve full fenced block to mimic original formatting
+                    value = "\n".join([fence, *code_lines, fence_prefix]).rstrip()
             default_value = value or default_value
             continue
 
@@ -230,6 +165,7 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
 
             description_lines: list[str] = []
             i += 1
+            found_description_prefix = False
 
             while i < len(lines):
                 line = lines[i]
@@ -242,7 +178,17 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
                     "Default:"
                 ):
                     break
-                description_lines.append(line.rstrip())
+                # Strip "Description: " prefix from the first non-empty line if present
+                if not found_description_prefix and stripped_inner.startswith(
+                    "Description:"
+                ):
+                    desc_content = stripped_inner[len("Description:") :].strip()
+                    if desc_content:
+                        description_lines.append(desc_content)
+                    found_description_prefix = True
+                elif stripped_inner or description_lines:
+                    # Only add non-empty lines, or empty lines if we already have content
+                    description_lines.append(line.rstrip())
                 i += 1
 
             type_value, default_value, i = _parse_type_and_default(lines, i)
@@ -367,11 +313,21 @@ def render_grouped_markdown(
                 lines.append("")
 
             if var.type:
-                lines.append(f"Type: {var.type}")
+                if "```" in var.type or "\n" in var.type:
+                    lines.append("Type:")
+                    lines.append("")
+                    lines.append(var.type)
+                else:
+                    lines.append(f"Type: {var.type}")
                 lines.append("")
 
             if var.default:
-                lines.append(f"Default: {var.default}")
+                if "```" in var.default or "\n" in var.default:
+                    lines.append("Default:")
+                    lines.append("")
+                    lines.append(var.default)
+                else:
+                    lines.append(f"Default: {var.default}")
                 lines.append("")
 
         lines.append("")
