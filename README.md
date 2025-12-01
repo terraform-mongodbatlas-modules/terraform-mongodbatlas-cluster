@@ -553,7 +553,140 @@ Default: `null`
 
 ## Optional Variables
 
-_No variables in this section yet._
+### accept_data_risks_and_force_replica_set_reconfig
+
+If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology.
+
+Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `acceptDataRisksAndForceReplicaSetReconfig` to the current date.
+
+Type: `string`
+
+Default: `null`
+
+### bi_connector_config
+
+Settings needed to configure the MongoDB Connector for Business Intelligence for this cluster.
+
+Type:
+
+```hcl
+object({
+  enabled         = optional(bool)
+  read_preference = optional(string)
+})
+```
+
+Default: `null`
+
+### config_server_management_mode
+
+Config Server Management Mode for creating or updating a sharded cluster.
+
+When configured as ATLAS_MANAGED, atlas may automatically switch the cluster's config server type for optimal performance and savings.
+
+When configured as FIXED_TO_DEDICATED, the cluster will always use a dedicated config server.
+
+Type: `string`
+
+Default: `null`
+
+### delete_on_create_timeout
+
+Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false.
+
+Type: `bool`
+
+Default: `null`
+
+### global_cluster_self_managed_sharding
+
+Set this field to configure the Sharding Management Mode when creating a new Global Cluster.
+
+When set to false, the management mode is set to Atlas-Managed Sharding. This mode fully manages the sharding of your Global Cluster and is built to provide a seamless deployment experience.
+
+When set to true, the management mode is set to Self-Managed Sharding. This mode leaves the management of shards in your hands and is built to provide an advanced and flexible deployment experience.
+
+This setting cannot be changed once the cluster is deployed.
+
+Type: `bool`
+
+Default: `null`
+
+### mongo_db_major_version
+
+MongoDB major version of the cluster.
+
+On creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).
+
+ On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
+
+Type: `string`
+
+Default: `null`
+
+### paused
+
+Flag that indicates whether the cluster is paused.
+
+Type: `bool`
+
+Default: `null`
+
+### pinned_fcv
+
+Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. It is advised that updates to `pinned_fcv` are done isolated from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. See the following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and the [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) for more details.
+
+Type:
+
+```hcl
+object({
+  expiration_date = string
+})
+```
+
+Default: `null`
+
+### replica_set_scaling_strategy
+
+Set this field to configure the replica set scaling mode for your cluster.
+
+By default, Atlas scales under WORKLOAD_TYPE. This mode allows Atlas to scale your analytics nodes in parallel to your operational nodes.
+
+When configured as SEQUENTIAL, Atlas scales all nodes sequentially. This mode is intended for steady-state workloads and applications performing latency-sensitive secondary reads.
+
+Type: `string`
+
+Default: `null`
+
+### root_cert_type
+
+Root Certificate Authority that MongoDB Cloud cluster uses. MongoDB Cloud supports Internet Security Research Group.
+
+Type: `string`
+
+Default: `null`
+
+### timeouts
+
+Timeouts for create/update/delete operations.
+
+Type:
+
+```hcl
+object({
+  create = optional(string)
+  delete = optional(string)
+  update = optional(string)
+})
+```
+
+Default: `null`
+
+### version_release_system
+
+Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify **mongoDBMajorVersion**.
+
+Type: `string`
 END_TF_INPUTS_RAW -->
 
 ## Outputs

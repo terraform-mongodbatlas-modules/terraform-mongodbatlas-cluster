@@ -249,17 +249,25 @@ def load_group_config(config_path: Path) -> list[dict[str, object]]:
 
 
 def assign_section(variable: Variable, sections: list[dict[str, object]]) -> str:
+    # First, check for explicit name matches
     for section in sections:
         match = section.get("match", {}) or {}
         names = match.get("names", [])
         if isinstance(names, list) and variable.name in names:
             return str(section.get("title", section.get("id", "Other")))
 
+    # Second, check for required flag matches
     for section in sections:
         match = section.get("match", {}) or {}
         if match.get("required") and variable.required:
             return str(section.get("title", section.get("id", "Required Variables")))
 
+    # Third, check for is_default flag
+    for section in sections:
+        if section.get("is_default"):
+            return str(section.get("title", section.get("id", "Other Variables")))
+
+    # Fallback to "other" section if it exists
     for section in sections:
         if section.get("id") == "other":
             return str(section.get("title", "Other Variables"))

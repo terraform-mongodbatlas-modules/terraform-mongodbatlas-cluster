@@ -76,3 +76,4 @@ sections:
   - id: optional
     title: "Optional Variables"
     level: 2
+    is_default: true
