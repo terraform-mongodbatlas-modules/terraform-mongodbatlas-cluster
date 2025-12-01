@@ -142,3 +142,43 @@ def test_render_grouped_markdown_with_section_description() -> None:
     assert "### test_var" in output
     # Description should appear before variables
     assert output.find("This is a section description") < output.find("### test_var")
+
+
+_indented_hcl_content = """\
+```hcl
+list(object({
+    name                    = string
+    disk_iops               = optional(number)
+    disk_size_gb            = optional(number)
+    ebs_volume_type         = optional(string)
+    instance_size           = optional(string)
+    instance_size_analytics = optional(string)
+    node_count              = optional(number)
+    node_count_analytics    = optional(number)
+    node_count_read_only    = optional(number)
+    provider_name           = optional(string)
+    shard_number            = optional(number)
+    zone_name               = optional(string)
+  }))
+```"""
+_wanted_hcl_content = """\
+```hcl
+list(object({
+  name                    = string
+  disk_iops               = optional(number)
+  disk_size_gb            = optional(number)
+  ebs_volume_type         = optional(string)
+  instance_size           = optional(string)
+  instance_size_analytics = optional(string)
+  node_count              = optional(number)
+  node_count_analytics    = optional(number)
+  node_count_read_only    = optional(number)
+  provider_name           = optional(string)
+  shard_number            = optional(number)
+  zone_name               = optional(string)
+}))
+```"""
+
+def test_removing_indent():
+    assert mod.avoid_extra_type_indent(_indented_hcl_content) == _wanted_hcl_content
+    assert mod.avoid_extra_type_indent("string") == "string" # no change

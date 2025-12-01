@@ -12,7 +12,24 @@ import yaml
 BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW"
 END_MARKER = "END_TF_INPUTS_RAW -->"
 INPUT_ANCHOR_PATTERN = re.compile(r'name="input_(?P<var_name>[^"]+)"')
+FENCED_HCL_TYPE_PATTERN = re.compile(
+    r"```hcl\s*\n"
+    r"(?P<hcl_content>.*?)"
+    r"\n```",
+    re.DOTALL,  # Makes . match newlines so multi-line HCL content is captured
+)
 
+def avoid_extra_type_indent(type_value: str) -> str:
+    match = FENCED_HCL_TYPE_PATTERN.match(type_value)
+    if match:
+        hcl_body = [line.removeprefix("  ") for line in match.group("hcl_content").splitlines()]
+        return "\n".join([
+            "```hcl",
+            *hcl_body,
+            "```",
+        ])
+
+    return type_value
 
 @dataclass
 class Variable:
@@ -21,6 +38,9 @@ class Variable:
     type: str
     default: str
     required: bool
+
+    def __post_init__(self) -> None:
+        self.type = avoid_extra_type_indent(self.type)
 
 
 def load_readme(readme_path: Path) -> str:
