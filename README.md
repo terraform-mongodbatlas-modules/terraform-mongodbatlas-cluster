@@ -330,7 +330,7 @@ Default: `null`
 
 Only valid for AWS and Azure instances.
 
-#### AWS
+##### AWS
 Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
 
 Change this parameter if you:
@@ -348,7 +348,7 @@ MongoDB Cloud enforces minimum ratios of storage capacity to system memory for g
 - Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
 - Instance sizes greater than `M40` have a ratio of 120:1.
 
-#### Azure
+##### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
 
 - set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
