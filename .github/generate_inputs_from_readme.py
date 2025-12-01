@@ -9,8 +9,8 @@ from pathlib import Path
 
 import yaml
 
-BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW"
-END_MARKER = "END_TF_INPUTS_RAW -->"
+BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW -->"
+END_MARKER = "<!-- END_TF_INPUTS_RAW -->"
 INPUT_ANCHOR_PATTERN = re.compile(r'name="input_(?P<var_name>[^"]+)"')
 FENCED_HCL_TYPE_PATTERN = re.compile(
     r"```hcl\s*\n"
