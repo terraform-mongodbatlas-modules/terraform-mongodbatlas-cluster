@@ -158,6 +158,7 @@ The following resources are used by this module:
 ### project_id
 
 Unique 24-hexadecimal digit string that identifies your project, for example `664619d870c247237f4b86a6`. It is found listing projects in the Admin API or selecting a project in the UI and copying the path in the URL.
+
 **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
 
 Type: `string`
@@ -190,6 +191,7 @@ The simplest way to define your cluster topology:
 - For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 - See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
+
 **NOTE**:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
@@ -226,6 +228,7 @@ Default: `null`
 ### shard_count
 
 Number of shards for SHARDED clusters.
+
 - When set, all shards share the same region topology (each shard gets the same regions list).
 - Do NOT set `regions[*].shard_number` when `shard_count` is set (they are mutually exclusive).
 - When unset, you must set `regions[*].shard_number` on every region to explicitly group regions into shards.
@@ -268,7 +271,9 @@ Default:
 #### auto_scaling_analytics
 
 Auto scaling config for analytics specs.
+
 When `auto_scaling_analytics` is `null` (default) and no manual `instance_size_analytics` is set, analytics nodes will inherit the auto-scaling configuration from the electable nodes (`auto_scaling`). This includes all settings: `compute_enabled`, `compute_max_instance_size`, `compute_min_instance_size`, `compute_scale_down_enabled`, and `disk_gb_enabled`.
+
 When `auto_scaling_analytics` is explicitly set, it uses its own configuration. If `compute_scale_down_enabled` is not specified, it defaults to `true` (consistent with the electable nodes default behavior).
 
 Type:
@@ -307,7 +312,9 @@ Default: `null`
 #### disk_size_gb
 
 Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
+
 Consider the following
+
 - This value must be equal for all shards and node types.
 - This value is not configurable on M0/M2/M5 clusters.
 - MongoDB Cloud requires this parameter if you set `replicationSpecs`.
@@ -322,22 +329,31 @@ Default: `null`
 #### disk_iops
 
 Only valid for AWS and Azure instances.
+
 #### AWS
 Target IOPS (Input/Output Operations Per Second) desired for storage attached to this hardware.
+
 Change this parameter if you:
+
 - set `"replicationSpecs[n].regionConfigs[m].providerName" to "AWS"`.
 - set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" to "M30"` or greater (not including `Mxx_NVME` tiers).
+
 - set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
+
 The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
 This parameter defaults to the cluster tier's standard IOPS value.
 Changing this value impacts cluster cost.
 MongoDB Cloud enforces minimum ratios of storage capacity to system memory for given cluster tiers. This keeps cluster performance consistent with large datasets.
+
 - Instance sizes `M10` to `M40` have a ratio of disk capacity to system memory of 60:1.
 - Instance sizes greater than `M40` have a ratio of 120:1.
+
 #### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
+
 - set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
 - set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
+
 The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
 This parameter defaults to the cluster tier's standard IOPS value.
 Changing this value impacts cluster cost.
@@ -494,8 +510,11 @@ Default: `null`
 ### redact_client_log_data
 
 Enable or disable log redaction.
+
 This setting configures the `mongod` or `mongos` to redact any document field contents from a message accompanying a given log event before logging. This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
+
 Use `redactClientLogData` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
+
 *Note*: Changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
 
 Type: `bool`
@@ -513,6 +532,7 @@ We recommend setting the following values:
 - Version
 - Email contact
 - Criticality
+
 These values can be used for:
 - Billing.
 - Data classification.

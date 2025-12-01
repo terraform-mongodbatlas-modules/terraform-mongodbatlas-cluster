@@ -41,6 +41,9 @@ def avoid_underscore_escaping(description: str) -> str:
     return description.replace("\\_", "_")
 
 
+def remove_description_prefix(description: str) -> str:
+    return description.removeprefix("\n\nDescription: ")
+
 @dataclass
 class Variable:
     name: str
@@ -52,6 +55,7 @@ class Variable:
     def __post_init__(self) -> None:
         self.type = avoid_extra_type_indent(self.type)
         self.description = avoid_underscore_escaping(self.description)
+        self.description = remove_description_prefix(self.description)
 
 
 def load_readme(readme_path: Path) -> str:
@@ -78,72 +82,6 @@ def extract_inputs_block(readme_content: str) -> str:
     return block
 
 
-def _parse_type_and_default(
-    lines: list[str],
-    start_index: int,
-) -> tuple[str, str, int]:
-    type_value = ""
-    default_value = ""
-    i = start_index
-
-    while i < len(lines):
-        stripped = lines[i].strip()
-        if stripped.startswith("### ") or stripped.startswith("## "):
-            break
-
-        if stripped.startswith("Type:"):
-            value = stripped[len("Type:") :].strip()
-            i += 1
-            if not value:
-                # Skip blank lines until we find the fenced block
-                while i < len(lines) and not lines[i].strip():
-                    i += 1
-                if i < len(lines) and lines[i].strip().startswith("```"):
-                    fence = lines[i].rstrip()
-                    fence_prefix = fence[:3]
-                    i += 1
-                    code_lines: list[str] = []
-                    while i < len(lines) and not lines[i].strip().startswith(
-                        fence_prefix
-                    ):
-                        code_lines.append(lines[i].rstrip())
-                        i += 1
-                    if i < len(lines) and lines[i].strip().startswith(fence_prefix):
-                        i += 1
-                    # Preserve full fenced block to mimic original formatting
-                    value = "\n".join([fence, *code_lines, fence_prefix]).rstrip()
-            type_value = value or type_value
-            continue
-
-        if stripped.startswith("Default:"):
-            value = stripped[len("Default:") :].strip()
-            i += 1
-            if not value:
-                # Skip blank lines until we find the fenced block
-                while i < len(lines) and not lines[i].strip():
-                    i += 1
-                if i < len(lines) and lines[i].strip().startswith("```"):
-                    fence = lines[i].rstrip()
-                    fence_prefix = fence[:3]
-                    i += 1
-                    code_lines = []
-                    while i < len(lines) and not lines[i].strip().startswith(
-                        fence_prefix
-                    ):
-                        code_lines.append(lines[i].rstrip())
-                        i += 1
-                    if i < len(lines) and lines[i].strip().startswith(fence_prefix):
-                        i += 1
-                    # Preserve full fenced block to mimic original formatting
-                    value = "\n".join([fence, *code_lines, fence_prefix]).rstrip()
-            default_value = value or default_value
-            continue
-
-        i += 1
-
-    return type_value, default_value, i
-
-
 def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
     """
     Parse the terraform-docs markdown used in this repository, which structures inputs as:
@@ -161,88 +99,165 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
     Type: ...
     Default: ...
     """
-    lines = [line.rstrip() for line in inputs_block.splitlines()]
+    # Pattern to match section headers
+    section_pattern = re.compile(
+        r"^##\s+(Required|Optional)\s+Inputs", re.IGNORECASE | re.MULTILINE
+    )
+
+    # Pattern to match variable header: ### <a name="input_name"></a> [name](#input_name)
+    # Handles escaped underscores in the link like #input\_regions
+    var_header_pattern = re.compile(
+        r"^###\s+<a\s+name=\"input_(?P<var_name>[^\"]+)\"></a>\s+\[(?P<display>[^\]]+)\]\(#input[^\)]+\)",
+        re.MULTILINE,
+    )
+
+    # Pattern to match fenced code blocks (```lang\n...\n```)
+    fenced_block_pattern = re.compile(
+        r"```(\w+)?\n(.*?)\n```", re.MULTILINE | re.DOTALL
+    )
+
+    # Separate regex patterns for each section with named groups
+    # Pattern to match description: everything until Type: or Default:
+    # Uses non-greedy match to stop at first Type: or Default:
+    description_pattern = re.compile(
+        r"^(?P<description>.*?)(?=\nType:|\nDefault:|$)", re.MULTILINE | re.DOTALL
+    )
+
+    # Pattern to match Type section: Type: followed by inline value or fenced block
+    # Handles both "Type: `string`" (inline) and "Type:\n\n```hcl\n...\n```" (fenced)
+    type_pattern = re.compile(
+        r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|$))|"
+        r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|$))",
+        re.MULTILINE | re.DOTALL,
+    )
+
+    # Pattern to match Default section: Default: followed by inline value or fenced block
+    # Handles both "Default: `null`" (inline) and "Default:\n\n```hcl\n...\n```" (fenced)
+    default_pattern = re.compile(
+        r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|$))|"
+        r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|$))",
+        re.MULTILINE | re.DOTALL,
+    )
 
     variables: list[Variable] = []
-    current_required = False
-    i = 0
 
-    while i < len(lines):
-        stripped = lines[i].strip()
+    # Find all section boundaries
+    section_matches = list(section_pattern.finditer(inputs_block))
 
-        if stripped.startswith("## "):
-            lower = stripped.lower()
-            if "required inputs" in lower:
-                current_required = True
-            elif "optional inputs" in lower:
-                current_required = False
-            i += 1
+    # If no sections found, treat entire block as optional
+    if not section_matches:
+        section_matches = [None]  # Dummy entry to process once
+        section_contents = [(inputs_block, False)]
+    else:
+        section_contents = []
+        for section_idx, section_match in enumerate(section_matches):
+            section_type = section_match.group(1)
+            section_start = section_match.end()
+            section_end = (
+                section_matches[section_idx + 1].start()
+                if section_idx + 1 < len(section_matches)
+                else len(inputs_block)
+            )
+            section_content = inputs_block[section_start:section_end]
+            current_required = section_type.lower() == "required"
+            section_contents.append((section_content, current_required))
+
+    # Process each section
+    for section_content, current_required in section_contents:
+        # Find all variable headers in this section
+        var_matches = list(var_header_pattern.finditer(section_content))
+        if not var_matches:
             continue
 
-        if stripped.startswith("### "):
-            header_line = lines[i]
-            name_match = INPUT_ANCHOR_PATTERN.search(header_line)
-            if name_match:
-                var_name = name_match.group("var_name")
-            else:
-                bracket_start = header_line.find("[")
-                bracket_end = header_line.find("]", bracket_start + 1)
-                var_name = (
-                    header_line[bracket_start + 1 : bracket_end]
-                    if bracket_start != -1 and bracket_end != -1
-                    else header_line.strip("# ").strip()
-                )
-                var_name = var_name.replace("\\_", "_")
+        for var_idx, var_match in enumerate(var_matches):
+            var_name = var_match.group("var_name").replace("\\_", "_")
+            var_start = var_match.end()
 
-            description_lines: list[str] = []
-            i += 1
-            found_description_prefix = False
-            in_description_section = False
+            # Find the end of this variable block (start of next variable or section)
+            var_end = (
+                var_matches[var_idx + 1].start()
+                if var_idx + 1 < len(var_matches)
+                else len(section_content)
+            )
+            var_block = section_content[var_start:var_end]
 
-            while i < len(lines):
-                line = lines[i]
-                stripped_inner = line.strip()
-                if stripped_inner.startswith("### ") or stripped_inner.startswith(
-                    "## "
-                ):
-                    break
-                if stripped_inner.startswith("Type:") or stripped_inner.startswith(
-                    "Default:"
-                ):
-                    break
-                # Strip "Description: " prefix from the first non-empty line if present
-                if not found_description_prefix and stripped_inner.startswith(
+            # Extract description using named group pattern
+            description = ""
+            desc_match = description_pattern.search(var_block)
+            if desc_match and desc_match.group("description"):
+                description_text = desc_match.group("description")
+                # Remove "Description: " prefix if present, preserving blank lines
+                description_lines = description_text.split("\n")
+                if description_lines and description_lines[0].strip().startswith(
                     "Description:"
                 ):
-                    desc_content = stripped_inner[len("Description:") :].strip()
-                    if desc_content:
-                        description_lines.append(desc_content)
-                    found_description_prefix = True
-                    in_description_section = True
-                elif in_description_section:
-                    # Preserve all lines (including blank lines) once we're in the description section
-                    description_lines.append(line.rstrip())
-                elif stripped_inner:
-                    # Before finding Description: prefix, only add non-empty lines
-                    description_lines.append(line.rstrip())
-                    in_description_section = True
-                i += 1
+                    first_line = description_lines[0]
+                    if first_line.strip() == "Description:":
+                        description_lines = description_lines[1:]
+                    else:
+                        desc_content = first_line.split("Description:", 1)[1]
+                        if desc_content.strip():
+                            description_lines[0] = desc_content.strip()
+                        else:
+                            description_lines = description_lines[1:]
+                description = "\n".join(description_lines).rstrip()
+            else:
+                # Fallback: find description manually
+                desc_end_match = re.search(r"\n(?:Type:|Default:)", var_block)
+                desc_end = desc_end_match.start() if desc_end_match else len(var_block)
+                description_text = var_block[:desc_end]
+                description_lines = description_text.split("\n")
+                if description_lines and description_lines[0].strip().startswith(
+                    "Description:"
+                ):
+                    first_line = description_lines[0]
+                    if first_line.strip() == "Description:":
+                        description_lines = description_lines[1:]
+                    else:
+                        desc_content = first_line.split("Description:", 1)[1]
+                        if desc_content.strip():
+                            description_lines[0] = desc_content.strip()
+                        else:
+                            description_lines = description_lines[1:]
+                description = "\n".join(description_lines).rstrip()
 
-            type_value, default_value, i = _parse_type_and_default(lines, i)
+            # Extract type using named group pattern
+            type_value = ""
+            type_match = type_pattern.search(var_block)
+            if type_match:
+                if type_match.group("type_inline"):
+                    type_value = type_match.group("type_inline").strip()
+                elif type_match.group("type_fenced"):
+                    fenced_content = type_match.group("type_fenced")
+                    fenced_match = fenced_block_pattern.search(fenced_content)
+                    if fenced_match:
+                        lang = fenced_match.group(1) or "hcl"
+                        content = fenced_match.group(2)
+                        type_value = f"```{lang}\n{content}\n```"
 
-            description = "\n".join(description_lines).rstrip()
+            # Extract default using named group pattern
+            default_value = ""
+            default_match = default_pattern.search(var_block)
+            if default_match:
+                if default_match.group("default_inline"):
+                    default_value = default_match.group("default_inline").strip()
+                elif default_match.group("default_fenced"):
+                    fenced_content = default_match.group("default_fenced")
+                    fenced_match = fenced_block_pattern.search(fenced_content)
+                    if fenced_match:
+                        lang = fenced_match.group(1) or "hcl"
+                        content = fenced_match.group(2)
+                        default_value = f"```{lang}\n{content}\n```"
+
             variables.append(
                 Variable(
                     name=var_name,
                     description=description,
-                    type=type_value or "",
-                    default=default_value or "",
+                    type=type_value,
+                    default=default_value,
                     required=current_required,
                 )
             )
-            continue
-
-        i += 1
 
     if not variables:
         msg = "No variables were parsed from the terraform-docs inputs section."
@@ -350,8 +365,7 @@ def render_grouped_markdown(
             lines.append("")
             if var.description:
                 for desc_line in var.description.splitlines():
-                    if desc_line.strip():
-                        lines.append(desc_line.rstrip())
+                    lines.append(desc_line.rstrip())
                 lines.append("")
 
             if var.type:
