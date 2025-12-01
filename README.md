@@ -187,13 +187,14 @@ The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
 - For `cluster_type.REPLICASET`: omit both `shard_number` and `zone_name`.
-- For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-NOTE:
+- See [auto\_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
+**NOTE**:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Within a zone, `shard_numbers` are specific to that zone and independent of the `shard_number` in any other zones.
-- `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
+- The `shard_number` variable is specific to this module. It groups regions within a shard and does not represent an actual value in Atlas.
 
 Type:
 
@@ -216,7 +217,7 @@ list(object({
 
 ### provider_name
 
-AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`.
+AWS/AZURE/GCP. The value of this variable is set on the root level. It is contained inside of each `region`.
 
 Type: `string`
 
@@ -289,7 +290,7 @@ Default: `null`
 
 #### instance_size
 
-Default `instance_size` in electable/read-only specs. Only used when `auto_scaling.compute_enabled = false`. Defaults to M10 if not specified.
+Default `instance_size` in electable/read-only specs. Only used when `auto_scaling.compute_enabled = false`. Defaults to `M10` if not specified.
 
 Type: `string`
 
@@ -306,12 +307,13 @@ Default: `null`
 #### disk_size_gb
 
 Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
- This value must be equal for all shards and node types.
- This value is not configurable on M0/M2/M5 clusters.
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
- Storage charge calculations depend on whether you choose the default value or a custom value.
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
+Consider the following
+- This value must be equal for all shards and node types.
+- This value is not configurable on M0/M2/M5 clusters.
+- MongoDB Cloud requires this parameter if you set `replicationSpecs`.
+- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
+- Storage charge calculations depend on whether you choose the default value or a custom value.
+- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
 
 Type: `number`
 
@@ -454,7 +456,7 @@ Default:
 
 ### backup_enabled
 
-Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups.
+Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups; if set to `false`, the cluster doesn't use backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters.
 
 Type: `bool`
 
@@ -492,9 +494,9 @@ Default: `null`
 ### redact_client_log_data
 
 Enable or disable log redaction.
-This setting configures the `mongod` or `mongos` to redact any document field contents from a message accompanying a given log event before logging.This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
+This setting configures the `mongod` or `mongos` to redact any document field contents from a message accompanying a given log event before logging. This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
 Use `redactClientLogData` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
-*Note*: changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
+*Note*: Changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
 
 Type: `bool`
 
@@ -503,8 +505,14 @@ Default: `true`
 ### tags
 
 Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
-We recommend setting:
-Department, team name, application name, environment, version, email contact, criticality.
+We recommend setting the following values:
+- Department
+- Team name
+- Application name
+- Environment
+- Version
+- Email contact
+- Criticality
 These values can be used for:
 - Billing.
 - Data classification.
@@ -516,7 +524,7 @@ Default: `{}`
 
 ### termination_protection_enabled
 
-Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster.
+Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud does not delete the cluster; if set to `false`, MongoDB Cloud deletes the cluster.
 
 Type: `bool`
 
