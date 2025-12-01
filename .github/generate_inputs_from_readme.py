@@ -44,6 +44,23 @@ def avoid_underscore_escaping(description: str) -> str:
 def remove_description_prefix(description: str) -> str:
     return description.removeprefix("\n\nDescription: ")
 
+
+def _extract_description(text: str) -> str:
+    """Extract and clean description text, removing 'Description:' prefix if present."""
+    lines = text.split("\n")
+    if lines and lines[0].strip().startswith("Description:"):
+        first_line = lines[0]
+        if first_line.strip() == "Description:":
+            lines = lines[1:]
+        else:
+            desc_content = first_line.split("Description:", 1)[1]
+            if desc_content.strip():
+                lines[0] = desc_content.strip()
+            else:
+                lines = lines[1:]
+    return "\n".join(lines).rstrip()
+
+
 @dataclass
 class Variable:
     name: str
@@ -99,59 +116,70 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
     Type: ...
     Default: ...
     """
-    # Pattern to match section headers
+    # Compile regex patterns once
     section_pattern = re.compile(
         r"^##\s+(Required|Optional)\s+Inputs", re.IGNORECASE | re.MULTILINE
     )
-
-    # Pattern to match variable header: ### <a name="input_name"></a> [name](#input_name)
-    # Handles escaped underscores in the link like #input\_regions
     var_header_pattern = re.compile(
         r"^###\s+<a\s+name=\"input_(?P<var_name>[^\"]+)\"></a>\s+\[(?P<display>[^\]]+)\]\(#input[^\)]+\)",
         re.MULTILINE,
     )
-
-    # Pattern to match fenced code blocks (```lang\n...\n```)
     fenced_block_pattern = re.compile(
         r"```(\w+)?\n(.*?)\n```", re.MULTILINE | re.DOTALL
     )
-
-    # Separate regex patterns for each section with named groups
-    # Pattern to match description: everything until Type: or Default:
-    # Uses non-greedy match to stop at first Type: or Default:
     description_pattern = re.compile(
         r"^(?P<description>.*?)(?=\nType:|\nDefault:|$)", re.MULTILINE | re.DOTALL
     )
-
-    # Pattern to match Type section: Type: followed by inline value or fenced block
-    # Handles both "Type: `string`" (inline) and "Type:\n\n```hcl\n...\n```" (fenced)
     type_pattern = re.compile(
         r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|$))|"
         r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|$))",
         re.MULTILINE | re.DOTALL,
     )
-
-    # Pattern to match Default section: Default: followed by inline value or fenced block
-    # Handles both "Default: `null`" (inline) and "Default:\n\n```hcl\n...\n```" (fenced)
     default_pattern = re.compile(
         r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|$))|"
         r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|$))",
         re.MULTILINE | re.DOTALL,
     )
 
-    variables: list[Variable] = []
+    def _extract_fenced_value_local(fenced_content: str) -> str:
+        """Extract value from fenced code block using the compiled pattern."""
+        match = fenced_block_pattern.search(fenced_content)
+        if match:
+            lang = match.group(1) or "hcl"
+            content = match.group(2)
+            return f"```{lang}\n{content}\n```"
+        return ""
 
-    # Find all section boundaries
+    def _extract_inline_or_fenced_local(
+        var_block: str, pattern: re.Pattern[str], inline_group: str, fenced_group: str
+    ) -> str:
+        """Extract inline or fenced value using regex pattern with named groups."""
+        match = pattern.search(var_block)
+        if not match:
+            return ""
+        if match.group(inline_group):
+            return match.group(inline_group).strip()
+        if match.group(fenced_group):
+            return _extract_fenced_value_local(match.group(fenced_group))
+        return ""
+
+    def _parse_description(var_block: str) -> str:
+        """Extract description from variable block."""
+        desc_match = description_pattern.search(var_block)
+        if desc_match and desc_match.group("description"):
+            return _extract_description(desc_match.group("description"))
+        # Fallback: find description manually
+        desc_end_match = re.search(r"\n(?:Type:|Default:)", var_block)
+        desc_end = desc_end_match.start() if desc_end_match else len(var_block)
+        return _extract_description(var_block[:desc_end])
+
+    # Parse sections
     section_matches = list(section_pattern.finditer(inputs_block))
-
-    # If no sections found, treat entire block as optional
     if not section_matches:
-        section_matches = [None]  # Dummy entry to process once
         section_contents = [(inputs_block, False)]
     else:
         section_contents = []
         for section_idx, section_match in enumerate(section_matches):
-            section_type = section_match.group(1)
             section_start = section_match.end()
             section_end = (
                 section_matches[section_idx + 1].start()
@@ -159,21 +187,16 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
                 else len(inputs_block)
             )
             section_content = inputs_block[section_start:section_end]
-            current_required = section_type.lower() == "required"
-            section_contents.append((section_content, current_required))
+            is_required = section_match.group(1).lower() == "required"
+            section_contents.append((section_content, is_required))
 
-    # Process each section
-    for section_content, current_required in section_contents:
-        # Find all variable headers in this section
+    # Parse variables from each section
+    variables: list[Variable] = []
+    for section_content, is_required in section_contents:
         var_matches = list(var_header_pattern.finditer(section_content))
-        if not var_matches:
-            continue
-
         for var_idx, var_match in enumerate(var_matches):
             var_name = var_match.group("var_name").replace("\\_", "_")
             var_start = var_match.end()
-
-            # Find the end of this variable block (start of next variable or section)
             var_end = (
                 var_matches[var_idx + 1].start()
                 if var_idx + 1 < len(var_matches)
@@ -181,73 +204,13 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
             )
             var_block = section_content[var_start:var_end]
 
-            # Extract description using named group pattern
-            description = ""
-            desc_match = description_pattern.search(var_block)
-            if desc_match and desc_match.group("description"):
-                description_text = desc_match.group("description")
-                # Remove "Description: " prefix if present, preserving blank lines
-                description_lines = description_text.split("\n")
-                if description_lines and description_lines[0].strip().startswith(
-                    "Description:"
-                ):
-                    first_line = description_lines[0]
-                    if first_line.strip() == "Description:":
-                        description_lines = description_lines[1:]
-                    else:
-                        desc_content = first_line.split("Description:", 1)[1]
-                        if desc_content.strip():
-                            description_lines[0] = desc_content.strip()
-                        else:
-                            description_lines = description_lines[1:]
-                description = "\n".join(description_lines).rstrip()
-            else:
-                # Fallback: find description manually
-                desc_end_match = re.search(r"\n(?:Type:|Default:)", var_block)
-                desc_end = desc_end_match.start() if desc_end_match else len(var_block)
-                description_text = var_block[:desc_end]
-                description_lines = description_text.split("\n")
-                if description_lines and description_lines[0].strip().startswith(
-                    "Description:"
-                ):
-                    first_line = description_lines[0]
-                    if first_line.strip() == "Description:":
-                        description_lines = description_lines[1:]
-                    else:
-                        desc_content = first_line.split("Description:", 1)[1]
-                        if desc_content.strip():
-                            description_lines[0] = desc_content.strip()
-                        else:
-                            description_lines = description_lines[1:]
-                description = "\n".join(description_lines).rstrip()
-
-            # Extract type using named group pattern
-            type_value = ""
-            type_match = type_pattern.search(var_block)
-            if type_match:
-                if type_match.group("type_inline"):
-                    type_value = type_match.group("type_inline").strip()
-                elif type_match.group("type_fenced"):
-                    fenced_content = type_match.group("type_fenced")
-                    fenced_match = fenced_block_pattern.search(fenced_content)
-                    if fenced_match:
-                        lang = fenced_match.group(1) or "hcl"
-                        content = fenced_match.group(2)
-                        type_value = f"```{lang}\n{content}\n```"
-
-            # Extract default using named group pattern
-            default_value = ""
-            default_match = default_pattern.search(var_block)
-            if default_match:
-                if default_match.group("default_inline"):
-                    default_value = default_match.group("default_inline").strip()
-                elif default_match.group("default_fenced"):
-                    fenced_content = default_match.group("default_fenced")
-                    fenced_match = fenced_block_pattern.search(fenced_content)
-                    if fenced_match:
-                        lang = fenced_match.group(1) or "hcl"
-                        content = fenced_match.group(2)
-                        default_value = f"```{lang}\n{content}\n```"
+            description = _parse_description(var_block)
+            type_value = _extract_inline_or_fenced_local(
+                var_block, type_pattern, "type_inline", "type_fenced"
+            )
+            default_value = _extract_inline_or_fenced_local(
+                var_block, default_pattern, "default_inline", "default_fenced"
+            )
 
             variables.append(
                 Variable(
@@ -255,7 +218,7 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
                     description=description,
                     type=type_value,
                     default=default_value,
-                    required=current_required,
+                    required=is_required,
                 )
             )
 
