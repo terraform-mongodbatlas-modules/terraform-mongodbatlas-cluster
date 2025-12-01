@@ -119,7 +119,7 @@ Change this parameter if you:
 
 - set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
 
-The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.
 Changing this value impacts cluster cost.
 MongoDB Cloud enforces minimum ratios of storage capacity to system memory for given cluster tiers. This keeps cluster performance consistent with large datasets.
@@ -133,7 +133,7 @@ Target throughput desired for storage attached to your Azure-provisioned cluster
 - set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
 - set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
 
-The maximum input/output operations per second (IOPS) depend on the selected **.instanceSize** and **.diskSizeGB**.
+The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.
 Changing this value impacts cluster cost.
 EOT

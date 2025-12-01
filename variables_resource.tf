@@ -64,9 +64,9 @@ variable "config_server_management_mode" {
   description = <<-EOT
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as ATLAS_MANAGED, atlas may automatically switch the cluster's config server type for optimal performance and savings.
+When configured as `ATLAS_MANAGED`, atlas may automatically switch the cluster's config server type for optimal performance and savings.
 
-When configured as FIXED_TO_DEDICATED, the cluster will always use a dedicated config server.
+When configured as `FIXED_TO_DEDICATED`, the cluster will always use a dedicated config server.
 EOT
 
   type     = string
