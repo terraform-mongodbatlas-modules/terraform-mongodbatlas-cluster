@@ -8,15 +8,15 @@ variable "regions" {
 The simplest way to define your cluster topology:
 - Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
-- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
-- For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
-- For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
+- For `cluster_type.REPLICASET`: omit both `shard_number` and `zone_name`.
+- For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 
 NOTE:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
-- Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
+- Within a zone, `shard_numbers` are specific to that zone and independent of the `shard_number` in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 EOT
   type = list(object({
@@ -56,7 +56,7 @@ EOT
         || try(r.shard_number == floor(r.shard_number) && r.shard_number >= 0, false)
       )
     ])
-    error_message = "Each regions[*].shard_number must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
+    error_message = "Each `regions[*].shard_number` must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
   }
 }
 
@@ -73,7 +73,7 @@ variable "provider_name" {
 }
 
 variable "instance_size" {
-  description = "Default instance_size in electable/read-only specs. Only used when auto_scaling.compute_enabled = false. Defaults to M10 if not specified."
+  description = "Default `instance_size` in electable/read-only specs. Only used when `auto_scaling.compute_enabled = false`. Defaults to M10 if not specified."
   type        = string
   nullable    = true
   default     = null
@@ -154,7 +154,7 @@ EOT
 
 
 variable "instance_size_analytics" {
-  description = "Default instance_size in analytics specs. Do not set if using auto_scaling_analytics."
+  description = "Default `instance_size` in analytics specs. Do **not** set if using `auto_scaling_analytics`."
   type        = string
   nullable    = true
   default     = null
@@ -221,8 +221,8 @@ variable "shard_count" {
 Number of shards for SHARDED clusters.
 
 - When set, all shards share the same region topology (each shard gets the same regions list).
-- Do NOT set regions[*].shard_number when shard_count is set (they are mutually exclusive).
-- When unset, you must set regions[*].shard_number on every region to explicitly group regions into shards.
+- Do NOT set `regions[*].shard_number` when `shard_count` is set (they are mutually exclusive).
+- When unset, you must set `regions[*].shard_number` on every region to explicitly group regions into shards.
 
 EOT
   type        = number
@@ -236,6 +236,6 @@ EOT
 
   validation {
     condition     = var.shard_count == null || var.cluster_type == "SHARDED"
-    error_message = "shard_count can only be set when cluster_type is SHARDED."
+    error_message = "`shard_count` can only be set when `cluster_type` is SHARDED."
   }
 }

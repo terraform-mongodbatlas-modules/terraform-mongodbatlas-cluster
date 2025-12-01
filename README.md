@@ -185,14 +185,14 @@ See also [why two options?](#why-two-options-for-cluster-topology).
 The simplest way to define your cluster topology:
 - Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
-- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider\_name.
-- For cluster\_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster\_type.SHARDED: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
-- For cluster\_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
+- For `cluster_type.REPLICASET`: omit both `shard_number` and `zone_name`.
+- For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 NOTE:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
-- Within a zone, shard\_numbers are specific to that zone and independent of the shard\_number in any other zones.
+- Within a zone, `shard_numbers` are specific to that zone and independent of the `shard_number` in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 
 Type:
@@ -226,8 +226,8 @@ Default: `null`
 
 Number of shards for SHARDED clusters.
 - When set, all shards share the same region topology (each shard gets the same regions list).
-- Do NOT set regions[*].shard\_number when shard\_count is set (they are mutually exclusive).
-- When unset, you must set regions[*].shard\_number on every region to explicitly group regions into shards.
+- Do NOT set `regions[*].shard_number` when `shard_count` is set (they are mutually exclusive).
+- When unset, you must set `regions[*].shard_number` on every region to explicitly group regions into shards.
 
 Type: `number`
 
@@ -289,7 +289,7 @@ Default: `null`
 
 #### instance_size
 
-Default instance\_size in electable/read-only specs. Only used when auto\_scaling.compute\_enabled = false. Defaults to M10 if not specified.
+Default `instance_size` in electable/read-only specs. Only used when `auto_scaling.compute_enabled = false`. Defaults to M10 if not specified.
 
 Type: `string`
 
@@ -297,7 +297,7 @@ Default: `null`
 
 #### instance_size_analytics
 
-Default instance\_size in analytics specs. Do not set if using auto\_scaling\_analytics.
+Default `instance_size` in analytics specs. Do **not** set if using `auto_scaling_analytics`.
 
 Type: `string`
 
