@@ -179,6 +179,40 @@ list(object({
 }))
 ```"""
 
+
 def test_removing_indent():
     assert mod.avoid_extra_type_indent(_indented_hcl_content) == _wanted_hcl_content
-    assert mod.avoid_extra_type_indent("string") == "string" # no change
+    assert mod.avoid_extra_type_indent("string") == "string"  # no change
+
+
+_expected_preserved_lines = """\
+- See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
+
+**NOTE**:
+
+- The order"""
+
+
+def test_preserving_blank_lines_in_description() -> None:
+    description = """\
+### <a name="input_regions"></a> [regions](#input\_regions)
+
+Description: The simplest way to define your cluster topology:
+- Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
+- Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
+- Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
+- For `cluster_type.REPLICASET`: omit both `shard_number` and `zone_name`.
+- For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` [variable](#shard\_count); do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
+- See [auto\_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
+
+**NOTE**:
+
+- The order in which region blocks are defined in this list determines their priority within each shard or zone.
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+- Within a zone, `shard_numbers` are specific to that zone and independent of the `shard_number` in any other zones.
+- The `shard_number` variable is specific to this module. It groups regions within a shard and does not represent an actual value in Atlas.
+
+"""
+    parsed = mod.parse_terraform_docs_inputs(description)
+    assert _expected_preserved_lines in parsed[0].description

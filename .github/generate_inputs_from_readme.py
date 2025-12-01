@@ -19,21 +19,27 @@ FENCED_HCL_TYPE_PATTERN = re.compile(
     re.DOTALL,  # Makes . match newlines so multi-line HCL content is captured
 )
 
+
 def avoid_extra_type_indent(type_value: str) -> str:
     match = FENCED_HCL_TYPE_PATTERN.match(type_value)
     if match:
-        hcl_body = [line.removeprefix("  ") for line in match.group("hcl_content").splitlines()]
-        return "\n".join([
-            "```hcl",
-            *hcl_body,
-            "```",
-        ])
+        hcl_body = [
+            line.removeprefix("  ") for line in match.group("hcl_content").splitlines()
+        ]
+        return "\n".join(
+            [
+                "```hcl",
+                *hcl_body,
+                "```",
+            ]
+        )
 
     return type_value
 
 
 def avoid_underscore_escaping(description: str) -> str:
     return description.replace("\\_", "_")
+
 
 @dataclass
 class Variable:
@@ -191,6 +197,7 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
             description_lines: list[str] = []
             i += 1
             found_description_prefix = False
+            in_description_section = False
 
             while i < len(lines):
                 line = lines[i]
@@ -211,9 +218,14 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
                     if desc_content:
                         description_lines.append(desc_content)
                     found_description_prefix = True
-                elif stripped_inner or description_lines:
-                    # Only add non-empty lines, or empty lines if we already have content
+                    in_description_section = True
+                elif in_description_section:
+                    # Preserve all lines (including blank lines) once we're in the description section
                     description_lines.append(line.rstrip())
+                elif stripped_inner:
+                    # Before finding Description: prefix, only add non-empty lines
+                    description_lines.append(line.rstrip())
+                    in_description_section = True
                 i += 1
 
             type_value, default_value, i = _parse_type_and_default(lines, i)
