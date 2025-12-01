@@ -189,7 +189,7 @@ The simplest way to define your cluster topology:
 - For `cluster_type.REPLICASET`: omit both `shard_number` and `zone_name`.
 - For `cluster_type.SHARDED`: set `shard_number` on each region or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
-- See [auto\_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
+- See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 **NOTE**:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).

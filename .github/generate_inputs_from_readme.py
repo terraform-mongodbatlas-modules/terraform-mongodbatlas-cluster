@@ -31,6 +31,10 @@ def avoid_extra_type_indent(type_value: str) -> str:
 
     return type_value
 
+
+def avoid_underscore_escaping(description: str) -> str:
+    return description.replace("\\_", "_")
+
 @dataclass
 class Variable:
     name: str
@@ -41,6 +45,7 @@ class Variable:
 
     def __post_init__(self) -> None:
         self.type = avoid_extra_type_indent(self.type)
+        self.description = avoid_underscore_escaping(self.description)
 
 
 def load_readme(readme_path: Path) -> str:
