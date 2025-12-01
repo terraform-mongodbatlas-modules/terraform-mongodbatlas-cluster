@@ -41,7 +41,7 @@ variable "backup_enabled" {
 }
 
 variable "bi_connector_config" {
-  description = "Settings needed to configure the MongoDB Connector for Business Intelligence for this cluster."
+  description = "Setting needed to configure the MongoDB Connector for Business Intelligence for this cluster."
   type = object({
     enabled         = optional(bool)
     read_preference = optional(string)
@@ -64,9 +64,9 @@ variable "config_server_management_mode" {
   description = <<-EOT
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as `ATLAS_MANAGED`, atlas may automatically switch the cluster's config server type for optimal performance and savings.
+When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
 
-When configured as `FIXED_TO_DEDICATED`, the cluster will always use a dedicated config server.
+When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
 EOT
 
   type     = string
@@ -96,7 +96,7 @@ When set to false, the management mode is set to Atlas-Managed Sharding. This mo
 
 When set to true, the management mode is set to Self-Managed Sharding. This mode leaves the management of shards in your hands and is built to provide an advanced and flexible deployment experience.
 
-This setting cannot be changed once the cluster is deployed.
+*Important*: This setting cannot be changed once the cluster is deployed.
 EOT
 
   type     = bool
@@ -110,7 +110,7 @@ MongoDB major version of the cluster.
 
 On creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).
 
- On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
+ On update: Increase version only by one major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, you can downgrade to the previous MongoDB major version.
 EOT
 
   type     = string
@@ -126,7 +126,7 @@ variable "paused" {
 }
 
 variable "pinned_fcv" {
-  description = "Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. It is advised that updates to `pinned_fcv` are done isolated from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. See the following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and the [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) for more details."
+  description = "Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV, the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. We recommend updating to `pinned_fcv` in isolation from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. See the following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and the [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) for more details."
   type = object({
     expiration_date = string
   })
@@ -171,9 +171,9 @@ variable "replica_set_scaling_strategy" {
   description = <<-EOT
 Set this field to configure the replica set scaling mode for your cluster.
 
-By default, Atlas scales under WORKLOAD_TYPE. This mode allows Atlas to scale your analytics nodes in parallel to your operational nodes.
+By default, Atlas scales under `WORKLOAD_TYPE`. This mode allows Atlas to scale your analytics nodes in parallel to your operational nodes.
 
-When configured as SEQUENTIAL, Atlas scales all nodes sequentially. This mode is intended for steady-state workloads and applications performing latency-sensitive secondary reads.
+When configured as `SEQUENTIAL`, Atlas scales all nodes sequentially. This mode is intended for steady-state workloads and applications performing latency-sensitive secondary reads.
 EOT
 
   type     = string
@@ -314,7 +314,7 @@ variable "termination_protection_enabled" {
 }
 
 variable "timeouts" {
-  description = "Timeouts for create/update/delete operations."
+  description = "Timeouts for `create`, `update`, and `delete` operations."
   type = object({
     create = optional(string)
     delete = optional(string)
@@ -325,7 +325,7 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify **mongoDBMajorVersion**."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongoDBMajorVersion*`."
   type        = string
   nullable    = true
   default     = null
