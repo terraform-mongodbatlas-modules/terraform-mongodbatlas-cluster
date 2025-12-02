@@ -438,7 +438,7 @@ def main() -> None:
 
     # Assume script is run from repo root
     root_dir = Path.cwd()
-    config_path = root_dir / ".terraform-docs.yml"
+    config_path = root_dir / "docs" / "examples.yaml"
     examples_dir = root_dir / "examples"
 
     if not config_path.exists():
