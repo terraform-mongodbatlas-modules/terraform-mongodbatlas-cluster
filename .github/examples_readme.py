@@ -188,6 +188,8 @@ def generate_readme(
     skip_var_patterns: list[str] | None = None,
 ) -> str:
     """Generate README content by replacing template variables."""
+    header_comment = "<!-- @generated\nWARNING: This file is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-examples' to regenerate.\n-->\n"
+
     content = template.replace("{{ .NAME }}", example_name)
 
     code_snippet = generate_code_snippet(
@@ -200,7 +202,12 @@ def generate_readme(
             value = ""
         content = content.replace(f"{{{{ .{key.upper()} }}}}", value.rstrip("\n"))
 
-    return content
+    # Remove the old template comment if present (first line starting with <!--)
+    lines = content.split("\n")
+    if lines and lines[0].strip().startswith("<!--") and "used to generate" in lines[0]:
+        content = "\n".join(lines[1:])
+
+    return header_comment + content
 
 
 def load_root_versions_tf(root_dir: Path) -> str:

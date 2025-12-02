@@ -286,6 +286,13 @@ def render_grouped_markdown(
         grouped.setdefault(section_title, []).append(var)
 
     lines: list[str] = []
+    lines.append("<!-- @generated")
+    lines.append(
+        "WARNING: This grouped inputs section is auto-generated from variable_*.tf files. Do not edit directly."
+    )
+    lines.append("Changes will be overwritten when documentation is regenerated.")
+    lines.append("Run 'just docs' to regenerate.")
+    lines.append("-->")
 
     for section in sections:
         title = str(section.get("title", section.get("id", "Variables")))
@@ -388,7 +395,9 @@ def main() -> None:
     variables = parse_terraform_docs_inputs(inputs_block)
     sections = load_group_config(args.config)
     output_markdown = render_grouped_markdown(variables, sections)
-    new_content = readme_content.replace(inputs_block, output_markdown)
+    # Replace the block (which includes BEGIN_MARKER but not END_MARKER) with new content including both markers
+    replacement = f"{BEGIN_MARKER}\n{output_markdown}\n{END_MARKER}"
+    new_content = readme_content.replace(inputs_block, replacement)
     try:
         args.readme.write_text(new_content, encoding="utf-8")
     except OSError as exc:

@@ -125,10 +125,15 @@ def update_section(
     new_content: str,
     begin_marker: str,
     end_marker: str,
+    header_comment: str | None = None,
 ) -> str:
     """Update a section between markers in the content."""
     pattern = f"({begin_marker})(.*?)({end_marker})"
-    replacement = f"\\1\n{new_content}\n{end_marker}"
+
+    if header_comment:
+        replacement = f"\\1\n<!-- {header_comment} -->\n{new_content}\n{end_marker}"
+    else:
+        replacement = f"\\1\n{new_content}\n{end_marker}"
 
     new_text = re.sub(pattern, replacement, content, flags=re.DOTALL)
 
@@ -200,6 +205,7 @@ def main() -> None:
             toc_content,
             "<!-- BEGIN_TOC -->",
             "<!-- END_TOC -->",
+            "@generated\nWARNING: This section is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-readme' to regenerate.",
         )
         print("✓ TOC generated")
         modified = True
@@ -214,6 +220,7 @@ def main() -> None:
             tables_content,
             "<!-- BEGIN_TABLES -->",
             "<!-- END_TABLES -->",
+            "@generated\nWARNING: This section is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-readme' to regenerate.",
         )
         print("✓ TABLES generated")
         modified = True

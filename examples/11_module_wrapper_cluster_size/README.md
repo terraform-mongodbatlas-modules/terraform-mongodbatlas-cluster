@@ -1,4 +1,8 @@
-<!-- This file is used to generate the examples/README.md files -->
+<!-- @generated
+WARNING: This file is auto-generated. Do not edit directly.
+Changes will be overwritten when documentation is regenerated.
+Run 'just gen-examples' to regenerate.
+-->
 # Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)
 
 ## Pre Requirements

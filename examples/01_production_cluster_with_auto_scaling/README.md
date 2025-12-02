@@ -1,4 +1,8 @@
-<!-- This file is used to generate the examples/README.md files -->
+<!-- @generated
+WARNING: This file is auto-generated. Do not edit directly.
+Changes will be overwritten when documentation is regenerated.
+Run 'just gen-examples' to regenerate.
+-->
 # Production Cluster with Auto Scaling
 
 ## Pre Requirements
