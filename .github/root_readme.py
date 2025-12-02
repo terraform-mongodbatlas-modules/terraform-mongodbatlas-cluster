@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 """Generate and update root README.md TOC and TABLES sections."""
 
+from __future__ import annotations
+
 import argparse
 import re
 from pathlib import Path
 
-import yaml
-
-
-def load_config(config_path: Path) -> dict:
-    """Load the terraform-docs YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+from config_loader import load_examples_config
 
 
 def find_example_folder(folder_number: int, examples_dir: Path) -> str | None:
@@ -185,21 +181,16 @@ def main() -> None:
     # Paths
     root_dir = Path.cwd()
     readme_path = root_dir / "README.md"
-    config_path = root_dir / ".terraform-docs.yml"
     examples_dir = root_dir / "examples"
 
     if not readme_path.exists():
         print(f"Error: README.md not found at {readme_path}")
         return
 
-    if not config_path.exists():
-        print(f"Error: Config file not found at {config_path}")
-        return
-
     # Load files
     original_readme_content = readme_path.read_text(encoding="utf-8")
     readme_content = original_readme_content
-    config = load_config(config_path)
+    config = load_examples_config()
 
     print("Root README.md Generator")
     if args.dry_run:

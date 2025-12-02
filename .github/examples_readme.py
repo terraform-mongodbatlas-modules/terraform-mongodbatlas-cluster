@@ -7,83 +7,14 @@ import argparse
 import re
 import subprocess
 import sys
-from dataclasses import dataclass, field
 from pathlib import Path
 
-import yaml
-
-
-@dataclass
-class CodeSnippetFilesConfig:
-    """Configuration for code snippet file extraction."""
-
-    additional: list[str] = field(default_factory=list)
-
-
-@dataclass
-class TemplateVarsConfig:
-    """Configuration for template variables."""
-
-    skip_if_name_contains: list[str] = field(default_factory=list)
-    vars: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass
-class VersionsTfConfig:
-    """Configuration for versions.tf generation."""
-
-    add: str = ""
-    skip_if_name_contains: list[str] = field(default_factory=list)
-    generate_when_missing_only: bool = False
-    force_generate: bool = False
-
-
-@dataclass
-class ExamplesReadmeConfig:
-    """Configuration for example README generation."""
-
-    readme_template: str
-    skip_examples: list[str] = field(default_factory=list)
-    code_snippet_files: CodeSnippetFilesConfig = field(
-        default_factory=CodeSnippetFilesConfig
-    )
-    template_vars: TemplateVarsConfig = field(default_factory=TemplateVarsConfig)
-    versions_tf: VersionsTfConfig = field(default_factory=VersionsTfConfig)
-
-
-def parse_examples_readme_config(config_dict: dict) -> ExamplesReadmeConfig:
-    """Parse examples_readme configuration from YAML dict."""
-    examples_readme_dict = config_dict.get("examples_readme", {})
-
-    code_snippet_files_dict = examples_readme_dict.get("code_snippet_files", {})
-    code_snippet_files = CodeSnippetFilesConfig(**code_snippet_files_dict)
-
-    template_vars_dict = examples_readme_dict.get("template_vars", {})
-    skip_if_name_contains = template_vars_dict.pop("skip_if_name_contains", [])
-    template_vars = TemplateVarsConfig(
-        skip_if_name_contains=skip_if_name_contains, vars=template_vars_dict
-    )
-
-    versions_tf_dict = examples_readme_dict.get("versions_tf", {})
-    versions_tf = VersionsTfConfig(**versions_tf_dict)
-
-    examples_readme_dict_filtered = {
-        k: v
-        for k, v in examples_readme_dict.items()
-        if k not in ("code_snippet_files", "template_vars", "versions_tf")
-    }
-    return ExamplesReadmeConfig(
-        **examples_readme_dict_filtered,
-        code_snippet_files=code_snippet_files,
-        template_vars=template_vars,
-        versions_tf=versions_tf,
-    )
-
-
-def load_config(config_path: Path) -> dict:
-    """Load the terraform-docs YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+from config_loader import (
+    ExamplesReadmeConfig,
+    VersionsTfConfig,
+    load_examples_config,
+    parse_examples_readme_config,
+)
 
 
 def load_template(template_path: Path) -> str:
@@ -438,14 +369,9 @@ def main() -> None:
 
     # Assume script is run from repo root
     root_dir = Path.cwd()
-    config_path = root_dir / "docs" / "examples.yaml"
     examples_dir = root_dir / "examples"
 
-    if not config_path.exists():
-        print(f"Error: Config file not found: {config_path}")
-        sys.exit(1)
-
-    config = load_config(config_path)
+    config = load_examples_config()
     examples_readme_config = parse_examples_readme_config(config)
 
     if not examples_readme_config.readme_template:

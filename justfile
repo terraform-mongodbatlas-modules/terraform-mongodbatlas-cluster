@@ -76,12 +76,12 @@ md-link tag_version *args:
 
 # Generate README.md and versions.tf files for examples
 gen-examples *args:
-    uv run --with pyyaml python .github/examples_readme.py {{args}}
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/examples_readme.py {{args}}
     just fmt
 
 # Generate root README.md TOC and TABLES sections
 gen-readme *args:
-    uv run --with pyyaml python .github/root_readme.py {{args}}
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/root_readme.py {{args}}
 
 # Show Terraform Registry source for this module
 tf-registry-source:
