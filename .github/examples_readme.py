@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """Generate README.md and versions.tf files for examples using terraform-docs config."""
 
-from __future__ import annotations
-
 import argparse
 import re
 import subprocess
@@ -15,6 +13,7 @@ from config_loader import (
     load_examples_config,
     parse_examples_readme_config,
 )
+from doc_utils import generate_header_comment
 
 
 def load_template(template_path: Path) -> str:
@@ -188,7 +187,13 @@ def generate_readme(
     skip_var_patterns: list[str] | None = None,
 ) -> str:
     """Generate README content by replacing template variables."""
-    header_comment = "<!-- @generated\nWARNING: This file is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-examples' to regenerate.\n-->\n"
+    header_comment = (
+        generate_header_comment(
+            description="This file",
+            regenerate_command="just gen-examples",
+        )
+        + "\n"
+    )
 
     content = template.replace("{{ .NAME }}", example_name)
 

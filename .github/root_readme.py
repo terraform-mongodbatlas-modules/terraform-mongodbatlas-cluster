@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """Generate and update root README.md TOC and TABLES sections."""
 
-from __future__ import annotations
-
 import argparse
 import re
 from pathlib import Path
 
 from config_loader import TableConfig, load_examples_config, parse_tables_config
+from doc_utils import generate_header_comment_for_section
 
 
 def find_example_folder(folder_number: int, examples_dir: Path) -> str | None:
@@ -205,7 +204,10 @@ def main() -> None:
             toc_content,
             "<!-- BEGIN_TOC -->",
             "<!-- END_TOC -->",
-            "@generated\nWARNING: This section is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-readme' to regenerate.",
+            generate_header_comment_for_section(
+                description="This section",
+                regenerate_command="just gen-readme",
+            ),
         )
         print("✓ TOC generated")
         modified = True
@@ -220,7 +222,10 @@ def main() -> None:
             tables_content,
             "<!-- BEGIN_TABLES -->",
             "<!-- END_TABLES -->",
-            "@generated\nWARNING: This section is auto-generated. Do not edit directly.\nChanges will be overwritten when documentation is regenerated.\nRun 'just gen-readme' to regenerate.",
+            generate_header_comment_for_section(
+                description="This section",
+                regenerate_command="just gen-readme",
+            ),
         )
         print("✓ TABLES generated")
         modified = True

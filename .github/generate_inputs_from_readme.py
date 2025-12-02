@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import re
 import sys
@@ -8,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+from doc_utils import generate_header_comment
 
 BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW -->"
 END_MARKER = "<!-- END_TF_INPUTS_RAW -->"
@@ -286,13 +285,12 @@ def render_grouped_markdown(
         grouped.setdefault(section_title, []).append(var)
 
     lines: list[str] = []
-    lines.append("<!-- @generated")
-    lines.append(
-        "WARNING: This grouped inputs section is auto-generated from variable_*.tf files. Do not edit directly."
+    header = generate_header_comment(
+        description="This grouped inputs section",
+        regenerate_command="just docs",
     )
-    lines.append("Changes will be overwritten when documentation is regenerated.")
-    lines.append("Run 'just docs' to regenerate.")
-    lines.append("-->")
+    # Add header as a single string (it already includes newlines)
+    lines.append(header)
 
     for section in sections:
         title = str(section.get("title", section.get("id", "Variables")))

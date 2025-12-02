@@ -168,7 +168,7 @@ The following resources are used by this module:
 
 <!-- BEGIN_TF_INPUTS_RAW -->
 <!-- @generated
-WARNING: This grouped inputs section is auto-generated from variable_*.tf files. Do not edit directly.
+WARNING: This grouped inputs section is auto-generated. Do not edit directly.
 Changes will be overwritten when documentation is regenerated.
 Run 'just docs' to regenerate.
 -->
