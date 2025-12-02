@@ -25,9 +25,15 @@ py-fmt:
     uv run ruff format .github
 
 # Generate documentation
-docs: gen-readme gen-examples
+docs: fmt
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
+    uv run --with pyyaml python .github/generate_inputs_from_readme.py
+    @echo "Inputs documentation updated successfully"
+    just gen-readme
+    @echo "Root README.md updated successfully"
+    just gen-examples
+    @echo "Examples README.md updated successfully"
 
 # Run all validation checks
 check: fmt validate lint check-docs py-check

@@ -1,5 +1,9 @@
 variable "accept_data_risks_and_force_replica_set_reconfig" {
-  description = "If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology. Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. MongoDB Atlas docs contain more information. To proceed with an operation which carries that risk, set **acceptDataRisksAndForceReplicaSetReconfig** to the current date."
+  description = <<-EOT
+If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology.
+
+Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `acceptDataRisksAndForceReplicaSetReconfig` to the current date.
+EOT
   type        = string
   nullable    = true
   default     = null
@@ -31,13 +35,13 @@ variable "advanced_configuration" {
 }
 
 variable "backup_enabled" {
-  description = "Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters. If set to `false`, the cluster doesn't use backups."
+  description = "Recommended for production clusters. Flag that indicates whether the cluster can perform backups. If set to `true`, the cluster can perform backups; if set to `false`, the cluster doesn't use backups. You must set this value to `true` for NVMe clusters. Backup uses [Cloud Backups](https://docs.atlas.mongodb.com/backup/cloud-backup/overview/) for dedicated clusters and [Shared Cluster Backups](https://docs.atlas.mongodb.com/backup/shared-tier/overview/) for tenant clusters."
   type        = bool
   default     = true
 }
 
 variable "bi_connector_config" {
-  description = "Settings needed to configure the MongoDB Connector for Business Intelligence for this cluster."
+  description = "Setting needed to configure the MongoDB Connector for Business Intelligence for this cluster."
   type = object({
     enabled         = optional(bool)
     read_preference = optional(string)
@@ -60,9 +64,9 @@ variable "config_server_management_mode" {
   description = <<-EOT
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as ATLAS_MANAGED, atlas may automatically switch the cluster's config server type for optimal performance and savings.
+When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
 
-When configured as FIXED_TO_DEDICATED, the cluster will always use a dedicated config server.
+When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
 EOT
 
   type     = string
@@ -92,7 +96,7 @@ When set to false, the management mode is set to Atlas-Managed Sharding. This mo
 
 When set to true, the management mode is set to Self-Managed Sharding. This mode leaves the management of shards in your hands and is built to provide an advanced and flexible deployment experience.
 
-This setting cannot be changed once the cluster is deployed.
+*Important*: This setting cannot be changed once the cluster is deployed.
 EOT
 
   type     = bool
@@ -106,7 +110,7 @@ MongoDB major version of the cluster.
 
 On creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).
 
- On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version.
+ On update: Increase version only by one major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, you can downgrade to the previous MongoDB major version.
 EOT
 
   type     = string
@@ -122,7 +126,7 @@ variable "paused" {
 }
 
 variable "pinned_fcv" {
-  description = "Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. It is advised that updates to `pinned_fcv` are done isolated from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. The following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) can be referenced for more details."
+  description = "Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV, the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. We recommend updating to `pinned_fcv` in isolation from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. See the following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and the [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) for more details."
   type = object({
     expiration_date = string
   })
@@ -151,11 +155,11 @@ variable "redact_client_log_data" {
   description = <<-EOT
 Enable or disable log redaction.
 
-This setting configures the ``mongod`` or ``mongos`` to redact any document field contents from a message accompanying a given log event before logging.This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
+This setting configures the ``mongod`` or ``mongos`` to redact any document field contents from a message accompanying a given log event before logging. This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
 
 Use ``redactClientLogData`` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
 
-*Note*: changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
+*Note*: Changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
 EOT
 
   type     = bool
@@ -167,9 +171,9 @@ variable "replica_set_scaling_strategy" {
   description = <<-EOT
 Set this field to configure the replica set scaling mode for your cluster.
 
-By default, Atlas scales under WORKLOAD_TYPE. This mode allows Atlas to scale your analytics nodes in parallel to your operational nodes.
+By default, Atlas scales under `WORKLOAD_TYPE`. This mode allows Atlas to scale your analytics nodes in parallel to your operational nodes.
 
-When configured as SEQUENTIAL, Atlas scales all nodes sequentially. This mode is intended for steady-state workloads and applications performing latency-sensitive secondary reads.
+When configured as `SEQUENTIAL`, Atlas scales all nodes sequentially. This mode is intended for steady-state workloads and applications performing latency-sensitive secondary reads.
 EOT
 
   type     = string
@@ -232,7 +236,7 @@ variable "replication_specs" {
         (region_config.auto_scaling == null || region_config.auto_scaling.compute_enabled == false) && (region_config.analytics_auto_scaling == null || region_config.analytics_auto_scaling.compute_enabled == false)
       ])
     ])
-    error_message = "This module doesn't support auto_scaling for `replication_specs` variable, please use `regions` and `auto_scaling` variables instead."
+    error_message = "This module doesn't support `auto_scaling` for `replication_specs` variable, please use `regions` and `auto_scaling` variables instead."
   }
 
   validation {
@@ -245,47 +249,47 @@ variable "replication_specs" {
       disk_gb_enabled            = true
     }
 
-    error_message = "Cannot use var.auto_scaling when var.replication_specs is used. Configure auto_scaling within replication_specs[*].region_configs[*].auto_scaling instead."
+    error_message = "Cannot use `var.auto_scaling` when `var.replication_specs` is used. Configure `auto_scaling` within `replication_specs[*].region_configs[*].auto_scaling` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.auto_scaling_analytics == null
-    error_message = "Cannot use var.auto_scaling_analytics when var.replication_specs is used. Configure auto_scaling_analytics within replication_specs[*].region_configs[*].analytics_auto_scaling instead."
+    error_message = "Cannot use `var.auto_scaling_analytics` when `var.replication_specs` is used. Configure `auto_scaling_analytics` within `replication_specs[*].region_configs[*].analytics_auto_scaling` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.instance_size == null
-    error_message = "Cannot use var.instance_size when var.replication_specs is used. Configure instance_size within replication_specs[*].region_configs[*].electable_specs.instance_size or read_only_specs.instance_size instead."
+    error_message = "Cannot use `var.instance_size` when `var.replication_specs` is used. Configure `instance_size` within `replication_specs[*].region_configs[*].electable_specs.instance_size` or `read_only_specs.instance_size` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.instance_size_analytics == null
-    error_message = "Cannot use var.instance_size_analytics when var.replication_specs is used. Configure instance_size within replication_specs[*].region_configs[*].analytics_specs.instance_size instead."
+    error_message = "Cannot use `var.instance_size_analytics` when `var.replication_specs` is used. Configure `instance_size` within `replication_specs[*].region_configs[*].analytics_specs.instance_size` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.disk_iops == null
-    error_message = "Cannot use var.disk_iops when var.replication_specs is used. Configure disk_iops within replication_specs[*].region_configs[*].electable_specs.disk_iops, read_only_specs.disk_iops, or analytics_specs.disk_iops instead."
+    error_message = "Cannot use `var.disk_iops` when `var.replication_specs` is used. Configure `disk_iops` within `replication_specs[*].region_configs[*].electable_specs.disk_iops`, `read_only_specs.disk_iops`, or `analytics_specs.disk_iops` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.disk_size_gb == null
-    error_message = "Cannot use var.disk_size_gb when var.replication_specs is used. Configure disk_size_gb within replication_specs[*].region_configs[*].electable_specs.disk_size_gb, read_only_specs.disk_size_gb, or analytics_specs.disk_size_gb instead."
+    error_message = "Cannot use `var.disk_size_gb` when `var.replication_specs` is used. Configure `disk_size_gb` within `replication_specs[*].region_configs[*].electable_specs.disk_size_gb`, `read_only_specs.disk_size_gb`, or `analytics_specs.disk_size_gb` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.ebs_volume_type == null
-    error_message = "Cannot use var.ebs_volume_type when var.replication_specs is used. Configure ebs_volume_type within replication_specs[*].region_configs[*].electable_specs.ebs_volume_type, read_only_specs.ebs_volume_type, or analytics_specs.ebs_volume_type instead."
+    error_message = "Cannot use `var.ebs_volume_type` when `var.replication_specs` is used. Configure `ebs_volume_type` within `replication_specs[*].region_configs[*].electable_specs.ebs_volume_type`, `read_only_specs.ebs_volume_type`, or `analytics_specs.ebs_volume_type` instead."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.shard_count == null
-    error_message = "Cannot use var.shard_count when var.replication_specs is used. Shard configuration is defined by the number of replication_specs provided."
+    error_message = "Cannot use `var.shard_count` when `var.replication_specs` is used. Shard configuration is defined by the number of `replication_specs` provided."
   }
 
   validation {
     condition     = length(var.replication_specs) == 0 || var.provider_name == null
-    error_message = "Cannot use var.provider_name when var.replication_specs is used. Configure provider_name within replication_specs[*].region_configs[*].provider_name instead."
+    error_message = "Cannot use `var.provider_name` when `var.replication_specs` is used. Configure `provider_name` within `replication_specs[*].region_configs[*].provider_name` instead."
   }
 }
 
@@ -303,14 +307,14 @@ variable "root_cert_type" {
 }
 
 variable "termination_protection_enabled" {
-  description = "Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud won't delete the cluster. If set to `false`, MongoDB Cloud will delete the cluster."
+  description = "Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud does not delete the cluster; if set to `false`, MongoDB Cloud deletes the cluster."
   type        = bool
   nullable    = true
   default     = null
 }
 
 variable "timeouts" {
-  description = "Timeouts for create/update/delete operations."
+  description = "Timeouts for `create`, `update`, and `delete` operations."
   type = object({
     create = optional(string)
     delete = optional(string)
@@ -321,7 +325,7 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify **mongoDBMajorVersion**."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongoDBMajorVersion*`."
   type        = string
   nullable    = true
   default     = null
