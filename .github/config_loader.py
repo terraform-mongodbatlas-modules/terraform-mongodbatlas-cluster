@@ -46,6 +46,28 @@ class ExamplesReadmeConfig:
     versions_tf: VersionsTfConfig = field(default_factory=VersionsTfConfig)
 
 
+@dataclass
+class ExampleRow:
+    """Configuration for a single example row in a table."""
+
+    folder: int
+    name: str
+    environment: str = ""
+    title_suffix: str = ""
+    cluster_type: str = ""
+
+
+@dataclass
+class TableConfig:
+    """Configuration for a table in the root README."""
+
+    name: str
+    columns: list[str] = field(default_factory=list)
+    link_column: str = ""
+    example_rows: list[ExampleRow] = field(default_factory=list)
+    readme_template: str = ""
+
+
 def load_examples_config(config_path: Path | None = None) -> dict:
     """Load the examples YAML configuration."""
     if config_path is None:
@@ -83,3 +105,21 @@ def parse_examples_readme_config(config_dict: dict) -> ExamplesReadmeConfig:
         template_vars=template_vars,
         versions_tf=versions_tf,
     )
+
+
+def parse_tables_config(config_dict: dict) -> list[TableConfig]:
+    """Parse tables configuration from YAML dict."""
+    tables_list = config_dict.get("tables", [])
+    tables = []
+
+    for table_dict in tables_list:
+        example_rows = [
+            ExampleRow(**row_dict) for row_dict in table_dict.get("example_rows", [])
+        ]
+        table_dict_filtered = {
+            k: v for k, v in table_dict.items() if k != "example_rows"
+        }
+        table = TableConfig(**table_dict_filtered, example_rows=example_rows)
+        tables.append(table)
+
+    return tables
