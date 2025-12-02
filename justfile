@@ -93,8 +93,16 @@ release-notes new_version old_version="":
 
 # Check if documentation is up-to-date (for CI)
 check-docs:
-    uv run --with pyyaml python .github/root_readme.py --check
-    uv run --with pyyaml python .github/examples_readme.py --check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just docs
+    if ! git diff --quiet; then
+        echo "Documentation is out of date; the following files have uncommitted changes:" >&2
+        git --no-pager diff --name-only >&2
+        echo "Run 'just docs' locally and commit the changes to fix this failure." >&2
+        exit 1
+    fi
+    echo "Documentation is up-to-date."
 
 # Create release branch with version-specific documentation
 release-commit version:
