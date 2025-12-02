@@ -82,7 +82,7 @@ variable "delete_on_create_timeout" {
 }
 
 variable "encryption_at_rest_provider" {
-  description = "Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replication_specs[n].region_configs[m].{type}_specs.instance_size** setting must be `M10` or higher and `\"backup_enabled\" : false` or omitted entirely."
+  description = "Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replication_specs[n].region_configs[m].{type}_specs.instance_size** setting must be `M10` or higher."
   type        = string
   nullable    = true
   default     = null
