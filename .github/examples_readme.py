@@ -7,9 +7,77 @@ import argparse
 import re
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
+
+@dataclass
+class CodeSnippetFilesConfig:
+    """Configuration for code snippet file extraction."""
+
+    additional: list[str] = field(default_factory=list)
+
+
+@dataclass
+class TemplateVarsConfig:
+    """Configuration for template variables."""
+
+    skip_if_name_contains: list[str] = field(default_factory=list)
+    vars: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class VersionsTfConfig:
+    """Configuration for versions.tf generation."""
+
+    add: str = ""
+    skip_if_name_contains: list[str] = field(default_factory=list)
+    generate_when_missing_only: bool = False
+    force_generate: bool = False
+
+
+@dataclass
+class ExamplesReadmeConfig:
+    """Configuration for example README generation."""
+
+    readme_template: str
+    skip_examples: list[str] = field(default_factory=list)
+    code_snippet_files: CodeSnippetFilesConfig = field(
+        default_factory=CodeSnippetFilesConfig
+    )
+    template_vars: TemplateVarsConfig = field(default_factory=TemplateVarsConfig)
+    versions_tf: VersionsTfConfig = field(default_factory=VersionsTfConfig)
+
+
+def parse_examples_readme_config(config_dict: dict) -> ExamplesReadmeConfig:
+    """Parse examples_readme configuration from YAML dict."""
+    examples_readme_dict = config_dict.get("examples_readme", {})
+
+    code_snippet_files_dict = examples_readme_dict.get("code_snippet_files", {})
+    code_snippet_files = CodeSnippetFilesConfig(**code_snippet_files_dict)
+
+    template_vars_dict = examples_readme_dict.get("template_vars", {})
+    skip_if_name_contains = template_vars_dict.pop("skip_if_name_contains", [])
+    template_vars = TemplateVarsConfig(
+        skip_if_name_contains=skip_if_name_contains, vars=template_vars_dict
+    )
+
+    versions_tf_dict = examples_readme_dict.get("versions_tf", {})
+    versions_tf = VersionsTfConfig(**versions_tf_dict)
+
+    examples_readme_dict_filtered = {
+        k: v
+        for k, v in examples_readme_dict.items()
+        if k not in ("code_snippet_files", "template_vars", "versions_tf")
+    }
+    return ExamplesReadmeConfig(
+        **examples_readme_dict_filtered,
+        code_snippet_files=code_snippet_files,
+        template_vars=template_vars,
+        versions_tf=versions_tf,
+    )
 
 
 def load_config(config_path: Path) -> dict:
@@ -238,36 +306,32 @@ def should_skip_example(folder_name: str, skip_list: list[str] | None) -> bool:
 def should_generate_versions_tf(
     example_name: str,
     example_dir: Path,
-    versions_tf_config: dict,
-    force_generate: bool = False,
+    versions_tf_config: VersionsTfConfig,
 ) -> bool:
     """Determine if versions.tf should be generated for this example."""
-    if force_generate:
+    if versions_tf_config.force_generate:
         return True
 
     versions_path = example_dir / "versions.tf"
     if not versions_path.exists():
         return True
 
-    skip_patterns = versions_tf_config.get("skip_if_name_contains", [])
-    if skip_patterns:
+    if versions_tf_config.skip_if_name_contains:
         example_name_lower = example_name.lower()
-        for pattern in skip_patterns:
+        for pattern in versions_tf_config.skip_if_name_contains:
             if pattern.lower() in example_name_lower:
                 return False
 
-    return versions_tf_config.get("generate_when_missing_only", False) is False
+    return not versions_tf_config.generate_when_missing_only
 
 
 def process_example(
     example_dir: Path,
     template: str,
-    template_vars: dict[str, str],
     base_versions_tf: str,
-    provider_config: str,
     config: dict,
     registry_source: str,
-    examples_readme_config: dict,
+    examples_readme_config: ExamplesReadmeConfig,
     version: str | None = None,
     dry_run: bool = False,
     skip_readme: bool = False,
@@ -288,21 +352,15 @@ def process_example(
 
     if not skip_readme:
         readme_path = example_dir / "README.md"
-        additional_files = examples_readme_config.get("code_snippet_files", {}).get(
-            "additional", []
-        )
-        skip_var_patterns = examples_readme_config.get("template_vars", {}).get(
-            "skip_if_name_contains", []
-        )
         readme_content = generate_readme(
             template,
             example_name,
             example_dir,
             registry_source,
-            template_vars,
+            examples_readme_config.template_vars.vars,
             version,
-            additional_files,
-            skip_var_patterns,
+            examples_readme_config.code_snippet_files.additional,
+            examples_readme_config.template_vars.skip_if_name_contains,
         )
 
         if check and readme_path.exists():
@@ -317,13 +375,13 @@ def process_example(
         readme_generated = True
 
     if not skip_versions:
-        versions_tf_config = examples_readme_config.get("versions_tf", {})
-        force_generate = versions_tf_config.get("force_generate", False)
         if should_generate_versions_tf(
-            example_name, example_dir, versions_tf_config, force_generate
+            example_name, example_dir, examples_readme_config.versions_tf
         ):
             versions_path = example_dir / "versions.tf"
-            versions_content = generate_versions_tf(base_versions_tf, provider_config)
+            versions_content = generate_versions_tf(
+                base_versions_tf, examples_readme_config.versions_tf.add
+            )
 
             if check and versions_path.exists():
                 existing_content = versions_path.read_text(encoding="utf-8")
@@ -388,19 +446,13 @@ def main() -> None:
         sys.exit(1)
 
     config = load_config(config_path)
-    examples_readme_config = config.get("examples_readme", {})
+    examples_readme_config = parse_examples_readme_config(config)
 
-    template_vars_raw = examples_readme_config.get("template_vars", {})
-    template_vars = {
-        k: v for k, v in template_vars_raw.items() if not k.startswith("skip_")
-    }
-
-    template_path_str = examples_readme_config.get("readme_template", "")
-    if not template_path_str:
+    if not examples_readme_config.readme_template:
         print("Error: readme_template not found in config")
         sys.exit(1)
 
-    template_path = root_dir / template_path_str
+    template_path = root_dir / examples_readme_config.readme_template
     if not template_path.exists():
         print(f"Error: Template file not found: {template_path}")
         sys.exit(1)
@@ -409,12 +461,9 @@ def main() -> None:
 
     base_versions_tf = load_root_versions_tf(root_dir)
 
-    versions_tf_config = examples_readme_config.get("versions_tf", {})
-    provider_config = versions_tf_config.get("add", "")
-
     skip_list: list[str] | None = None
     if not args.no_skip:
-        skip_list = examples_readme_config.get("skip_examples", [])
+        skip_list = examples_readme_config.skip_examples
 
     try:
         registry_source = get_registry_source()
@@ -423,7 +472,7 @@ def main() -> None:
         sys.exit(1)
 
     print("Example README Generator")
-    print(f"Template: {template_path_str}")
+    print(f"Template: {examples_readme_config.readme_template}")
     print(f"Registry source: {registry_source}")
     if args.version:
         print(f"Version: {args.version}")
@@ -455,9 +504,7 @@ def main() -> None:
         readme_gen, versions_gen, has_changes = process_example(
             example_dir,
             template,
-            template_vars,
             base_versions_tf,
-            provider_config,
             config,
             registry_source,
             examples_readme_config,
