@@ -317,7 +317,6 @@ Consider the following
 
 - This value must be equal for all shards and node types.
 - This value is not configurable on M0/M2/M5 clusters.
-- MongoDB Cloud requires this parameter if you set `replicationSpecs`.
 - If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
 - Storage charge calculations depend on whether you choose the default value or a custom value.
 - The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
@@ -335,10 +334,10 @@ Target IOPS (Input/Output Operations Per Second) desired for storage attached to
 
 Change this parameter if you:
 
-- set `"replicationSpecs[n].regionConfigs[m].providerName" to "AWS"`.
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" to "M30"` or greater (not including `Mxx_NVME` tiers).
+- set `"replication_specs[n].region_configs[m].provider_name" to "AWS"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.instance_size" to "M30"` or greater (not including `Mxx_NVME` tiers).
 
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.ebs_volume_type" to "PROVISIONED"`.
 
 The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.
@@ -351,8 +350,8 @@ MongoDB Cloud enforces minimum ratios of storage capacity to system memory for g
 ##### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
 
-- set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
+- set `"replication_specs[n].region_configs[m].provider_name" : "Azure"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.instance_size" : "M40"` or greater not including `Mxx_NVME` tiers.
 
 The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.
@@ -501,7 +500,7 @@ These recommendations are based on the [Atlas Architecture Center Documentation]
 
 ### encryption_at_rest_provider
 
-Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replicationSpecs[n].regionConfigs[m].{type}Specs.instanceSize** setting must be `M10` or higher and `"backupEnabled" : false` or omitted entirely.
+Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replication_specs[n].region_configs[m].{type}_specs.instance_size** setting must be `M10` or higher and `"backup_enabled" : false` or omitted entirely.
 
 Type: `string`
 
@@ -513,7 +512,7 @@ Enable or disable log redaction.
 
 This setting configures the `mongod` or `mongos` to redact any document field contents from a message accompanying a given log event before logging. This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
 
-Use `redactClientLogData` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
+Use `redact_client_log_data` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
 
 *Note*: Changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
 
@@ -557,7 +556,7 @@ Default: `null`
 
 If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology.
 
-Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `acceptDataRisksAndForceReplicaSetReconfig` to the current date.
+Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `accept_data_risks_and_force_replica_set_reconfig` to the current date.
 
 Type: `string`
 
@@ -684,7 +683,7 @@ Default: `null`
 
 ### version_release_system
 
-Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongoDBMajorVersion*`.
+Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`.
 
 Type: `string`
 

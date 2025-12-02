@@ -2,7 +2,7 @@ variable "accept_data_risks_and_force_replica_set_reconfig" {
   description = <<-EOT
 If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology.
 
-Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `acceptDataRisksAndForceReplicaSetReconfig` to the current date.
+Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. See [Replication](https://www.mongodb.com/docs/manual/replication/) in the MongoDB Atlas documentation for more information. To proceed with an operation which carries that risk, set `accept_data_risks_and_force_replica_set_reconfig` to the current date.
 EOT
   type        = string
   nullable    = true
@@ -82,7 +82,7 @@ variable "delete_on_create_timeout" {
 }
 
 variable "encryption_at_rest_provider" {
-  description = "Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replicationSpecs[n].regionConfigs[m].{type}Specs.instanceSize** setting must be `M10` or higher and `\"backupEnabled\" : false` or omitted entirely."
+  description = "Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replication_specs[n].region_configs[m].{type}_specs.instance_size** setting must be `M10` or higher and `\"backup_enabled\" : false` or omitted entirely."
   type        = string
   nullable    = true
   default     = null
@@ -157,7 +157,7 @@ Enable or disable log redaction.
 
 This setting configures the ``mongod`` or ``mongos`` to redact any document field contents from a message accompanying a given log event before logging. This prevents the program from writing potentially sensitive data stored on the database to the diagnostic log. Metadata such as error or operation codes, line numbers, and source file names are still visible in the logs.
 
-Use ``redactClientLogData`` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
+Use ``redact_client_log_data`` in conjunction with Encryption at Rest and TLS/SSL (Transport Encryption) to assist compliance with regulatory requirements.
 
 *Note*: Changing this setting on a cluster will trigger a rolling restart as soon as the cluster is updated.
 EOT
@@ -325,7 +325,7 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongoDBMajorVersion*`."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`."
   type        = string
   nullable    = true
   default     = null
