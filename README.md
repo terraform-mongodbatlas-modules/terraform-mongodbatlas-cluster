@@ -708,7 +708,7 @@ Type: `string`
 
 Default: `null`
 
-<!-- END_TF_INPUTS_RAW --><!-- END_TF_INPUTS_RAW -->
+<!-- END_TF_INPUTS_RAW -->
 
 ## Outputs
 

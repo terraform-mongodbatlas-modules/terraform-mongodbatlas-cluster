@@ -94,7 +94,8 @@ def extract_inputs_block(readme_content: str) -> str:
         )
         raise SystemExit(msg)
 
-    block = readme_content[start:end]
+    # Include END_MARKER in the extracted block so replacement removes it
+    block = readme_content[start : end + len(END_MARKER)]
     return block
 
 
@@ -130,13 +131,13 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
         r"^(?P<description>.*?)(?=\nType:|\nDefault:|$)", re.MULTILINE | re.DOTALL
     )
     type_pattern = re.compile(
-        r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|$))|"
-        r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|$))",
+        r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|<!--|$))|"
+        r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|<!--|$))",
         re.MULTILINE | re.DOTALL,
     )
     default_pattern = re.compile(
-        r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|$))|"
-        r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|$))",
+        r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|<!--|$))|"
+        r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|<!--|$))",
         re.MULTILINE | re.DOTALL,
     )
 
@@ -393,7 +394,7 @@ def main() -> None:
     variables = parse_terraform_docs_inputs(inputs_block)
     sections = load_group_config(args.config)
     output_markdown = render_grouped_markdown(variables, sections)
-    # Replace the block (which includes BEGIN_MARKER but not END_MARKER) with new content including both markers
+    # Replace the entire block (including both markers) with new content
     replacement = f"{BEGIN_MARKER}\n{output_markdown}\n{END_MARKER}"
     new_content = readme_content.replace(inputs_block, replacement)
     try:
