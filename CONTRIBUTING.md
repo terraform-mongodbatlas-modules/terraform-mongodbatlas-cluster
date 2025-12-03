@@ -125,9 +125,9 @@ The `just docs` command runs the following steps in order:
 
 1. Format Terraform files (`terraform fmt`)
 2. Generate terraform-docs sections (Requirements, Providers, Resources, Variables, Outputs)
-3. Generate grouped Inputs section from `variable_*.tf` files
+3. Generate grouped Inputs section from `variable_*.tf` files (organizes variables into logical categories like "Required", "Auto Scaling", etc.)
 4. Generate root README.md TOC and example tables
-5. Generate example README.md files
+5. Generate example README.md and versions.tf files
 
 ### Generated Files and Sections
 
