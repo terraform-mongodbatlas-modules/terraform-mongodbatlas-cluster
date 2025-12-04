@@ -78,10 +78,6 @@ def copy_module_files(source: Path, dest: Path) -> None:
     modules_dir = source / "modules"
     if modules_dir.exists():
         shutil.copytree(modules_dir, dest / "modules")
-    # Copy docs/ if referenced
-    docs_dir = source / "docs"
-    if docs_dir.exists():
-        shutil.copytree(docs_dir, dest / "docs")
 
 
 def run_validate(job: TestJob) -> TestResult:
