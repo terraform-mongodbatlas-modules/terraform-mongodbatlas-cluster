@@ -14,10 +14,12 @@ parsing .tftest.hcl files that use features not available in older versions.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,6 +28,9 @@ import yaml
 # Terraform version that supports all test file features (state_key, etc.)
 MIN_TFTEST_VERSION = (1, 11)
 
+# Number of parallel workers (default: CPU count, capped at 8)
+MAX_WORKERS = min(os.cpu_count() or 4, 8)
+
 
 @dataclass
 class TestResult:
@@ -33,6 +38,13 @@ class TestResult:
     target: str
     passed: bool
     output: str
+
+
+@dataclass
+class TestJob:
+    version: str
+    target: Path
+    use_temp_dir: bool
 
 
 def parse_version(version: str) -> tuple[int, ...]:
@@ -72,24 +84,26 @@ def copy_module_files(source: Path, dest: Path) -> None:
         shutil.copytree(docs_dir, dest / "docs")
 
 
-def run_validate(version: str, target: Path, use_temp_dir: bool = False) -> TestResult:
+def run_validate(job: TestJob) -> TestResult:
     """Run terraform init and validate for a specific version and target."""
-    target_name = target.name if target.name != target.parent.name else "root"
+    target_name = (
+        job.target.name if job.target.name != job.target.parent.name else "root"
+    )
 
-    work_dir = target
+    work_dir = job.target
     temp_dir_path = None
 
-    if use_temp_dir:
+    if job.use_temp_dir:
         temp_dir_path = tempfile.mkdtemp(prefix=f"tf-compat-{target_name}-")
         work_dir = Path(temp_dir_path)
-        copy_module_files(target, work_dir)
+        copy_module_files(job.target, work_dir)
 
     try:
         # Run init
         init_cmd = [
             "mise",
             "x",
-            f"terraform@{version}",
+            f"terraform@{job.version}",
             "--",
             "terraform",
             "init",
@@ -103,7 +117,7 @@ def run_validate(version: str, target: Path, use_temp_dir: bool = False) -> Test
         )
         if init_result.returncode != 0:
             return TestResult(
-                version=version,
+                version=job.version,
                 target=target_name,
                 passed=False,
                 output=f"init failed:\n{init_result.stderr}",
@@ -113,7 +127,7 @@ def run_validate(version: str, target: Path, use_temp_dir: bool = False) -> Test
         validate_cmd = [
             "mise",
             "x",
-            f"terraform@{version}",
+            f"terraform@{job.version}",
             "--",
             "terraform",
             "validate",
@@ -127,11 +141,11 @@ def run_validate(version: str, target: Path, use_temp_dir: bool = False) -> Test
 
         if validate_result.returncode == 0:
             return TestResult(
-                version=version, target=target_name, passed=True, output=""
+                version=job.version, target=target_name, passed=True, output=""
             )
 
         return TestResult(
-            version=version,
+            version=job.version,
             target=target_name,
             passed=False,
             output=validate_result.stderr or validate_result.stdout,
@@ -190,34 +204,38 @@ def main() -> int:
     versions = load_versions(config_path)
     targets = discover_targets(repo_root)
 
+    # Build job list
+    jobs: list[TestJob] = []
+    for version in versions:
+        version_tuple = parse_version(version)
+        use_temp_for_root = version_tuple < MIN_TFTEST_VERSION
+        for target in targets:
+            is_root = target == repo_root
+            use_temp = use_temp_for_root and is_root
+            jobs.append(TestJob(version=version, target=target, use_temp_dir=use_temp))
+
+    total_jobs = len(jobs)
     print(
         f"Testing {len(versions)} Terraform versions against {len(targets)} targets..."
     )
     print(f"Versions: {', '.join(versions)}")
     print(f"Targets: root + {len(targets) - 1} examples")
+    print(f"Running {total_jobs} jobs with {MAX_WORKERS} workers...")
     print()
 
+    # Run jobs in parallel
     results: list[TestResult] = []
-    for version in versions:
-        print(f"Testing Terraform {version}...", end=" ", flush=True)
-        version_tuple = parse_version(version)
-        # Use temp dir for root module on older TF versions to avoid parsing .tftest.hcl
-        use_temp_for_root = version_tuple < MIN_TFTEST_VERSION
-
-        version_passed = 0
-        for target in targets:
-            is_root = target == repo_root
-            use_temp = use_temp_for_root and is_root
-            result = run_validate(version, target, use_temp_dir=use_temp)
+    completed = 0
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(run_validate, job): job for job in jobs}
+        for future in as_completed(futures):
+            result = future.result()
             results.append(result)
-            if result.passed:
-                version_passed += 1
-        status = (
-            "ok"
-            if version_passed == len(targets)
-            else f"{len(targets) - version_passed} failed"
-        )
-        print(status)
+            completed += 1
+            status = "ok" if result.passed else "FAIL"
+            print(
+                f"  [{completed}/{total_jobs}] {result.version} / {result.target}: {status}"
+            )
 
     print_summary(results)
 
