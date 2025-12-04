@@ -7,18 +7,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
-# Files/folders to skip by default
-DEFAULT_SKIP_EXAMPLES = [
-    "13_example_import",  # Different structure
-]
-
-
-def load_config(config_path: Path) -> dict:
-    """Load the terraform-docs YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+from config_loader import (
+    ExamplesReadmeConfig,
+    VersionsTfConfig,
+    load_examples_config,
+    parse_examples_readme_config,
+)
+from doc_utils import generate_header_comment
 
 
 def load_template(template_path: Path) -> str:
@@ -69,23 +64,32 @@ def get_registry_source() -> str:
     return result.stdout.strip()
 
 
-def get_example_terraform_files(example_dir: Path) -> tuple[str, list[str]]:
+def get_example_terraform_files(
+    example_dir: Path, additional_files: list[str] | None = None
+) -> tuple[str, dict[str, str], list[str]]:
     """
     Get Terraform files in example directory.
 
-    Returns dict with:
-    - main_tf: content of main.tf
-    - other_files: list of other .tf filenames
+    Returns:
+        Tuple of (main_tf_content, additional_file_contents, other_file_names)
     """
     main_tf = example_dir / "main.tf"
     main_content = main_tf.read_text(encoding="utf-8") if main_tf.exists() else ""
 
-    # Find all .tf files except main.tf
+    additional_contents: dict[str, str] = {}
+    if additional_files:
+        for filename in additional_files:
+            file_path = example_dir / filename
+            if file_path.exists():
+                additional_contents[filename] = file_path.read_text(encoding="utf-8")
+
     other_files = [
-        f.name for f in sorted(example_dir.glob("*.tf")) if f.name != "main.tf"
+        f.name
+        for f in sorted(example_dir.glob("*.tf"))
+        if f.name != "main.tf" and f.name not in (additional_files or [])
     ]
 
-    return main_content, other_files
+    return main_content, additional_contents, other_files
 
 
 def transform_main_tf_for_registry(
@@ -120,17 +124,20 @@ def transform_main_tf_for_registry(
 
 
 def generate_code_snippet(
-    example_dir: Path, registry_source: str, version: str | None = None
+    example_dir: Path,
+    registry_source: str,
+    version: str | None = None,
+    additional_files: list[str] | None = None,
 ) -> str:
     """Generate code snippet section for README."""
-    main_tf, other_files = get_example_terraform_files(example_dir)
+    main_tf, additional_contents, other_files = get_example_terraform_files(
+        example_dir, additional_files
+    )
     if not main_tf:
         return ""
 
-    # Transform main.tf for registry usage
     transformed_main = transform_main_tf_for_registry(main_tf, registry_source, version)
 
-    # Build code snippet section
     snippet = "## Code Snippet\n\n"
     snippet += "Copy and use this code to get started quickly:\n\n"
     snippet += "**main.tf**\n"
@@ -138,14 +145,35 @@ def generate_code_snippet(
     snippet += transformed_main
     snippet += "```\n\n"
 
-    # Add links to other files
+    for filename, content in sorted(additional_contents.items()):
+        transformed_content = transform_main_tf_for_registry(
+            content, registry_source, version
+        )
+        snippet += f"**{filename}**\n"
+        snippet += "```hcl\n"
+        snippet += transformed_content
+        snippet += "```\n\n"
+
     if other_files:
         snippet += "**Additional files needed:**\n"
-        for filename in other_files:
+        for filename in sorted(other_files):
             snippet += f"- [{filename}](./{filename})\n"
         snippet += "\n"
 
     return snippet
+
+
+def should_skip_template_var(
+    example_name: str, var_key: str, skip_patterns: list[str] | None = None
+) -> bool:
+    """Check if a template variable should be skipped for this example."""
+    if not skip_patterns:
+        return False
+    example_name_lower = example_name.lower()
+    for pattern in skip_patterns:
+        if pattern.lower() in example_name_lower and var_key.startswith("production"):
+            return True
+    return False
 
 
 def generate_readme(
@@ -155,19 +183,36 @@ def generate_readme(
     registry_source: str,
     template_vars: dict[str, str],
     version: str | None = None,
+    additional_files: list[str] | None = None,
+    skip_var_patterns: list[str] | None = None,
 ) -> str:
     """Generate README content by replacing template variables."""
+    header_comment = (
+        generate_header_comment(
+            description="This file",
+            regenerate_command="just gen-examples",
+        )
+        + "\n"
+    )
+
     content = template.replace("{{ .NAME }}", example_name)
 
-    # Generate and insert code snippet
-    code_snippet = generate_code_snippet(example_dir, registry_source, version)
+    code_snippet = generate_code_snippet(
+        example_dir, registry_source, version, additional_files
+    )
     content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
-    is_development = "development" in example_name.lower()
-    for key, value in template_vars.items():
-        if is_development and key.startswith("production"):
+
+    for key, value in sorted(template_vars.items()):
+        if should_skip_template_var(example_name, key, skip_var_patterns):
             value = ""
-        content = content.replace("{{ .%s }}"%key.upper(), value.rstrip('\n'))
-    return content
+        content = content.replace(f"{{{{ .{key.upper()} }}}}", value.rstrip("\n"))
+
+    # Remove the old template comment if present (first line starting with <!--)
+    lines = content.split("\n")
+    if lines and lines[0].strip().startswith("<!--") and "used to generate" in lines[0]:
+        content = "\n".join(lines[1:])
+
+    return header_comment + content
 
 
 def load_root_versions_tf(root_dir: Path) -> str:
@@ -194,19 +239,42 @@ def find_example_folders(examples_dir: Path) -> list[Path]:
     return folders
 
 
-def should_skip_example(folder_name: str, skip_list: list[str]) -> bool:
+def should_skip_example(folder_name: str, skip_list: list[str] | None) -> bool:
     """Check if example should be skipped."""
+    if not skip_list:
+        return False
     return folder_name in skip_list
+
+
+def should_generate_versions_tf(
+    example_name: str,
+    example_dir: Path,
+    versions_tf_config: VersionsTfConfig,
+) -> bool:
+    """Determine if versions.tf should be generated for this example."""
+    if versions_tf_config.force_generate:
+        return True
+
+    versions_path = example_dir / "versions.tf"
+    if not versions_path.exists():
+        return True
+
+    if versions_tf_config.skip_if_name_contains:
+        example_name_lower = example_name.lower()
+        for pattern in versions_tf_config.skip_if_name_contains:
+            if pattern.lower() in example_name_lower:
+                return False
+
+    return not versions_tf_config.generate_when_missing_only
 
 
 def process_example(
     example_dir: Path,
     template: str,
-    template_vars: dict[str, str],
     base_versions_tf: str,
-    provider_config: str,
     config: dict,
     registry_source: str,
+    examples_readme_config: ExamplesReadmeConfig,
     version: str | None = None,
     dry_run: bool = False,
     skip_readme: bool = False,
@@ -225,41 +293,49 @@ def process_example(
     versions_generated = False
     has_changes = False
 
-    # Generate README.md
     if not skip_readme:
         readme_path = example_dir / "README.md"
         readme_content = generate_readme(
-            template, example_name, example_dir, registry_source, template_vars, version
+            template,
+            example_name,
+            example_dir,
+            registry_source,
+            examples_readme_config.template_vars.vars,
+            version,
+            examples_readme_config.code_snippet_files.additional,
+            examples_readme_config.template_vars.skip_if_name_contains,
         )
 
-        # Check mode: compare with existing
         if check and readme_path.exists():
             existing_content = readme_path.read_text(encoding="utf-8")
             if existing_content != readme_content:
                 has_changes = True
-        elif check and not readme_path.exists():
+        elif check:
             has_changes = True
 
         if not dry_run and not check:
             readme_path.write_text(readme_content, encoding="utf-8")
         readme_generated = True
 
-    # Generate versions.tf
-    if not skip_versions and "development" not in example_name.lower():
-        versions_path = example_dir / "versions.tf"
-        versions_content = generate_versions_tf(base_versions_tf, provider_config)
+    if not skip_versions:
+        if should_generate_versions_tf(
+            example_name, example_dir, examples_readme_config.versions_tf
+        ):
+            versions_path = example_dir / "versions.tf"
+            versions_content = generate_versions_tf(
+                base_versions_tf, examples_readme_config.versions_tf.add
+            )
 
-        # Check mode: compare with existing
-        if check and versions_path.exists():
-            existing_content = versions_path.read_text(encoding="utf-8")
-            if existing_content != versions_content:
+            if check and versions_path.exists():
+                existing_content = versions_path.read_text(encoding="utf-8")
+                if existing_content != versions_content:
+                    has_changes = True
+            elif check:
                 has_changes = True
-        elif check and not versions_path.exists():
-            has_changes = True
 
-        if not dry_run and not check:
-            versions_path.write_text(versions_content, encoding="utf-8")
-        versions_generated = True
+            if not dry_run and not check:
+                versions_path.write_text(versions_content, encoding="utf-8")
+            versions_generated = True
 
     return readme_generated, versions_generated, has_changes
 
@@ -305,51 +381,36 @@ def main() -> None:
 
     # Assume script is run from repo root
     root_dir = Path.cwd()
-    config_path = root_dir / ".terraform-docs.yml"
     examples_dir = root_dir / "examples"
 
-    # Load configuration
-    if not config_path.exists():
-        print(f"Error: Config file not found: {config_path}")
-        return
+    config = load_examples_config()
+    examples_readme_config = parse_examples_readme_config(config)
 
-    config = load_config(config_path)
-    examples_readme_config = config.get("examples_readme", {})
-
-    template_vars = examples_readme_config.get("template_vars", {})
-
-    # Get template path
-    template_path_str = examples_readme_config.get("readme_template", "")
-    if not template_path_str:
+    if not examples_readme_config.readme_template:
         print("Error: readme_template not found in config")
-        return
+        sys.exit(1)
 
-    template_path = root_dir / template_path_str
+    template_path = root_dir / examples_readme_config.readme_template
     if not template_path.exists():
         print(f"Error: Template file not found: {template_path}")
-        return
+        sys.exit(1)
 
     template = load_template(template_path)
 
-    # Load root versions.tf
     base_versions_tf = load_root_versions_tf(root_dir)
 
-    # Get provider config
-    versions_tf_config = examples_readme_config.get("versions_tf", {})
-    provider_config = versions_tf_config.get("add", "")
+    skip_list: list[str] | None = None
+    if not args.no_skip:
+        skip_list = examples_readme_config.skip_examples
 
-    # Determine skip list
-    skip_list = [] if args.no_skip else DEFAULT_SKIP_EXAMPLES
-
-    # Get registry source for code snippets
     try:
         registry_source = get_registry_source()
     except subprocess.CalledProcessError as e:
         print(f"Error: Failed to get registry source: {e}", file=sys.stderr)
-        return
+        sys.exit(1)
 
     print("Example README Generator")
-    print(f"Template: {template_path_str}")
+    print(f"Template: {examples_readme_config.readme_template}")
     print(f"Registry source: {registry_source}")
     if args.version:
         print(f"Version: {args.version}")
@@ -381,11 +442,10 @@ def main() -> None:
         readme_gen, versions_gen, has_changes = process_example(
             example_dir,
             template,
-            template_vars,
             base_versions_tf,
-            provider_config,
             config,
             registry_source,
+            examples_readme_config,
             version=args.version,
             dry_run=args.dry_run,
             skip_readme=args.skip_readme,

@@ -5,13 +5,8 @@ import argparse
 import re
 from pathlib import Path
 
-import yaml
-
-
-def load_config(config_path: Path) -> dict:
-    """Load the terraform-docs YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+from config_loader import TableConfig, load_examples_config, parse_tables_config
+from doc_utils import generate_header_comment_for_section
 
 
 def find_example_folder(folder_number: int, examples_dir: Path) -> str | None:
@@ -66,47 +61,40 @@ def generate_toc_from_headings(content: str) -> str:
     return "\n".join(toc_lines)
 
 
-def generate_tables(config: dict, examples_dir: Path) -> str:
+def generate_tables(tables: list[TableConfig], examples_dir: Path) -> str:
     """Generate markdown tables from config."""
     tables_output = []
 
-    for table_config in config.get("tables", []):
-        table_name = table_config.get("name", "")
-        columns = table_config.get("columns", [])
-        link_column = table_config.get("link_column", "")
-        example_rows = table_config.get("example_rows", [])
-
+    for table_config in tables:
         # Add table title
-        tables_output.append(f"## {table_name}\n")
+        tables_output.append(f"## {table_config.name}\n")
 
         # Generate table header
-        header = " | ".join(col.replace("_", " ").title() for col in columns)
-        separator = " | ".join("---" for _ in columns)
+        header = " | ".join(
+            col.replace("_", " ").title() for col in table_config.columns
+        )
+        separator = " | ".join("---" for _ in table_config.columns)
         tables_output.append(header)
         tables_output.append(separator)
 
         # Generate table rows
-        for row in example_rows:
-            folder_num = row.get("folder")
-            folder_name = find_example_folder(folder_num, examples_dir)
+        for row in table_config.example_rows:
+            folder_name = find_example_folder(row.folder, examples_dir)
 
             if not folder_name:
                 continue
 
             row_data = []
-            for col in columns:
-                if col == link_column:
-                    # Generate link for the link column
-                    display_name = row.get("name", "")
-                    title_suffix = row.get("title_suffix", "")
-                    if title_suffix:
-                        display_name = f"{display_name} {title_suffix}"
+            for col in table_config.columns:
+                if col == table_config.link_column:
+                    display_name = row.name
+                    if row.title_suffix:
+                        display_name = f"{display_name} {row.title_suffix}"
 
                     cell_value = f"[{display_name}](./examples/{folder_name})"
                     row_data.append(cell_value)
                 elif col == "cluster_type":
-                    # Get cluster_type from config or extract from main.tf
-                    cluster_type = row.get("cluster_type", "")
+                    cluster_type = row.cluster_type
                     if not cluster_type:
                         example_folder_path = examples_dir / folder_name
                         cluster_type = extract_cluster_type_from_example(
@@ -114,19 +102,14 @@ def generate_tables(config: dict, examples_dir: Path) -> str:
                         )
                     row_data.append(cluster_type)
                 elif col == "environment":
-                    # Get environment
-                    environment = row.get("environment", "")
-                    row_data.append(environment)
+                    row_data.append(row.environment)
                 elif col == "name":
-                    # Just the name without link
-                    display_name = row.get("name", "")
-                    title_suffix = row.get("title_suffix", "")
-                    if title_suffix:
-                        display_name = f"{display_name} {title_suffix}"
+                    display_name = row.name
+                    if row.title_suffix:
+                        display_name = f"{display_name} {row.title_suffix}"
                     row_data.append(display_name)
                 else:
-                    # Any other column
-                    row_data.append(row.get(col, ""))
+                    row_data.append("")
 
             tables_output.append(" | ".join(row_data))
 
@@ -141,10 +124,15 @@ def update_section(
     new_content: str,
     begin_marker: str,
     end_marker: str,
+    header_comment: str | None = None,
 ) -> str:
     """Update a section between markers in the content."""
     pattern = f"({begin_marker})(.*?)({end_marker})"
-    replacement = f"\\1\n{new_content}\n{end_marker}"
+
+    if header_comment:
+        replacement = f"\\1\n<!-- {header_comment} -->\n{new_content}\n{end_marker}"
+    else:
+        replacement = f"\\1\n{new_content}\n{end_marker}"
 
     new_text = re.sub(pattern, replacement, content, flags=re.DOTALL)
 
@@ -185,21 +173,17 @@ def main() -> None:
     # Paths
     root_dir = Path.cwd()
     readme_path = root_dir / "README.md"
-    config_path = root_dir / ".terraform-docs.yml"
     examples_dir = root_dir / "examples"
 
     if not readme_path.exists():
         print(f"Error: README.md not found at {readme_path}")
         return
 
-    if not config_path.exists():
-        print(f"Error: Config file not found at {config_path}")
-        return
-
     # Load files
     original_readme_content = readme_path.read_text(encoding="utf-8")
     readme_content = original_readme_content
-    config = load_config(config_path)
+    config_dict = load_examples_config()
+    tables = parse_tables_config(config_dict)
 
     print("Root README.md Generator")
     if args.dry_run:
@@ -220,6 +204,10 @@ def main() -> None:
             toc_content,
             "<!-- BEGIN_TOC -->",
             "<!-- END_TOC -->",
+            generate_header_comment_for_section(
+                description="This section",
+                regenerate_command="just gen-readme",
+            ),
         )
         print("✓ TOC generated")
         modified = True
@@ -227,13 +215,17 @@ def main() -> None:
     # Update TABLES
     if not args.skip_tables:
         print("Generating TABLES from config...")
-        tables_content = generate_tables(config, examples_dir)
+        tables_content = generate_tables(tables, examples_dir)
         readme_content = update_section(
             readme_content,
             "TABLES",
             tables_content,
             "<!-- BEGIN_TABLES -->",
             "<!-- END_TABLES -->",
+            generate_header_comment_for_section(
+                description="This section",
+                regenerate_command="just gen-readme",
+            ),
         )
         print("✓ TABLES generated")
         modified = True

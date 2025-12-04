@@ -1,0 +1,1 @@
+"""GitHub automation scripts package."""

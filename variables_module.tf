@@ -93,7 +93,6 @@ Consider the following
 
 - This value must be equal for all shards and node types.
 - This value is not configurable on M0/M2/M5 clusters.
-- MongoDB Cloud requires this parameter if you set `replicationSpecs`.
 - If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
 - Storage charge calculations depend on whether you choose the default value or a custom value.
 - The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
@@ -114,10 +113,10 @@ Target IOPS (Input/Output Operations Per Second) desired for storage attached to
 
 Change this parameter if you:
 
-- set `"replicationSpecs[n].regionConfigs[m].providerName" to "AWS"`.
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" to "M30"` or greater (not including `Mxx_NVME` tiers).
+- set `"replication_specs[n].region_configs[m].provider_name" to "AWS"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.instance_size" to "M30"` or greater (not including `Mxx_NVME` tiers).
 
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.ebsVolumeType" to "PROVISIONED"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.ebs_volume_type" to "PROVISIONED"`.
 
 The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.
@@ -130,8 +129,8 @@ MongoDB Cloud enforces minimum ratios of storage capacity to system memory for g
 ##### Azure
 Target throughput desired for storage attached to your Azure-provisioned cluster. Change this parameter if you:
 
-- set `"replicationSpecs[n].regionConfigs[m].providerName" : "Azure"`.
-- set `"replicationSpecs[n].regionConfigs[m].electableSpecs.instanceSize" : "M40"` or greater not including `Mxx_NVME` tiers.
+- set `"replication_specs[n].region_configs[m].provider_name" : "Azure"`.
+- set `"replication_specs[n].region_configs[m].electable_specs.instance_size" : "M40"` or greater not including `Mxx_NVME` tiers.
 
 The maximum input/output operations per second (IOPS) depend on the selected `instance_size` and `disk_size_gb`.
 This parameter defaults to the cluster tier's standard IOPS value.

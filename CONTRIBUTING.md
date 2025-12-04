@@ -117,27 +117,79 @@ variable "shard_count" {
 
 ## Documentation
 
-Documentation is auto-generated. Run `just check` before committing - it regenerates all docs and verifies they're up-to-date.
+Documentation is auto-generated from Terraform source files and configuration. Run `just docs` before committing to regenerate all docs and verify they are up-to-date.
+
+### Documentation Generation Workflow
+
+The `just docs` command runs the following steps in order:
+
+1. Format Terraform files (`terraform fmt`)
+2. Generate terraform-docs sections (Requirements, Providers, Resources, Variables, Outputs)
+3. Generate grouped Inputs section from `variable_*.tf` files (organizes variables into logical categories like "Required", "Auto Scaling", etc.)
+4. Generate root README.md TOC and example tables
+5. Generate example README.md and versions.tf files
+
+### Generated Files and Sections
+
+Do not edit these files or sections directly. They are regenerated automatically:
+
+- **Root README.md**:
+  - Table of Contents (`<!-- BEGIN_TOC -->` to `<!-- END_TOC -->`)
+  - Example tables (`<!-- BEGIN_TABLES -->` to `<!-- END_TABLES -->`)
+  - Requirements, Providers, Resources sections (`<!-- BEGIN_TF_DOCS -->` to `<!-- END_TF_DOCS -->`)
+  - Grouped Inputs section (between terraform-docs markers)
+  - Outputs section (within `<!-- BEGIN_TF_DOCS -->` markers)
+- **Example README.md files** (`examples/*/README.md`): Entire files are generated from templates
+
+### Regenerating Documentation Locally
+
+```bash
+# Regenerate all documentation
+just docs
+
+# Verify documentation is up-to-date (for CI/pre-push)
+just check-docs
+```
+
+If `just check-docs` fails, it means documentation is out of sync. Run `just docs` locally and commit the changes.
+
+### Fixing CI Documentation Failures
+
+When CI fails with "Documentation is out of date":
+
+1. Run `just docs` locally
+2. Review the generated changes with `git diff`
+3. Commit the changes if they are expected
+4. If changes are unexpected, check:
+   - Did you modify `variable_*.tf` files? Update variable descriptions there.
+   - Did you modify `.terraform-docs.yml`? Ensure configuration is correct.
+   - Did you add a new example? Add it to `docs/examples.yaml` tables configuration.
 
 ### Adding New Examples
 
 1. Create folder: `NN_descriptive_name`
-2. Add to `.terraform-docs.yml`:
+2. Add to `docs/examples.yaml` tables configuration:
    ```yaml
    - folder: NN
      name: Descriptive Name
      title_suffix: (Optional)  # e.g., "(AWS + Azure)"
    ```
-3. Run `just docs`
+3. Run `just docs` to generate the example README.md
 
-**Scripts** (in `.github/`, [Python](https://www.python.org/) 3.10+):
+### Documentation Scripts
+
+Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
+
 - `root_readme.py` - Generates root README TOC and tables
-- `examples_readme.py` - Generates example docs
+- `examples_readme.py` - Generates example README.md files
+- `generate_inputs_from_readme.py` - Generates grouped Inputs section from terraform-docs output
 - `md_link_absolute.py` - Converts relative links to absolute GitHub URLs for releases
 - `tf_registry_source.py` - Shows Terraform Registry source for the module
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
+
+See [CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md) for detailed documentation contributor guidelines.
 
 ## Release Process (Maintainers)
 

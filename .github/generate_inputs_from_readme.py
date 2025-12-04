@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import re
 import sys
@@ -8,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+from doc_utils import generate_header_comment
 
 BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW -->"
 END_MARKER = "<!-- END_TF_INPUTS_RAW -->"
@@ -95,7 +94,8 @@ def extract_inputs_block(readme_content: str) -> str:
         )
         raise SystemExit(msg)
 
-    block = readme_content[start:end]
+    # Include END_MARKER in the extracted block so replacement removes it
+    block = readme_content[start : end + len(END_MARKER)]
     return block
 
 
@@ -131,13 +131,13 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
         r"^(?P<description>.*?)(?=\nType:|\nDefault:|$)", re.MULTILINE | re.DOTALL
     )
     type_pattern = re.compile(
-        r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|$))|"
-        r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|$))",
+        r"^Type:\s*(?P<type_inline>[^\n]+)(?=\n(?:Default:|###|##|<!--|$))|"
+        r"^Type:\s*\n(?P<type_fenced>```\w+\n.*?\n```)(?=\n(?:Default:|###|##|<!--|$))",
         re.MULTILINE | re.DOTALL,
     )
     default_pattern = re.compile(
-        r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|$))|"
-        r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|$))",
+        r"^Default:\s*(?P<default_inline>[^\n]+)(?=\n(?:###|##|<!--|$))|"
+        r"^Default:\s*\n(?P<default_fenced>```\w+\n.*?\n```)(?=\n(?:###|##|<!--|$))",
         re.MULTILINE | re.DOTALL,
     )
 
@@ -286,6 +286,12 @@ def render_grouped_markdown(
         grouped.setdefault(section_title, []).append(var)
 
     lines: list[str] = []
+    header = generate_header_comment(
+        description="This grouped inputs section",
+        regenerate_command="just docs",
+    )
+    # Add header as a single string (it already includes newlines)
+    lines.append(header)
 
     for section in sections:
         title = str(section.get("title", section.get("id", "Variables")))
@@ -388,7 +394,9 @@ def main() -> None:
     variables = parse_terraform_docs_inputs(inputs_block)
     sections = load_group_config(args.config)
     output_markdown = render_grouped_markdown(variables, sections)
-    new_content = readme_content.replace(inputs_block, output_markdown)
+    # Replace the entire block (including both markers) with new content
+    replacement = f"{BEGIN_MARKER}\n{output_markdown}\n{END_MARKER}"
+    new_content = readme_content.replace(inputs_block, replacement)
     try:
         args.readme.write_text(new_content, encoding="utf-8")
     except OSError as exc:
