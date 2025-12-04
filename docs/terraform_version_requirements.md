@@ -29,6 +29,27 @@ If you're currently using Terraform 1.6-1.8 with the MongoDB Atlas Provider, you
 - **Improved user experience**: Clear error messages when variables are misconfigured
 - **Future-proof**: Terraform 1.8 reaches EOL on 2026-04-30, so upgrading is recommended regardless
 
+## Version Compatibility Testing
+
+This module is tested against Terraform versions 1.9 through 1.14. Run the compatibility tests locally:
+
+```bash
+just test-compat
+```
+
+The version matrix is defined in `.terraform-versions.yaml`. To add or remove versions from testing, edit this file.
+
+### Tested Versions
+
+| Version | Status |
+|---------|--------|
+| 1.9.x | Minimum supported (cross-variable validation) |
+| 1.10.x | Supported |
+| 1.11.x | Supported |
+| 1.12.x | Supported (short-circuit evaluation fixed) |
+| 1.13.x | Supported |
+| 1.14.x | Supported (latest) |
+
 ## Related Documentation
 
 - [Terraform 1.9 Upgrade Guide](https://developer.hashicorp.com/terraform/language/v1.9/upgrade-guide)

@@ -233,7 +233,7 @@ variable "replication_specs" {
     condition = alltrue([
       for spec in var.replication_specs : alltrue([
         for region_config in spec.region_configs :
-        (region_config.auto_scaling == null || region_config.auto_scaling.compute_enabled == false) && (region_config.analytics_auto_scaling == null || region_config.analytics_auto_scaling.compute_enabled == false)
+        try(region_config.auto_scaling.compute_enabled == false, true) && try(region_config.analytics_auto_scaling.compute_enabled == false, true)
       ])
     ])
     error_message = "This module doesn't support `auto_scaling` for `replication_specs` variable, please use `regions` and `auto_scaling` variables instead."
