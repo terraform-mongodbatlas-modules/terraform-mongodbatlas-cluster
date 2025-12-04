@@ -1,7 +1,7 @@
 """Terraform CLI version compatibility testing.
 
 Runs `terraform init -backend=false` and `terraform validate` across all configured
-Terraform versions for the root module and all examples.
+Terraform versions (defined in .terraform-versions.yaml) for the root module and all examples.
 
 Usage:
     uv run --with pyyaml python .github/test_compat.py
@@ -9,7 +9,7 @@ Usage:
     just test-compat
 
 Note: For Terraform < 1.11, the root module is validated in a temp directory to avoid
-parsing .tftest.hcl files that use 1.11+ features (like state_key).
+parsing .tftest.hcl files that use features not available in older versions.
 """
 
 from __future__ import annotations

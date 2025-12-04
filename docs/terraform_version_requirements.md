@@ -31,24 +31,13 @@ If you're currently using Terraform 1.6-1.8 with the MongoDB Atlas Provider, you
 
 ## Version Compatibility Testing
 
-This module is tested against Terraform versions 1.9 through 1.14. Run the compatibility tests locally:
+This module is tested against all supported Terraform versions (1.9 and later). Run the compatibility tests locally:
 
 ```bash
 just test-compat
 ```
 
-The version matrix is defined in `.terraform-versions.yaml`. To add or remove versions from testing, edit this file.
-
-### Tested Versions
-
-| Version | Status |
-|---------|--------|
-| 1.9.x | Minimum supported (cross-variable validation) |
-| 1.10.x | Supported |
-| 1.11.x | Supported |
-| 1.12.x | Supported (short-circuit evaluation fixed) |
-| 1.13.x | Supported |
-| 1.14.x | Supported (latest) |
+The version matrix is defined in `.terraform-versions.yaml`. Update this file when new Terraform versions are released.
 
 ## Related Documentation
 
