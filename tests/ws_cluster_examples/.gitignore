@@ -1,0 +1,5 @@
+test_plan_reg_actual/
+plan.bin
+plan.json
+.terraform/
+.terraform.lock.hcl

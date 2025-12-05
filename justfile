@@ -70,6 +70,18 @@ unit-plan-tests:
 # Run all tests
 test: unit-plan-tests integration-tests
 
+# Generate workspace test files (variables.generated.tf, test_plan_reg.py)
+test-ws-gen:
+    uv run --with pyyaml --with typer python .github/tf_ws/gen.py tests
+
+# Run terraform plan for workspace tests
+test-ws-plan ws="all" *args:
+    uv run --with pyyaml --with typer python .github/tf_ws/plan.py tests/{{ws}} {{args}}
+
+# Generate regression files and run pytest
+test-plan-reg ws="all" *args:
+    uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py tests/{{ws}} {{args}}
+
 # Convert relative markdown links to absolute GitHub URLs
 md-link tag_version *args:
     uv run python .github/md_link_absolute.py {{tag_version}} {{args}}
