@@ -3,13 +3,10 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 import typer
-from models import WsConfig, parse_ws_config, sanitize_address
+from tf_ws.models import WsConfig, parse_ws_config, sanitize_address
 
 app = typer.Typer()
 

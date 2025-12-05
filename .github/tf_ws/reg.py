@@ -5,15 +5,12 @@ from __future__ import annotations
 
 import json
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 import typer
 import yaml
-from models import DumpConfig, WsConfig, parse_ws_config, sanitize_address
+from tf_ws.models import DumpConfig, WsConfig, parse_ws_config, sanitize_address
 
 app = typer.Typer()
 
