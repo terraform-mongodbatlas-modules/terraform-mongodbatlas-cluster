@@ -1,0 +1,10 @@
+# Terraform CLI versions for compatibility testing
+# Must be subset of provider compatibility matrix (>= 1.9 for cross-variable validation)
+# See: https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix
+versions:
+  - "1.9"
+  - "1.10"
+  - "1.11"
+  - "1.12"
+  - "1.13"
+  - "1.14"

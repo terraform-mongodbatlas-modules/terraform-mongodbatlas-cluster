@@ -104,6 +104,10 @@ check-docs:
     fi
     echo "Documentation is up-to-date."
 
+# Run terraform validate across all supported Terraform versions
+test-compat:
+    uv run --with pyyaml python .github/test_compat.py
+
 # Create release branch with version-specific documentation
 release-commit version:
     @echo "Creating release {{version}}..."
