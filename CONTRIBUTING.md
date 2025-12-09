@@ -49,9 +49,11 @@ just check-docs               # Verify docs are up-to-date (CI mode)
 just init-examples            # Initialize examples
 just plan-examples PROJECT_ID # Test examples
 just test                     # Run unit + integration tests
-just test-ws-gen              # Generate workspace test files
-just test-ws-plan WS          # Run terraform plan for workspace
-just test-plan-reg WS         # Run plan regression tests
+
+# Workspace testing (plan regression)
+just ws-run -m plan-reg -v dev.tfvars  # Plan + compare baselines
+just ws-run -m apply --auto-approve    # Apply examples (creates resources)
+just ws-run -m destroy --auto-approve  # Destroy resources
 
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
@@ -88,38 +90,40 @@ See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/provid
 
 ### Plan Regression Tests
 
-Plan regression tests verify that terraform plan output remains consistent across changes. They use workspace directories under `tests/ws_*/` with YAML snapshots.
+Plan regression tests verify that terraform plan output remains consistent across changes. They use workspace directories under `tests/ws_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
 ```bash
-# Generate workspace test files (run after modifying ws.yaml)
-just test-ws-gen
+# Plan and compare against baselines (requires dev.tfvars with project_ids)
+just ws-run -m plan-reg -v dev.tfvars
 
-# Run terraform plan (with your project_id)
-just test-ws-plan ws_cluster_examples --var-file my-vars.tfvars
+# First run or after intentional changes: create/update baselines
+just ws-run -m plan-reg -v dev.tfvars --force-regen
 
-# Generate regression files and run pytest
-just test-plan-reg ws_cluster_examples
+# Plan specific examples only (e.g., 01 and 08)
+just ws-run -m plan-only -e 1,8 -v dev.tfvars
 
-# Force regenerate baselines (after intentional changes)
-just test-plan-reg ws_cluster_examples --force-regen
+# Setup project infrastructure before testing (when project_id unknown)
+just ws-run -m setup-only --auto-approve
+
+# Apply examples (creates real resources)
+just ws-run -m apply -v dev.tfvars --auto-approve
+
+# Destroy resources after testing
+just ws-run -m destroy --auto-approve
 ```
 
-**Adding a new plan regression test:**
+**Adding a new example to regression testing:**
 
 1. Add entry to `tests/ws_cluster_examples/ws.yaml`:
    ```yaml
    examples:
-     - number: 1  # matches examples/01_*/
-       var_groups: [default]
+     - number: 3                    # matches examples/03_*/
+       var_groups: [shared, group1] # combine shared + group-specific vars
        plan_regressions:
-         - address: module.ex_01.module.cluster.mongodbatlas_advanced_cluster.this
+         - address: module.cluster.mongodbatlas_advanced_cluster.this
    ```
-2. Update `main.tf` to include the example module
-3. Run `just test-ws-gen` to regenerate test files
-4. Run `just test-ws-plan --var-file dev.tfvars` with your `project_id`
-5. Run `just test-plan-reg` (fails first time, creates baseline)
-6. Run `just test-plan-reg` again (should pass)
-7. Commit baseline files in `tests/ws_cluster_examples/test_plan_reg/`
+2. Run `just ws-run -m plan-reg -v dev.tfvars --force-regen`
+3. Commit baseline files in `tests/ws_cluster_examples/test_plan_reg/`
 
 ## Variable Validation Patterns
 
@@ -226,7 +230,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
-- `tf_ws/` - Plan regression test tooling (gen.py, plan.py, reg.py)
+- `tf_ws/` - Workspace test tooling (run.py orchestrates gen.py, plan.py, reg.py)
 
 See [CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md) for detailed documentation contributor guidelines.
 
