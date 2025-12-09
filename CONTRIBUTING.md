@@ -49,6 +49,9 @@ just check-docs               # Verify docs are up-to-date (CI mode)
 just init-examples            # Initialize examples
 just plan-examples PROJECT_ID # Test examples
 just test                     # Run unit + integration tests
+just test-ws-gen              # Generate workspace test files
+just test-ws-plan WS          # Run terraform plan for workspace
+just test-plan-reg WS         # Run plan regression tests
 
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
@@ -82,6 +85,41 @@ just integration-tests   # Apply tests (creates resources)
 **Note**: Integration tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
 
 See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) for more details.
+
+### Plan Regression Tests
+
+Plan regression tests verify that terraform plan output remains consistent across changes. They use workspace directories under `tests/ws_*/` with YAML snapshots.
+
+```bash
+# Generate workspace test files (run after modifying ws.yaml)
+just test-ws-gen
+
+# Run terraform plan (with your project_id)
+just test-ws-plan ws_cluster_examples --var-file my-vars.tfvars
+
+# Generate regression files and run pytest
+just test-plan-reg ws_cluster_examples
+
+# Force regenerate baselines (after intentional changes)
+just test-plan-reg ws_cluster_examples --force-regen
+```
+
+**Adding a new plan regression test:**
+
+1. Add entry to `tests/ws_cluster_examples/ws.yaml`:
+   ```yaml
+   examples:
+     - number: 1  # matches examples/01_*/
+       var_groups: [default]
+       plan_regressions:
+         - address: module.ex_01.module.cluster.mongodbatlas_advanced_cluster.this
+   ```
+2. Update `main.tf` to include the example module
+3. Run `just test-ws-gen` to regenerate test files
+4. Run `just test-ws-plan --var-file dev.tfvars` with your `project_id`
+5. Run `just test-plan-reg` (fails first time, creates baseline)
+6. Run `just test-plan-reg` again (should pass)
+7. Commit baseline files in `tests/ws_cluster_examples/test_plan_reg/`
 
 ## Variable Validation Patterns
 
@@ -188,6 +226,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
+- `tf_ws/` - Plan regression test tooling (gen.py, plan.py, reg.py)
 
 See [CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md) for detailed documentation contributor guidelines.
 
