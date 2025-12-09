@@ -25,22 +25,17 @@ def parse_plan_json(plan_path: Path) -> dict[str, Any]:
 def extract_planned_resources(plan: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Extract resources from planned_values, keyed by full address."""
     result: dict[str, dict[str, Any]] = {}
-    _extract_from_module(
-        plan.get("planned_values", {}).get("root_module", {}), "", result
-    )
+    _extract_from_module(plan.get("planned_values", {}).get("root_module", {}), result)
     return result
 
 
 def _extract_from_module(
-    module: dict[str, Any], prefix: str, result: dict[str, dict[str, Any]]
+    module: dict[str, Any], result: dict[str, dict[str, Any]]
 ) -> None:
     for resource in module.get("resources", []):
-        addr = f"{prefix}{resource['address']}" if prefix else resource["address"]
-        result[addr] = resource.get("values", {})
+        result[resource["address"]] = resource.get("values", {})
     for child in module.get("child_modules", []):
-        child_addr = child.get("address", "")
-        new_prefix = f"{child_addr}." if child_addr else prefix
-        _extract_from_module(child, new_prefix, result)
+        _extract_from_module(child, result)
 
 
 def filter_values(
@@ -79,6 +74,20 @@ def dump_resource_yaml(
     )
 
 
+def find_matching_address(
+    resources: dict[str, dict[str, Any]], suffix: str, example_num: int
+) -> str | None:
+    """Find resource address ending with suffix, preferring example module prefix."""
+    example_prefix = f"module.ex_{example_num:02d}."
+    for addr in resources:
+        if addr.endswith(suffix) and addr.startswith(example_prefix):
+            return addr
+    for addr in resources:
+        if addr.endswith(suffix):
+            return addr
+    return None
+
+
 def process_workspace(ws_dir: Path, force_regen: bool) -> None:
     ws_yaml = ws_dir / "ws.yaml"
     plan_path = ws_dir / PLAN_JSON
@@ -97,16 +106,16 @@ def process_workspace(ws_dir: Path, force_regen: bool) -> None:
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
         for reg in ex.plan_regressions:
-            addr = reg.address
-            if addr not in resources:
-                typer.echo(f"  Warning: {addr} not found in plan", err=True)
+            full_addr = find_matching_address(resources, reg.address, ex.number)
+            if not full_addr:
+                typer.echo(f"  Warning: {reg.address} not found in plan", err=True)
                 continue
-            filename = f"{ex.number:02d}_{sanitize_address(addr)}.yaml"
-            content = dump_resource_yaml(resources[addr], config, reg.dump)
+            filename = f"{ex.number:02d}_{sanitize_address(reg.address)}.yaml"
+            content = dump_resource_yaml(resources[full_addr], config, reg.dump)
             (actual_dir / filename).write_text(content)
             typer.echo(f"  Generated {filename}")
     typer.echo(f"Running pytest for {ws_dir.name}...")
-    pytest_args = ["pytest", str(ws_dir / "test_plan_reg.py"), "-v"]
+    pytest_args = ["pytest", "test_plan_reg.py", "-v"]
     if force_regen:
         pytest_args.append("--force-regen")
     result = subprocess.run(pytest_args, cwd=ws_dir)

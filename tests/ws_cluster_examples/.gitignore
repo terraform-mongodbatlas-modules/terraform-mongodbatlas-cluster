@@ -3,3 +3,4 @@ plan.bin
 plan.json
 .terraform/
 .terraform.lock.hcl
+dev.tfvars

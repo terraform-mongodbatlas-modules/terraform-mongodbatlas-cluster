@@ -2,11 +2,11 @@ examples:
   - number: 1
     var_groups: [default]
     plan_regressions:
-      - address: module.ex_01.module.cluster.mongodbatlas_advanced_cluster.this
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 8
     var_groups: [default]
     plan_regressions:
-      - address: module.ex_08.module.cluster.mongodbatlas_advanced_cluster.this
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
 
 var_groups:
   default:

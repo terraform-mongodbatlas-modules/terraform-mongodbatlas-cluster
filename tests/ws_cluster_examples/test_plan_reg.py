@@ -6,8 +6,8 @@ ACTUAL_DIR = Path(__file__).parent / 'test_plan_reg_actual'
 EXPECTED_DIR = Path(__file__).parent / 'test_plan_reg'
 
 TEST_CASES = [
-    ("01_module_ex_01_module_cluster_mongodbatlas_advanced_cluster_this.yaml"),
-    ("08_module_ex_08_module_cluster_mongodbatlas_advanced_cluster_this.yaml"),
+    ("01_module_cluster_mongodbatlas_advanced_cluster_this.yaml"),
+    ("08_module_cluster_mongodbatlas_advanced_cluster_this.yaml"),
 ]
 
 

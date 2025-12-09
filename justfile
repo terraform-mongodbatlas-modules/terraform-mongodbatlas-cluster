@@ -76,7 +76,7 @@ test-ws-gen:
 
 # Run terraform plan for workspace tests
 test-ws-plan ws="all" *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/plan.py tests/{{ws}} {{args}}
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/plan.py {{args}} tests/{{ws}}
 
 # Generate regression files and run pytest
 test-plan-reg ws="all" *args:
