@@ -22,7 +22,7 @@ just
 just check
 ```
 
-**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/) • [mise](https://mise.jdx.dev/) (optional)
+**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/) • [mise](https://mise.jdx.dev/) (for version compatibility testing)
 
 ## Prerequisites
 
@@ -49,6 +49,7 @@ just check-docs               # Verify docs are up-to-date (CI mode)
 just init-examples            # Initialize examples
 just plan-examples PROJECT_ID # Test examples
 just test                     # Run unit + integration tests
+just test-compat              # Validate across all supported Terraform versions
 
 # Workspace testing (plan regression)
 just ws-run -m plan-reg -v dev.tfvars  # Plan + compare baselines
@@ -87,6 +88,18 @@ just integration-tests   # Apply tests (creates resources)
 **Note**: Integration tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
 
 See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) for more details.
+
+### Version Compatibility Testing
+
+Test that the module validates correctly across all supported Terraform versions:
+
+```bash
+just test-compat
+```
+
+This runs `terraform init` and `terraform validate` on the root module and all examples using each version in `.terraform-versions.yaml`. Requires [mise](https://mise.jdx.dev/) for version switching.
+
+To update the version matrix when new Terraform versions are released, edit `.terraform-versions.yaml`.
 
 ### Plan Regression Tests
 
