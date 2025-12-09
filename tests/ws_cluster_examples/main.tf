@@ -24,6 +24,12 @@ variable "project_name" {
   description = "Project name when creating via project_generator."
 }
 
+variable "org_id" {
+  type        = string
+  description = "Organization ID for creating a project via project_generator."
+  default     = ""
+}
+
 module "proj" {
   count        = var.project_id == null ? 1 : 0
   source       = "../project_generator"

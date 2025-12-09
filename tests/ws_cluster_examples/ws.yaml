@@ -13,3 +13,4 @@ var_groups:
     - name: project_id
       expose_in_workspace: false
     - name: org_id
+      expose_in_workspace: false
