@@ -12,5 +12,7 @@ var_groups:
   default:
     - name: project_id
       expose_in_workspace: false
-    - name: org_id
-      expose_in_workspace: false
+      module_value: local.project_id
+    - name: tags
+      expose_in_workspace: true
+      module_value: "{}"

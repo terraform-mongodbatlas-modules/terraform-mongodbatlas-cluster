@@ -4,3 +4,4 @@ plan.json
 .terraform/
 .terraform.lock.hcl
 dev.tfvars
+modules.generated.tf

@@ -15,6 +15,7 @@ DEFAULT_TESTS_DIR = REPO_ROOT / "tests"
 class WsVar:
     name: str
     expose_in_workspace: bool = True
+    module_value: str = ""
 
 
 @dataclass
@@ -46,6 +47,10 @@ class Example:
                 return p
         raise ValueError(f"Example {self.number:02d}_* not found in {examples_dir}")
 
+    def title_from_dir(self, examples_dir: Path) -> str:
+        dir_name = self.example_path(examples_dir).name
+        return dir_name.split("_", 1)[1].replace("_", " ").title()
+
 
 @dataclass
 class WsConfig:
@@ -65,6 +70,12 @@ class WsConfig:
                     result.append(v)
         return result
 
+    def vars_for_example(self, example: Example) -> list[WsVar]:
+        result: list[WsVar] = []
+        for group_name in example.var_groups:
+            result.extend(self.var_groups.get(group_name, []))
+        return result
+
 
 def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
     data = yaml.safe_load(ws_yaml_path.read_text())
@@ -72,7 +83,9 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
     for group_name, vars_list in data.get("var_groups", {}).items():
         var_groups[group_name] = [
             WsVar(
-                name=v["name"], expose_in_workspace=v.get("expose_in_workspace", True)
+                name=v["name"],
+                expose_in_workspace=v.get("expose_in_workspace", True),
+                module_value=v.get("module_value", ""),
             )
             for v in vars_list
         ]

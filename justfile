@@ -82,6 +82,10 @@ ws-plan *args:
 ws-reg *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
 
+# Run workspace test workflow (gen -> plan -> reg)
+ws-run *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py {{args}}
+
 # Convert relative markdown links to absolute GitHub URLs
 md-link tag_version *args:
     uv run python .github/md_link_absolute.py {{tag_version}} {{args}}
