@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import typer
+from tf_ws.models import DEFAULT_TESTS_DIR
 
 app = typer.Typer()
 
@@ -37,36 +38,27 @@ def run_terraform_plan(ws_dir: Path, var_files: list[Path]) -> None:
     typer.echo(f"Plan saved to {PLAN_JSON}")
 
 
-def find_workspace(tests_dir: Path, ws_name: str) -> Path:
-    if ws_name == "all":
-        raise ValueError("Use 'all' only at top level")
-    ws_dir = tests_dir / ws_name
-    if not ws_dir.exists():
-        for d in tests_dir.iterdir():
-            if d.is_dir() and d.name.startswith("ws_") and ws_name in d.name:
-                return d
-        raise typer.Exit(1)
-    return ws_dir
-
-
 @app.command()
 def main(
-    ws_path: Path = typer.Argument(
-        ..., help="Path to workspace directory or tests/{ws_name}"
+    ws: str = typer.Option(
+        "all", "--ws", help="Workspace name or 'all' for all ws_* directories"
+    ),
+    tests_dir: Path = typer.Option(
+        DEFAULT_TESTS_DIR, "--tests-dir", help="Path to tests directory"
     ),
     var_file: list[Path] = typer.Option(
         [], "--var-file", "-v", help="Variable files to pass to terraform plan"
     ),
 ) -> None:
     """Run terraform plan for a workspace."""
-    if ws_path.name == "all":
-        tests_dir = ws_path.parent
+    if ws == "all":
         ws_dirs = sorted(
             d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
         )
         for ws_dir in ws_dirs:
             run_terraform_plan(ws_dir, var_file)
     else:
+        ws_path = tests_dir / ws
         if not ws_path.exists():
             typer.echo(f"Error: {ws_path} does not exist", err=True)
             raise typer.Exit(1)

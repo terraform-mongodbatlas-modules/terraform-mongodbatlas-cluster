@@ -6,6 +6,10 @@ from typing import Any
 
 import yaml
 
+# .github/tf_ws/ -> repo root
+REPO_ROOT = Path(__file__).parent.parent.parent
+DEFAULT_TESTS_DIR = REPO_ROOT / "tests"
+
 
 @dataclass
 class WsVar:

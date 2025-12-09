@@ -10,7 +10,13 @@ from typing import Any
 
 import typer
 import yaml
-from tf_ws.models import DumpConfig, WsConfig, parse_ws_config, sanitize_address
+from tf_ws.models import (
+    DEFAULT_TESTS_DIR,
+    DumpConfig,
+    WsConfig,
+    parse_ws_config,
+    sanitize_address,
+)
 
 app = typer.Typer()
 
@@ -125,22 +131,25 @@ def process_workspace(ws_dir: Path, force_regen: bool) -> None:
 
 @app.command()
 def main(
-    ws_path: Path = typer.Argument(
-        ..., help="Path to workspace directory or tests/{ws_name}"
+    ws: str = typer.Option(
+        "all", "--ws", help="Workspace name or 'all' for all ws_* directories"
+    ),
+    tests_dir: Path = typer.Option(
+        DEFAULT_TESTS_DIR, "--tests-dir", help="Path to tests directory"
     ),
     force_regen: bool = typer.Option(
         False, "--force-regen", help="Force regenerate baseline files"
     ),
 ) -> None:
     """Generate regression test files and run pytest."""
-    if ws_path.name == "all":
-        tests_dir = ws_path.parent
+    if ws == "all":
         ws_dirs = sorted(
             d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
         )
         for ws_dir in ws_dirs:
             process_workspace(ws_dir, force_regen)
     else:
+        ws_path = tests_dir / ws
         if not ws_path.exists():
             typer.echo(f"Error: {ws_path} does not exist", err=True)
             raise typer.Exit(1)
