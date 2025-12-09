@@ -15,7 +15,7 @@ validate:
 
 # Lint with comprehensive rules
 lint:
-    tflint -f compact --recursive --minimum-failure-severity=warning --ignore-module=tests/ws_cluster_examples
+    tflint -f compact --recursive --minimum-failure-severity=warning
     terraform fmt -check -recursive
 
 py-check:
