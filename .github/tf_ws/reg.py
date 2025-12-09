@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Generate regression test files from terraform plan output."""
 
 from __future__ import annotations

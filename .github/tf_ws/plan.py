@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Run terraform plan for workspace tests."""
 
 from __future__ import annotations
