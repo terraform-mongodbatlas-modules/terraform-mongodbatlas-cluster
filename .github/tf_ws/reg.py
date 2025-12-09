@@ -15,6 +15,7 @@ from tf_ws.models import (
     DumpConfig,
     WsConfig,
     parse_ws_config,
+    resolve_workspaces,
     sanitize_address,
 )
 
@@ -142,18 +143,13 @@ def main(
     ),
 ) -> None:
     """Generate regression test files and run pytest."""
-    if ws == "all":
-        ws_dirs = sorted(
-            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
-        )
-        for ws_dir in ws_dirs:
-            process_workspace(ws_dir, force_regen)
-    else:
-        ws_path = tests_dir / ws
-        if not ws_path.exists():
-            typer.echo(f"Error: {ws_path} does not exist", err=True)
-            raise typer.Exit(1)
-        process_workspace(ws_path, force_regen)
+    try:
+        ws_dirs = resolve_workspaces(ws, tests_dir)
+    except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+    for ws_dir in ws_dirs:
+        process_workspace(ws_dir, force_regen)
     typer.echo("Done.")
 
 

@@ -107,3 +107,31 @@ def _parse_dump_config(data: dict[str, Any]) -> DumpConfig:
 
 def sanitize_address(address: str) -> str:
     return address.replace(".", "_")
+
+
+def resolve_workspaces(ws: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Path]:
+    """Resolve workspace directories based on ws name.
+
+    Args:
+        ws: Workspace name or 'all' for all ws_* directories
+        tests_dir: Path to tests directory
+
+    Returns:
+        List of workspace directory paths
+
+    Raises:
+        ValueError: If tests_dir doesn't exist, ws not found, or no ws_* dirs found
+    """
+    if not tests_dir.exists():
+        raise ValueError(f"{tests_dir} does not exist")
+    if ws == "all":
+        ws_dirs = sorted(
+            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
+        )
+        if not ws_dirs:
+            raise ValueError(f"No ws_* directories found in {tests_dir}")
+        return ws_dirs
+    ws_path = tests_dir / ws
+    if not ws_path.exists():
+        raise ValueError(f"{ws_path} does not exist")
+    return [ws_path]

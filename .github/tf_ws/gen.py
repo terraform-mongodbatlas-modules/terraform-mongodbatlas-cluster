@@ -6,7 +6,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-from tf_ws.models import DEFAULT_TESTS_DIR, WsConfig, parse_ws_config, sanitize_address
+from tf_ws.models import (
+    DEFAULT_TESTS_DIR,
+    WsConfig,
+    parse_ws_config,
+    resolve_workspaces,
+    sanitize_address,
+)
 
 app = typer.Typer()
 
@@ -89,22 +95,11 @@ def main(
     ),
 ) -> None:
     """Generate terraform and pytest files for workspaces."""
-    if not tests_dir.exists():
-        typer.echo(f"Error: {tests_dir} does not exist", err=True)
+    try:
+        ws_dirs = resolve_workspaces(ws, tests_dir)
+    except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
-    if ws == "all":
-        ws_dirs = sorted(
-            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
-        )
-        if not ws_dirs:
-            typer.echo(f"No ws_* directories found in {tests_dir}")
-            raise typer.Exit(1)
-    else:
-        ws_path = tests_dir / ws
-        if not ws_path.exists():
-            typer.echo(f"Error: {ws_path} does not exist", err=True)
-            raise typer.Exit(1)
-        ws_dirs = [ws_path]
     for ws_dir in ws_dirs:
         typer.echo(f"Processing {ws_dir.name}...")
         process_workspace(ws_dir)

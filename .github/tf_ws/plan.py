@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 import typer
-from tf_ws.models import DEFAULT_TESTS_DIR
+from tf_ws.models import DEFAULT_TESTS_DIR, resolve_workspaces
 
 app = typer.Typer()
 
@@ -51,18 +51,13 @@ def main(
     ),
 ) -> None:
     """Run terraform plan for a workspace."""
-    if ws == "all":
-        ws_dirs = sorted(
-            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
-        )
-        for ws_dir in ws_dirs:
-            run_terraform_plan(ws_dir, var_file)
-    else:
-        ws_path = tests_dir / ws
-        if not ws_path.exists():
-            typer.echo(f"Error: {ws_path} does not exist", err=True)
-            raise typer.Exit(1)
-        run_terraform_plan(ws_path, var_file)
+    try:
+        ws_dirs = resolve_workspaces(ws, tests_dir)
+    except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+    for ws_dir in ws_dirs:
+        run_terraform_plan(ws_dir, var_file)
     typer.echo("Done.")
 
 
