@@ -54,12 +54,29 @@ def run_terraform_plan(
     typer.echo(f"Plan saved to {PLAN_JSON}")
 
 
-def run_terraform_apply(ws_dir: Path, auto_approve: bool = False) -> None:
+def run_terraform_apply(
+    ws_dir: Path, var_files: list[Path], auto_approve: bool = False
+) -> None:
     apply_cmd = ["terraform", "apply", "-input=false"]
+    for vf in var_files:
+        apply_cmd.extend(["-var-file", str(vf)])
     if auto_approve:
         apply_cmd.append("-auto-approve")
     typer.echo("Running terraform apply...")
     if run_cmd(apply_cmd, ws_dir) != 0:
+        raise typer.Exit(1)
+
+
+def run_terraform_destroy(
+    ws_dir: Path, var_files: list[Path], auto_approve: bool = False
+) -> None:
+    destroy_cmd = ["terraform", "destroy", "-input=false"]
+    for vf in var_files:
+        destroy_cmd.extend(["-var-file", str(vf)])
+    if auto_approve:
+        destroy_cmd.append("-auto-approve")
+    typer.echo("Running terraform destroy...")
+    if run_cmd(destroy_cmd, ws_dir) != 0:
         raise typer.Exit(1)
 
 

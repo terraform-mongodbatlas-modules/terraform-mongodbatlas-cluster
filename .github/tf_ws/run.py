@@ -17,6 +17,7 @@ class RunMode(enum.StrEnum):
     PLAN_ONLY = "plan-only"
     PLAN_REG = "plan-reg"
     APPLY = "apply"
+    DESTROY = "destroy"
 
 
 @app.command()
@@ -53,7 +54,10 @@ def main(
             reg.process_workspace(ws_dir, force_regen)
 
         if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
-            plan.run_terraform_apply(ws_dir, auto_approve)
+            plan.run_terraform_apply(ws_dir, var_file, auto_approve)
+
+        if mode == RunMode.DESTROY:
+            plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
 
     typer.echo("Done.")
 
