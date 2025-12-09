@@ -71,15 +71,15 @@ unit-plan-tests:
 test: unit-plan-tests integration-tests
 
 # Generate workspace test files (variables.generated.tf, test_plan_reg.py)
-test-ws-gen *args:
+ws-gen *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/gen.py {{args}}
 
 # Run terraform plan for workspace tests
-test-ws-plan *args:
+ws-plan *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/plan.py {{args}}
 
 # Generate regression files and run pytest
-test-plan-reg *args:
+ws-reg *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
 
 # Convert relative markdown links to absolute GitHub URLs
