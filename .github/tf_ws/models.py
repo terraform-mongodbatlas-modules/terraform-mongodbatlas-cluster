@@ -16,6 +16,7 @@ class WsVar:
     name: str
     expose_in_workspace: bool = True
     module_value: str = ""
+    var_type: str = ""
 
 
 @dataclass
@@ -86,6 +87,7 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
                 name=v["name"],
                 expose_in_workspace=v.get("expose_in_workspace", True),
                 module_value=v.get("module_value", ""),
+                var_type=v.get("var_type", ""),
             )
             for v in vars_list
         ]

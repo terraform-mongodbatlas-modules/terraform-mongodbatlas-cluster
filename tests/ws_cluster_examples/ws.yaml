@@ -15,4 +15,5 @@ var_groups:
       module_value: local.project_id
     - name: tags
       expose_in_workspace: true
+      var_type: map(string)
       module_value: "{}"
