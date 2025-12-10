@@ -1,0 +1,14 @@
+name: Generate Changelog
+
+on:
+  pull_request:
+    paths:
+      - .changelog/**
+  workflow_dispatch:
+
+jobs:
+  generate-and-update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      -  run: |
+          echo "TEMPORARY: This workflow skeleton needs to be in main so can be run manually from a PR while in development. Will be completed in CLOUDP-361426"
