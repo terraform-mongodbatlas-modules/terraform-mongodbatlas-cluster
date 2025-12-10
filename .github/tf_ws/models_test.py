@@ -1,0 +1,177 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+from tf_ws import models
+
+
+def test_sanitize_address():
+    assert models.sanitize_address("module.cluster.this") == "module_cluster_this"
+    assert models.sanitize_address("resource.name") == "resource_name"
+
+
+def test_ws_var_defaults():
+    var = models.WsVar(name="test")
+    assert var.expose_in_workspace
+    assert var.module_value == ""
+    assert var.var_type == ""
+
+
+def test_example_path_found(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "01_basic").mkdir()
+    (examples_dir / "02_advanced").mkdir()
+
+    ex = models.Example(number=1)
+    assert ex.example_path(examples_dir).name == "01_basic"
+
+    ex2 = models.Example(number=2)
+    assert ex2.example_path(examples_dir).name == "02_advanced"
+
+
+def test_example_path_not_found(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+
+    ex = models.Example(number=99)
+    with pytest.raises(ValueError, match="Example 99_\\* not found"):
+        ex.example_path(examples_dir)
+
+
+def test_title_from_dir(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "01_basic_cluster").mkdir()
+
+    ex = models.Example(number=1)
+    assert ex.title_from_dir(examples_dir) == "Basic Cluster"
+
+
+def test_ws_config_exposed_vars():
+    config = models.WsConfig(
+        examples=[],
+        var_groups={
+            "shared": [
+                models.WsVar(name="tags", expose_in_workspace=True),
+                models.WsVar(name="project_id", expose_in_workspace=False),
+            ],
+            "group1": [
+                models.WsVar(name="region", expose_in_workspace=True),
+            ],
+        },
+    )
+    exposed = config.exposed_vars()
+    names = [v.name for v in exposed]
+    assert "tags" in names
+    assert "region" in names
+    assert "project_id" not in names
+
+
+def test_ws_config_exposed_vars_deduplicates():
+    config = models.WsConfig(
+        examples=[],
+        var_groups={
+            "group1": [models.WsVar(name="tags", expose_in_workspace=True)],
+            "group2": [models.WsVar(name="tags", expose_in_workspace=True)],
+        },
+    )
+    exposed = config.exposed_vars()
+    assert len(exposed) == 1
+    assert exposed[0].name == "tags"
+
+
+def test_ws_config_vars_for_example():
+    config = models.WsConfig(
+        examples=[],
+        var_groups={
+            "shared": [models.WsVar(name="tags")],
+            "group1": [models.WsVar(name="project_id")],
+        },
+    )
+    ex = models.Example(number=1, var_groups=["shared", "group1"])
+    vars_list = config.vars_for_example(ex)
+    names = [v.name for v in vars_list]
+    assert names == ["tags", "project_id"]
+
+
+def test_ws_config_vars_for_example_duplicate_raises():
+    config = models.WsConfig(
+        examples=[],
+        var_groups={
+            "shared": [models.WsVar(name="project_id")],
+            "group1": [models.WsVar(name="project_id")],
+        },
+    )
+    ex = models.Example(number=1, var_groups=["shared", "group1"])
+    with pytest.raises(
+        ValueError, match="Duplicate variable 'project_id' in example 01"
+    ):
+        config.vars_for_example(ex)
+
+
+def test_parse_ws_config(tmp_path: Path):
+    ws_yaml = tmp_path / "ws.yaml"
+    ws_yaml.write_text("""
+examples:
+  - number: 1
+    var_groups: [shared]
+    plan_regressions:
+      - address: module.cluster.this
+
+var_groups:
+  shared:
+    - name: tags
+      expose_in_workspace: true
+      var_type: map(string)
+      module_value: "{}"
+""")
+    config = models.parse_ws_config(ws_yaml)
+    assert len(config.examples) == 1
+    assert config.examples[0].number == 1
+    assert config.examples[0].var_groups == ["shared"]
+    assert len(config.examples[0].plan_regressions) == 1
+    assert config.examples[0].plan_regressions[0].address == "module.cluster.this"
+    assert "shared" in config.var_groups
+    assert config.var_groups["shared"][0].name == "tags"
+
+
+def test_resolve_workspaces_all(tmp_path: Path):
+    (tmp_path / "ws_one").mkdir()
+    (tmp_path / "ws_two").mkdir()
+    (tmp_path / "other_dir").mkdir()
+
+    ws_dirs = models.resolve_workspaces("all", tmp_path)
+    names = [d.name for d in ws_dirs]
+    assert names == ["ws_one", "ws_two"]
+
+
+def test_resolve_workspaces_specific(tmp_path: Path):
+    ws_dir = tmp_path / "ws_test"
+    ws_dir.mkdir()
+    (ws_dir / "ws.yaml").write_text("examples: []")
+
+    ws_dirs = models.resolve_workspaces("ws_test", tmp_path)
+    assert len(ws_dirs) == 1
+    assert ws_dirs[0].name == "ws_test"
+
+
+def test_resolve_workspaces_specific_missing_ws_yaml(tmp_path: Path):
+    ws_dir = tmp_path / "ws_test"
+    ws_dir.mkdir()
+    # No ws.yaml created
+
+    with pytest.raises(ValueError, match="ws.yaml does not exist"):
+        models.resolve_workspaces("ws_test", tmp_path)
+
+
+def test_resolve_workspaces_tests_dir_not_found(tmp_path: Path):
+    missing = tmp_path / "missing"
+    with pytest.raises(ValueError, match="does not exist"):
+        models.resolve_workspaces("all", missing)
+
+
+def test_resolve_workspaces_no_ws_dirs(tmp_path: Path):
+    with pytest.raises(ValueError, match="No ws_\\* directories found"):
+        models.resolve_workspaces("all", tmp_path)

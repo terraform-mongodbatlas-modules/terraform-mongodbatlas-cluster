@@ -143,7 +143,7 @@ def resolve_workspaces(ws: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Pat
         List of workspace directory paths
 
     Raises:
-        ValueError: If tests_dir doesn't exist, ws not found, or no ws_* dirs found
+        ValueError: If tests_dir doesn't exist, ws not found, ws.yaml missing, or no ws_* dirs found
     """
     if not tests_dir.exists():
         raise ValueError(f"{tests_dir} does not exist")
@@ -157,4 +157,7 @@ def resolve_workspaces(ws: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Pat
     ws_path = tests_dir / ws
     if not ws_path.exists():
         raise ValueError(f"{ws_path} does not exist")
+    ws_yaml = ws_path / "ws.yaml"
+    if not ws_yaml.exists():
+        raise ValueError(f"{ws_yaml} does not exist")
     return [ws_path]
