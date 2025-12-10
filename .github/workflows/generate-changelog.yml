@@ -22,15 +22,13 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Set up Go
+      - name: Setup base tools
+        uses: ./.github/actions/setup-base
+
+      - name: Setup Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
         with:
           go-version: 'stable'
-
-      - name: Install just
-        uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6
-        with:
-          just-version: '1.36.0'
 
       - name: Install changelog-build tool
         run: just init-changelog
@@ -38,47 +36,32 @@ jobs:
       - name: Determine release references
         id: refs
         run: |
-          # Determine this_release (default to HEAD if not provided)
-          if [ -n "${{ inputs.this_release }}" ]; then
-            THIS_RELEASE="${{ inputs.this_release }}"
-          else
-            THIS_RELEASE=$(git rev-parse HEAD)
-          fi
+          # Determine this_release (default to HEAD)
+          THIS_RELEASE="${{ inputs.this_release }}"
+          [ -z "$THIS_RELEASE" ] && THIS_RELEASE=$(git rev-parse HEAD)
           echo "this_release=$THIS_RELEASE" >> $GITHUB_OUTPUT
 
-          # Determine last_release (default to latest tag if not provided)
-          if [ -n "${{ inputs.last_release }}" ]; then
-            LAST_RELEASE="${{ inputs.last_release }}"
-          else
-            # Try to find the latest tag matching v*.*.*
+          # Determine last_release (default to latest tag)
+          LAST_RELEASE="${{ inputs.last_release }}"
+          if [ -z "$LAST_RELEASE" ]; then
             if LATEST_TAG=$(git describe --abbrev=0 --match='v*.*.*' --tags 2>/dev/null); then
               LAST_RELEASE=$(git rev-list -n 1 "$LATEST_TAG")
+              # Use changelog-dir-created if .changelog doesn't exist at latest tag
+              if ! git ls-tree "$LAST_RELEASE" .changelog >/dev/null 2>&1; then
+                LAST_RELEASE=$(git rev-list -n 1 changelog-dir-created)
+                echo "::notice::Using changelog-dir-created (latest tag $LATEST_TAG has no .changelog)"
+              fi
             else
-              # If no tags exist, use the first commit
-              LAST_RELEASE=$(git rev-list --max-parents=0 HEAD)
+              LAST_RELEASE=$(git rev-list -n 1 changelog-dir-created)
+              echo "::notice::Using changelog-dir-created (no version tags found)"
             fi
           fi
           echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
 
-          # Check if .changelog directory exists at last_release commit
-          if ! git ls-tree "$LAST_RELEASE" .changelog >/dev/null 2>&1; then
-            echo "::warning::The .changelog directory does not exist at commit $LAST_RELEASE"
-            echo "::warning::Finding the first commit where .changelog was introduced..."
-            # Find the first commit that introduced .changelog
-            FIRST_CHANGELOG_COMMIT=$(git log --all --format=%H --reverse -- .changelog | head -1)
-            if [ -n "$FIRST_CHANGELOG_COMMIT" ]; then
-              echo "::notice::Using $FIRST_CHANGELOG_COMMIT as last_release (first commit with .changelog directory)"
-              LAST_RELEASE="$FIRST_CHANGELOG_COMMIT"
-              echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
-            fi
-          fi
-
       - name: Generate changelog
         run: |
-          just build-changelog "${{ steps.refs.outputs.last_release }}" "${{ steps.refs.outputs.this_release }}" | tee generated-changelog.txt
+          just build-changelog "${{ steps.refs.outputs.last_release }}" "${{ steps.refs.outputs.this_release }}"
 
       - name: Show generated changelog
         run: |
-          echo ""
-          echo "--- Generated Changelog ---"
-          cat generated-changelog.txt
+          cat CHANGELOG.md

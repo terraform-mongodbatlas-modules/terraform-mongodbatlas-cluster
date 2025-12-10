@@ -133,8 +133,7 @@ init-changelog:
 # Generate changelog between two releases and update CHANGELOG.md
 build-changelog last_release this_release:
     #!/bin/bash
-    set -euxo pipefail
-    
+    set -euo pipefail
     CHANGELOG_OUTPUT=$("$(go env GOPATH)"/bin/changelog-build \
         -this-release "{{this_release}}" \
         -last-release "{{last_release}}" \
@@ -142,7 +141,6 @@ build-changelog last_release this_release:
         -entries-dir .changelog \
         -changelog-template .github/changelog/changelog.tmpl \
         -note-template .github/changelog/release-note.tmpl)
-
     if [ -n "$CHANGELOG_OUTPUT" ]; then
         echo "$CHANGELOG_OUTPUT" > CHANGELOG.md
         echo "CHANGELOG.md updated successfully"
