@@ -125,3 +125,27 @@ release-commit version:
     @echo "✓ Release branch {{version}} ready with tag"
     @echo "  Review changes, then push:"
     @echo "  git push origin {{version}} --tags"
+
+# Install tool needed by just build-changelog
+init-changelog:
+    go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
+
+# Generate changelog between two releases and update CHANGELOG.md
+build-changelog last_release this_release:
+    #!/bin/bash
+    set -euxo pipefail
+    
+    CHANGELOG_OUTPUT=$("$(go env GOPATH)"/bin/changelog-build \
+        -this-release "{{this_release}}" \
+        -last-release "{{last_release}}" \
+        -git-dir . \
+        -entries-dir .changelog \
+        -changelog-template .github/changelog/changelog.tmpl \
+        -note-template .github/changelog/release-note.tmpl)
+
+    if [ -n "$CHANGELOG_OUTPUT" ]; then
+        echo "$CHANGELOG_OUTPUT" > CHANGELOG.md
+        echo "CHANGELOG.md updated successfully"
+    else
+        echo "No changelog entries found between commits"
+    fi

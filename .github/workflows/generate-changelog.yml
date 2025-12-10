@@ -27,11 +27,13 @@ jobs:
         with:
           go-version: 'stable'
 
-      - name: Install changelog-build
-        run: go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
+      - name: Install just
+        uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6
+        with:
+          just-version: '1.36.0'
 
-      - name: Ensure .changelog directory exists
-        run: mkdir -p .changelog
+      - name: Install changelog-build tool
+        run: just init-changelog
 
       - name: Determine release references
         id: refs
@@ -58,22 +60,25 @@ jobs:
           fi
           echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
 
+          # Check if .changelog directory exists at last_release commit
+          if ! git ls-tree "$LAST_RELEASE" .changelog >/dev/null 2>&1; then
+            echo "::warning::The .changelog directory does not exist at commit $LAST_RELEASE"
+            echo "::warning::Finding the first commit where .changelog was introduced..."
+            # Find the first commit that introduced .changelog
+            FIRST_CHANGELOG_COMMIT=$(git log --all --format=%H --reverse -- .changelog | head -1)
+            if [ -n "$FIRST_CHANGELOG_COMMIT" ]; then
+              echo "::notice::Using $FIRST_CHANGELOG_COMMIT as last_release (first commit with .changelog directory)"
+              LAST_RELEASE="$FIRST_CHANGELOG_COMMIT"
+              echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Generate changelog
         run: |
-          set -e
-          set -o pipefail
-          changelog-build \
-            -this-release "${{ steps.refs.outputs.this_release }}" \
-            -last-release "${{ steps.refs.outputs.last_release }}" \
-            -git-dir "$GITHUB_WORKSPACE" \
-            -entries-dir "$GITHUB_WORKSPACE/.changelog" \
-            -changelog-template "$GITHUB_WORKSPACE/.github/changelog/changelog.tmpl" \
-            -note-template "$GITHUB_WORKSPACE/.github/changelog/release-note.tmpl" \
-          | tee generated-changelog.txt
+          just build-changelog "${{ steps.refs.outputs.last_release }}" "${{ steps.refs.outputs.this_release }}" | tee generated-changelog.txt
 
       - name: Show generated changelog
         run: |
-          echo "Generated changelog between ${{ steps.refs.outputs.last_release }} and ${{ steps.refs.outputs.this_release }}"
           echo ""
           echo "--- Generated Changelog ---"
           cat generated-changelog.txt
