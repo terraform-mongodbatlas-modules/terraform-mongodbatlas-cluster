@@ -73,8 +73,16 @@ class WsConfig:
 
     def vars_for_example(self, example: Example) -> list[WsVar]:
         result: list[WsVar] = []
+        seen: dict[str, str] = {}  # var_name -> group_name
         for group_name in example.var_groups:
-            result.extend(self.var_groups.get(group_name, []))
+            for var in self.var_groups.get(group_name, []):
+                if var.name in seen:
+                    raise ValueError(
+                        f"Duplicate variable '{var.name}' in example {example.number:02d}: "
+                        f"defined in both '{seen[var.name]}' and '{group_name}'"
+                    )
+                seen[var.name] = group_name
+                result.append(var)
         return result
 
 
