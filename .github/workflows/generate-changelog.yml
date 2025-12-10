@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
@@ -44,8 +45,13 @@ jobs:
           if [ -n "${{ inputs.last_release }}" ]; then
             LAST_RELEASE="${{ inputs.last_release }}"
           else
-            LATEST_TAG=$(git describe --abbrev=0 --match='v*.*.*' --tags)
-            LAST_RELEASE=$(git rev-list -n 1 "$LATEST_TAG")
+            # Try to find the latest tag matching v*.*.*
+            if LATEST_TAG=$(git describe --abbrev=0 --match='v*.*.*' --tags 2>/dev/null); then
+              LAST_RELEASE=$(git rev-list -n 1 "$LATEST_TAG")
+            else
+              # If no tags exist, use the first commit
+              LAST_RELEASE=$(git rev-list --max-parents=0 HEAD)
+            fi
           fi
           echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
 
