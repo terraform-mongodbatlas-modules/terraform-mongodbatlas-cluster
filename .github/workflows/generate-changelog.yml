@@ -3,6 +3,9 @@ name: Generate Changelog
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   generate-and-update-changelog:
     runs-on: ubuntu-latest
@@ -24,11 +27,27 @@ jobs:
         with:
           go-version: 'stable'
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Install changelog-build tool
         run: just init-changelog
 
       - name: Generate and update CHANGELOG.md
         run: just build-changelog
+
+      - name: Commit and push CHANGELOG.md if changed
+        run: |
+          if ! git diff --quiet CHANGELOG.md; then
+            git add CHANGELOG.md
+            git commit -m "chore: Update CHANGELOG.md"
+            git push origin HEAD
+            echo "✓ CHANGELOG.md committed and pushed"
+          else
+            echo "No changes to CHANGELOG.md"
+          fi
 
       - name: Show generated changelog
         run: cat CHANGELOG.md
