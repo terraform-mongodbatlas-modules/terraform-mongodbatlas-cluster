@@ -30,6 +30,9 @@ jobs:
       - name: Install changelog-build
         run: go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
 
+      - name: Ensure .changelog directory exists
+        run: mkdir -p .changelog
+
       - name: Determine release references
         id: refs
         run: |
