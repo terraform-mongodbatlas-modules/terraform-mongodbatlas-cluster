@@ -2,15 +2,6 @@ name: Generate Changelog
 
 on:
   workflow_dispatch:
-    inputs:
-      last_release:
-        description: 'Reference to last commit in previous release (defaults to latest published version)'
-        required: false
-        type: string
-      this_release:
-        description: 'Reference to last commit to include in the release (defaults to latest commit)'
-        required: false
-        type: string
 
 jobs:
   generate-and-update-changelog:
@@ -33,35 +24,8 @@ jobs:
       - name: Install changelog-build tool
         run: just init-changelog
 
-      - name: Determine release references
-        id: refs
-        run: |
-          # Determine this_release (default to HEAD)
-          THIS_RELEASE="${{ inputs.this_release }}"
-          [ -z "$THIS_RELEASE" ] && THIS_RELEASE=$(git rev-parse HEAD)
-          echo "this_release=$THIS_RELEASE" >> $GITHUB_OUTPUT
-
-          # Determine last_release (default to latest tag)
-          LAST_RELEASE="${{ inputs.last_release }}"
-          if [ -z "$LAST_RELEASE" ]; then
-            if LATEST_TAG=$(git describe --abbrev=0 --match='v*.*.*' --tags 2>/dev/null); then
-              LAST_RELEASE=$(git rev-list -n 1 "$LATEST_TAG")
-              # Use changelog-dir-created if .changelog doesn't exist at latest tag
-              if ! git ls-tree "$LAST_RELEASE" .changelog >/dev/null 2>&1; then
-                LAST_RELEASE=$(git rev-list -n 1 changelog-dir-created)
-                echo "::notice::Using changelog-dir-created (latest tag $LATEST_TAG has no .changelog)"
-              fi
-            else
-              LAST_RELEASE=$(git rev-list -n 1 changelog-dir-created)
-              echo "::notice::Using changelog-dir-created (no version tags found)"
-            fi
-          fi
-          echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
-
-      - name: Generate changelog
-        run: |
-          just build-changelog "${{ steps.refs.outputs.last_release }}" "${{ steps.refs.outputs.this_release }}"
+      - name: Generate and update CHANGELOG.md
+        run: just build-changelog
 
       - name: Show generated changelog
-        run: |
-          cat CHANGELOG.md
+        run: cat CHANGELOG.md
