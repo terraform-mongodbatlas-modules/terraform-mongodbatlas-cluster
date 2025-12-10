@@ -8,18 +8,19 @@ terraform {
   required_version = ">= 1.6"
 }
 
-provider "mongodbatlas" {
-  # Credentials come from env vars, using Service Accounts:
-  # MONGODB_ATLAS_CLIENT_ID / MONGODB_ATLAS_CLIENT_SECRET
-  # Optionally override base URL via MONGODB_ATLAS_BASE_URL
-}
-
 variable "org_id" { type = string }
 variable "project_name" { type = string }
 
 resource "mongodbatlas_project" "project_test" {
   org_id = var.org_id
   name   = var.project_name
+
+  lifecycle {
+    precondition {
+      condition     = var.org_id != ""
+      error_message = "org_id must be set"
+    }
+  }
 }
 
 output "project_id" {

@@ -51,6 +51,11 @@ just plan-examples PROJECT_ID # Test examples
 just test                     # Run unit + integration tests
 just test-compat              # Validate across all supported Terraform versions
 
+# Workspace testing (plan regression)
+just ws-run -m plan-reg -v dev.tfvars  # Plan + compare baselines
+just ws-run -m apply --auto-approve    # Apply examples (creates resources)
+just ws-run -m destroy --auto-approve  # Destroy resources
+
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
 just release-notes v1.0.0     # Generate release notes
@@ -95,6 +100,43 @@ just test-compat
 This runs `terraform init` and `terraform validate` on the root module and all examples using each version in `.terraform-versions.yaml`. Requires [mise](https://mise.jdx.dev/) for version switching.
 
 To update the version matrix when new Terraform versions are released, edit `.terraform-versions.yaml`.
+
+### Plan Regression Tests
+
+Plan regression tests verify that terraform plan output remains consistent across changes. They use workspace directories under `tests/ws_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
+
+```bash
+# Plan and compare against baselines (requires dev.tfvars with project_ids)
+just ws-run -m plan-reg -v dev.tfvars
+
+# First run or after intentional changes: create/update baselines
+just ws-run -m plan-reg -v dev.tfvars --force-regen
+
+# Plan specific examples only (e.g., 01 and 08)
+just ws-run -m plan-only -e 1,8 -v dev.tfvars
+
+# Setup project infrastructure before testing (when project_id unknown)
+just ws-run -m setup-only --auto-approve
+
+# Apply examples (creates real resources)
+just ws-run -m apply -v dev.tfvars --auto-approve
+
+# Destroy resources after testing
+just ws-run -m destroy --auto-approve
+```
+
+**Adding a new example to regression testing:**
+
+1. Add entry to `tests/ws_cluster_examples/ws.yaml`:
+   ```yaml
+   examples:
+     - number: 3                    # matches examples/03_*/
+       var_groups: [shared, group1] # combine shared + group-specific vars
+       plan_regressions:
+         - address: module.cluster.mongodbatlas_advanced_cluster.this
+   ```
+2. Run `just ws-run -m plan-reg -v dev.tfvars --force-regen`
+3. Commit baseline files in `tests/ws_cluster_examples/test_plan_reg/`
 
 ## Variable Validation Patterns
 
@@ -201,6 +243,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
+- `tf_ws/` - Workspace test tooling (run.py orchestrates gen.py, plan.py, reg.py)
 
 See [CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md) for detailed documentation contributor guidelines.
 
