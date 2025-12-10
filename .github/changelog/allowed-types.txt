@@ -1,0 +1,7 @@
+breaking-change
+new-resource
+new-datasource
+new-guide
+note
+enhancement
+bug

@@ -1,14 +1,68 @@
 name: Generate Changelog
 
 on:
-  pull_request:
-    paths:
-      - .changelog/**
   workflow_dispatch:
+    inputs:
+      last_release:
+        description: 'Reference to last commit in previous release (defaults to latest published version)'
+        required: false
+        type: string
+      this_release:
+        description: 'Reference to last commit to include in the release (defaults to latest commit)'
+        required: false
+        type: string
 
 jobs:
   generate-and-update-changelog:
     runs-on: ubuntu-latest
     steps:
-      -  run: |
-          echo "TEMPORARY: This workflow skeleton needs to be in main so can be run manually from a PR while in development. Will be completed in CLOUDP-361426"
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+          go-version: 'stable'
+
+      - name: Install changelog-build
+        run: go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
+
+      - name: Determine release references
+        id: refs
+        run: |
+          # Determine this_release (default to HEAD if not provided)
+          if [ -n "${{ inputs.this_release }}" ]; then
+            THIS_RELEASE="${{ inputs.this_release }}"
+          else
+            THIS_RELEASE=$(git rev-parse HEAD)
+          fi
+          echo "this_release=$THIS_RELEASE" >> $GITHUB_OUTPUT
+
+          # Determine last_release (default to latest tag if not provided)
+          if [ -n "${{ inputs.last_release }}" ]; then
+            LAST_RELEASE="${{ inputs.last_release }}"
+          else
+            LATEST_TAG=$(git describe --abbrev=0 --match='v*.*.*' --tags)
+            LAST_RELEASE=$(git rev-list -n 1 "$LATEST_TAG")
+          fi
+          echo "last_release=$LAST_RELEASE" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        run: |
+          changelog-build \
+            -this-release "${{ steps.refs.outputs.this_release }}" \
+            -last-release "${{ steps.refs.outputs.last_release }}" \
+            -git-dir "$GITHUB_WORKSPACE" \
+            -entries-dir .changelog \
+            -changelog-template .github/changelog/changelog.tmpl \
+            -note-template .github/changelog/release-note.tmpl \
+          | tee generated-changelog.txt
+
+      - name: Show generated changelog
+        run: |
+          echo "Generated changelog between ${{ steps.refs.outputs.last_release }} and ${{ steps.refs.outputs.this_release }}"
+          echo ""
+          echo "--- Generated Changelog ---"
+          cat generated-changelog.txt
