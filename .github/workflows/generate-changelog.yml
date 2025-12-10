@@ -57,6 +57,8 @@ jobs:
 
       - name: Generate changelog
         run: |
+          set -e
+          set -o pipefail
           changelog-build \
             -this-release "${{ steps.refs.outputs.this_release }}" \
             -last-release "${{ steps.refs.outputs.last_release }}" \
