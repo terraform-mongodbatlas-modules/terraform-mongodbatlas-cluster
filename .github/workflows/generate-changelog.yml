@@ -63,9 +63,9 @@ jobs:
             -this-release "${{ steps.refs.outputs.this_release }}" \
             -last-release "${{ steps.refs.outputs.last_release }}" \
             -git-dir "$GITHUB_WORKSPACE" \
-            -entries-dir .changelog \
-            -changelog-template .github/changelog/changelog.tmpl \
-            -note-template .github/changelog/release-note.tmpl \
+            -entries-dir "$GITHUB_WORKSPACE/.changelog" \
+            -changelog-template "$GITHUB_WORKSPACE/.github/changelog/changelog.tmpl" \
+            -note-template "$GITHUB_WORKSPACE/.github/changelog/release-note.tmpl" \
           | tee generated-changelog.txt
 
       - name: Show generated changelog
