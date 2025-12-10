@@ -136,6 +136,59 @@ def build_changelog(last_release: str, repo_dir: Path) -> str:
         sys.exit(1)
 
 
+def update_unreleased_section(
+    changelog_file: Path, new_unreleased_content: str
+) -> None:
+    """Update only the (Unreleased) section in CHANGELOG.md."""
+    if not changelog_file.exists():
+        # Create new CHANGELOG.md with header and unreleased section
+        content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
+        changelog_file.write_text(content)
+        return
+
+    # Read existing changelog
+    existing_content = changelog_file.read_text()
+    lines = existing_content.split("\n")
+
+    # Find the first ## (should be ## (Unreleased))
+    first_header_idx = None
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            first_header_idx = i
+            break
+
+    if first_header_idx is None:
+        # No headers found, create new file with unreleased section
+        content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
+        changelog_file.write_text(content)
+        return
+
+    # Find the second ## (should be first released version)
+    second_header_idx = None
+    for i in range(first_header_idx + 1, len(lines)):
+        if lines[i].startswith("## "):
+            second_header_idx = i
+            break
+
+    # Build the new content
+    if second_header_idx is None:
+        # No released versions yet, just update unreleased section
+        new_content = (
+            f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
+        )
+    else:
+        # Keep everything from the second header onwards (released versions)
+        header = "\n".join(lines[:first_header_idx])
+        released_versions = "\n".join(lines[second_header_idx:])
+
+        if header.strip():
+            new_content = f"{header}\n## (Unreleased)\n\n{new_unreleased_content.strip()}\n\n{released_versions}"
+        else:
+            new_content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n\n{released_versions}"
+
+    changelog_file.write_text(new_content)
+
+
 def main() -> None:
     """Main function to generate and update CHANGELOG.md."""
     # Determine repository root (where the script is run from)
@@ -144,13 +197,14 @@ def main() -> None:
     # Determine last release reference
     last_release = determine_last_release()
 
-    # Generate changelog
+    # Generate changelog for unreleased changes
     changelog_output = build_changelog(last_release, repo_dir)
 
+    changelog_file = repo_dir / "CHANGELOG.md"
+
     if changelog_output.strip():
-        # Write to CHANGELOG.md
-        changelog_file = repo_dir / "CHANGELOG.md"
-        changelog_file.write_text(changelog_output)
+        # Update the (Unreleased) section
+        update_unreleased_section(changelog_file, changelog_output)
         print("CHANGELOG.md updated successfully", file=sys.stderr)
     else:
         print("No changelog entries found", file=sys.stderr)
