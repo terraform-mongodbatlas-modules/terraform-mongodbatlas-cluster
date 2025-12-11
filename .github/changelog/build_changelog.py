@@ -1,11 +1,33 @@
 #!/usr/bin/env python
-"""Generate changelog from latest release to HEAD and update CHANGELOG.md."""
+"""Generate changelog from latest release to HEAD and update CHANGELOG.md.
 
-import os
+This script automates changelog generation by:
+
+1. Finding the baseline commit to compare against:
+   - First, looks for the latest version tag (v*.*.*)
+   - If that tag exists and has a .changelog directory at that commit, uses it as the baseline
+   - If the tag exists but has no .changelog directory (version predates changelog system),
+     falls back to the 'changelog-dir-created' tag
+   - If no version tags exist at all, uses the 'changelog-dir-created' tag
+
+2. Running changelog-build (HashiCorp tool) to generate entries from baseline to HEAD
+   - Reads from .changelog/*.txt files added since the baseline
+   - Uses templates from .github/changelog/ to format the output
+
+3. Updating only the (Unreleased) section in CHANGELOG.md
+   - Preserves all existing released version entries
+   - Replaces the (Unreleased) section with newly generated content
+   - Creates CHANGELOG.md if it doesn't exist
+
+This ensures that CHANGELOG.md always reflects unreleased changes accumulated since
+the last published version, without modifying historical release entries.
+"""
+
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
@@ -18,19 +40,17 @@ def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProce
     )
 
 
-def get_latest_version_tag() -> Optional[str]:
+def get_latest_version_tag() -> str | None:
     """Get the latest version tag (v*.*.*)."""
     try:
-        result = run_command(
-            ["git", "tag", "-l", "v*.*.*", "--sort=-version:refname"]
-        )
+        result = run_command(["git", "tag", "-l", "v*.*.*", "--sort=-version:refname"])
         tags = result.stdout.strip().split("\n")
         return tags[0] if tags and tags[0] else None
     except subprocess.CalledProcessError:
         return None
 
 
-def get_commit_sha(ref: str) -> Optional[str]:
+def get_commit_sha(ref: str) -> str | None:
     """Get the commit SHA for a given ref."""
     try:
         result = run_command(["git", "rev-list", "-n", "1", ref])
@@ -80,9 +100,7 @@ def determine_last_release() -> str:
         print("Using changelog-dir-created (no version tags found)", file=sys.stderr)
         last_release = get_commit_sha("changelog-dir-created")
         if not last_release:
-            print(
-                "Error: Could not resolve changelog-dir-created tag", file=sys.stderr
-            )
+            print("Error: Could not resolve changelog-dir-created tag", file=sys.stderr)
             sys.exit(1)
 
     return last_release
@@ -143,11 +161,11 @@ def update_unreleased_section(
     if not changelog_file.exists():
         # Create new CHANGELOG.md with header and unreleased section
         content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
-        changelog_file.write_text(content)
+        changelog_file.write_text(content, encoding="utf-8")
         return
 
     # Read existing changelog
-    existing_content = changelog_file.read_text()
+    existing_content = changelog_file.read_text(encoding="utf-8")
     lines = existing_content.split("\n")
 
     # Find the first ## (should be ## (Unreleased))
@@ -160,7 +178,7 @@ def update_unreleased_section(
     if first_header_idx is None:
         # No headers found, create new file with unreleased section
         content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
-        changelog_file.write_text(content)
+        changelog_file.write_text(content, encoding="utf-8")
         return
 
     # Find the second ## (should be first released version)
@@ -173,9 +191,7 @@ def update_unreleased_section(
     # Build the new content
     if second_header_idx is None:
         # No released versions yet, just update unreleased section
-        new_content = (
-            f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
-        )
+        new_content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
     else:
         # Keep everything from the second header onwards (released versions)
         header = "\n".join(lines[:first_header_idx])
@@ -186,7 +202,7 @@ def update_unreleased_section(
         else:
             new_content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n\n{released_versions}"
 
-    changelog_file.write_text(new_content)
+    changelog_file.write_text(new_content, encoding="utf-8")
 
 
 def main() -> None:
