@@ -25,7 +25,7 @@ py-fmt:
     uv run --with ruff ruff format .github
 
 py-test:
-    uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
 
 # Generate documentation
 docs: fmt

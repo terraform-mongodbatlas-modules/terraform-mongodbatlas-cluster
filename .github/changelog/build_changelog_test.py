@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-import sys
 import textwrap
 from pathlib import Path
-
-# Import from parent directory
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from changelog import build_changelog as mod
 
