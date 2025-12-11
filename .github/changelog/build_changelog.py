@@ -29,6 +29,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Tag that marks the commit where the .changelog directory was first introduced.
+# This tag must be created in the repository before using the changelog generation workflow.
+CHANGELOG_DIR_CREATED_TAG = "changelog-dir-created"
+
 
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
     """Run a command and return the result."""
@@ -59,6 +63,15 @@ def get_commit_sha(ref: str) -> str | None:
         return None
 
 
+def get_commit_sha_or_exit(ref: str, error_context: str) -> str:
+    """Get commit SHA for a ref, or exit with an error message if it fails."""
+    commit_sha = get_commit_sha(ref)
+    if not commit_sha:
+        print(f"Error: Could not resolve {error_context}", file=sys.stderr)
+        sys.exit(1)
+    return commit_sha
+
+
 def changelog_exists_at_commit(commit_sha: str) -> bool:
     """Check if .changelog directory exists at a given commit."""
     try:
@@ -68,49 +81,43 @@ def changelog_exists_at_commit(commit_sha: str) -> bool:
         return False
 
 
+def get_changelog_dir_created_commit(reason: str) -> str:
+    """Get the changelog-dir-created commit SHA with informative message."""
+    print(f"Using {CHANGELOG_DIR_CREATED_TAG} ({reason})", file=sys.stderr)
+    return get_commit_sha_or_exit(
+        CHANGELOG_DIR_CREATED_TAG, f"{CHANGELOG_DIR_CREATED_TAG} tag"
+    )
+
+
 def determine_last_release() -> str:
     """Determine the last release reference for changelog generation."""
-    # Try to get the latest version tag
     latest_tag = get_latest_version_tag()
 
-    if latest_tag:
-        last_release = get_commit_sha(latest_tag)
-        if not last_release:
-            print(
-                f"Error: Could not resolve commit for tag {latest_tag}",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+    # No version tags found, use changelog-dir-created tag
+    if not latest_tag:
+        return get_changelog_dir_created_commit("no version tags found")
 
-        # Check if .changelog exists at that commit
-        if not changelog_exists_at_commit(last_release):
-            print(
-                f"Using changelog-dir-created (latest tag {latest_tag} has no .changelog)",
-                file=sys.stderr,
-            )
-            last_release = get_commit_sha("changelog-dir-created")
-            if not last_release:
-                print(
-                    "Error: Could not resolve changelog-dir-created tag",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-    else:
-        # No version tags found, use changelog-dir-created
-        print("Using changelog-dir-created (no version tags found)", file=sys.stderr)
-        last_release = get_commit_sha("changelog-dir-created")
-        if not last_release:
-            print("Error: Could not resolve changelog-dir-created tag", file=sys.stderr)
-            sys.exit(1)
+    # Resolve latest tag to commit SHA
+    last_release = get_commit_sha_or_exit(latest_tag, f"commit for tag {latest_tag}")
 
-    return last_release
+    # If .changelog exists at that commit, use it
+    if changelog_exists_at_commit(last_release):
+        return last_release
+
+    # Latest tag predates changelog system, fall back to changelog-dir-created
+    return get_changelog_dir_created_commit(
+        f"latest tag {latest_tag} has no .changelog"
+    )
 
 
 def get_gopath() -> str:
     """Get the GOPATH environment variable."""
     try:
         result = run_command(["go", "env", "GOPATH"])
-        return result.stdout.strip()
+        gopath = result.stdout.strip()
+        if not gopath:
+            raise subprocess.CalledProcessError(1, ["go", "env", "GOPATH"])
+        return gopath
     except subprocess.CalledProcessError:
         print("Error: Could not get GOPATH", file=sys.stderr)
         sys.exit(1)
@@ -154,54 +161,68 @@ def build_changelog(last_release: str, repo_dir: Path) -> str:
         sys.exit(1)
 
 
+def build_changelog_content(
+    new_content: str, preamble: str = "", released_versions: str = ""
+) -> str:
+    """Build the complete changelog content with unreleased section."""
+    stripped_content = new_content.strip()
+    unreleased_section = f"## (Unreleased)\n\n{stripped_content}\n"
+
+    if not released_versions:
+        # No released versions yet
+        if preamble:
+            return f"{preamble}\n\n{unreleased_section}"
+        return unreleased_section
+
+    # Has released versions
+    if preamble:
+        return f"{preamble}\n\n{unreleased_section}\n{released_versions}"
+    return f"{unreleased_section}\n{released_versions}"
+
+
+def find_header_index(lines: list[str], start_idx: int = 0) -> int | None:
+    """Find the index of the first line starting with '## '."""
+    for i in range(start_idx, len(lines)):
+        if lines[i].startswith("## "):
+            return i
+    return None
+
+
 def update_unreleased_section(
     changelog_file: Path, new_unreleased_content: str
 ) -> None:
     """Update only the (Unreleased) section in CHANGELOG.md."""
+    # Create new file if it doesn't exist
     if not changelog_file.exists():
-        # Create new CHANGELOG.md with header and unreleased section
-        content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
+        content = build_changelog_content(new_unreleased_content)
         changelog_file.write_text(content, encoding="utf-8")
         return
 
-    # Read existing changelog
+    # Read and parse existing changelog
     existing_content = changelog_file.read_text(encoding="utf-8")
     lines = existing_content.split("\n")
 
-    # Find the first ## (should be ## (Unreleased))
-    first_header_idx = None
-    for i, line in enumerate(lines):
-        if line.startswith("## "):
-            first_header_idx = i
-            break
+    first_header_idx = find_header_index(lines)
 
+    # No headers found, write fresh content
     if first_header_idx is None:
-        # No headers found, create new file with unreleased section
-        content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
+        content = build_changelog_content(new_unreleased_content)
         changelog_file.write_text(content, encoding="utf-8")
         return
 
-    # Find the second ## (should be first released version)
-    second_header_idx = None
-    for i in range(first_header_idx + 1, len(lines)):
-        if lines[i].startswith("## "):
-            second_header_idx = i
-            break
+    # Find second header (first released version)
+    second_header_idx = find_header_index(lines, first_header_idx + 1)
 
-    # Build the new content
-    if second_header_idx is None:
-        # No released versions yet, just update unreleased section
-        new_content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n"
-    else:
-        # Keep everything from the second header onwards (released versions)
-        header = "\n".join(lines[:first_header_idx])
-        released_versions = "\n".join(lines[second_header_idx:])
+    # Extract sections
+    preamble = "\n".join(lines[:first_header_idx]).strip()
+    released_versions = (
+        "\n".join(lines[second_header_idx:]) if second_header_idx else ""
+    )
 
-        if header.strip():
-            new_content = f"{header}\n## (Unreleased)\n\n{new_unreleased_content.strip()}\n\n{released_versions}"
-        else:
-            new_content = f"## (Unreleased)\n\n{new_unreleased_content.strip()}\n\n{released_versions}"
-
+    # Build and write new content
+    new_content = build_changelog_content(
+        new_unreleased_content, preamble, released_versions
+    )
     changelog_file.write_text(new_content, encoding="utf-8")
 
 
