@@ -1,3 +1,0 @@
-```release-note:enhancement
-module: Adds example to test changelog generation, this is a temporary entry to be removed
-```
