@@ -19,13 +19,13 @@ lint:
     terraform fmt -check -recursive
 
 py-check:
-    uv run ruff check .github
+    uv run --with ruff ruff check .github
 
 py-fmt:
-    uv run ruff format .github
+    uv run --with ruff ruff format .github
 
 py-test:
-    uv run pytest .github/ -v --ignore=.github/test_compat.py
+    uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
 
 # Generate documentation
 docs: fmt
