@@ -1,5 +1,7 @@
 name: Generate Changelog
 
+# TODO: Until CLOUDP-365072 is done, this workflow must be run manually.
+# Before running it, the user must temporarily bypass branch rulesets in GitHub settings to allow the workflow to commit and push directly to main.
 on:
   workflow_dispatch:
 
