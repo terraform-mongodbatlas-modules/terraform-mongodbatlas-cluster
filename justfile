@@ -24,6 +24,9 @@ py-check:
 py-fmt:
     uv run ruff format .github
 
+py-test:
+    uv run pytest .github/ -v --ignore=.github/test_compat.py
+
 # Generate documentation
 docs: fmt
     terraform-docs -c .terraform-docs.yml .
@@ -36,7 +39,7 @@ docs: fmt
     @echo "Examples README.md updated successfully"
 
 # Run all validation checks
-check: fmt validate lint check-docs py-check
+check: fmt validate lint check-docs py-check py-test
     @echo "All checks passed successfully"
 
 # Initialize examples
