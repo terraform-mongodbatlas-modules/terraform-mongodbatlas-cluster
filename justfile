@@ -19,10 +19,13 @@ lint:
     terraform fmt -check -recursive
 
 py-check:
-    uv run ruff check .github
+    uv run --with ruff ruff check .github
 
 py-fmt:
-    uv run ruff format .github
+    uv run --with ruff ruff format .github
+
+py-test:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
 
 # Generate documentation
 docs: fmt
@@ -36,7 +39,7 @@ docs: fmt
     @echo "Examples README.md updated successfully"
 
 # Run all validation checks
-check: fmt validate lint check-docs py-check
+check: fmt validate lint check-docs py-check py-test
     @echo "All checks passed successfully"
 
 # Initialize examples
@@ -125,3 +128,11 @@ release-commit version:
     @echo "✓ Release branch {{version}} ready with tag"
     @echo "  Review changes, then push:"
     @echo "  git push origin {{version}} --tags"
+
+# Install tool needed by just build-changelog
+init-changelog:
+    go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
+
+# Generate changelog from latest release to HEAD and update CHANGELOG.md
+build-changelog:
+    uv run python .github/changelog/build_changelog.py

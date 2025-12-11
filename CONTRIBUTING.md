@@ -39,7 +39,8 @@ just fmt                      # Format Terraform code
 just lint                     # Run Terraform linters
 just py-fmt                   # Format Python code
 just py-check                 # Lint Python code
-just check                    # Run all checks (fmt, validate, lint, check-docs, py-check)
+just py-test                  # Run Python unit tests
+just check                    # Run all checks (fmt, validate, lint, check-docs, py-check, py-test)
 
 # Documentation
 just docs                     # Generate all docs
@@ -201,6 +202,9 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
+- `changelog/build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
+
+**Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 
 See [CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md) for detailed documentation contributor guidelines.
 

@@ -1,14 +1,55 @@
 name: Generate Changelog
 
+# TODO: Until CLOUDP-365072 is done, this workflow must be run manually.
+# Before running it, the user must temporarily bypass branch rulesets in GitHub settings to allow the workflow to commit and push directly to main.
 on:
-  pull_request:
-    paths:
-      - .changelog/**
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   generate-and-update-changelog:
     runs-on: ubuntu-latest
     steps:
-      -  run: |
-          echo "TEMPORARY: This workflow skeleton needs to be in main so can be run manually from a PR while in development. Will be completed in CLOUDP-361426"
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup base tools
+        uses: ./.github/actions/setup-base
+
+      - name: Setup docs tools (Python and uv)
+        uses: ./.github/actions/setup-docs
+
+      - name: Setup Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+          go-version: 'stable'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install changelog-build tool
+        run: just init-changelog
+
+      - name: Generate and update CHANGELOG.md
+        run: just build-changelog
+
+      - name: Commit and push CHANGELOG.md if changed
+        run: |
+          if ! git diff --quiet CHANGELOG.md; then
+            git add CHANGELOG.md
+            git commit -m "chore: Update CHANGELOG.md"
+            git push origin HEAD
+            echo "✓ CHANGELOG.md committed and pushed"
+          else
+            echo "No changes to CHANGELOG.md"
+          fi
+
+      - name: Show generated changelog
+        run: cat CHANGELOG.md

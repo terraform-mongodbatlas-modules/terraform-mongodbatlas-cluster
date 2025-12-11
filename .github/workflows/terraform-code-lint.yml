@@ -8,29 +8,23 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-      - uses: ./.github/actions/setup-base
-      - uses: ./.github/actions/setup-terraform
-      - run: just validate
-      - run: just lint
-
-  docs-check:
+  check:
+    name: Code Quality & Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: ./.github/actions/setup-base
       - uses: ./.github/actions/setup-docs
       - uses: ./.github/actions/setup-terraform
-      - name: Check documentation is up-to-date
-        run: just check-docs
+      - name: Run all validation checks
+        run: just check
 
   plan-tests:
+    name: Terraform Plan Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: ./.github/actions/setup-base
       - uses: ./.github/actions/setup-terraform
-      - run: just unit-plan-tests
+      - name: Run Terraform plan tests
+        run: just unit-plan-tests
