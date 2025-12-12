@@ -16,6 +16,8 @@ jobs:
           go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
 
       - name: Validate .changelog directory changes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Get .changelog files that are not the expected file
           OTHER_FILES=$(gh pr view --json files \
