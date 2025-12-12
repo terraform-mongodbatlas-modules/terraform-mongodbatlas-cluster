@@ -28,7 +28,7 @@ A single PR can include multiple changelog entries for distinct changes or when 
 ### Entry Types
 
 | Type | Purpose |
-|------|---------|
+| --- | --- |
 | `breaking-change` | Changes requiring user action. |
 | `note` | Important information (security, deprecations, migrations). |
 | `enhancement` | New features or improvements. |
@@ -37,7 +37,7 @@ A single PR can include multiple changelog entries for distinct changes or when 
 ### Allowed Prefixes
 
 | Prefix | Format | Example |
-|--------|--------|---------|
+| --- | --- | --- |
 | `module` | `module: <sentence>` | `module: Adds support for auto-scaling configuration`. |
 | `provider/` | `provider/<word>: <sentence>` | `provider/mongodbatlas: Requires minimum version 2.3.0`. |
 | `terraform` | `terraform: <sentence>` | `terraform: Updates minimum version to 1.9`. |
