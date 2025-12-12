@@ -15,7 +15,7 @@ app = typer.Typer()
 class RunMode(enum.StrEnum):
     SETUP_ONLY = "setup-only"
     PLAN_ONLY = "plan-only"
-    PLAN_REG = "plan-reg"
+    PLAN_SNAPSHOT_TEST = "plan-snapshot-test"
     APPLY = "apply"
     DESTROY = "destroy"
 
@@ -47,10 +47,10 @@ def main(
         if not skip_init:
             plan.run_terraform_init(ws_dir)
 
-        if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_REG):
+        if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
             plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
 
-        if mode == RunMode.PLAN_REG:
+        if mode == RunMode.PLAN_SNAPSHOT_TEST:
             reg.process_workspace(ws_dir, force_regen)
 
         if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):

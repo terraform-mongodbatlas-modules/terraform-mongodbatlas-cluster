@@ -8,6 +8,7 @@ import typer
 from tf_ws.models import (
     DEFAULT_TESTS_DIR,
     REPO_ROOT,
+    WORKSPACE_CONFIG_FILE,
     Example,
     WsConfig,
     parse_ws_config,
@@ -19,9 +20,9 @@ app = typer.Typer()
 
 VARIABLES_GENERATED_TF = "variables.generated.tf"
 MODULES_GENERATED_TF = "modules.generated.tf"
-TEST_PLAN_REG_DIR = "test_plan_reg"
-TEST_PLAN_REG_ACTUAL_DIR = "test_plan_reg_actual"
-TEST_PLAN_REG_PY = "test_plan_reg.py"
+PLAN_SNAPSHOTS_DIR = "plan_snapshots"
+PLAN_SNAPSHOTS_ACTUAL_DIR = "plan_snapshots_actual"
+TEST_PLAN_SNAPSHOT_PY = "test_plan_snapshot.py"
 EXAMPLES_DIR_NAME = "examples"
 
 
@@ -78,7 +79,7 @@ def generate_pytest_file(config: WsConfig) -> str:
         "",
         "import pytest",
         "",
-        'ACTUAL_DIR = Path(__file__).parent / "test_plan_reg_actual"',
+        f'ACTUAL_DIR = Path(__file__).parent / "{PLAN_SNAPSHOTS_ACTUAL_DIR}"',
         "",
         "TEST_CASES = [",
     ]
@@ -92,7 +93,7 @@ def generate_pytest_file(config: WsConfig) -> str:
             "",
             "",
             '@pytest.mark.parametrize("name", TEST_CASES)',
-            "def test_plan_regression(name: str, file_regression) -> None:",
+            "def test_plan_snapshot(name: str, file_regression) -> None:",
             '    actual_file = ACTUAL_DIR / f"{name}.yaml"',
             "    assert actual_file.exists(), f'Actual file not found: {actual_file}'",
             '    file_regression.check(actual_file.read_text(), basename=name, extension=".yaml")',
@@ -103,11 +104,11 @@ def generate_pytest_file(config: WsConfig) -> str:
 
 
 def process_workspace(ws_dir: Path, include_examples: str = "all") -> None:
-    ws_yaml = ws_dir / "ws.yaml"
-    if not ws_yaml.exists():
-        typer.echo(f"Skipping {ws_dir.name}: no ws.yaml found")
+    ws_config = ws_dir / WORKSPACE_CONFIG_FILE
+    if not ws_config.exists():
+        typer.echo(f"Skipping {ws_dir.name}: no {WORKSPACE_CONFIG_FILE} found")
         return
-    config = parse_ws_config(ws_yaml)
+    config = parse_ws_config(ws_config)
     variables_tf = ws_dir / VARIABLES_GENERATED_TF
     if content := generate_variables_tf(config):
         variables_tf.write_text(content)
@@ -123,11 +124,11 @@ def process_workspace(ws_dir: Path, include_examples: str = "all") -> None:
     elif modules_tf.exists():
         modules_tf.unlink()
         typer.echo(f"  Removed {MODULES_GENERATED_TF} (no examples)")
-    (ws_dir / TEST_PLAN_REG_DIR).mkdir(exist_ok=True)
-    (ws_dir / TEST_PLAN_REG_ACTUAL_DIR).mkdir(exist_ok=True)
-    pytest_file = ws_dir / TEST_PLAN_REG_PY
+    (ws_dir / PLAN_SNAPSHOTS_DIR).mkdir(exist_ok=True)
+    (ws_dir / PLAN_SNAPSHOTS_ACTUAL_DIR).mkdir(exist_ok=True)
+    pytest_file = ws_dir / TEST_PLAN_SNAPSHOT_PY
     pytest_file.write_text(generate_pytest_file(config))
-    typer.echo(f"  Generated {TEST_PLAN_REG_PY}")
+    typer.echo(f"  Generated {TEST_PLAN_SNAPSHOT_PY}")
 
 
 @app.command()

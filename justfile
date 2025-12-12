@@ -70,7 +70,7 @@ unit-plan-tests:
 # Run all tests
 test: unit-plan-tests integration-tests
 
-# Generate workspace test files (variables.generated.tf, test_plan_reg.py)
+# Generate workspace test files (variables.generated.tf, test_plan_snapshot.py)
 ws-gen *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/gen.py {{args}}
 
@@ -78,11 +78,11 @@ ws-gen *args:
 ws-plan *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/plan.py {{args}}
 
-# Generate regression files and run pytest
+# Generate snapshot files and run pytest
 ws-reg *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
 
-# Run workspace test workflow (gen -> plan -> reg)
+# Run workspace test workflow (gen -> plan -> snapshot test)
 ws-run *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py {{args}}
 

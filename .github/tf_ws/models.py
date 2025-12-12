@@ -132,32 +132,37 @@ def sanitize_address(address: str) -> str:
     return address.replace(".", "_")
 
 
-def resolve_workspaces(ws: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Path]:
+WORKSPACE_CONFIG_FILE = "workspace_test_config.yaml"
+
+
+def resolve_workspaces(workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Path]:
     """Resolve workspace directories based on ws name.
 
     Args:
-        ws: Workspace name or 'all' for all ws_* directories
+        ws: Workspace name or 'all' for all workspace_* directories
         tests_dir: Path to tests directory
 
     Returns:
         List of workspace directory paths
 
     Raises:
-        ValueError: If tests_dir doesn't exist, ws not found, ws.yaml missing, or no ws_* dirs found
+        ValueError: If tests_dir doesn't exist, ws not found, config missing, or no workspace_* dirs found
     """
     if not tests_dir.exists():
         raise ValueError(f"{tests_dir} does not exist")
-    if ws == "all":
+    if workspace == "all":
         ws_dirs = sorted(
-            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_")
+            d
+            for d in tests_dir.iterdir()
+            if d.is_dir() and d.name.startswith("workspace_")
         )
         if not ws_dirs:
-            raise ValueError(f"No ws_* directories found in {tests_dir}")
+            raise ValueError(f"No workspace_* directories found in {tests_dir}")
         return ws_dirs
-    ws_path = tests_dir / ws
-    if not ws_path.exists():
-        raise ValueError(f"{ws_path} does not exist")
-    ws_yaml = ws_path / "ws.yaml"
-    if not ws_yaml.exists():
-        raise ValueError(f"{ws_yaml} does not exist")
-    return [ws_path]
+    workspace_path = tests_dir / workspace
+    if not workspace_path.exists():
+        raise ValueError(f"{workspace_path} does not exist")
+    workspace_config = workspace_path / WORKSPACE_CONFIG_FILE
+    if not workspace_config.exists():
+        raise ValueError(f"{workspace_config} does not exist")
+    return [workspace_path]

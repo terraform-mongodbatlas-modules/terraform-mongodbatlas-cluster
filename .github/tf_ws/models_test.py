@@ -112,8 +112,8 @@ def test_ws_config_vars_for_example_duplicate_raises():
 
 
 def test_parse_ws_config(tmp_path: Path):
-    ws_yaml = tmp_path / "ws.yaml"
-    ws_yaml.write_text("""
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
 examples:
   - number: 1
     var_groups: [shared]
@@ -127,7 +127,7 @@ var_groups:
       var_type: map(string)
       module_value: "{}"
 """)
-    config = models.parse_ws_config(ws_yaml)
+    config = models.parse_ws_config(ws_config)
     assert len(config.examples) == 1
     assert config.examples[0].number == 1
     assert config.examples[0].var_groups == ["shared"]
@@ -138,32 +138,32 @@ var_groups:
 
 
 def test_resolve_workspaces_all(tmp_path: Path):
-    (tmp_path / "ws_one").mkdir()
-    (tmp_path / "ws_two").mkdir()
+    (tmp_path / "workspace_one").mkdir()
+    (tmp_path / "workspace_two").mkdir()
     (tmp_path / "other_dir").mkdir()
 
     ws_dirs = models.resolve_workspaces("all", tmp_path)
     names = [d.name for d in ws_dirs]
-    assert names == ["ws_one", "ws_two"]
+    assert names == ["workspace_one", "workspace_two"]
 
 
 def test_resolve_workspaces_specific(tmp_path: Path):
-    ws_dir = tmp_path / "ws_test"
+    ws_dir = tmp_path / "workspace_test"
     ws_dir.mkdir()
-    (ws_dir / "ws.yaml").write_text("examples: []")
+    (ws_dir / models.WORKSPACE_CONFIG_FILE).write_text("examples: []")
 
-    ws_dirs = models.resolve_workspaces("ws_test", tmp_path)
+    ws_dirs = models.resolve_workspaces("workspace_test", tmp_path)
     assert len(ws_dirs) == 1
-    assert ws_dirs[0].name == "ws_test"
+    assert ws_dirs[0].name == "workspace_test"
 
 
-def test_resolve_workspaces_specific_missing_ws_yaml(tmp_path: Path):
-    ws_dir = tmp_path / "ws_test"
+def test_resolve_workspaces_specific_missing_config(tmp_path: Path):
+    ws_dir = tmp_path / "workspace_test"
     ws_dir.mkdir()
-    # No ws.yaml created
+    # No config file created
 
-    with pytest.raises(ValueError, match="ws.yaml does not exist"):
-        models.resolve_workspaces("ws_test", tmp_path)
+    with pytest.raises(ValueError, match=models.WORKSPACE_CONFIG_FILE):
+        models.resolve_workspaces("workspace_test", tmp_path)
 
 
 def test_resolve_workspaces_tests_dir_not_found(tmp_path: Path):
@@ -172,6 +172,6 @@ def test_resolve_workspaces_tests_dir_not_found(tmp_path: Path):
         models.resolve_workspaces("all", missing)
 
 
-def test_resolve_workspaces_no_ws_dirs(tmp_path: Path):
-    with pytest.raises(ValueError, match="No ws_\\* directories found"):
+def test_resolve_workspaces_no_workspace_dirs(tmp_path: Path):
+    with pytest.raises(ValueError, match="No workspace_\\* directories found"):
         models.resolve_workspaces("all", tmp_path)

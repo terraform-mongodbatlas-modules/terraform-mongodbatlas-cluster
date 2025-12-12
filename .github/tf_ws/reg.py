@@ -11,6 +11,7 @@ import typer
 import yaml
 from tf_ws.models import (
     DEFAULT_TESTS_DIR,
+    WORKSPACE_CONFIG_FILE,
     DumpConfig,
     WsConfig,
     parse_ws_config,
@@ -21,7 +22,8 @@ from tf_ws.models import (
 app = typer.Typer()
 
 PLAN_JSON = "plan.json"
-TEST_PLAN_REG_ACTUAL_DIR = "test_plan_reg_actual"
+PLAN_SNAPSHOTS_ACTUAL_DIR = "plan_snapshots_actual"
+TEST_PLAN_SNAPSHOT_PY = "test_plan_snapshot.py"
 
 
 def parse_plan_json(plan_path: Path) -> dict[str, Any]:
@@ -95,20 +97,18 @@ def find_matching_address(
 
 
 def process_workspace(ws_dir: Path, force_regen: bool) -> None:
-    ws_yaml = ws_dir / "ws.yaml"
+    ws_config = ws_dir / WORKSPACE_CONFIG_FILE
     plan_path = ws_dir / PLAN_JSON
-    if not ws_yaml.exists():
-        typer.echo(f"Skipping {ws_dir.name}: no ws.yaml found")
+    if not ws_config.exists():
+        typer.echo(f"Skipping {ws_dir.name}: no {WORKSPACE_CONFIG_FILE} found")
         return
     if not plan_path.exists():
-        typer.echo(
-            f"Skipping {ws_dir.name}: no {PLAN_JSON} found (run test-ws-plan first)"
-        )
+        typer.echo(f"Skipping {ws_dir.name}: no {PLAN_JSON} found (run plan first)")
         return
-    config = parse_ws_config(ws_yaml)
+    config = parse_ws_config(ws_config)
     plan = parse_plan_json(plan_path)
     resources = extract_planned_resources(plan)
-    actual_dir = ws_dir / TEST_PLAN_REG_ACTUAL_DIR
+    actual_dir = ws_dir / PLAN_SNAPSHOTS_ACTUAL_DIR
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
         for reg in ex.plan_regressions:
@@ -121,7 +121,7 @@ def process_workspace(ws_dir: Path, force_regen: bool) -> None:
             (actual_dir / filename).write_text(content)
             typer.echo(f"  Generated {filename}")
     typer.echo(f"Running pytest for {ws_dir.name}...")
-    pytest_args = ["pytest", "test_plan_reg.py", "-v"]
+    pytest_args = ["pytest", TEST_PLAN_SNAPSHOT_PY, "-v"]
     if force_regen:
         pytest_args.append("--force-regen")
     result = subprocess.run(pytest_args, cwd=ws_dir)
