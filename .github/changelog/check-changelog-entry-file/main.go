@@ -4,101 +4,93 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-changelog"
 )
 
 var (
-	allowedTypeValues          = getValidValues("../allowed-types.txt")
-	allowedPrefixValues        = getValidValues("../allowed-prefixes.txt")
-	typesRequireResourcePrefix = []string{"breaking-change", "enhancement", "bug"}
+	allowedTypes    = loadLines("../allowed-types.txt")
+	allowedPrefixes = loadLines("../allowed-prefixes.txt")
 )
 
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: go run main.go <path-to-changelog-file>")
 	}
-
-	filePath := os.Args[1]
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(os.Args[1])
+	if os.IsNotExist(err) {
+		fmt.Printf("No changelog entry file found at: %s (this may be expected)\n", os.Args[1])
+		return
+	}
 	if err != nil {
-		// If file doesn't exist, that's ok - not all PRs require changelog entries
-		if os.IsNotExist(err) {
-			fmt.Printf("No changelog entry file found at: %s (this may be expected)\n", filePath)
-			return
-		}
-		log.Fatalf("Error reading changelog file %s: %v", filePath, err)
+		log.Fatalf("Error reading changelog file: %v", err)
 	}
-
-	validateChangelog(string(content))
-}
-
-func validateChangelog(body string) {
-	entry := changelog.Entry{
-		Body: body,
-	}
-	// grabbing validation logic from https://github.com/hashicorp/go-changelog/blob/main/entry.go#L66, if entry types become configurable we can invoke entry.Validate() directly
-	notes := changelog.NotesFromEntry(entry)
-
-	if len(notes) < 1 {
+	notes := changelog.NotesFromEntry(changelog.Entry{Body: string(content)})
+	if len(notes) == 0 {
 		log.Fatal("Error validating changelog: no changelog entry found")
 	}
-
-	var unknownTypes []string
-	for _, note := range notes {
-		if !containsType(note.Type, allowedTypeValues) {
-			unknownTypes = append(unknownTypes, note.Type)
+	var errors []string
+	for i, note := range notes {
+		if !slices.Contains(allowedTypes, note.Type) {
+			errors = append(errors, fmt.Sprintf("Entry %d: Unknown changelog type '%s', please use only the configured changelog entry types %v", i+1, note.Type, allowedTypes))
+		} else if err := validateFormat(note.Body); err != nil {
+			errors = append(errors, fmt.Sprintf("Entry %d: %v", i+1, err))
 		}
 	}
-	if len(unknownTypes) > 0 {
-		log.Fatalf("Error validating changelog: Unknown changelog types %v, please use only the configured changelog entry types %v", unknownTypes, allowedTypeValues)
+	if len(errors) > 0 {
+		log.Fatalf("Error validating changelog:\n  - %s", strings.Join(errors, "\n  - "))
 	}
-
-	validateEntryPrefix(notes)
 	fmt.Println("Changelog entry is valid")
 }
 
-func validateEntryPrefix(entries []changelog.Note) {
-	for _, entry := range entries {
-		entryContent := entry.Body
-		if containsType(entry.Type, typesRequireResourcePrefix) {
-			hasValidPrefix := false
-			for _, prefix := range allowedPrefixValues {
-				if strings.HasPrefix(entryContent, prefix) {
-					hasValidPrefix = true
-					break
+func validateFormat(content string) error {
+	colonIdx := -1
+	for _, prefix := range allowedPrefixes {
+		if strings.HasSuffix(prefix, "/") {
+			if strings.HasPrefix(content, prefix) {
+				if !regexp.MustCompile(`^` + regexp.QuoteMeta(prefix) + `\w+: .+$`).MatchString(content) {
+					return fmt.Errorf("entry with prefix '%s' must have format '%s<word>: <sentence>'", prefix, prefix)
 				}
+				colonIdx = strings.Index(content, ": ")
+				break
 			}
-			if !hasValidPrefix {
-				log.Fatalf("Error validating changelog: An incorrect prefix was found in the definition of the changelog entry. Please use one of the allowed prefixes: %v", allowedPrefixValues)
-			}
+		} else if strings.HasPrefix(content, prefix+":") {
+			colonIdx = strings.Index(content, ": ")
+			break
 		}
 	}
+	var sentence string
+	if colonIdx != -1 {
+		sentence = content[colonIdx+2:]
+	}
+	if sentence == "" {
+		return fmt.Errorf("entry must follow format '<prefix>: <sentence>' where prefix is one of: %v", allowedPrefixes)
+	}
+	if strings.Contains(sentence, "\n") {
+		return fmt.Errorf("sentence must be single line")
+	}
+	if sentence != strings.TrimSpace(sentence) {
+		return fmt.Errorf("sentence must not have leading or trailing whitespace")
+	}
+	if strings.HasSuffix(sentence, ".") {
+		return fmt.Errorf("sentence must not end with a period")
+	}
+	return nil
 }
 
-func containsType(entryType string, allowed []string) bool {
-	for _, a := range allowed {
-		if a == entryType {
-			return true
+func loadLines(path string) []string {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Error reading %s: %v", path, err)
+	}
+	var lines []string
+	for _, line := range strings.Split(string(content), "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			lines = append(lines, line)
 		}
 	}
-	return false
-}
-
-func getValidValues(path string) []string {
-	content, errFile := os.ReadFile(path)
-	if errFile != nil {
-		log.Fatalf("Error reading allowed values from %s: %v", path, errFile)
-	}
-	lines := strings.Split(string(content), "\n")
-	// Filter out empty lines
-	var validValues []string
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			validValues = append(validValues, line)
-		}
-	}
-	return validValues
+	return lines
 }
