@@ -1,0 +1,3 @@
+```release-note:enhancement
+module: Adds support for auto-scaling inheritance from electable nodes to analytics nodes when no explicit analytics auto-scaling is configured
+```
