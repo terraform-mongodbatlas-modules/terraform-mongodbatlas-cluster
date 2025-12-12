@@ -73,7 +73,7 @@ provider/mongodbatlas: Requires minimum version 3.0.0
 ````
 
 **Not breaking:**
-- **Provider minor upgrades:** Minor version upgrades (e.g., 1.15.0 to 1.16.0) even if user intervention is needed to bump the provider version.
+- **Provider minor upgrades:** Minor version upgrades (e.g., 2.0.0 to 2.3.0) even if user intervention is needed to bump the provider version.
 - **Deprecations:** Deprecation notices without configuration changes required.
 - **Example changes:** Any changes to examples including removals or breaking changes.
 - **EOL version changes:** Changes affecting only EOL Terraform CLI versions.
@@ -95,7 +95,8 @@ provider/mongodbatlas: Requires minimum version 3.0.0
 - [`.github/changelog/allowed-types.txt`](../.github/changelog/allowed-types.txt) - Valid types.
 - [`.github/changelog/allowed-prefixes.txt`](../.github/changelog/allowed-prefixes.txt) - Valid prefixes.
 - [`.github/changelog/check-changelog-entry-file/main.go`](../.github/changelog/check-changelog-entry-file/main.go) - Validation script.
-- [`.github/workflows/check-changelog-entry-file.yml`](../.github/workflows/check-changelog-entry-file.yml) - Validation workflow.
+- [`.github/workflows/check-changelog-entry-file.yml`](../.github/workflows/check-changelog-entry-file.yml) - Validation GitHub Action.
+- [`.github/workflows/generate-changelog.yml`](../.github/workflows/generate-changelog.yml) - Generate Changelog GitHub Action.
 
 **Local validation:**
 ```bash
