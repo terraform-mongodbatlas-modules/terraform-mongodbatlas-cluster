@@ -203,6 +203,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
 - `changelog/build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
+- `changelog/update_changelog_version.py` - Updates CHANGELOG.md version header with current date
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 
@@ -225,14 +226,34 @@ git push origin v1.0.0 --tags
 ```
 
 **What happens**:
-1. Creates release branch `v1.0.0`
-2. Updates `module_version` in `versions.tf` from `"local"` to `"v1.0.0"`
-3. Regenerates all docs with absolute links
-4. Commits and tags
+1. Validates version format (vX.Y.Z) and checks if tag/branch already exists
+2. Creates release branch `v1.0.0`
+3. Updates `module_version` in `versions.tf` from `"local"` to `"v1.0.0"`
+4. Regenerates examples and root README with version-specific references
+5. Converts relative markdown links to absolute GitHub URLs (for stable docs)
+6. Updates CHANGELOG.md:
+   - Installs go-changelog tool if needed
+   - Builds changelog from `.changelog/*.txt` entry files
+   - Replaces `(Unreleased)` header with version and current date
+7. Commits all changes and creates git tag
 
 **Why separate branches?**
 - Main uses relative links (dev-friendly) and `module_version = "local"`
 - Release branches use absolute links (stable docs for that version) and actual version numbers
+
+### Changelog Commands
+
+The release process uses these changelog-related commands:
+
+```bash
+# Generate CHANGELOG.md from .changelog/*.txt entries
+just build-changelog
+
+# Update CHANGELOG.md version header with current date (idempotent)
+just update-changelog-version v1.0.0
+```
+
+See [changelog-process.md](./changelog-process.md) for detailed information about the changelog workflow.
 
 ## Submitting Changes
 
