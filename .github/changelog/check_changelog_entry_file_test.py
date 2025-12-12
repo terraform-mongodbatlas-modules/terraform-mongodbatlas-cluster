@@ -64,7 +64,7 @@ def test_valid_module_prefix() -> None:
     assert_valid(
         """
         ```release-note:enhancement
-        module: Add support for auto-scaling configuration
+        module: Adds support for auto-scaling configuration
         ```
         """
     )
@@ -75,7 +75,7 @@ def test_valid_provider_slash_prefix() -> None:
     assert_valid(
         """
         ```release-note:enhancement
-        provider/mongodbatlas: Add new authentication method
+        provider/mongodbatlas: Adds new authentication method
         ```
         """
     )
@@ -86,7 +86,7 @@ def test_example_regular_prefix() -> None:
     assert_valid(
         """
         ```release-note:enhancement
-        example: Add new configuration example
+        example: Adds new configuration example
         ```
         """
     )
@@ -97,7 +97,7 @@ def test_example_slash_prefix() -> None:
     assert_valid(
         """
         ```release-note:enhancement
-        example/basic: Add basic usage example
+        example/basic: Adds basic usage example
         ```
         """
     )
@@ -108,13 +108,13 @@ def test_multiple_entries_all_valid() -> None:
     assert_valid(
         """
         ```release-note:enhancement
-        module: Add first feature
+        module: Adds first feature
         ```
         ```release-note:bug
-        provider/mongodbatlas: Fix authentication issue
+        provider/mongodbatlas: Fixes authentication issue
         ```
         ```release-note:breaking-change
-        terraform: Update minimum version
+        terraform: Updates minimum version
         ```
         """
     )
@@ -140,7 +140,7 @@ def test_missing_colon() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        module Add feature without colon
+        module Adds feature without colon
         ```
         """
     , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
@@ -151,7 +151,7 @@ def test_missing_space_after_colon() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        module:Add feature without space
+        module:Adds feature without space
         ```
         """
     , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
@@ -162,7 +162,7 @@ def test_sentence_ends_with_period() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        module: Add support for auto-scaling.
+        module: Adds support for auto-scaling.
         ```
         """
     , "must not end with a period")
@@ -184,7 +184,7 @@ def test_slash_prefix_without_word() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        provider/: Add authentication
+        provider/: Adds authentication
         ```
         """
     , "must have format")
@@ -195,7 +195,7 @@ def test_slash_prefix_with_space_instead_of_word() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        provider/ mongodbatlas: Add authentication
+        provider/ mongodbatlas: Adds authentication
         ```
         """
     , "must have format")
@@ -206,7 +206,7 @@ def test_invalid_prefix() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        invalidprefix: Add feature
+        invalidprefix: Adds feature
         ```
         """
     , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
@@ -228,7 +228,7 @@ def test_multiple_spaces_after_colon() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        module:  Add feature with two spaces
+        module:  Adds feature with two spaces
         ```
         """
     , "sentence must not have leading or trailing whitespace")
@@ -275,7 +275,7 @@ def test_multiline_sentence() -> None:
     assert_invalid(
         """
         ```release-note:enhancement
-        module: Add support for multi-region clusters
+        module: Adds support for multi-region clusters
         with enhanced replication
         ```
         """
@@ -287,10 +287,10 @@ def test_multiple_entries_with_format_errors() -> None:
     exit_code, stdout, stderr = _run_checker(_dedent(
         """
         ```release-note:enhancement
-        module: Add feature with period.
+        module: Adds feature with period.
         ```
         ```release-note:bug
-        invalidprefix: Fix something
+        invalidprefix: Fixes something
         ```
         ```release-note:enhancement
         module:No space after colon
