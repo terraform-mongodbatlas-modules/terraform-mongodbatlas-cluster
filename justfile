@@ -125,7 +125,7 @@ release-commit version:
     just init-changelog
     just build-changelog
     just update-changelog-version {{version}}
-    @echo "Commiting changes..."
+    @echo "Committing changes..."
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
