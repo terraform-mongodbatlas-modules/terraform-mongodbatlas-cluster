@@ -121,10 +121,6 @@ release-commit version:
     just gen-readme
     just md-link {{version}}
     just fmt
-    @echo "Updating changelog..."
-    just init-changelog
-    just build-changelog
-    just update-changelog-version {{version}}
     @echo "Committing changes..."
     git add .
     git commit -m "chore: release {{version}}"

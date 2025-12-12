@@ -15,9 +15,7 @@ A single PR can include multiple changelog entries for distinct changes or when 
 1. Developer creates `.changelog/<PR_NUMBER>.txt` entry file.
 2. GitHub Actions validates format on every PR.
 3. GitHub Actions updates CHANGELOG.md Unreleased section.
-4. Release workflow updates CHANGELOG.md:
-   - Builds changelog from all `.changelog/*.txt` entries
-   - Replaces `(Unreleased)` header with version and current date
+4. Release workflow moves Unreleased section to versioned release.
 
 ## Entry Format
 
