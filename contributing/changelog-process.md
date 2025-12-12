@@ -6,7 +6,7 @@ Each PR with user-facing changes requires a changelog entry file at `.changelog/
 
 **Create entries for:** New features, bug fixes, breaking changes, deprecations, important notes.
 
-**No needed for:** Documentation-only, internal refactoring, CI/CD, test improvements.
+**Not needed for:** Documentation-only, internal refactoring, CI/CD, test improvements.
 
 A single PR can include multiple changelog entries for distinct changes or when a feature affects multiple areas.
 
