@@ -38,14 +38,14 @@ A single PR can include multiple changelog entries for distinct changes or when 
 
 | Prefix | Format | Example |
 | --- | --- | --- |
-| `module` | `module: <sentence>` | `module: Adds support for auto-scaling configuration`. |
-| `provider/` | `provider/<word>: <sentence>` | `provider/mongodbatlas: Requires minimum version 2.3.0`. |
-| `terraform` | `terraform: <sentence>` | `terraform: Updates minimum version to 1.9`. |
-| `variable/` | `variable/<word>: <sentence>` | `variable/instance_size: Adds validation for M0 tier`. |
-| `output/` | `output/<word>: <sentence>` | `output/connection_strings: Adds private endpoint strings`. |
-| `example` | `example: <sentence>` | `example: Adds configuration example`. |
-| `example/` | `example/<word>: <sentence>` | `example/basic: Adds basic usage example`. |
-| `submodule/` | `submodule/<word>: <sentence>` | `submodule/import: Adds cluster import functionality`. |
+| `module` | `module: <sentence>` | `module: Adds support for auto-scaling configuration` |
+| `provider/` | `provider/<word>: <sentence>` | `provider/mongodbatlas: Requires minimum version 2.3.0` |
+| `terraform` | `terraform: <sentence>` | `terraform: Updates minimum version to 1.9` |
+| `variable/` | `variable/<word>: <sentence>` | `variable/instance_size: Adds validation for M0 tier` |
+| `output/` | `output/<word>: <sentence>` | `output/connection_strings: Adds private endpoint strings` |
+| `example` | `example: <sentence>` | `example: Adds configuration example` |
+| `example/` | `example/<word>: <sentence>` | `example/basic: Adds basic usage example` |
+| `submodule/` | `submodule/<word>: <sentence>` | `submodule/import: Adds cluster import functionality` |
 
 Prefixes with `/` require a word after the slash (e.g., `provider/mongodbatlas:` not `provider/:`).
 
@@ -60,17 +60,17 @@ Breaking changes require user action during upgrade.
 - **Version requirements:** Provider major version upgrade, significant Terraform CLI version upgrade expected to be supported.
 - **Module removal:** Removing entire module, variable, output, or submodule (must have migration path and deprecation notice).
 
-```
+````
 ```release-note:breaking-change
 variable/regions: Removes deprecated shard_number attribute
 ```
-```
+````
 
-```
+````
 ```release-note:breaking-change
 provider/mongodbatlas: Requires minimum version 3.0.0
 ```
-```
+````
 
 **Not breaking:**
 - **Provider minor upgrades:** Minor version upgrades (e.g., 1.15.0 to 1.16.0) even if user intervention is needed to bump the provider version.
