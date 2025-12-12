@@ -136,3 +136,7 @@ init-changelog:
 # Generate changelog from latest release to HEAD and update CHANGELOG.md
 build-changelog:
     uv run python .github/changelog/build_changelog.py
+
+# Check changelog entry file
+check-changelog-entry-file filepath:
+    go run -C .github/changelog/check-changelog-entry-file . "{{justfile_directory()}}/{{filepath}}"

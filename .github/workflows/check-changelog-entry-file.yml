@@ -1,0 +1,30 @@
+name: Check changelog entry file
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      CHANGELOG_FILE: ".changelog/${{ github.event.pull_request.number }}.txt"
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+      - uses: ./.github/actions/setup-base
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+          go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
+
+      - name: Validate .changelog directory changes
+        run: |
+          # Get .changelog files that are not the expected file
+          OTHER_FILES=$(gh pr view --json files \
+            --jq ".files[].path | select(startswith(\".changelog/\") and . != \"${CHANGELOG_FILE}\")")
+
+          if [ -n "${OTHER_FILES}" ]; then
+            printf "Error: Only ${CHANGELOG_FILE} should be modified in this PR\nOther files found:\n${OTHER_FILES}\n"
+            exit 1
+          fi
+
+      - name: Validate changelog entry content
+        run: just check-changelog-entry-file "${CHANGELOG_FILE}"
