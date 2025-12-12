@@ -19,11 +19,11 @@ A single PR can include multiple changelog entries for distinct changes or when 
 
 ## Entry Format
 
-```
+````
 ```release-note:<type>
 <prefix>: <sentence>
 ```
-```
+````
 
 ### Entry Types
 
