@@ -18,9 +18,10 @@ jobs:
       - name: Validate .changelog directory changes
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Get .changelog files that are not the expected file
-          OTHER_FILES=$(gh pr view --json files \
+          OTHER_FILES=$(gh pr view "${PR_NUMBER}" --json files \
             --jq ".files[].path | select(startswith(\".changelog/\") and . != \"${CHANGELOG_FILE}\")")
 
           if [ -n "${OTHER_FILES}" ]; then
