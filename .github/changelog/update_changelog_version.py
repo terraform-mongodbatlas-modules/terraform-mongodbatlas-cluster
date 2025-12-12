@@ -27,7 +27,6 @@ def update_changelog(changelog_path: Path, version: str, current_date: str) -> N
 
     content = changelog_path.read_text(encoding="utf-8")
 
-    # Fail fast: Check for (Unreleased) header before doing anything else
     unreleased_pattern = r"^## \(Unreleased\)$"
     if not re.search(unreleased_pattern, content, re.MULTILINE):
         print(
@@ -36,30 +35,11 @@ def update_changelog(changelog_path: Path, version: str, current_date: str) -> N
         )
         sys.exit(1)
 
-    # Check if version already exists
-    version_pattern = rf"^## {re.escape(version)} \(([^)]+)\)$"
-    version_match = re.search(version_pattern, content, re.MULTILINE)
-
-    if version_match:
-        existing_date = version_match.group(1)
-        # Version exists with same date - nothing to do
-        if existing_date == current_date:
-            print(
-                f"CHANGELOG.md already has {version} with today's date, no changes needed"
-            )
-            return
-        # Version exists with different date - update it
-        old_header = f"## {version} ({existing_date})"
-        new_header = f"## {version} ({current_date})"
-        changelog_path.write_text(
-            content.replace(old_header, new_header), encoding="utf-8"
-        )
-        print(
-            f"Updated CHANGELOG.md: {version} date changed from {existing_date} to {current_date}"
-        )
+    version_pattern = rf"^## {re.escape(version)} \("
+    if re.search(version_pattern, content, re.MULTILINE):
+        print(f"CHANGELOG.md already has {version}, no changes needed")
         return
 
-    # Version doesn't exist - add it by replacing (Unreleased)
     new_header = f"## (Unreleased)\n\n## {version} ({current_date})"
     new_content = re.sub(
         unreleased_pattern, new_header, content, count=1, flags=re.MULTILINE
