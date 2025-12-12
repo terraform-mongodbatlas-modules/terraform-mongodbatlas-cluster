@@ -1,3 +1,0 @@
-```release-note:bug
-output/replication_specs: Removes replication_specs output to avoid plan changes
-```
