@@ -142,8 +142,9 @@ def test_missing_colon() -> None:
         ```release-note:enhancement
         module Adds feature without colon
         ```
-        """
-    , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
+        """,
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of",
+    )
 
 
 def test_missing_space_after_colon() -> None:
@@ -153,8 +154,9 @@ def test_missing_space_after_colon() -> None:
         ```release-note:enhancement
         module:Adds feature without space
         ```
-        """
-    , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
+        """,
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of",
+    )
 
 
 def test_sentence_ends_with_period() -> None:
@@ -164,8 +166,9 @@ def test_sentence_ends_with_period() -> None:
         ```release-note:enhancement
         module: Adds support for auto-scaling.
         ```
-        """
-    , "must not end with a period")
+        """,
+        "must not end with a period",
+    )
 
 
 def test_empty_sentence() -> None:
@@ -175,8 +178,9 @@ def test_empty_sentence() -> None:
         ```release-note:enhancement
         module:
         ```
-        """
-    , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
+        """,
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of",
+    )
 
 
 def test_slash_prefix_without_word() -> None:
@@ -186,8 +190,9 @@ def test_slash_prefix_without_word() -> None:
         ```release-note:enhancement
         provider/: Adds authentication
         ```
-        """
-    , "must have format")
+        """,
+        "must have format",
+    )
 
 
 def test_slash_prefix_with_space_instead_of_word() -> None:
@@ -197,8 +202,9 @@ def test_slash_prefix_with_space_instead_of_word() -> None:
         ```release-note:enhancement
         provider/ mongodbatlas: Adds authentication
         ```
-        """
-    , "must have format")
+        """,
+        "must have format",
+    )
 
 
 def test_invalid_prefix() -> None:
@@ -208,8 +214,9 @@ def test_invalid_prefix() -> None:
         ```release-note:enhancement
         invalidprefix: Adds feature
         ```
-        """
-    , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
+        """,
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of",
+    )
 
 
 def test_no_prefix() -> None:
@@ -219,8 +226,9 @@ def test_no_prefix() -> None:
         ```release-note:enhancement
         This is an entry without any prefix
         ```
-        """
-    , "entry must follow format '<prefix>: <sentence>' where prefix is one of")
+        """,
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of",
+    )
 
 
 def test_multiple_spaces_after_colon() -> None:
@@ -230,24 +238,32 @@ def test_multiple_spaces_after_colon() -> None:
         ```release-note:enhancement
         module:  Adds feature with two spaces
         ```
-        """
-    , "sentence must not have leading or trailing whitespace")
+        """,
+        "sentence must not have leading or trailing whitespace",
+    )
 
 
 def test_invalid_changelog_type() -> None:
     """Test entry with invalid changelog type."""
-    exit_code, stdout, stderr = _run_checker(_dedent(
-        """
+    exit_code, stdout, stderr = _run_checker(
+        _dedent(
+            """
         ```release-note:invalid-type
         module: Some change
         ```
         """
-    ))
+        )
+    )
 
     assert exit_code == 1
     assert "Entry 1:" in stderr
     assert "Unknown changelog type 'invalid-type'" in stderr
-    assert "breaking-change" in stderr and "note" in stderr and "enhancement" in stderr and "bug" in stderr
+    assert (
+        "breaking-change" in stderr
+        and "note" in stderr
+        and "enhancement" in stderr
+        and "bug" in stderr
+    )
 
 
 def test_empty_content() -> None:
@@ -278,14 +294,16 @@ def test_multiline_sentence() -> None:
         module: Adds support for multi-region clusters
         with enhanced replication
         ```
-        """
-    , "sentence must be single line")
+        """,
+        "sentence must be single line",
+    )
 
 
 def test_multiple_entries_with_format_errors() -> None:
     """Test that all format errors are shown for multiple entries."""
-    exit_code, stdout, stderr = _run_checker(_dedent(
-        """
+    exit_code, stdout, stderr = _run_checker(
+        _dedent(
+            """
         ```release-note:enhancement
         module: Adds feature with period.
         ```
@@ -296,20 +314,25 @@ def test_multiple_entries_with_format_errors() -> None:
         module:No space after colon
         ```
         """
-    ))
+        )
+    )
 
     assert exit_code == 1
     assert "Entry 1:" in stderr
     assert "Entry 2:" in stderr
     assert "Entry 3:" in stderr
     assert "must not end with a period" in stderr
-    assert "entry must follow format '<prefix>: <sentence>' where prefix is one of" in stderr
+    assert (
+        "entry must follow format '<prefix>: <sentence>' where prefix is one of"
+        in stderr
+    )
 
 
 def test_multiple_entries_with_type_and_format_errors() -> None:
     """Test that both type and format errors are shown (one error per entry)."""
-    exit_code, stdout, stderr = _run_checker(_dedent(
-        """
+    exit_code, stdout, stderr = _run_checker(
+        _dedent(
+            """
         ```release-note:invalid-type
         module: Some change
         ```
@@ -320,9 +343,12 @@ def test_multiple_entries_with_type_and_format_errors() -> None:
         example: Another change
         ```
         """
-    ))
+        )
+    )
 
     assert exit_code == 1
     assert "Entry 1:" in stderr and "Unknown changelog type 'invalid-type'" in stderr
     assert "Entry 2:" in stderr and "must have format" in stderr
-    assert "Entry 3:" in stderr and "Unknown changelog type 'another-bad-type'" in stderr
+    assert (
+        "Entry 3:" in stderr and "Unknown changelog type 'another-bad-type'" in stderr
+    )

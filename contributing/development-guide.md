@@ -203,6 +203,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
 - `changelog/build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
+- `changelog/update_changelog_version.py` - Updates CHANGELOG.md version header with current date
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 
