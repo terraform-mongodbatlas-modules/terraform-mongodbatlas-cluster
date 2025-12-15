@@ -70,6 +70,9 @@ unit-plan-tests:
     terraform init
     terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl
 
+# Run all tests
+test: unit-plan-tests integration-tests
+
 # Generate workspace test files (variables.generated.tf, test_plan_snapshot.py)
 ws-gen *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/gen.py {{args}}
@@ -81,6 +84,14 @@ ws-plan *args:
 # Generate snapshot files and run pytest
 ws-reg *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
+
+# Runs workspace generation and terraform plan. TIP: Use `just plan-only --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
+plan-only *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py -m plan-only {{args}}
+
+# Runs workspace generation, terraform plan, and snapshot test. TIP: Use `just plan-snapshot-test --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
+plan-snapshot-test *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py -m plan-snapshot-test {{args}}
 
 # Run workspace test workflow (gen -> plan -> snapshot test)
 ws-run *args:
