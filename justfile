@@ -121,6 +121,7 @@ release-commit version:
     just gen-readme
     just md-link {{version}}
     just fmt
+    @echo "Committing changes..."
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
@@ -129,14 +130,18 @@ release-commit version:
     @echo "  Review changes, then push:"
     @echo "  git push origin {{version}} --tags"
 
-# Install tool needed by just build-changelog
+# Install go-changelog tool (required by build-changelog)
 init-changelog:
     go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
 
-# Generate changelog from latest release to HEAD and update CHANGELOG.md
+# Update Unreleased section in CHANGELOG.md from .changelog/*.txt entries
 build-changelog:
     uv run python .github/changelog/build_changelog.py
 
-# Check changelog entry file
+# Validate changelog entry file format
 check-changelog-entry-file filepath:
     go run -C .github/changelog/check-changelog-entry-file . "{{justfile_directory()}}/{{filepath}}"
+
+# Update CHANGELOG.md with version and current date
+update-changelog-version version:
+    uv run python .github/changelog/update_changelog_version.py {{version}}
