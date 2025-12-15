@@ -1,0 +1,22 @@
+name: 'Cleanup Terraform Modules Org'
+
+on:
+  workflow_dispatch: {} # workflow can be run manually
+  schedule:
+    - cron: "0 3 * * *" # workflow runs every day at 03:00 AM
+
+jobs:  
+  cleanup-terraform-modules-org:
+    runs-on: ubuntu-latest
+    steps:
+      - name: terraform-provider-mongodbatlas-checkout
+        uses: actions/checkout@800d17a5cd4dfacef9370dbdecbee00094d05486
+        with:
+          repository: mongodb/terraform-provider-mongodbatlas
+      - name: Cleanup cloud-dev terraform-modules-org
+        uses: ./.github/templates/clean-atlas-org
+        env:
+            MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+            MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+            MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+            MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
