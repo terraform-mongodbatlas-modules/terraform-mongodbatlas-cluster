@@ -27,7 +27,9 @@ jobs:
       - name: Configure dev vars
         run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
-        run: just apply-examples --auto-approve -e "${{ inputs.include_examples }}"
+      env:
+        INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+      run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES"
       - name: Destroy examples
         if: always()
         run: just destroy-examples --auto-approve -e "${{ inputs.include_examples }}"
