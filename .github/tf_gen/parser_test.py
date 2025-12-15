@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -9,8 +10,8 @@ from tf_gen.schema.parser import (
     list_resource_types,
 )
 
-MONGODBATLAS_SOURCE = "mongodb/mongodbatlas"
-MONGODBATLAS_VERSION = "~> 1.26"
+MONGODBATLAS_SOURCE = os.getenv("MONGODBATLAS_SOURCE", "mongodb/mongodbatlas")
+MONGODBATLAS_VERSION = os.getenv("MONGODBATLAS_VERSION", "~> 2.2")
 
 
 @pytest.fixture(scope="module")
