@@ -1,0 +1,100 @@
+{
+    "version": 1,
+    "block": {
+      "attributes": {
+        "authorized_date": {
+          "type": "string",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "feature_usages": {
+          "type": [
+            "list",
+            [
+              "object",
+              {
+                "feature_id": [
+                  "map",
+                  "string"
+                ],
+                "feature_type": "string"
+              }
+            ]
+          ],
+          "description_kind": "plain",
+          "computed": true
+        },
+        "gcp": {
+          "type": [
+            "list",
+            [
+              "object",
+              {
+                "service_account_for_atlas": "string"
+              }
+            ]
+          ],
+          "description_kind": "plain",
+          "computed": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "project_id": {
+          "type": "string",
+          "description_kind": "plain",
+          "required": true
+        },
+        "role_id": {
+          "type": "string",
+          "description_kind": "plain",
+          "required": true
+        }
+      },
+      "block_types": {
+        "aws": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "iam_assumed_role_arn": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "azure": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "atlas_azure_app_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              },
+              "service_principal_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              },
+              "tenant_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        }
+      },
+      "description_kind": "plain"
+    }
+  }
+  
