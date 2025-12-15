@@ -1,0 +1,8 @@
+module
+provider/
+terraform
+variable/
+output/
+example
+example/
+submodule/

@@ -1,0 +1,3 @@
+```release-note:bug
+terraform: Fixes short-circuit evaluation bug in auto_scaling validation for Terraform 1.9-1.11
+```

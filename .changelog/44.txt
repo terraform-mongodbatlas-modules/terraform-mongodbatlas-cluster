@@ -1,0 +1,3 @@
+```release-note:bug
+variable/regions: Fixes validation errors when using replication_specs instead of regions
+```

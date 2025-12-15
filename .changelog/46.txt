@@ -1,0 +1,3 @@
+```release-note:bug
+terraform: Fixes variable validation compatibility with Terraform 1.9-1.11 by wrapping floor() checks with try() for null safety
+```
