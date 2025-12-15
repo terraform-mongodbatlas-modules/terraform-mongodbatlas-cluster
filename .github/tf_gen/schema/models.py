@@ -86,6 +86,23 @@ class ResourceSchema(BaseModel):
         return data
 
 
+def _parse_inline_type(value: str | list | dict) -> TfType:
+    if isinstance(value, str):
+        return TfType.from_primitive(AttrType.from_schema(value))
+    if isinstance(value, list) and len(value) >= 2:
+        if value[0] in ("list", "set", "map"):
+            collection_kind = CollectionKind(value[0])
+            elem_type = _parse_inline_type(value[1])
+            return TfType.from_collection(collection_kind, elem_type)
+        if value[0] == "object" and isinstance(value[1], dict):
+            obj_attrs = {k: _parse_inline_type(v) for k, v in value[1].items()}
+            return TfType.from_object(obj_attrs)
+    if isinstance(value, dict):
+        obj_attrs = {k: _parse_inline_type(v) for k, v in value.items()}
+        return TfType.from_object(obj_attrs)
+    return TfType.from_primitive(AttrType.dynamic)
+
+
 def parse_type_field(
     type_field: str | list | None, element_type_field: str | dict | None = None
 ) -> TfType | None:
@@ -95,25 +112,8 @@ def parse_type_field(
         return TfType.from_primitive(AttrType.from_schema(type_field))
     if isinstance(type_field, list) and len(type_field) >= 2:
         collection_kind = CollectionKind(type_field[0])
-        elem = type_field[1]
-        if element_type_field is not None:
-            elem = element_type_field
-        if isinstance(elem, str):
-            elem_type = TfType.from_primitive(AttrType.from_schema(elem))
-        elif isinstance(elem, list) and len(elem) == 2 and elem[0] == "object":
-            obj_attrs = {
-                k: TfType.from_primitive(AttrType.from_schema(v))
-                for k, v in elem[1].items()
-            }
-            elem_type = TfType.from_object(obj_attrs)
-        elif isinstance(elem, dict):
-            obj_attrs = {
-                k: TfType.from_primitive(AttrType.from_schema(v))
-                for k, v in elem.items()
-            }
-            elem_type = TfType.from_object(obj_attrs)
-        else:
-            elem_type = TfType.from_primitive(AttrType.dynamic)
+        elem = element_type_field if element_type_field is not None else type_field[1]
+        elem_type = _parse_inline_type(elem)
         return TfType.from_collection(collection_kind, elem_type)
     return TfType.from_primitive(AttrType.dynamic)
 

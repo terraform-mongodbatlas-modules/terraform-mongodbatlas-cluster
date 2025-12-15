@@ -55,17 +55,26 @@ terraform {{
     return schema
 
 
+def _find_provider_key(full_schema: dict, provider_name: str) -> str:
+    for key in full_schema.get("provider_schemas", {}):
+        if key.endswith(provider_name):
+            return key
+    raise ValueError(f"Provider {provider_name} not found in schema")
+
+
+def list_resource_types(full_schema: dict, provider_name: str) -> list[str]:
+    provider_key = _find_provider_key(full_schema, provider_name)
+    resources = full_schema["provider_schemas"][provider_key].get(
+        "resource_schemas", {}
+    )
+    prefix = f"{provider_name}_"
+    return [k.removeprefix(prefix) for k in sorted(resources.keys())]
+
+
 def extract_resource_schema(
     full_schema: dict, provider_name: str, resource_type: str
 ) -> ResourceSchema:
-    provider_key = None
-    for key in full_schema.get("provider_schemas", {}):
-        if key.endswith(provider_name):
-            provider_key = key
-            break
-    if not provider_key:
-        raise ValueError(f"Provider {provider_name} not found in schema")
-
+    provider_key = _find_provider_key(full_schema, provider_name)
     resources = full_schema["provider_schemas"][provider_key].get(
         "resource_schemas", {}
     )
