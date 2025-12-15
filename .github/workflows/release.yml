@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for git operations
       
-      - uses: ./.github/actions/setup-base
+      - uses: ./.github/actions/setup-just
       
       - uses: ./.github/actions/setup-terraform
       

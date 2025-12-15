@@ -1,9 +1,9 @@
 name: 'Setup Documentation Tools'
-description: 'Setup Python and uv for documentation generation'
+description: 'Setup tools for documentation generation'
 runs:
   using: 'composite'
   steps:
-    - uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41  # v7.1.2
+    - uses: ./.github/actions/setup-uv
     - name: Install terraform-docs
       uses: jaxxstorm/action-install-gh-release@v1.10.0
       with:
