@@ -1,8 +1,11 @@
-test_plan_reg_actual/
 plan.bin
 plan.json
 .terraform/
 .terraform.lock.hcl
 dev.tfvars
 *.generated.tf
-test_plan_reg.py
+test_plan_snapshot.py
+plan_snapshots_actual/
+terraform.tfstate
+terraform.tfstate.backup
+__pycache__/
