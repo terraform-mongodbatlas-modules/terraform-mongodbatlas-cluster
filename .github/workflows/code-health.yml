@@ -39,8 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: ./.github/actions/setup-just
+      - uses: ./.github/actions/setup-uv
       - uses: ./.github/actions/setup-terraform
       - name: Configure tfvars
-        run: just dev-vars-project {{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
+        run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - name: Run Terraform plan tests
-        run: just plan-snapshot-tests --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+        run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars

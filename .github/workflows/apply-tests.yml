@@ -39,13 +39,13 @@ jobs:
           terraform init
           terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
 
-  full-test-suite:
-    name: Full Test Suite
+  tftest-integration-tests:
+    name: tftest integration tests
     if: ${{ inputs.run_full_suite }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: ./.github/actions/setup-just
       - uses: ./.github/actions/setup-terraform
-      - name: Run Full Test Suite
+      - name: Run tftest integration tests
         run: just integration-tests

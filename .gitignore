@@ -13,3 +13,9 @@ terraform.rc
 .vscode
 .secrets
 __pycache__
+# Workspace test generated files
+*.generated.tf
+dev.tfvars
+plan.bin
+plan.json
+plan_snapshots_actual/
