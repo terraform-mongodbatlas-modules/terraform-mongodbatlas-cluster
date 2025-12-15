@@ -4,7 +4,8 @@ This directory contains guides for contributors to the terraform-mongodbatlas-cl
 
 ## Available Guides
 
-- **[Development Guide](development-guide.md)** - Quick start, development workflow, testing, and release process
+- **[Development Guide](development-guide.md)** - Quick start, development workflow, and release process
+- **[Test Guide](test-guide.md)** - Running unit, integration, and plan snapshot tests
 - **[Documentation Guide](documentation-guide.md)** - Working with auto-generated documentation
 - **[Changelog Guide](changelog-process.md)** - Creating changelog entries and understanding the changelog workflow
 

@@ -46,11 +46,10 @@ just check                    # Run all checks (fmt, validate, lint, check-docs,
 just docs                     # Generate all docs
 just check-docs               # Verify docs are up-to-date (CI mode)
 
-# Testing
-just init-examples            # Initialize examples
-just plan-examples PROJECT_ID # Test examples
+# Testing (see test-guide.md for details)
 just test                     # Run unit + integration tests
 just test-compat              # Validate across all supported Terraform versions
+just ws-run -m plan-snapshot-test -v dev.tfvars  # Plan snapshot tests
 
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
@@ -62,40 +61,11 @@ Run `just --list` for all commands.
 
 ## Testing
 
-### Setup
-
-```bash
-# Required for all tests (authentication)
-export MONGODB_ATLAS_CLIENT_ID=your_sa_client_id
-export MONGODB_ATLAS_CLIENT_SECRET=your_sa_client_secret
-
-# Required for integration tests (creates test project)
-export MONGODB_ATLAS_ORG_ID=your_org_id
-
-# Optional:
-export MONGODB_ATLAS_BASE_URL=https://cloud.mongodb.com/
-
-# Run tests
-just test                # All tests (unit + integration)
-just unit-plan-tests     # Plan-only (no resources)
-just integration-tests   # Apply tests (creates resources)
-```
-
-**Note**: Integration tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
-
-See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#authentication) for more details.
-
-### Version Compatibility Testing
-
-Test that the module validates correctly across all supported Terraform versions:
-
-```bash
-just test-compat
-```
-
-This runs `terraform init` and `terraform validate` on the root module and all examples using each version in `.terraform-versions.yaml`. Requires [mise](https://mise.jdx.dev/) for version switching.
-
-To update the version matrix when new Terraform versions are released, edit `.terraform-versions.yaml`.
+See [test-guide.md](./test-guide.md) for detailed testing documentation including:
+- Authentication setup
+- Unit and integration tests
+- Version compatibility testing
+- Plan snapshot tests with workspace tooling
 
 ## Variable Validation Patterns
 

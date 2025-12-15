@@ -6,7 +6,8 @@ Thank you for your interest in contributing to this Terraform module!
 
 All contributing documentation has been organized in the [`contributing/`](contributing/) directory:
 
-- **[Development Guide](contributing/development-guide.md)** - Quick start, development workflow, testing, and release process
+- **[Development Guide](contributing/development-guide.md)** - Quick start, development workflow, and release process
+- **[Test Guide](contributing/test-guide.md)** - Running unit, integration, and plan snapshot tests
 - **[Documentation Guide](contributing/documentation-guide.md)** - Working with auto-generated documentation
 - **[Changelog Guide](contributing/changelog-process.md)** - Creating changelog entries and understanding the changelog workflow
 
