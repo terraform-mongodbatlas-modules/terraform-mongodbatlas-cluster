@@ -85,17 +85,36 @@ ws-plan *args:
 ws-reg *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
 
+# Run workspace test workflow gen ->
+#   1. plan -> snapshot test
+#   2. apply
+# TIP: See plan-only, plan-snapshot-test, and apply-examples for more specific workflows.
+ws-run *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py {{args}}
+
 # Runs workspace generation and terraform plan. TIP: Use `just plan-only --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
 plan-only *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py -m plan-only {{args}}
+    just ws-run -m plan-only {{args}}
 
 # Runs workspace generation, terraform plan, and snapshot test. TIP: Use `just plan-snapshot-test --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
 plan-snapshot-test *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py -m plan-snapshot-test {{args}}
+    just ws-run -m plan-snapshot-test {{args}}
 
-# Run workspace test workflow (gen -> plan -> snapshot test)
-ws-run *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py {{args}}
+# Runs workspace generation and terraform apply, TIP: Use `just apply-examples --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
+apply-examples *args:
+    just ws-run -m apply {{args}}
+
+# Runs workspace generation and terraform destroy, TIP: Use `just destroy-examples --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
+destroy-examples *args:
+    just ws-run -m destroy {{args}}
+
+# Generate dev.tfvars with a project_id (reused for all 5 project slots)
+dev-vars-project project_id:
+    uv run --with typer python .github/dev_vars.py project {{project_id}}
+
+# Generate dev.tfvars with an org_id (projects created dynamically)
+dev-vars-org org_id:
+    uv run --with typer python .github/dev_vars.py org {{org_id}}
 
 # Convert relative markdown links to absolute GitHub URLs
 md-link tag_version *args:
