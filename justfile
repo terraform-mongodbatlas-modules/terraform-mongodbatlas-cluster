@@ -60,7 +60,7 @@ plan-examples project_id:
         (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
     done
 
-# Run all integration tests (expects org_id env var)
+# Run fast integration tests - small examples only (expects org_id env var)
 integration-tests:
     terraform init
     terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
@@ -69,9 +69,6 @@ integration-tests:
 unit-plan-tests:
     terraform init
     terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl
-
-# Run all tests
-test: unit-plan-tests integration-tests
 
 # Generate workspace test files (variables.generated.tf, test_plan_snapshot.py)
 ws-gen *args:
