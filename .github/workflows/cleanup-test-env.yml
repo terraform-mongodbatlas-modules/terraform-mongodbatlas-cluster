@@ -1,7 +1,7 @@
 name: 'Cleanup Terraform Modules Org'
 
 on:
-  workflow_dispatch: {} # workflow can be run manually
+  workflow_dispatch: # workflow can be run manually
   schedule:
     - cron: "0 3 * * *" # workflow runs every day at 03:00 AM
 

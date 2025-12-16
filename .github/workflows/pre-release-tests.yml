@@ -20,16 +20,18 @@ jobs:
     name: Apply & Destroy Examples
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/setup-just
       - uses: ./.github/actions/setup-uv
       - uses: ./.github/actions/setup-terraform
       - name: Configure dev vars
         run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
-      env:
-        INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
-      run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES"
+        env:
+          INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+        run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES"
       - name: Destroy examples
         if: always()
-        run: just destroy-examples --auto-approve -e "${{ inputs.include_examples }}"
+        env:
+          INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+        run: just destroy-examples --auto-approve -e "$INCLUDE_EXAMPLES"
