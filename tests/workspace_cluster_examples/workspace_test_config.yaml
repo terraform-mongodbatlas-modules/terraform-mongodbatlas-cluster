@@ -1,10 +1,67 @@
+# Workspace test configuration for cluster module examples
+# Examples are grouped by project to respect 30-node limit per project
+#
+# Node counts:
+# - 01: 3, 02: 6, 03: 4, 04: 5, 05: 5, 06: 6 (project1 = 29)
+# - 07: 14, 08: 3, 09: 3 (project2 = 20)
+# - 10: 24 (project3 = 24)
+# - 11: 25 (project4 = 25)
+# - 12: 15 (project5 = 15)
+
 examples:
+  # Project 1: Examples 01-06 (29 nodes)
   - number: 1
-    var_groups: [shared, group1]
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 2
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 3
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 4
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 5
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 6
+    var_groups: [shared, project1]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  # Project 2: Examples 07-09 (20 nodes)
+  - number: 7
+    var_groups: [shared, project2]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 8
-    var_groups: [shared, group2]
+    var_groups: [shared, project2]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 9
+    var_groups: [shared, project2]
+    plan_regressions:
+      - address: module.replication_var.mongodbatlas_advanced_cluster.this
+  # Project 3: Example 10 (24 nodes)
+  - number: 10
+    var_groups: [shared, project3]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  # Project 4: Example 11 (25 nodes - 3 clusters)
+  - number: 11
+    var_groups: [shared, project4]
+    plan_regressions:
+      - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
+      - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
+      - address: module.cluster_geosharded.module.cluster.mongodbatlas_advanced_cluster.this
+  # Project 5: Example 12 (15 nodes)
+  - number: 12
+    var_groups: [shared, project5]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
 
@@ -14,11 +71,23 @@ var_groups:
       expose_in_workspace: true
       var_type: map(string)
       module_value: "{}"
-  group1:
+  project1:
     - name: project_id
       expose_in_workspace: false
       module_value: local.project_id1
-  group2:
+  project2:
     - name: project_id
       expose_in_workspace: false
       module_value: local.project_id2
+  project3:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id3
+  project4:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id4
+  project5:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id5

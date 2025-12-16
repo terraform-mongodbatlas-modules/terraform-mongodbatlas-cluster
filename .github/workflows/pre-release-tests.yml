@@ -1,0 +1,39 @@
+name: Pre-Release Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_examples:
+        description: 'Examples to test (all or comma-separated list)'
+        required: false
+        type: string
+        default: 'all'
+
+env:
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+
+jobs:
+  apply-and-destroy:
+    name: Apply & Destroy Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+          terraform: 'true'
+      - name: Configure dev vars
+        run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
+      - name: Apply examples
+        env:
+          INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+        run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES"
+      - name: Destroy examples
+        if: always()
+        env:
+          INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+        run: just destroy-examples --auto-approve -e "$INCLUDE_EXAMPLES"

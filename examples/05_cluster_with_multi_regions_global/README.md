@@ -56,6 +56,10 @@ module "cluster" {
   provider_name = "AWS"
   tags          = var.tags
 }
+
+output "cluster" {
+  value = module.cluster
+}
 ```
 
 **Additional files needed:**

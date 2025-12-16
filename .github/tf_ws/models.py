@@ -135,7 +135,9 @@ def sanitize_address(address: str) -> str:
 WORKSPACE_CONFIG_FILE = "workspace_test_config.yaml"
 
 
-def resolve_workspaces(workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Path]:
+def resolve_workspaces(
+    workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR
+) -> list[Path]:
     """Resolve workspace directories based on ws name.
 
     Args:

@@ -57,6 +57,10 @@ module "replication_var" {
   }]
   tags = var.tags
 }
+
+output "cluster" {
+  value = module.replication_var
+}
 ```
 
 **Additional files needed:**

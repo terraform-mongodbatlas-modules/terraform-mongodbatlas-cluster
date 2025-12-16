@@ -21,13 +21,10 @@ See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/provid
 ## Test Commands
 
 ```bash
-# Run all tests (unit + integration)
-just test
-
 # Plan-only tests (no resources created)
 just unit-plan-tests
 
-# Integration tests (creates resources)
+# Fast integration tests - single dev cluster (creates resources)
 just integration-tests
 ```
 

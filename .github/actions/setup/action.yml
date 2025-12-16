@@ -1,0 +1,66 @@
+name: 'Setup'
+description: 'Consolidated setup action for tool installation'
+inputs:
+  go:
+    description: 'Setup Go'
+    required: false
+    default: 'false'
+  go-version-file:
+    description: 'Path to go.mod file for version detection'
+    required: false
+    default: ''
+  just:
+    description: 'Setup just command runner'
+    required: false
+    default: 'false'
+  uv:
+    description: 'Setup uv Python package manager'
+    required: false
+    default: 'false'
+  terraform:
+    description: 'Setup Terraform and tflint'
+    required: false
+    default: 'false'
+  docs:
+    description: 'Setup documentation tools (terraform-docs, implies uv)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      if: inputs.go == 'true'
+      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
+      with:
+        go-version: ${{ inputs.go-version-file == '' && 'stable' || '' }}
+        go-version-file: ${{ inputs.go-version-file }}
+
+    - name: Setup just
+      if: inputs.just == 'true'
+      uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6
+      with:
+        just-version: '1.40.0'
+
+    - name: Setup uv
+      if: inputs.uv == 'true' || inputs.docs == 'true'
+      uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41
+
+    - name: Setup Terraform
+      if: inputs.terraform == 'true'
+      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+      with:
+        terraform_wrapper: false
+
+    - name: Install tflint
+      if: inputs.terraform == 'true'
+      shell: bash
+      run: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+    - name: Install terraform-docs
+      if: inputs.docs == 'true'
+      uses: jaxxstorm/action-install-gh-release@v1.10.0
+      with:
+        repo: terraform-docs/terraform-docs
+        tag: v0.20.0
