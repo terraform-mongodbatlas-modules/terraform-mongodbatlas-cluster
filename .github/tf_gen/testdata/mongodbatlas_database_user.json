@@ -1,0 +1,127 @@
+{
+    "version": 0,
+    "block": {
+      "attributes": {
+        "auth_database_name": {
+          "type": "string",
+          "description_kind": "plain",
+          "required": true
+        },
+        "aws_iam_type": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "description": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "ldap_auth_type": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "oidc_auth_type": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "password": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "sensitive": true
+        },
+        "project_id": {
+          "type": "string",
+          "description_kind": "plain",
+          "required": true
+        },
+        "username": {
+          "type": "string",
+          "description_kind": "plain",
+          "required": true
+        },
+        "x509_type": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        }
+      },
+      "block_types": {
+        "labels": {
+          "nesting_mode": "set",
+          "block": {
+            "attributes": {
+              "key": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+              },
+              "value": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+              }
+            },
+            "description_kind": "plain"
+          }
+        },
+        "roles": {
+          "nesting_mode": "set",
+          "block": {
+            "attributes": {
+              "collection_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "database_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              },
+              "role_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "description_kind": "plain"
+          }
+        },
+        "scopes": {
+          "nesting_mode": "set",
+          "block": {
+            "attributes": {
+              "name": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "type": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description_kind": "plain"
+          }
+        }
+      },
+      "description_kind": "plain"
+    }
+  }
+  
