@@ -36,3 +36,10 @@ def project_schema(testdata_dir: Path) -> dict:
 @pytest.fixture
 def database_user_schema(testdata_dir: Path) -> dict:
     return json.loads((testdata_dir / "mongodbatlas_database_user.json").read_text())
+
+
+@pytest.fixture
+def advanced_cluster_v2_schema(testdata_dir: Path) -> dict:
+    return json.loads(
+        (testdata_dir / "mongodbatlas_advanced_clusterv2.json").read_text()
+    )

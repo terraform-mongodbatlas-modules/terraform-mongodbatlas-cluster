@@ -211,11 +211,17 @@ def block_type_to_variable_spec(
     return _apply_overrides(spec, name, config)
 
 
+def _render_description(desc: str) -> str:
+    if "\n" in desc:
+        return f"<<-EOT\n{desc}\nEOT"
+    escaped = desc.replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def render_variable_block(spec: VariableSpec) -> str:
     lines = [f'variable "{spec.name}" {{', f"  type = {spec.type_str}"]
     if spec.description:
-        escaped = spec.description.replace('"', '\\"')
-        lines.append(f'  description = "{escaped}"')
+        lines.append(f"  description = {_render_description(spec.description)}")
     if spec.nullable:
         lines.append("  nullable = true")
     if spec.default is not None:
