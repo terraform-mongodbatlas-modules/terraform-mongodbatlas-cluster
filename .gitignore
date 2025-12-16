@@ -19,3 +19,4 @@ dev.tfvars
 plan.bin
 plan.json
 plan_snapshots_actual/
+dev.tfrc

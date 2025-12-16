@@ -16,6 +16,17 @@ env:
   MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
 
 jobs:
+  tftest-all:
+    name: All Terraform Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+      - run: just tftest-all
+
   apply-and-destroy:
     name: Apply & Destroy Examples
     runs-on: ubuntu-latest
@@ -26,8 +37,7 @@ jobs:
           just: 'true'
           uv: 'true'
           terraform: 'true'
-      - name: Configure dev vars
-        run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
+      - run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
         env:
           INCLUDE_EXAMPLES: ${{ inputs.include_examples }}

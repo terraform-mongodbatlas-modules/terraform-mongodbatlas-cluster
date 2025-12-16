@@ -1,0 +1,38 @@
+name: Dev Integration Test
+
+on:
+  push:
+    branches: [main]
+    paths: ['**.tf', '**.tftest.hcl']
+  pull_request:
+    paths: ['**.tf', '**.tftest.hcl']
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      provider_ref:
+        description: 'Provider git ref (default: master)'
+        required: false
+        default: 'master'
+        type: string
+
+env:
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+
+jobs:
+  dev-integration-test:
+    name: Dev Cluster Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+      - uses: ./.github/actions/setup-provider-dev
+        with:
+          provider-ref: ${{ inputs.provider_ref || 'master' }}
+      - run: just dev-integration-test

@@ -24,11 +24,14 @@ See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/provid
 # Plan-only tests (no resources created)
 just unit-plan-tests
 
-# Fast integration tests - single dev cluster (creates resources)
-just integration-tests
+# Single dev cluster test (creates resources)
+just dev-integration-test
+
+# All terraform tests (plan + apply, no filter)
+just tftest-all
 ```
 
-**Note**: Integration tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
+**Note**: Apply tests create temporary projects and set `termination_protection_enabled = false` for cleanup.
 
 ## Version Compatibility Testing
 
@@ -92,3 +95,21 @@ Scripts in `.github/tf_ws/` directory:
 - `gen.py` - Generates workspace configurations
 - `plan.py` - Runs terraform plan operations
 - `reg.py` - Handles regression snapshot comparison
+
+## Provider Dev Branch Testing
+
+Test against a local provider build instead of the registry version:
+
+```bash
+# Clone provider and build from source
+git clone https://github.com/mongodb/terraform-provider-mongodbatlas ../provider
+just setup-provider-dev ../provider
+
+# Export the config file (printed by setup-provider-dev)
+export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
+
+# Now terraform commands use the local provider
+just unit-plan-tests
+```
+
+CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use provider `master` branch via the `setup-provider-dev` action.

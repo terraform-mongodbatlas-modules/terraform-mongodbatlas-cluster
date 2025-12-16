@@ -60,18 +60,20 @@ plan-examples project_id:
         (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
     done
 
-# Run fast integration tests - small examples only (expects org_id env var)
-integration-tests:
+# Run dev cluster integration test (fast, single cluster apply/destroy)
+dev-integration-test:
     terraform init
     terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+# Run all terraform tests (plan + apply tests, no filter)
+tftest-all:
+    terraform init
+    terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 # Run tests matching a file/path/pattern
 unit-plan-tests:
     terraform init
     terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl
-
-# Run all tests
-test: unit-plan-tests integration-tests
 
 # Generate workspace test files (variables.generated.tf, test_plan_snapshot.py)
 ws-gen *args:
@@ -188,3 +190,22 @@ check-changelog-entry-file filepath:
 # Update CHANGELOG.md with version and current date
 update-changelog-version version:
     uv run python .github/changelog/update_changelog_version.py {{version}}
+
+# Build provider from source and create dev.tfrc for dev_overrides
+setup-provider-dev provider_path:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
+    PLUGIN_DIR="$PROVIDER_ABS/bin"
+    cd "{{provider_path}}"
+    make build
+    cat > "{{justfile_directory()}}/dev.tfrc" <<EOF
+    provider_installation {
+      dev_overrides {
+        "mongodb/mongodbatlas" = "$PLUGIN_DIR"
+      }
+      direct {}
+    }
+    EOF
+    echo "Provider built at $PLUGIN_DIR"
+    echo "Run: export TF_CLI_CONFIG_FILE={{justfile_directory()}}/dev.tfrc"
