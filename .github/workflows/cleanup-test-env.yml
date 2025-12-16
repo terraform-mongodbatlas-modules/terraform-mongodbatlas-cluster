@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: terraform-provider-mongodbatlas-checkout
-        uses: actions/checkout@800d17a5cd4dfacef9370dbdecbee00094d05486
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: mongodb/terraform-provider-mongodbatlas
       - name: Cleanup cloud-dev terraform-modules-org
