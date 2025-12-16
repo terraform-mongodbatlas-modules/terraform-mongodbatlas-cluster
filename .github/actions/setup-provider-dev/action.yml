@@ -13,7 +13,7 @@ runs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
         repository: mongodb/terraform-provider-mongodbatlas
-        ref: ${{ inputs.provider-ref }}
+        ref: ${{ inputs.provider-ref || 'master' }}
         path: ${{ github.workspace }}/provider-src
 
     - name: Setup Go
@@ -25,6 +25,7 @@ runs:
     # dev.tfrc points Terraform to use the local provider binary instead of registry
     - name: Build and configure provider
       shell: bash
+      working-directory: ${{ github.workspace }}
       run: just setup-provider-dev ${{ github.workspace }}/provider-src
 
     # Makes TF_CLI_CONFIG_FILE available to all subsequent steps in the job

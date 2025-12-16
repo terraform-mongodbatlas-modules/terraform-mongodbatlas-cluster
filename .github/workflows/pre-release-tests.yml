@@ -8,11 +8,11 @@ on:
         required: false
         type: string
         default: 'all'
-      provider_branch:
-        description: 'Provider git ref to test (empty = use registry)'
+      provider_ref:
+        description: 'Provider git ref (registry = published, empty = default branch)'
         required: false
         type: string
-        default: ''
+        default: 'registry'
 
 env:
   MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
@@ -31,9 +31,9 @@ jobs:
           just: 'true'
           terraform: 'true'
       - uses: ./.github/actions/setup-provider-dev
-        if: inputs.provider_branch != ''
+        if: inputs.provider_ref != 'registry'
         with:
-          provider-ref: ${{ inputs.provider_branch }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just tftest-all
 
   apply-and-destroy:
@@ -47,9 +47,9 @@ jobs:
           uv: 'true'
           terraform: 'true'
       - uses: ./.github/actions/setup-provider-dev
-        if: inputs.provider_branch != ''
+        if: inputs.provider_ref != 'registry'
         with:
-          provider-ref: ${{ inputs.provider_branch }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
         env:

@@ -11,9 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       provider_ref:
-        description: 'Provider git ref (default: master)'
+        description: 'Provider git ref (empty = default branch)'
         required: false
-        default: 'master'
         type: string
 
 env:
@@ -34,5 +33,5 @@ jobs:
           terraform: 'true'
       - uses: ./.github/actions/setup-provider-dev
         with:
-          provider-ref: ${{ inputs.provider_ref || 'master' }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-integration-test

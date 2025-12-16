@@ -10,9 +10,8 @@ on:
   workflow_dispatch:
     inputs:
       provider_ref:
-        description: 'Provider git ref (default: master)'
+        description: 'Provider git ref (empty = default branch)'
         required: false
-        default: 'master'
         type: string
 
 jobs:
@@ -69,6 +68,6 @@ jobs:
           terraform: 'true'
       - uses: ./.github/actions/setup-provider-dev
         with:
-          provider-ref: ${{ inputs.provider_ref || 'master' }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars

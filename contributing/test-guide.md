@@ -112,4 +112,4 @@ export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
 just unit-plan-tests
 ```
 
-CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use provider `master` branch via the `setup-provider-dev` action.
+CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use the provider default branch via the `setup-provider-dev` action.
