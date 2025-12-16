@@ -1,7 +1,13 @@
+mock_provider "mongodbatlas" {}
+
+variables {
+  project_id = "000000000000000000000000"
+}
+
 run "sharded_uniform_layout_and_priorities" {
   command = plan
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -57,7 +63,7 @@ run "sharded_uniform_conflicts_with_shard_number" {
   ]
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -80,7 +86,7 @@ run "sharded_explicit_requires_shard_number" {
   ]
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -103,7 +109,7 @@ run "shard_count_zero_invalid" {
   ]
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -123,7 +129,7 @@ run "sharded_uniform_shard_count_one" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -149,7 +155,7 @@ run "sharded_uniform_shard_count_five" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
