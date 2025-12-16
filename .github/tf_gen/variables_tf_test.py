@@ -249,3 +249,20 @@ def test_generate_variables_tf_excludes_computed_only(backup_schedule_schema: di
     assert "cluster_id" not in output
     assert "next_snapshot" not in output
     assert "id_policy" not in output
+
+
+def test_map_string_variable(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget()
+    spec = attr_to_variable_spec("tags", schema.block.attributes["tags"], config)
+    assert spec.type_str == "map(string)"
+
+
+def test_inline_object_type(vpc_endpoint_schema: dict):
+    schema = parse_resource_schema(vpc_endpoint_schema)
+    config = GenerationTarget()
+    spec = attr_to_variable_spec(
+        "dns_entry", schema.block.attributes["dns_entry"], config
+    )
+    assert "object(" in spec.type_str
+    assert "dns_name" in spec.type_str
