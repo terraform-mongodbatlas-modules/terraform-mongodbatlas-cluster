@@ -189,6 +189,25 @@ def print_summary(results: list[TestResult]) -> None:
         print(f"\n{len(failures)} failure(s) detected.")
 
 
+def preinstall_versions(versions: list[str]) -> bool:
+    """Pre-install all terraform versions to avoid race conditions during parallel tests."""
+    print("Pre-installing Terraform versions...")
+    for version in versions:
+        print(f"  Installing terraform@{version}...", end=" ", flush=True)
+        result = subprocess.run(
+            ["mise", "install", f"terraform@{version}"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print("FAIL")
+            print(f"    Error: {result.stderr.strip()}", file=sys.stderr)
+            return False
+        print("ok")
+    print()
+    return True
+
+
 def main() -> int:
     repo_root = Path(__file__).parent.parent
     config_path = repo_root / ".terraform-versions.yaml"
@@ -198,6 +217,11 @@ def main() -> int:
         return 1
 
     versions = load_versions(config_path)
+
+    # Pre-install all versions to avoid race conditions in parallel execution
+    if not preinstall_versions(versions):
+        return 1
+
     targets = discover_targets(repo_root)
 
     # Build job list
