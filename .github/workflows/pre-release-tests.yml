@@ -21,9 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: ./.github/actions/setup-just
-      - uses: ./.github/actions/setup-uv
-      - uses: ./.github/actions/setup-terraform
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+          terraform: 'true'
       - name: Configure dev vars
         run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
