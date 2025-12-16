@@ -16,7 +16,51 @@ variable "project_id" {
 }
 
 variable "replication_specs" {
-  type = list(object({num_shards = optional(number), region_configs = list(object({analytics_auto_scaling = optional(object({compute_enabled = optional(bool), compute_max_instance_size = optional(string), compute_min_instance_size = optional(string), compute_scale_down_enabled = optional(bool), disk_gb_enabled = optional(bool)})), analytics_specs = optional(object({disk_iops = optional(number), disk_size_gb = optional(number), ebs_volume_type = optional(string), instance_size = optional(string), node_count = optional(number)})), auto_scaling = optional(object({compute_enabled = optional(bool), compute_max_instance_size = optional(string), compute_min_instance_size = optional(string), compute_scale_down_enabled = optional(bool), disk_gb_enabled = optional(bool)})), backing_provider_name = optional(string), electable_specs = optional(object({disk_iops = optional(number), disk_size_gb = optional(number), ebs_volume_type = optional(string), instance_size = optional(string), node_count = optional(number)})), priority = number, provider_name = string, read_only_specs = optional(object({disk_iops = optional(number), disk_size_gb = optional(number), ebs_volume_type = optional(string), instance_size = optional(string), node_count = optional(number)})), region_name = string})), zone_name = optional(string)}))
+  type = list(object({
+  num_shards = optional(number),
+  region_configs = list(object({
+    analytics_auto_scaling = optional(object({
+      compute_enabled = optional(bool),
+      compute_max_instance_size = optional(string),
+      compute_min_instance_size = optional(string),
+      compute_scale_down_enabled = optional(bool),
+      disk_gb_enabled = optional(bool)
+    })),
+    analytics_specs = optional(object({
+      disk_iops = optional(number),
+      disk_size_gb = optional(number),
+      ebs_volume_type = optional(string),
+      instance_size = optional(string),
+      node_count = optional(number)
+    })),
+    auto_scaling = optional(object({
+      compute_enabled = optional(bool),
+      compute_max_instance_size = optional(string),
+      compute_min_instance_size = optional(string),
+      compute_scale_down_enabled = optional(bool),
+      disk_gb_enabled = optional(bool)
+    })),
+    backing_provider_name = optional(string),
+    electable_specs = optional(object({
+      disk_iops = optional(number),
+      disk_size_gb = optional(number),
+      ebs_volume_type = optional(string),
+      instance_size = optional(string),
+      node_count = optional(number)
+    })),
+    priority = number,
+    provider_name = string,
+    read_only_specs = optional(object({
+      disk_iops = optional(number),
+      disk_size_gb = optional(number),
+      ebs_volume_type = optional(string),
+      instance_size = optional(string),
+      node_count = optional(number)
+    })),
+    region_name = string
+  })),
+  zone_name = optional(string)
+}))
   description = "List of settings that configure your cluster regions. This array has one object per shard representing node configurations in each shard. For replica sets there is only one object representing node configurations."
 }
 
@@ -28,7 +72,23 @@ variable "accept_data_risks_and_force_replica_set_reconfig" {
 }
 
 variable "advanced_configuration" {
-  type = object({change_stream_options_pre_and_post_images_expire_after_seconds = optional(number), custom_openssl_cipher_config_tls12 = optional(set(string)), default_max_time_ms = optional(number), default_read_concern = optional(string), default_write_concern = optional(string), fail_index_key_too_long = optional(bool), javascript_enabled = optional(bool), minimum_enabled_tls_protocol = optional(string), no_table_scan = optional(bool), oplog_min_retention_hours = optional(number), oplog_size_mb = optional(number), sample_refresh_interval_bi_connector = optional(number), sample_size_bi_connector = optional(number), tls_cipher_config_mode = optional(string), transaction_lifetime_limit_seconds = optional(number)})
+  type = object({
+  change_stream_options_pre_and_post_images_expire_after_seconds = optional(number),
+  custom_openssl_cipher_config_tls12 = optional(set(string)),
+  default_max_time_ms = optional(number),
+  default_read_concern = optional(string),
+  default_write_concern = optional(string),
+  fail_index_key_too_long = optional(bool),
+  javascript_enabled = optional(bool),
+  minimum_enabled_tls_protocol = optional(string),
+  no_table_scan = optional(bool),
+  oplog_min_retention_hours = optional(number),
+  oplog_size_mb = optional(number),
+  sample_refresh_interval_bi_connector = optional(number),
+  sample_size_bi_connector = optional(number),
+  tls_cipher_config_mode = optional(string),
+  transaction_lifetime_limit_seconds = optional(number)
+})
   description = "Additional settings for an Atlas cluster."
   nullable = true
   default = null
@@ -42,7 +102,10 @@ variable "backup_enabled" {
 }
 
 variable "bi_connector_config" {
-  type = object({enabled = optional(bool), read_preference = optional(string)})
+  type = object({
+  enabled = optional(bool),
+  read_preference = optional(string)
+})
   description = "Settings needed to configure the MongoDB Connector for Business Intelligence for this cluster."
   nullable = true
   default = null
@@ -133,7 +196,9 @@ variable "paused" {
 }
 
 variable "pinned_fcv" {
-  type = object({expiration_date = string})
+  type = object({
+  expiration_date = string
+})
   description = "Pins the Feature Compatibility Version (FCV) to the current MongoDB version with a provided expiration date. To unpin the FCV the `pinned_fcv` attribute must be removed. This operation can take several minutes as the request processes through the MongoDB data plane. Once FCV is unpinned it will not be possible to downgrade the `mongo_db_major_version`. It is advised that updates to `pinned_fcv` are done isolated from other cluster changes. If a plan contains multiple changes, the FCV change will be applied first. If FCV is unpinned past the expiration date the `pinned_fcv` attribute must be removed. The following [knowledge hub article](https://kb.corp.mongodb.com/article/000021785/) and [FCV documentation](https://www.mongodb.com/docs/atlas/tutorial/major-version-change/#manage-feature-compatibility--fcv--during-upgrades) can be referenced for more details."
   nullable = true
   default = null
@@ -201,7 +266,11 @@ variable "termination_protection_enabled" {
 }
 
 variable "timeouts" {
-  type = object({create = optional(string), delete = optional(string), update = optional(string)})
+  type = object({
+  create = optional(string),
+  delete = optional(string),
+  update = optional(string)
+})
   nullable = true
   default = null
 }

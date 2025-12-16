@@ -13,43 +13,73 @@ variable "auto_export_enabled" {
 }
 
 variable "copy_settings" {
-  type     = list(object({ cloud_provider = optional(string), frequencies = optional(set(string)), region_name = optional(string), replication_spec_id = optional(string), should_copy_oplogs = optional(bool), zone_id = optional(string) }))
+  type = list(object({
+    cloud_provider      = optional(string),
+    frequencies         = optional(set(string)),
+    region_name         = optional(string),
+    replication_spec_id = optional(string),
+    should_copy_oplogs  = optional(bool),
+    zone_id             = optional(string)
+  }))
   nullable = true
   default  = null
 }
 
 variable "export" {
-  type     = object({ export_bucket_id = optional(string), frequency_type = optional(string) })
+  type = object({
+    export_bucket_id = optional(string),
+    frequency_type   = optional(string)
+  })
   nullable = true
   default  = null
 }
 
 variable "policy_item_daily" {
-  type     = object({ frequency_interval = number, retention_unit = string, retention_value = number })
+  type = object({
+    frequency_interval = number,
+    retention_unit     = string,
+    retention_value    = number
+  })
   nullable = true
   default  = null
 }
 
 variable "policy_item_hourly" {
-  type     = object({ frequency_interval = number, retention_unit = string, retention_value = number })
+  type = object({
+    frequency_interval = number,
+    retention_unit     = string,
+    retention_value    = number
+  })
   nullable = true
   default  = null
 }
 
 variable "policy_item_monthly" {
-  type     = list(object({ frequency_interval = number, retention_unit = string, retention_value = number }))
+  type = list(object({
+    frequency_interval = number,
+    retention_unit     = string,
+    retention_value    = number
+  }))
   nullable = true
   default  = null
 }
 
 variable "policy_item_weekly" {
-  type     = list(object({ frequency_interval = number, retention_unit = string, retention_value = number }))
+  type = list(object({
+    frequency_interval = number,
+    retention_unit     = string,
+    retention_value    = number
+  }))
   nullable = true
   default  = null
 }
 
 variable "policy_item_yearly" {
-  type     = list(object({ frequency_interval = number, retention_unit = string, retention_value = number }))
+  type = list(object({
+    frequency_interval = number,
+    retention_unit     = string,
+    retention_value    = number
+  }))
   nullable = true
   default  = null
 }

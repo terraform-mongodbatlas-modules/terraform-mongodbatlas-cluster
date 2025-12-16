@@ -50,7 +50,10 @@ variable "is_slow_operation_thresholding_enabled" {
 }
 
 variable "limits" {
-  type     = set(object({ name = string, value = number }))
+  type = set(object({
+    name  = string,
+    value = number
+  }))
   nullable = true
   default  = null
 }
@@ -74,7 +77,10 @@ variable "tags" {
 }
 
 variable "teams" {
-  type     = set(object({ role_names = set(string), team_id = string }))
+  type = set(object({
+    role_names = set(string),
+    team_id    = string
+  }))
   nullable = true
   default  = null
 }

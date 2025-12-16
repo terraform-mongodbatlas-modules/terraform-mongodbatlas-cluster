@@ -9,7 +9,10 @@ variable "auto_accept" {
 }
 
 variable "dns_options" {
-  type     = object({ dns_record_ip_type = optional(string), private_dns_only_for_inbound_resolver_endpoint = optional(bool) })
+  type = object({
+    dns_record_ip_type                             = optional(string),
+    private_dns_only_for_inbound_resolver_endpoint = optional(bool)
+  })
   nullable = true
   default  = null
 }
@@ -69,7 +72,11 @@ variable "service_region" {
 }
 
 variable "subnet_configuration" {
-  type     = set(object({ ipv4 = optional(string), ipv6 = optional(string), subnet_id = optional(string) }))
+  type = set(object({
+    ipv4      = optional(string),
+    ipv6      = optional(string),
+    subnet_id = optional(string)
+  }))
   nullable = true
   default  = null
 }
@@ -93,7 +100,11 @@ variable "tags_all" {
 }
 
 variable "timeouts" {
-  type     = object({ create = optional(string), delete = optional(string), update = optional(string) })
+  type = object({
+    create = optional(string),
+    delete = optional(string),
+    update = optional(string)
+  })
   nullable = true
   default  = null
 }
