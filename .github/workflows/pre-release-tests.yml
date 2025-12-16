@@ -31,10 +31,14 @@ jobs:
         with:
           just: 'true'
           terraform: 'true'
-      - uses: ./.github/actions/setup-provider-dev
-        if: inputs.provider_ref != 'registry'
+      - name: Setup provider (default branch)
+        uses: ./.github/actions/setup-provider-dev
+        if: inputs.provider_ref == 'default'
+      - name: Setup provider (${{ inputs.provider_ref }})
+        uses: ./.github/actions/setup-provider-dev
+        if: inputs.provider_ref != 'registry' && inputs.provider_ref != 'default'
         with:
-          provider-ref: ${{ inputs.provider_ref == 'default' && '' || inputs.provider_ref }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just tftest-all
 
   apply-and-destroy:
@@ -47,10 +51,14 @@ jobs:
           just: 'true'
           uv: 'true'
           terraform: 'true'
-      - uses: ./.github/actions/setup-provider-dev
-        if: inputs.provider_ref != 'registry'
+      - name: Setup provider (default branch)
+        uses: ./.github/actions/setup-provider-dev
+        if: inputs.provider_ref == 'default'
+      - name: Setup provider (${{ inputs.provider_ref }})
+        uses: ./.github/actions/setup-provider-dev
+        if: inputs.provider_ref != 'registry' && inputs.provider_ref != 'default'
         with:
-          provider-ref: ${{ inputs.provider_ref == 'default' && '' || inputs.provider_ref }}
+          provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
         env:
