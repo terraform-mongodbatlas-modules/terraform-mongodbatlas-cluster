@@ -1,4 +1,5 @@
 name: Pre-Release Tests
+run-name: "Pre-Release: examples=${{ inputs.include_examples }}, provider=${{ inputs.provider_ref }}"
 
 on:
   workflow_dispatch:
@@ -9,7 +10,7 @@ on:
         type: string
         default: 'all'
       provider_ref:
-        description: 'Provider git ref (registry = published, empty = default branch)'
+        description: 'Provider git ref (registry = published, default = default branch)'
         required: false
         type: string
         default: 'registry'
@@ -33,7 +34,7 @@ jobs:
       - uses: ./.github/actions/setup-provider-dev
         if: inputs.provider_ref != 'registry'
         with:
-          provider-ref: ${{ inputs.provider_ref }}
+          provider-ref: ${{ inputs.provider_ref == 'default' && '' || inputs.provider_ref }}
       - run: just tftest-all
 
   apply-and-destroy:
@@ -49,7 +50,7 @@ jobs:
       - uses: ./.github/actions/setup-provider-dev
         if: inputs.provider_ref != 'registry'
         with:
-          provider-ref: ${{ inputs.provider_ref }}
+          provider-ref: ${{ inputs.provider_ref == 'default' && '' || inputs.provider_ref }}
       - run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
         env:
