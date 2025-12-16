@@ -198,7 +198,9 @@ setup-provider-dev provider_path:
     PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
     PLUGIN_DIR="$PROVIDER_ABS/bin"
     cd "{{provider_path}}"
+    echo "Building provider from source at $PROVIDER_ABS"
     make build
+    echo "Creating dev.tfrc at {{justfile_directory()}}/dev.tfrc"
     cat > "{{justfile_directory()}}/dev.tfrc" <<EOF
     provider_installation {
       dev_overrides {
@@ -208,4 +210,4 @@ setup-provider-dev provider_path:
     }
     EOF
     echo "Provider built at $PLUGIN_DIR"
-    echo "Run: export TF_CLI_CONFIG_FILE={{justfile_directory()}}/dev.tfrc"
+    echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
