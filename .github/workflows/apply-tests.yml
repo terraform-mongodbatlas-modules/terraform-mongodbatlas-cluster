@@ -31,31 +31,25 @@ jobs:
     if: ${{ !inputs.run_full_suite }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
         with:
-          terraform_wrapper: false
-      - uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6  # v2.0.0
-        with:
-          just-version: '1.40.0'
-
+          just: 'true'
+          terraform: 'true'
       - name: Run Dev Cluster Test
         run: |
           terraform init
           terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var "org_id=${MONGODB_ATLAS_ORG_ID}"
 
-  full-test-suite:
-    name: Full Test Suite
+  tftest-integration-tests:
+    name: tftest integration tests
     if: ${{ inputs.run_full_suite }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
-      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
         with:
-          terraform_wrapper: false
-      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
-        with:
-          just-version: '1.40.0'
-
-      - name: Run Full Test Suite
+          just: 'true'
+          terraform: 'true'
+      - name: Run tftest integration tests
         run: just integration-tests

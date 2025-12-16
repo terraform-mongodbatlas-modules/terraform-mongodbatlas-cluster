@@ -12,22 +12,15 @@ jobs:
   generate-and-update-changelog:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Setup base tools
-        uses: ./.github/actions/setup-base
-
-      - name: Setup docs tools (Python and uv)
-        uses: ./.github/actions/setup-docs
-
-      - name: Setup Go
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+      - uses: ./.github/actions/setup
         with:
-          go-version: 'stable'
+          just: 'true'
+          uv: 'true'
+          go: 'true'
 
       - name: Configure Git
         run: |

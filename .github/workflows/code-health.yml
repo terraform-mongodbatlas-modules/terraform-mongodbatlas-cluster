@@ -1,0 +1,53 @@
+name: Code Health
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Code Quality & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+          docs: 'true'
+      - name: Run all validation checks
+        run: just check
+
+  plan-tests:
+    name: Terraform Unit Plan Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+      - name: Run Terraform plan tests
+        run: just unit-plan-tests
+
+  plan-snapshot-tests:
+    name: Terraform Examples Plan Snapshot Tests
+    runs-on: ubuntu-latest
+    env: # Using a static project to avoid generating 5 projects for every run
+      MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+      MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
+      MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+          terraform: 'true'
+      - name: Configure tfvars
+        run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
+      - name: Run Terraform plan tests
+        run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars

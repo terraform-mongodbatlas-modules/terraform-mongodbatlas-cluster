@@ -17,15 +17,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0  # Fetch all history for git operations
-      
-      - uses: ./.github/actions/setup-base
-      
-      - uses: ./.github/actions/setup-terraform
-      
-      - uses: ./.github/actions/setup-docs
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+          docs: 'true'
       
       - name: Configure Git
         run: |

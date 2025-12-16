@@ -9,10 +9,11 @@ jobs:
     env:
       CHANGELOG_FILE: ".changelog/${{ github.event.pull_request.number }}.txt"
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-      - uses: ./.github/actions/setup-base
-      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
         with:
+          just: 'true'
+          go: 'true'
           go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
 
       - name: Validate .changelog directory changes
