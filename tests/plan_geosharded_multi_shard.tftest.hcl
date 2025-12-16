@@ -1,8 +1,13 @@
+mock_provider "mongodbatlas" {}
+
+variables {
+  project_id = "000000000000000000000000"
+}
 run "geo_single_shard_per_zone_order" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -47,7 +52,7 @@ run "geo_multi_shards_in_zone" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {
@@ -103,7 +108,7 @@ run "geo_multi_regions_in_same_shard" {
   command = plan
 
   module {
-    source = "../"
+    source = "./"
   }
 
   variables {

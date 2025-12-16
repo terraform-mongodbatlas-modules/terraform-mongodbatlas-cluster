@@ -46,10 +46,10 @@ just check                    # Run all checks (fmt, validate, lint, check-docs,
 just docs                     # Generate all docs
 just check-docs               # Verify docs are up-to-date (CI mode)
 
-# Testing (see test-guide.md for details)
-just test                     # Run unit + integration tests
-just test-compat              # Validate across all supported Terraform versions
-just ws-run -m plan-snapshot-test -v dev.tfvars  # Plan snapshot tests
+# Testing (see test-guide.md for full details)
+just unit-plan-tests          # Plan-only tests (no credentials)
+just dev-integration-test     # Single apply test (requires credentials)
+just test-compat              # Terraform version compatibility
 
 # Release (maintainers)
 just release-commit v1.0.0    # Create release branch
@@ -58,6 +58,37 @@ just tf-registry-source       # Show Terraform Registry source
 ```
 
 Run `just --list` for all commands.
+
+## CI/CD Workflows
+
+### Workflow Summary
+
+| Workflow | Triggers | Just Targets | Provider |
+|----------|----------|--------------|----------|
+| `code-health.yml` | PR, push main, nightly | `check`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
+| `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
+| `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
+| `release.yml` | manual | `release-commit`, `md-link`, `gen-examples`, `gen-readme`, `fmt` | N/A |
+
+### Provider Testing Policy
+
+- **PR/push/nightly**: Uses provider `master` branch via `TF_CLI_CONFIG` dev_overrides
+- **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
+
+### Required Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `MONGODB_ATLAS_ORG_ID` | Atlas organization ID for tests |
+| `MONGODB_ATLAS_CLIENT_ID` | Service account client ID |
+| `MONGODB_ATLAS_CLIENT_SECRET` | Service account client secret |
+| `MONGODB_ATLAS_BASE_URL` | Atlas API base URL (cloud-dev) |
+
+### Required Variables
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST` | Project ID for plan snapshot tests |
 
 ## Testing
 

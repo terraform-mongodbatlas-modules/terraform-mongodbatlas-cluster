@@ -5,7 +5,14 @@ on:
     branches:
       - main
   pull_request:
+  schedule:
+    - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      provider_ref:
+        description: 'Provider git ref (empty = default branch)'
+        required: false
+        type: string
 
 jobs:
   check:
@@ -33,6 +40,18 @@ jobs:
       - name: Run Terraform plan tests
         run: just unit-plan-tests
 
+  compat-tests:
+    name: Terraform CLI Version Compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+          mise: 'true'
+      - run: just test-compat
+
   plan-snapshot-tests:
     name: Terraform Examples Plan Snapshot Tests
     runs-on: ubuntu-latest
@@ -47,7 +66,8 @@ jobs:
           just: 'true'
           uv: 'true'
           terraform: 'true'
-      - name: Configure tfvars
-        run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
-      - name: Run Terraform plan tests
-        run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+      - uses: ./.github/actions/setup-provider-dev
+        with:
+          provider-ref: ${{ inputs.provider_ref }}
+      - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
+      - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars

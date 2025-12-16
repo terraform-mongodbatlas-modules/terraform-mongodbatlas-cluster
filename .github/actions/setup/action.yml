@@ -25,6 +25,10 @@ inputs:
     description: 'Setup documentation tools (terraform-docs, implies uv)'
     required: false
     default: 'false'
+  mise:
+    description: 'Setup mise version manager'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -64,3 +68,7 @@ runs:
       with:
         repo: terraform-docs/terraform-docs
         tag: v0.20.0
+
+    - name: Setup mise
+      if: inputs.mise == 'true'
+      uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5

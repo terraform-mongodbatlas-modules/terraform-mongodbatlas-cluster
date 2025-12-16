@@ -1,0 +1,41 @@
+name: 'Setup Provider Dev'
+description: 'Build provider from source and configure dev_overrides'
+inputs:
+  provider-ref:
+    description: 'Provider git ref (branch, tag, or SHA). Empty = default branch.'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    # Clones provider inside workspace (actions/checkout requires path under github.workspace)
+    # Two steps needed: actions/checkout uses default branch when ref is omitted
+    - name: Checkout provider (default branch)
+      if: inputs.provider-ref == ''
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        repository: mongodb/terraform-provider-mongodbatlas
+        path: ${{ github.workspace }}/provider-src
+    - name: Checkout provider (specific ref)
+      if: inputs.provider-ref != ''
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        repository: mongodb/terraform-provider-mongodbatlas
+        ref: ${{ inputs.provider-ref }}
+        path: ${{ github.workspace }}/provider-src
+
+    - name: Setup Go
+      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
+      with:
+        go-version-file: ${{ github.workspace }}/provider-src/go.mod
+
+    # Builds provider binary and creates dev.tfrc in cluster repo root
+    # dev.tfrc points Terraform to use the local provider binary instead of registry
+    - name: Build and configure provider
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: just setup-provider-dev ${{ github.workspace }}/provider-src
+
+    # Makes TF_CLI_CONFIG_FILE available to all subsequent steps in the job
+    - name: Export TF_CLI_CONFIG_FILE
+      shell: bash
+      run: echo "TF_CLI_CONFIG_FILE=${{ github.workspace }}/dev.tfrc" >> $GITHUB_ENV
