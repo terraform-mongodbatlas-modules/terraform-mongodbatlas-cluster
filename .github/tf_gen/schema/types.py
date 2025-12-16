@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import StrEnum
+
 
 
 class NestingMode(StrEnum):
@@ -14,7 +17,7 @@ class AttrType(StrEnum):
     dynamic = "dynamic"
 
     @classmethod
-    def from_schema(cls, value: str) -> "AttrType":
+    def from_schema(cls, value: str) -> AttrType:
         if value == "any":
             return cls.dynamic
         return cls(value)

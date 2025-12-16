@@ -26,3 +26,13 @@ def vpc_endpoint_schema(testdata_dir: Path) -> dict:
 @pytest.fixture
 def advanced_cluster_schema(testdata_dir: Path) -> dict:
     return json.loads((testdata_dir / "mongodbatlas_advanced_cluster.json").read_text())
+
+
+@pytest.fixture
+def project_schema(testdata_dir: Path) -> dict:
+    return json.loads((testdata_dir / "project.json").read_text())
+
+
+@pytest.fixture
+def database_user_schema(testdata_dir: Path) -> dict:
+    return json.loads((testdata_dir / "mongodbatlas_database_user.json").read_text())
