@@ -10,7 +10,7 @@ run "create_project" {
   }
 
   variables {
-    project_name = "test-cluster-module-tf-${run.apply_dev_cluster.name_project}"
+    project_name = "test-acc-tf-p-${run.apply_dev_cluster.name_project}" # DO NOT EDIT, prefix used by the cleanup-test-env.yml
   }
 }
 
