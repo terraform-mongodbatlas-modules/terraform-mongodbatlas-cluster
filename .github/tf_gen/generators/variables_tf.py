@@ -29,36 +29,48 @@ class VariableSpec(BaseModel):
     sensitive: bool = False
 
 
-def render_tf_type(tf_type: TfType) -> str:
+def _render_object_fields(fields: list[str], indent: int = 0) -> str:
+    if not fields:
+        return "object({})"
+    prefix = "  " * indent
+    inner_prefix = "  " * (indent + 1)
+    lines = [f"{inner_prefix}{f}" for f in fields]
+    return f"object({{\n{',\n'.join(lines)}\n{prefix}}})"
+
+
+def render_tf_type(tf_type: TfType, indent: int = 0) -> str:
     match tf_type.kind:
         case TfTypeKind.primitive:
             return "any" if tf_type.primitive == AttrType.dynamic else tf_type.primitive
         case TfTypeKind.collection:
             elem = (
-                render_tf_type(tf_type.element_type) if tf_type.element_type else "any"
+                render_tf_type(tf_type.element_type, indent)
+                if tf_type.element_type
+                else "any"
             )
             return f"{tf_type.collection_kind}({elem})"
         case TfTypeKind.object:
             if not tf_type.object_attrs:
                 return "object({})"
-            fields = ", ".join(
-                f"{k} = {render_tf_type(v)}"
+            fields = [
+                f"{k} = {render_tf_type(v, indent + 1)}"
                 for k, v in sorted(tf_type.object_attrs.items())
-            )
-            return f"object({{{fields}}})"
+            ]
+            return _render_object_fields(fields, indent)
     return "any"
 
 
 def _render_object_type_with_optionality(
     attrs: dict[str, SchemaAttribute],
     block_types: dict[str, SchemaBlockType] | None = None,
+    indent: int = 0,
 ) -> str:
     """Render object type with optional() for optional fields."""
     fields = []
     for name, attr in sorted(attrs.items()):
         if attr.is_computed_only:
             continue
-        field_type = _get_attr_type_str(attr)
+        field_type = _get_attr_type_str(attr, indent + 1)
         if attr.required:
             fields.append(f"{name} = {field_type}")
         else:
@@ -66,26 +78,26 @@ def _render_object_type_with_optionality(
 
     if block_types:
         for name, bt in sorted(block_types.items()):
-            bt_type = _get_block_type_str(bt)
+            bt_type = _get_block_type_str(bt, indent + 1)
             if bt.is_required:
                 fields.append(f"{name} = {bt_type}")
             else:
                 fields.append(f"{name} = optional({bt_type})")
 
-    return f"object({{{', '.join(fields)}}})"
+    return _render_object_fields(fields, indent)
 
 
-def _get_attr_type_str(attr: SchemaAttribute) -> str:
+def _get_attr_type_str(attr: SchemaAttribute, indent: int = 0) -> str:
     if attr.nested_type:
-        return _render_nested_type(attr.nested_type)
+        return _render_nested_type(attr.nested_type, indent)
     if attr.type:
-        return render_tf_type(attr.type)
+        return render_tf_type(attr.type, indent)
     return "any"
 
 
-def _render_nested_type(nested: SchemaBlock) -> str:
+def _render_nested_type(nested: SchemaBlock, indent: int = 0) -> str:
     obj_type = _render_object_type_with_optionality(
-        nested.attributes, nested.block_types
+        nested.attributes, nested.block_types, indent
     )
     match nested.nesting_mode:
         case NestingMode.single | None:
@@ -97,9 +109,9 @@ def _render_nested_type(nested: SchemaBlock) -> str:
     return obj_type
 
 
-def _get_block_type_str(bt: SchemaBlockType) -> str:
+def _get_block_type_str(bt: SchemaBlockType, indent: int = 0) -> str:
     obj_type = _render_object_type_with_optionality(
-        bt.block.attributes, bt.block.block_types
+        bt.block.attributes, bt.block.block_types, indent
     )
     if bt.is_single_object:
         return obj_type
@@ -225,7 +237,7 @@ def _build_single_variable_spec(
             fields.append(f"{s.name} = optional({field_type})")
         else:
             fields.append(f"{s.name} = {field_type}")
-    type_str = f"object({{{', '.join(fields)}}})"
+    type_str = _render_object_fields(fields, indent=0)
     return VariableSpec(name=var_name, type_str=type_str, default=None, nullable=False)
 
 

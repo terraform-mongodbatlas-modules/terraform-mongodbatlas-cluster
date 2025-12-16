@@ -48,7 +48,8 @@ def test_render_object_type():
             "count": TfType.from_primitive(AttrType.number),
         }
     )
-    assert render_tf_type(obj) == "object({count = number, name = string})"
+    expected = "object({\n  count = number,\n  name = string\n})"
+    assert render_tf_type(obj) == expected
 
 
 def test_should_generate_variable_computed_only(backup_schedule_schema: dict):

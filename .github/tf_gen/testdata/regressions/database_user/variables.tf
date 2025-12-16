@@ -23,7 +23,10 @@ variable "description" {
 }
 
 variable "labels" {
-  type     = set(object({ key = optional(string), value = optional(string) }))
+  type = set(object({
+    key   = optional(string),
+    value = optional(string)
+  }))
   nullable = true
   default  = null
 }
@@ -48,13 +51,20 @@ variable "password" {
 }
 
 variable "roles" {
-  type     = set(object({ collection_name = optional(string), database_name = string, role_name = string }))
+  type = set(object({
+    collection_name = optional(string),
+    database_name   = string,
+    role_name       = string
+  }))
   nullable = true
   default  = null
 }
 
 variable "scopes" {
-  type     = set(object({ name = optional(string), type = optional(string) }))
+  type = set(object({
+    name = optional(string),
+    type = optional(string)
+  }))
   nullable = true
   default  = null
 }
