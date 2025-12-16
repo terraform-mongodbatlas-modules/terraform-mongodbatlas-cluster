@@ -8,27 +8,26 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    # Clones provider to runner temp directory (sibling to workspace, not inside cluster repo)
-    # Path: $RUNNER_TEMP/provider-src (e.g., /home/runner/work/_temp/provider-src)
+    # Clones provider as sibling to workspace (outside cluster repo, but within allowed path)
     - name: Checkout provider
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
         repository: mongodb/terraform-provider-mongodbatlas
         ref: ${{ inputs.provider-ref }}
-        path: ${{ runner.temp }}/provider-src
+        path: ${{ github.workspace }}/../provider
 
     - name: Setup Go
       uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
       with:
-        go-version-file: ${{ runner.temp }}/provider-src/go.mod
+        go-version-file: ${{ github.workspace }}/../provider/go.mod
 
     # Builds provider binary and creates dev.tfrc in cluster repo root
     # dev.tfrc points Terraform to use the local provider binary instead of registry
     - name: Build and configure provider
       shell: bash
-      run: just setup-provider-dev ${{ runner.temp }}/provider-src
+      run: just setup-provider-dev ${{ github.workspace }}/../provider
 
     # Makes TF_CLI_CONFIG_FILE available to all subsequent steps in the job
     - name: Export TF_CLI_CONFIG_FILE
       shell: bash
-      run: echo "TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc" >> $GITHUB_ENV
+      run: echo "TF_CLI_CONFIG_FILE=${{ github.workspace }}/dev.tfrc" >> $GITHUB_ENV

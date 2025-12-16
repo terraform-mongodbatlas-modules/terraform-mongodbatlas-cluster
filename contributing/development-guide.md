@@ -67,13 +67,13 @@ Run `just --list` for all commands.
 |----------|----------|--------------|----------|
 | `code-health.yml` | PR, push main, nightly | `check`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
 | `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
-| `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry |
+| `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `release-commit`, `md-link`, `gen-examples`, `gen-readme`, `fmt` | N/A |
 
 ### Provider Testing Policy
 
 - **PR/push/nightly**: Uses provider `master` branch via `TF_CLI_CONFIG` dev_overrides
-- **Pre-release**: Uses latest published registry provider to validate compatibility
+- **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
 
 ### Required Secrets
 
