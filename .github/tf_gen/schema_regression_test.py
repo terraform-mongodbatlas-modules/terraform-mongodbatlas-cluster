@@ -52,3 +52,9 @@ def test_database_user_variables(
 
 def test_vpc_endpoint_variables(check_variables_regression, vpc_endpoint_schema: dict):
     check_variables_regression(vpc_endpoint_schema, "vpc_endpoint", provider_name="aws")
+
+
+def test_advanced_cluster_v2_variables(
+    check_variables_regression, advanced_cluster_v2_schema: dict
+):
+    check_variables_regression(advanced_cluster_v2_schema, "advanced_cluster_v2")

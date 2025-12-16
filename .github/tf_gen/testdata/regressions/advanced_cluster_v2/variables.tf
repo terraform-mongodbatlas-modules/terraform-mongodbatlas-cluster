@@ -19,7 +19,6 @@ EOT
 
 variable "replication_specs" {
   type = list(object({
-    num_shards = optional(number),
     region_configs = list(object({
       analytics_auto_scaling = optional(object({
         compute_enabled            = optional(bool),
@@ -78,9 +77,7 @@ variable "advanced_configuration" {
     change_stream_options_pre_and_post_images_expire_after_seconds = optional(number),
     custom_openssl_cipher_config_tls12                             = optional(set(string)),
     default_max_time_ms                                            = optional(number),
-    default_read_concern                                           = optional(string),
     default_write_concern                                          = optional(string),
-    fail_index_key_too_long                                        = optional(bool),
     javascript_enabled                                             = optional(bool),
     minimum_enabled_tls_protocol                                   = optional(string),
     no_table_scan                                                  = optional(bool),
@@ -128,28 +125,7 @@ EOT
 
 variable "delete_on_create_timeout" {
   type        = bool
-  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false."
-  nullable    = true
-  default     = null
-}
-
-variable "disk_size_gb" {
-  type        = number
-  description = <<-EOT
-DEPRECATED: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
-
- This value must be equal for all shards and node types.
-
- This value is not configurable on M0/M2/M5 clusters.
-
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
-
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value. 
-
- Storage charge calculations depend on whether you choose the default value or a custom value.
-
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
-EOT
+  description = "Indicates whether to delete the resource being created if a timeout is reached when waiting for completion. When set to `true` and timeout occurs, it triggers the deletion and returns immediately without waiting for deletion to complete. When set to `false`, the timeout will not trigger resource deletion. If you suspect a transient error when the value is `true`, wait before retrying to allow resource deletion to finish. Default is `true`."
   nullable    = true
   default     = null
 }
