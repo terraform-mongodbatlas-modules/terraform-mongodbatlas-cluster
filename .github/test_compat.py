@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,6 +31,10 @@ MIN_TFTEST_VERSION = (1, 11)
 
 # Number of parallel workers (default: CPU count, capped at 8)
 MAX_WORKERS = min(os.cpu_count() or 4, 8)
+
+# Retry settings for terraform init (can fail due to network issues)
+INIT_MAX_RETRIES = 3
+INIT_RETRY_DELAY_SECONDS = 10
 
 
 @dataclass
@@ -95,7 +100,7 @@ def run_validate(job: TestJob) -> TestResult:
         copy_module_files(job.target, work_dir)
 
     try:
-        # Run init
+        # Run init with retries
         init_cmd = [
             "mise",
             "x",
@@ -105,18 +110,25 @@ def run_validate(job: TestJob) -> TestResult:
             "init",
             "-backend=false",
         ]
-        init_result = subprocess.run(
-            init_cmd,
-            cwd=work_dir,
-            capture_output=True,
-            text=True,
-        )
+        init_result = None
+        for attempt in range(1, INIT_MAX_RETRIES + 1):
+            init_result = subprocess.run(
+                init_cmd,
+                cwd=work_dir,
+                capture_output=True,
+                text=True,
+            )
+            if init_result.returncode == 0:
+                break
+            if attempt < INIT_MAX_RETRIES:
+                time.sleep(INIT_RETRY_DELAY_SECONDS)
+
         if init_result.returncode != 0:
             return TestResult(
                 version=job.version,
                 target=target_name,
                 passed=False,
-                output=f"init failed:\n{init_result.stderr}",
+                output=f"init failed after {INIT_MAX_RETRIES} attempts:\n{init_result.stderr}",
             )
 
         # Run validate
