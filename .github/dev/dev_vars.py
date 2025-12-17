@@ -6,7 +6,9 @@ import typer
 
 app = typer.Typer()
 
-WORKSPACE_DIR = Path(__file__).parent.parent.parent / "tests" / "workspace_cluster_examples"
+WORKSPACE_DIR = (
+    Path(__file__).parent.parent.parent / "tests" / "workspace_cluster_examples"
+)
 DEV_TFVARS = WORKSPACE_DIR / "dev.tfvars"
 
 
@@ -29,6 +31,19 @@ def org(org_id: str) -> None:
     content = f'org_id = "{org_id}"\n'
     DEV_TFVARS.write_text(content)
     typer.echo(f"Generated {DEV_TFVARS}")
+
+
+@app.command()
+def tfrc(plugin_dir: str) -> None:
+    """Print dev.tfrc content for provider dev_overrides."""
+    content = f'''provider_installation {{
+  dev_overrides {{
+    "mongodb/mongodbatlas" = "{plugin_dir}"
+  }}
+  direct {{}}
+}}
+'''
+    print(content, end="")
 
 
 if __name__ == "__main__":
