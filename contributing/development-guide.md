@@ -6,7 +6,7 @@ Quick guide for contributing to this Terraform module.
 
 ```bash
 # Install required tools (macOS with Homebrew)
-brew install just terraform tflint terraform-docs uv
+brew install just terraform tflint terraform-docs uv pre-commit
 
 # Or use mise for automated tool management
 mise install
@@ -15,14 +15,18 @@ mise install
 git clone <repo-url>
 cd terraform-mongodbatlas-cluster
 
+# Install git hooks (optional but recommended)
+pre-commit install
+pre-commit install --hook-type pre-push
+
 # Verify installation
 just
 
-# Before committing
-just check
+# Before committing (runs automatically if hooks installed)
+just pre-commit
 ```
 
-**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/) • [mise](https://mise.jdx.dev/) (for version compatibility testing)
+**Tools**: [just](https://just.systems/) • [Terraform](https://www.terraform.io/) • [TFLint](https://github.com/terraform-linters/tflint) • [terraform-docs](https://terraform-docs.io/) • [uv](https://docs.astral.sh/uv/) • [pre-commit](https://pre-commit.com/) • [mise](https://mise.jdx.dev/) (for version compatibility testing)
 
 ## Prerequisites
 
@@ -59,6 +63,22 @@ just release-post-push           # Revert after pushing tag
 ```
 
 Run `just --list` for all commands.
+
+## Git Hooks
+
+Git hooks automate checks before commits and pushes. Install with [pre-commit](https://pre-commit.com/):
+
+```bash
+pre-commit install                    # Install pre-commit hook
+pre-commit install --hook-type pre-push  # Install pre-push hook
+```
+
+| Hook | Runs | Command |
+|------|------|---------|
+| pre-commit | Before each commit | `just pre-commit` (fmt, validate, lint, docs, py-check) |
+| pre-push | Before each push | `just pre-push` (pre-commit + unit-plan-tests, py-test) |
+
+To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ## CI/CD Workflows
 
@@ -275,7 +295,7 @@ git push origin main              # Push main with changelog + revert
 git checkout -b feature/your-feature-name
 
 # Make changes and verify
-just check
+just pre-commit
 just plan-examples YOUR_PROJECT_ID  # if applicable
 
 # Commit and push
@@ -287,5 +307,5 @@ git push origin feature/your-feature-name
 ## Getting Help
 
 - Check [Issues](../../../issues) for similar problems
-- Create new issue with output from `just check` if needed
+- Create new issue with output from `just pre-commit` if needed
 - See [Terraform docs](https://www.terraform.io/docs) and [MongoDB Atlas Provider docs](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs)
