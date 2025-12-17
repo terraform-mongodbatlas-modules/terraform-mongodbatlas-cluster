@@ -14,8 +14,6 @@ def generate_header_comment(description: str, regenerate_command: str) -> str:
     return f"<!-- @generated\n{warning_text}\n-->"
 
 
-def generate_header_comment_for_section(
-    description: str, regenerate_command: str
-) -> str:
+def generate_header_comment_for_section(description: str, regenerate_command: str) -> str:
     warning_text = _build_warning_text(description, regenerate_command)
     return f"@generated\n{warning_text}"

@@ -31,9 +31,7 @@ def process_submodule_readme(
         return False
     submodule_name = submodule_dir.name
     content = readme_path.read_text(encoding="utf-8")
-    transformed = transform_submodule_source(
-        content, registry_source, submodule_name, version
-    )
+    transformed = transform_submodule_source(content, registry_source, submodule_name, version)
     if transformed != content:
         readme_path.write_text(transformed, encoding="utf-8")
         print(f"Updated {readme_path}")
@@ -42,9 +40,7 @@ def process_submodule_readme(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Transform submodule README source paths"
-    )
+    parser = argparse.ArgumentParser(description="Transform submodule README source paths")
     parser.add_argument("--version", help="Version to add (e.g., v0.2.0)")
     args = parser.parse_args()
 
