@@ -86,6 +86,24 @@ def compute_registry_source(owner: str, repo_name: str) -> str:
     return registry_source
 
 
+def get_github_repo_info() -> tuple[str, str, str]:
+    """Get GitHub URL, owner, and repo name from git remote.
+
+    Returns:
+        Tuple of (github_url, owner, repo_name)
+    """
+    remote_url = get_git_remote_url()
+    owner, repo_name = parse_github_repo(remote_url)
+    return f"https://github.com/{owner}/{repo_name}", owner, repo_name
+
+
+def get_registry_source() -> str:
+    """Get Terraform Registry source from git remote."""
+    remote_url = get_git_remote_url()
+    owner, repo_name = parse_github_repo(remote_url)
+    return compute_registry_source(owner, repo_name)
+
+
 def main() -> None:
     """Main function."""
     try:
