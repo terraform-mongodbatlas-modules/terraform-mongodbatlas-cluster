@@ -16,7 +16,23 @@ env:
   GH_TOKEN: ${{ secrets.APIX_BOT_PAT || github.token }}
 
 jobs:
-  release:
+  pre-release-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+          docs: 'true'
+      - name: Pre-release validation
+        run: just check-release-ready ${{ inputs.version }}
+
+  release-tag:
+    needs: pre-release-checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -29,27 +45,31 @@ jobs:
           just: 'true'
           terraform: 'true'
           docs: 'true'
-      
       - name: Configure Git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Pre-release validation
-        run: just check-release-ready ${{ inputs.version }}
-      
+          if [[ -n "${{ secrets.APIX_BOT_PAT }}" ]]; then
+            git config user.name "apix-bot[bot]"
+            git config user.email "apix-bot[bot]@users.noreply.github.com"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+          fi
       - name: Create release commits and tag
         run: just release-commit ${{ inputs.version }}
-      
       - name: Push tag
         run: git push origin ${{ inputs.version }}
-      
-      - name: Revert release commit on main
-        run: just release-post-push
-      
-      - name: Push main with changelog and revert
-        run: git push origin main
-      
+
+  release-github:
+    needs: release-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.version }}
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
       - name: Generate release body
         id: release_body
         run: |
@@ -57,7 +77,6 @@ jobs:
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048
         with:
@@ -66,3 +85,28 @@ jobs:
           body: ${{ steps.release_body.outputs.body }}
           draft: false
           prerelease: false
+
+  post-release-revert:
+    needs: release-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ env.GH_TOKEN }}
+      - name: Configure Git
+        run: |
+          if [[ -n "${{ secrets.APIX_BOT_PAT }}" ]]; then
+            git config user.name "apix-bot[bot]"
+            git config user.email "apix-bot[bot]@users.noreply.github.com"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+          fi
+      - name: Pull latest main with release commits
+        run: git pull origin main
+      - name: Revert release commit
+        run: git revert HEAD --no-edit
+      - name: Push main with changelog and revert
+        run: git push origin main
