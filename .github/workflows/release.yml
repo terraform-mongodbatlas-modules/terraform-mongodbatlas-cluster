@@ -83,8 +83,8 @@ jobs:
           fi
       - name: Create release commits and tag
         run: just release-commit ${{ inputs.version }}
-      - name: Push tag
-        run: git push origin ${{ inputs.version }}
+      - name: Push commits and tag
+        run: git push origin main ${{ inputs.version }}
 
   release-github:
     needs: release-tag
@@ -98,6 +98,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           just: 'true'
+          uv: 'true'
       - name: Generate release body
         id: release_body
         run: |
