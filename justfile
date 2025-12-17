@@ -178,11 +178,14 @@ check-release-ready version:
 
 # Create release on main branch with changelog and release commits
 release-commit version:
-    @echo "Creating release {{version}} on main...# TODO: Let's use a $(git {find-my-current-branch-command})"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    echo "Creating release {{version}} on branch=$current_branch..."
     just update-changelog-version {{version}}
     git add CHANGELOG.md
     git commit -m "chore: update CHANGELOG.md for {{version}}"
-    @uv run python .github/update_version.py {{version}}
+    uv run python .github/update_version.py {{version}}
     just gen-examples --version {{version}}
     just gen-readme
     just md-link {{version}}
@@ -190,12 +193,12 @@ release-commit version:
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
-    @echo ""
-    @echo "Release {{version}} ready with tag"
-    @echo "Next steps:"
-    @echo "  1. git push origin {{version}}"
-    @echo "  2. just release-post-push"
-    @echo "  3. git push origin main"
+    echo ""
+    echo "Release {{version}} ready with tag"
+    echo "Next steps:"
+    echo "  1. git push origin {{version}}"
+    echo "  2. just release-post-push"
+    echo "  3. git push origin main"
 
 # Revert the release commit after pushing the tag
 release-post-push:
@@ -217,6 +220,10 @@ check-changelog-entry-file filepath:
 # Update CHANGELOG.md with version and current date
 update-changelog-version version:
     uv run python .github/changelog/update_changelog_version.py {{version}}
+
+# Generate GitHub release body from CHANGELOG.md
+generate-release-body version:
+    @PYTHONPATH={{justfile_directory()}}/.github uv run python .github/changelog/generate_release_body.py {{version}}
 
 # Build provider from source and create dev.tfrc for dev_overrides
 setup-provider-dev provider_path:

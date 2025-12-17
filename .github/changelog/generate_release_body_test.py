@@ -3,6 +3,7 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import pytest
 from changelog import generate_release_body as mod
 
 
@@ -46,8 +47,8 @@ def test_extract_version_section_not_found(tmp_path: Path) -> None:
     changelog = tmp_path / "CHANGELOG.md"
     changelog.write_text("## 0.1.0 (October 31, 2025)\n\n* Initial\n", encoding="utf-8")
 
-    section = mod.extract_version_section(changelog, "v0.9.0")
-    assert section == ""
+    with pytest.raises(ValueError, match="Version v0.9.0 not found"):
+        mod.extract_version_section(changelog, "v0.9.0")
 
 
 def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:

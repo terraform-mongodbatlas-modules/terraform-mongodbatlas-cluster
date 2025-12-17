@@ -1,4 +1,3 @@
-# TODO: This workflow should be updated to rely on a ${{ secrets.APIX_BOT_PAT }} secret with a PAT instead of the current GH User, this way we can add that github user as a bypass user for the branch ruleset, and allow committing to the main branch
 name: Release
 run-name: 'Release ${{ inputs.version }}'
 on:
@@ -12,6 +11,10 @@ on:
 permissions:
   contents: write
 
+env:
+  # Use APIX_BOT_PAT if available (bypasses branch rulesets), otherwise fall back to GITHUB_TOKEN
+  GH_TOKEN: ${{ secrets.APIX_BOT_PAT || github.token }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -20,6 +23,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
+          token: ${{ env.GH_TOKEN }}
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -49,7 +53,7 @@ jobs:
       - name: Generate release body
         id: release_body
         run: |
-          BODY=$(uv run python .github/changelog/generate_release_body.py ${{ inputs.version }})
+          BODY=$(just generate-release-body ${{ inputs.version }})
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

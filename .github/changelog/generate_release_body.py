@@ -4,9 +4,6 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(
-    0, str(Path(__file__).parent.parent)
-)  # TODO: this should rely on PYTHONPATH set instead, like in other scripts
 from tf_registry_source import (
     compute_registry_source,
     get_git_remote_url,
@@ -20,10 +17,9 @@ def extract_version_section(changelog_path: Path, version: str) -> str:
     content = changelog_path.read_text(encoding="utf-8")
 
     pattern = rf"^## {re.escape(version_without_v)} \([^)]+\)\s*\n(.*?)(?=^## |\Z)"
-    match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
-    if not match:  # this should raise a ValueError if not found
-        return ""
-    return match.group(1).strip()
+    if match := re.search(pattern, content, re.MULTILINE | re.DOTALL):
+        return match.group(1).strip()
+    raise ValueError(f"Version {version} not found in {changelog_path}")
 
 
 def get_github_repo_url() -> tuple[str, str, str]:
@@ -50,7 +46,7 @@ def generate_release_body(version: str, changelog_path: Path) -> str:
         "}",
         "```\n",
         "## What's Changed\n",
-        changelog_section if changelog_section else "_No changelog entries found._",
+        changelog_section,
         "\n## Documentation\n",
         f"- [Terraform Registry](https://registry.terraform.io/modules/{registry_source}/{version_without_v})",
         f"- [README]({github_url}/blob/{version}/README.md)",
