@@ -55,6 +55,10 @@ class SchemaAttribute(BaseModel):
     def is_computed_only(self) -> bool:
         return self.computed and not self.optional and not self.required
 
+    @property
+    def is_output_candidate(self) -> bool:
+        return self.computed and not self.required
+
 
 class SchemaBlockType(BaseModel):
     nesting_mode: NestingMode

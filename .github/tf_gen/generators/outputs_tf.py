@@ -1,0 +1,226 @@
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+
+from pydantic import BaseModel
+from tf_gen.config import GenerationTarget
+from tf_gen.generators.hcl_write import format_terraform, render_description
+from tf_gen.generators.variables_tf import DEPRECATED_PREFIX
+from tf_gen.schema.models import ResourceSchema, SchemaAttribute, SchemaBlockType
+from tf_gen.schema.types import NestingMode
+
+logger = logging.getLogger(__name__)
+
+
+class OutputSpec(BaseModel):
+    name: str
+    value: str
+    description: str | None = None
+
+
+@dataclass
+class OutputCollector:
+    resource_ref: str
+    config: GenerationTarget
+    outputs: list[OutputSpec] = field(default_factory=list)
+    set_outputs: set[str] = field(default_factory=set)
+
+    def add(self, spec: OutputSpec, is_set: bool = False) -> None:
+        self.outputs.append(spec)
+        if is_set:
+            self.set_outputs.add(spec.name)
+
+
+def should_generate_output(
+    name: str, attr: SchemaAttribute, config: GenerationTarget
+) -> bool:
+    if name in config.outputs_excluded:
+        return False
+    return attr.is_output_candidate
+
+
+def build_resource_ref(
+    provider_name: str, resource_type: str, config: GenerationTarget
+) -> str:
+    base = f"{provider_name}_{resource_type}.{config.label}"
+    return f"{base}[0]" if config.use_resource_count else base
+
+
+def _build_value_expr(
+    resource_ref: str,
+    parent_path: str | None,
+    leaf: str,
+    nesting: NestingMode | None,
+    parent_optional: bool,
+) -> str:
+    if parent_path is None:
+        return f"{resource_ref}.{leaf}"
+
+    full_ref = f"{resource_ref}.{parent_path}"
+    match nesting:
+        case NestingMode.list | NestingMode.set:
+            leaf_expr = f"{full_ref}[*].{leaf}"
+            if parent_optional:
+                return f"{full_ref} == null ? null : {leaf_expr}"
+            return leaf_expr
+        case NestingMode.single | None:
+            leaf_expr = f"{full_ref}.{leaf}"
+            if parent_optional:
+                return f"{full_ref} == null ? null : {leaf_expr}"
+            return leaf_expr
+
+
+def _should_expand_children(
+    name: str, attr: SchemaAttribute, config: GenerationTarget
+) -> bool:
+    if name in config.output_tf_overrides:
+        override = config.output_tf_overrides[name]
+        if override.include_children is not None:
+            return override.include_children
+    if attr.nested_type is None:
+        return False
+    child_count = len(attr.nested_type.attributes)
+    return child_count <= config.output_attribute_max_children
+
+
+def _make_description(attr: SchemaAttribute) -> str | None:
+    desc = attr.description
+    if attr.deprecated and desc:
+        return f"{DEPRECATED_PREFIX}{desc}"
+    if attr.deprecated:
+        return DEPRECATED_PREFIX.rstrip(": ")
+    return desc
+
+
+def _collect_from_nested_attr(
+    collector: OutputCollector,
+    parent_name: str,
+    attr: SchemaAttribute,
+) -> None:
+    if attr.nested_type is None:
+        return
+    parent_optional = not attr.required
+    nesting = attr.nested_type.nesting_mode
+    is_set = nesting == NestingMode.set
+
+    for child_name, child_attr in attr.nested_type.attributes.items():
+        output_name = f"{parent_name}_{child_name}"
+        if output_name in collector.config.outputs_excluded:
+            continue
+        value = _build_value_expr(
+            collector.resource_ref, parent_name, child_name, nesting, parent_optional
+        )
+        spec = OutputSpec(
+            name=output_name, value=value, description=child_attr.description
+        )
+        collector.add(spec, is_set=is_set)
+
+
+def collect_from_attributes(
+    attrs: dict[str, SchemaAttribute],
+    collector: OutputCollector,
+) -> None:
+    for name, attr in attrs.items():
+        if not attr.is_output_candidate:
+            continue
+        # Add parent output unless excluded
+        if name not in collector.config.outputs_excluded:
+            value = f"{collector.resource_ref}.{name}"
+            desc = _make_description(attr)
+            is_set = (
+                attr.nested_type and attr.nested_type.nesting_mode == NestingMode.set
+            )
+            collector.add(
+                OutputSpec(name=name, value=value, description=desc),
+                is_set=bool(is_set),
+            )
+        # Expand children regardless of parent exclusion
+        if _should_expand_children(name, attr, collector.config):
+            _collect_from_nested_attr(collector, name, attr)
+
+
+def collect_from_block_types(
+    block_types: dict[str, SchemaBlockType],
+    collector: OutputCollector,
+) -> None:
+    for bt_name, bt in block_types.items():
+        if bt_name == "timeouts" or bt_name in collector.config.outputs_excluded:
+            continue
+        nesting = bt.nesting_mode
+        parent_optional = not bt.is_required
+        is_set = nesting == NestingMode.set
+
+        computed_children = [
+            (name, attr)
+            for name, attr in bt.block.attributes.items()
+            if attr.is_output_candidate
+        ]
+        if len(computed_children) > collector.config.output_attribute_max_children:
+            computed_children = sorted(computed_children, key=lambda x: x[0])[
+                : collector.config.output_attribute_max_children
+            ]
+
+        for child_name, child_attr in computed_children:
+            output_name = f"{bt_name}_{child_name}"
+            if output_name in collector.config.outputs_excluded:
+                continue
+            value = _build_value_expr(
+                collector.resource_ref, bt_name, child_name, nesting, parent_optional
+            )
+            collector.add(
+                OutputSpec(
+                    name=output_name, value=value, description=child_attr.description
+                ),
+                is_set=is_set,
+            )
+
+
+def apply_overrides(spec: OutputSpec, config: GenerationTarget) -> OutputSpec:
+    if spec.name not in config.output_tf_overrides:
+        return spec
+    override = config.output_tf_overrides[spec.name]
+    data = spec.model_dump()
+    if override.name:
+        data["name"] = override.name
+    if override.value:
+        data["value"] = override.value
+    return OutputSpec(**data)
+
+
+def render_output_block(spec: OutputSpec) -> str:
+    lines = [f'output "{spec.name}" {{', f"  value = {spec.value}"]
+    if spec.description:
+        lines.append(f"  description = {render_description(spec.description)}")
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def log_set_warnings(collector: OutputCollector, log: logging.Logger) -> None:
+    for name in sorted(collector.set_outputs):
+        log.warning(
+            f"Output '{name}' uses set splat [*] with non-deterministic ordering. "
+            f"Consider updating the output description to note this behavior."
+        )
+
+
+def generate_outputs_tf(
+    schema: ResourceSchema,
+    config: GenerationTarget,
+    provider_name: str,
+    log: logging.Logger | None = None,
+) -> str:
+    resource_ref = build_resource_ref(provider_name, config.resource_type, config)
+    collector = OutputCollector(resource_ref=resource_ref, config=config)
+
+    collect_from_attributes(schema.block.attributes, collector)
+    collect_from_block_types(schema.block.block_types, collector)
+
+    specs = [apply_overrides(s, config) for s in collector.outputs]
+    specs.sort(key=lambda s: s.name)
+
+    if log:
+        log_set_warnings(collector, log)
+
+    content = "\n\n".join(render_output_block(s) for s in specs)
+    return format_terraform(content)

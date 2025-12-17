@@ -7,6 +7,12 @@ import yaml
 from pydantic import BaseModel, Field
 
 
+class OutputAttributeOverride(BaseModel):
+    name: str | None = None
+    value: str | None = None
+    include_children: bool | None = None
+
+
 class GenerationTarget(BaseModel):
     resource_type: str = ""
     output_dir: Path = Field(default_factory=Path.cwd)
@@ -26,7 +32,10 @@ class GenerationTarget(BaseModel):
     variable_tf: dict[str, dict[str, Any]] = Field(default_factory=dict)
     output_filename: str = "output.tf"
     outputs_excluded: list[str] = Field(default_factory=list)
-    output_tf_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    output_tf_overrides: dict[str, OutputAttributeOverride] = Field(
+        default_factory=dict
+    )
+    output_attribute_max_children: int = 5
 
 
 class ProviderGenConfig(BaseModel):
