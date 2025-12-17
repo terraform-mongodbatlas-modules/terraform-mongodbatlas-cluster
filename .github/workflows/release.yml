@@ -13,22 +13,22 @@ on:
         required: true
         type: string
       skip-pre-release-checks:
-        description: 'Skip pre-release validation'
+        description: 'Skip pre-release validation (can be useful in forks, that always updates the registry source in check-docs target)'
         required: false
         type: boolean
         default: false
       skip-release-tag:
-        description: 'Skip creating release commits and tag'
+        description: 'Skip creating the changelog commit, release commit, and tag (useful to re-run other steps after manual fixes)'
         required: false
         type: boolean
         default: false
       skip-release-github:
-        description: 'Skip creating GitHub release'
+        description: 'Skip creating GitHub release (useful if release was already created manually)'
         required: false
         type: boolean
         default: false
       skip-post-release-revert:
-        description: 'Skip reverting release commit on main'
+        description: 'Skip reverting release commit on main (useful if revert was already done manually)'
         required: false
         type: boolean
         default: false
@@ -61,6 +61,8 @@ jobs:
     needs: pre-release-checks
     if: ${{ always() && !inputs.skip-release-tag && (needs.pre-release-checks.result == 'success' || needs.pre-release-checks.result == 'skipped') }}
     runs-on: ubuntu-latest
+    outputs:
+      release_commit_sha: ${{ steps.create_commits.outputs.release_commit_sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -82,7 +84,10 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
           fi
       - name: Create release commits and tag
-        run: just release-commit ${{ inputs.version }}
+        id: create_commits
+        run: |
+          just release-commit ${{ inputs.version }}
+          echo "release_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Push commits and tag
         run: git push origin main ${{ inputs.version }}
 
@@ -115,9 +120,14 @@ jobs:
           draft: false
           prerelease: false
 
+  # Note: Runs in parallel with release-github for speed. This is safe because:
+  # - release-github checks out the tag (immutable)
+  # - post-release-revert operates on main branch
+  # Uses release_commit_sha to avoid race conditions if PRs are merged during release
+  # Only runs if release-tag succeeded (no point reverting if no commit was created)
   post-release-revert:
     needs: release-tag
-    if: ${{ always() && !inputs.skip-post-release-revert && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
+    if: ${{ !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -137,6 +147,6 @@ jobs:
       - name: Pull latest main with release commits
         run: git pull origin main
       - name: Revert release commit
-        run: git revert HEAD --no-edit
+        run: git revert ${{ needs.release-tag.outputs.release_commit_sha }} --no-edit
       - name: Push main with changelog and revert
         run: git push origin main
