@@ -66,12 +66,17 @@ def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(
         mod,
-        "get_github_repo_url",
+        "get_github_repo_info",
         lambda: (
             "https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster",
             "terraform-mongodbatlas-modules",
             "terraform-mongodbatlas-cluster",
         ),
+    )
+    monkeypatch.setattr(
+        mod,
+        "get_registry_source",
+        lambda: "terraform-mongodbatlas-modules/cluster/mongodbatlas",
     )
 
     body = mod.generate_release_body("v0.2.0", changelog)

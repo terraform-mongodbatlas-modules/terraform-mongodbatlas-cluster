@@ -4,11 +4,7 @@ import re
 import sys
 from pathlib import Path
 
-from tf_registry_source import (
-    compute_registry_source,
-    get_git_remote_url,
-    parse_github_repo,
-)
+from tf_registry_source import get_github_repo_info, get_registry_source
 
 
 def extract_version_section(changelog_path: Path, version: str) -> str:
@@ -22,18 +18,11 @@ def extract_version_section(changelog_path: Path, version: str) -> str:
     raise ValueError(f"Version {version} not found in {changelog_path}")
 
 
-def get_github_repo_url() -> tuple[str, str, str]:
-    """Get GitHub URL, owner, and repo name from git remote."""
-    remote_url = get_git_remote_url()
-    owner, repo_name = parse_github_repo(remote_url)
-    return f"https://github.com/{owner}/{repo_name}", owner, repo_name
-
-
 def generate_release_body(version: str, changelog_path: Path) -> str:
     """Generate complete GitHub release body."""
     version_without_v = version.removeprefix("v")
-    github_url, owner, repo_name = get_github_repo_url()
-    registry_source = compute_registry_source(owner, repo_name)
+    github_url, _, _ = get_github_repo_info()
+    registry_source = get_registry_source()
     changelog_section = extract_version_section(changelog_path, version)
 
     parts = [

@@ -131,6 +131,24 @@ gen-examples *args:
 gen-readme *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/root_readme.py {{args}}
 
+# Generate submodule README.md files with registry source
+gen-submodule-readme *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run python .github/submodule_readme.py {{args}}
+
+# Generate all release-specific updates (versions, docs, links)
+docs-release version:
+    uv run python .github/update_version.py {{version}}
+    @echo "Module versions updated successfully"
+    just gen-examples --version {{version}}
+    @echo "Examples README.md updated successfully"
+    just gen-submodule-readme --version {{version}}
+    @echo "Submodule README.md updated successfully"
+    just gen-readme
+    @echo "Root README.md updated successfully"
+    just md-link {{version}}
+    @echo "Markdown links converted to absolute URLs"
+    just fmt
+
 # Show Terraform Registry source for this module
 tf-registry-source:
     @uv run python .github/tf_registry_source.py
@@ -185,11 +203,7 @@ release-commit version:
     just update-changelog-version {{version}}
     git add CHANGELOG.md
     git commit -m "chore: update CHANGELOG.md for {{version}}"
-    uv run python .github/update_version.py {{version}}
-    just gen-examples --version {{version}}
-    just gen-readme
-    just md-link {{version}}
-    just fmt
+    just docs-release {{version}}
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
