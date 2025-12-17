@@ -10,4 +10,9 @@ terraform {
       version = "2.4.1"
     }
   }
+
+  provider_meta "mongodbatlas" {
+    module_name    = "cluster/cluster_import"
+    module_version = "local"
+  }
 }

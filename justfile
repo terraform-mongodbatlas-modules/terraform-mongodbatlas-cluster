@@ -156,24 +156,51 @@ check-docs:
 test-compat:
     uv run --with pyyaml python .github/test_compat.py
 
-# Create release branch with version-specific documentation
+# Validate release prerequisites (used locally and by GHA)
+check-release-ready version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Validating version {{version}}..."
+    uv run python .github/validate_version.py {{version}}
+    echo "Checking CHANGELOG.md is up-to-date..."
+    just init-changelog
+    just build-changelog
+    if ! git diff --quiet CHANGELOG.md; then
+        echo "Error: CHANGELOG.md is out of date"
+        echo "Run 'just init-changelog && just build-changelog' and commit changes"
+        git diff CHANGELOG.md
+        exit 1
+    fi
+    echo "CHANGELOG.md is up-to-date"
+    echo "Checking documentation is up-to-date..."
+    just check-docs
+    echo "All pre-release checks passed for {{version}}"
+
+# Create release on main branch with changelog and release commits
 release-commit version:
-    @echo "Creating release {{version}}..."
-    @uv run python .github/validate_version.py {{version}}
-    git checkout -b {{version}}
+    @echo "Creating release {{version}} on main...# TODO: Let's use a $(git {find-my-current-branch-command})"
+    just update-changelog-version {{version}}
+    git add CHANGELOG.md
+    git commit -m "chore: update CHANGELOG.md for {{version}}"
     @uv run python .github/update_version.py {{version}}
     just gen-examples --version {{version}}
     just gen-readme
     just md-link {{version}}
     just fmt
-    @echo "Committing changes..."
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
     @echo ""
-    @echo "✓ Release branch {{version}} ready with tag"
-    @echo "  Review changes, then push:"
-    @echo "  git push origin {{version}} --tags"
+    @echo "Release {{version}} ready with tag"
+    @echo "Next steps:"
+    @echo "  1. git push origin {{version}}"
+    @echo "  2. just release-post-push"
+    @echo "  3. git push origin main"
+
+# Revert the release commit after pushing the tag
+release-post-push:
+    git revert HEAD --no-edit
+    @echo "Release commit reverted. Push main: git push origin main"
 
 # Install go-changelog tool (required by build-changelog)
 init-changelog:
