@@ -61,8 +61,13 @@ lint:
     tflint -f compact --recursive --minimum-failure-severity=warning
     terraform fmt -check -recursive
 
+# Python linting
 py-check:
     {{uv_gh}} ruff check .github
+
+# Can fix some py-check errors
+py-fix:
+    {{uv_gh}} ruff check --fix .github
 
 # TESTING
 py-test:

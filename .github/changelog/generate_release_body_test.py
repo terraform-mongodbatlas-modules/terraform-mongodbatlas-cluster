@@ -4,9 +4,9 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from release import tf_registry_source
 
 from changelog import generate_release_body as mod
+from release import tf_registry_source
 
 
 def _dedent(s: str) -> str:
