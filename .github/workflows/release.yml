@@ -1,5 +1,10 @@
 name: Release
-run-name: 'Release ${{ inputs.version }}'
+run-name: >-
+  Release ${{ inputs.version }}
+  ${{ inputs.skip-pre-release-checks && '(skip-checks)' || '' }}
+  ${{ inputs.skip-release-tag && '(skip-tag)' || '' }}
+  ${{ inputs.skip-release-github && '(skip-github)' || '' }}
+  ${{ inputs.skip-post-release-revert && '(skip-revert)' || '' }}
 on:
   workflow_dispatch:
     inputs:
@@ -7,6 +12,26 @@ on:
         description: 'Release version (e.g., v1.0.0)'
         required: true
         type: string
+      skip-pre-release-checks:
+        description: 'Skip pre-release validation'
+        required: false
+        type: boolean
+        default: false
+      skip-release-tag:
+        description: 'Skip creating release commits and tag'
+        required: false
+        type: boolean
+        default: false
+      skip-release-github:
+        description: 'Skip creating GitHub release'
+        required: false
+        type: boolean
+        default: false
+      skip-post-release-revert:
+        description: 'Skip reverting release commit on main'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -17,6 +42,7 @@ env:
 
 jobs:
   pre-release-checks:
+    if: ${{ !inputs.skip-pre-release-checks }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -33,6 +59,7 @@ jobs:
 
   release-tag:
     needs: pre-release-checks
+    if: ${{ always() && !inputs.skip-release-tag && (needs.pre-release-checks.result == 'success' || needs.pre-release-checks.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -61,6 +88,7 @@ jobs:
 
   release-github:
     needs: release-tag
+    if: ${{ always() && !inputs.skip-release-github && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -88,6 +116,7 @@ jobs:
 
   post-release-revert:
     needs: release-tag
+    if: ${{ always() && !inputs.skip-post-release-revert && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
