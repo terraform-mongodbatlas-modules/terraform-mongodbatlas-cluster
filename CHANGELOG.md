@@ -1,5 +1,7 @@
 ## (Unreleased)
 
+## 0.2.0 (December 17, 2025)
+
 ENHANCEMENTS:
 
 * example/11_module_wrapper_cluster_size: Simplifies cluster_wrapper example by consolidating regions_helper module logic into a single comprehensive module ([#40](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/40))
