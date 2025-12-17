@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import logging
-import subprocess
-from tempfile import NamedTemporaryFile
-
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget
+from tf_gen.generators.hcl_write import format_terraform, render_description
 from tf_gen.schema.models import (
     ResourceSchema,
     SchemaAttribute,
@@ -14,8 +11,6 @@ from tf_gen.schema.models import (
     TfType,
 )
 from tf_gen.schema.types import AttrType, NestingMode, TfTypeKind
-
-logger = logging.getLogger(__name__)
 
 DEPRECATED_PREFIX = "DEPRECATED: "
 
@@ -211,17 +206,10 @@ def block_type_to_variable_spec(
     return _apply_overrides(spec, name, config)
 
 
-def _render_description(desc: str) -> str:
-    if "\n" in desc:
-        return f"<<-EOT\n{desc}\nEOT"
-    escaped = desc.replace('"', '\\"')
-    return f'"{escaped}"'
-
-
 def render_variable_block(spec: VariableSpec) -> str:
     lines = [f'variable "{spec.name}" {{', f"  type = {spec.type_str}"]
     if spec.description:
-        lines.append(f"  description = {_render_description(spec.description)}")
+        lines.append(f"  description = {render_description(spec.description)}")
     if spec.nullable:
         lines.append("  nullable = true")
     if spec.default is not None:
@@ -271,17 +259,3 @@ def generate_variables_tf(
         content = "\n\n".join(render_variable_block(s) for s in specs)
 
     return format_terraform(content)
-
-
-def format_terraform(content: str) -> str:
-    try:
-        with NamedTemporaryFile(mode="w", suffix=".tf", delete=False) as f:
-            f.write(content)
-            f.flush()
-            subprocess.run(
-                ["terraform", "fmt", f.name], check=True, capture_output=True
-            )
-            return open(f.name).read()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        logger.warning("terraform fmt unavailable, returning unformatted")
-        return content
