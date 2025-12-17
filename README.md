@@ -39,7 +39,7 @@ One of this project's primary objectives is to provide durable modules that supp
 
 ## Getting Started
 
-This section guides you through the basic steps to set up Terraform and run this module to create a new [development cluster](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster) as a practical example.
+This section guides you through the basic steps to set up Terraform and run this module to create a new [development cluster](./examples/08_development_cluster) as a practical example.
 
 ### Pre Requirements
 
@@ -55,7 +55,7 @@ Perform the following steps to download and configure the tools required to crea
 
    **NOTE**: Service Accounts (SA) is the preferred authentication method. See [Grant Programatic Access to an Organization](https://www.mongodb.com/docs/atlas/configure-api-access/#grant-programmatic-access-to-an-organization) in the MongoDB Atlas documentation for detailed instructions on configuring SA access to your project.
 
-4. Use an existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) or [create a new Atlas Project](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster/README.md/#optionally-create-a-new-atlas-project-resource).
+4. Use an existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) or [create a new Atlas Project](./examples/08_development_cluster/README.md/#optionally-create-a-new-atlas-project-resource).
 
 ### Create a New Cluster
 
@@ -64,9 +64,9 @@ Perform the following steps to create a new cluster using the cluster module:
 1. Create your Terraform configuration files.
   Ensure your files contain the code provided in this repository:
   
-   - [main.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster/README.md/#code-snippet)
-   - [variables.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster/variables.tf)
-   - [versions.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster/versions.tf)
+   - [main.tf](./examples/08_development_cluster/README.md/#code-snippet)
+   - [variables.tf](./examples/08_development_cluster/variables.tf)
+   - [versions.tf](examples/08_development_cluster/versions.tf)
 
 2. Initialize Terraform.
   
@@ -108,29 +108,29 @@ Run 'just gen-readme' to regenerate. -->
 
 Cluster Type | Environment | Name
 --- | --- | ---
-REPLICASET | Development | [Development Cluster](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/08_development_cluster)
-SHARDED | Production | [Production Cluster with Auto Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/01_production_cluster_with_auto_scaling)
-SHARDED | Production | [Production Cluster with Manual Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/02_production_cluster_with_manual_scaling)
+REPLICASET | Development | [Development Cluster](./examples/08_development_cluster)
+SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_production_cluster_with_auto_scaling)
+SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_production_cluster_with_manual_scaling)
 
 ## Examples
 
 Cluster Type | Name
 --- | ---
-SHARDED | [Cluster with Analytics Nodes](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/03_cluster_with_analytics_nodes)
-REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/04_cluster_with_multi_regions_local)
-SHARDED | [Cluster with Multi Regions Global (US+EU)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/05_cluster_with_multi_regions_global)
-GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/06_cluster_with_multi_zones)
-SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/07_cluster_with_multi_clouds)
-SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/09_cluster_using_replication_specs)
-GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/10_cluster_with_multi_zone_multi_shards)
-Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/11_module_wrapper_cluster_size)
-SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/examples/12_cluster_uniform_sharded_topology)
+SHARDED | [Cluster with Analytics Nodes](./examples/03_cluster_with_analytics_nodes)
+REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](./examples/04_cluster_with_multi_regions_local)
+SHARDED | [Cluster with Multi Regions Global (US+EU)](./examples/05_cluster_with_multi_regions_global)
+GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_cluster_with_multi_zones)
+SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_cluster_with_multi_clouds)
+SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_cluster_using_replication_specs)
+GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
+SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
 
 <!-- END_TABLES -->
 
 ## Cluster Topology Configuration
 
-**For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/docs/cluster_topology.md), which includes detailed explanations, examples, and migration instructions.**
+**For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](./docs/cluster_topology.md), which includes detailed explanations, examples, and migration instructions.**
 
 This module offers two mutually exclusive ways to configure cluster topology:
 
@@ -764,13 +764,13 @@ The module provides two approaches to accommodate different user needs and migra
 - Easier migration path from existing `mongodbatlas_advanced_cluster` resources
 - Ideal for users already familiar with the resource structure
 
-📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/docs/cluster_topology.md)**
+📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
 
 ### Why does this module require Terraform 1.9+ when the provider supports 1.7.x+?
 
 This module requires Terraform 1.9+ due to the use of cross-variable validation references, which are only supported in Terraform 1.9 and later. While the [MongoDB Atlas Provider](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix) supports Terraform 1.7.x+, this module's validation patterns require 1.9+.
 
-See [Terraform Version Requirements](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/docs/terraform_version_requirements.md) for detailed explanation.
+See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
 
 ### What is the `provider_meta "mongodbatlas"` doing?
 
