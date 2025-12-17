@@ -92,7 +92,7 @@ Run `just --list` for all commands.
 
 ## Testing
 
-See [test-guide.md](./test-guide.md) for detailed testing documentation including:
+See [test-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/test-guide.md) for detailed testing documentation including:
 - Authentication setup
 - Unit and integration tests
 - Version compatibility testing
@@ -128,7 +128,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
+**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 
@@ -210,7 +210,7 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 
-See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
+See [documentation-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/documentation-guide.md) for detailed documentation contributor guidelines.
 
 ## Release Process (Maintainers)
 
@@ -273,6 +273,6 @@ git push origin feature/your-feature-name
 
 ## Getting Help
 
-- Check [Issues](../../../issues) for similar problems
+- Check [Issues](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/../../../issues) for similar problems
 - Create new issue with output from `just check` if needed
 - See [Terraform docs](https://www.terraform.io/docs) and [MongoDB Atlas Provider docs](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs)

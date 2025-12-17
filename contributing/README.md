@@ -4,10 +4,10 @@ This directory contains guides for contributors to the terraform-mongodbatlas-cl
 
 ## Available Guides
 
-- **[Development Guide](development-guide.md)** - Quick start, development workflow, and release process
-- **[Test Guide](test-guide.md)** - Running unit, integration, and plan snapshot tests
-- **[Documentation Guide](documentation-guide.md)** - Working with auto-generated documentation
-- **[Changelog Guide](changelog-process.md)** - Creating changelog entries and understanding the changelog workflow
+- **[Development Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/development-guide.md)** - Quick start, development workflow, and release process
+- **[Test Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/test-guide.md)** - Running unit, integration, and plan snapshot tests
+- **[Documentation Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/documentation-guide.md)** - Working with auto-generated documentation
+- **[Changelog Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/contributing/changelog-process.md)** - Creating changelog entries and understanding the changelog workflow
 
 ## Quick Start
 
@@ -25,6 +25,6 @@ just check
 
 ## Getting Help
 
-- Check [Issues](../../../issues) for similar problems
+- Check [Issues](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.2.0/../../../issues) for similar problems
 - Create new issue with output from `just check` if needed
 - See [Terraform docs](https://www.terraform.io/docs) and [MongoDB Atlas Provider docs](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs)
