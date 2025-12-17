@@ -44,7 +44,7 @@ variable "is_schema_advisor_enabled" {
 
 variable "is_slow_operation_thresholding_enabled" {
   type        = bool
-  description = "DEPRECATED: "
+  description = "DEPRECATED"
   nullable    = true
   default     = null
 }

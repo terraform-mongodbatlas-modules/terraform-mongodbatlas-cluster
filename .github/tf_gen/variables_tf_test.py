@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from tf_gen.config import GenerationTarget
+from tf_gen.generators.hcl_write import DEPRECATED_NAME
 from tf_gen.generators.variables_tf import (
-    DEPRECATED_PREFIX,
     attr_to_variable_spec,
     block_type_to_variable_spec,
     generate_variables_tf,
@@ -111,7 +111,7 @@ def test_attr_to_variable_deprecated(backup_schedule_schema: dict):
     config = GenerationTarget()
     spec = attr_to_variable_spec("replication_spec_id", repl_spec_id, config)
     assert spec.description is not None
-    assert spec.description.startswith(DEPRECATED_PREFIX)
+    assert spec.description.startswith(DEPRECATED_NAME)
 
 
 def test_attr_to_variable_sensitive(database_user_schema: dict):
