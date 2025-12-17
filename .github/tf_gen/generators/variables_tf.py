@@ -3,8 +3,8 @@ from __future__ import annotations
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget
 from tf_gen.generators.hcl_write import (
-    format_terraform,
     make_description,
+    render_blocks,
     render_description,
 )
 from tf_gen.schema.models import (
@@ -247,8 +247,6 @@ def generate_variables_tf(
         single_spec = _build_single_variable_spec(
             specs, provider_name, config.resource_type
         )
-        content = render_variable_block(single_spec)
-    else:
-        content = "\n\n".join(render_variable_block(s) for s in specs)
+        return render_blocks([single_spec], render_variable_block)
 
-    return format_terraform(content)
+    return render_blocks(specs, render_variable_block)

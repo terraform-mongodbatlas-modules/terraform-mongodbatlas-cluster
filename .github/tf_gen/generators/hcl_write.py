@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from collections.abc import Callable
 from tempfile import NamedTemporaryFile
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +45,11 @@ def format_terraform(content: str) -> str:
     except (subprocess.CalledProcessError, FileNotFoundError):
         logger.warning("terraform fmt unavailable, returning unformatted")
         return content
+
+
+T = TypeVar("T")
+
+
+def render_blocks(specs: list[T], render_fn: Callable[[T], str]) -> str:
+    content = "\n\n".join(render_fn(s) for s in specs)
+    return format_terraform(content)

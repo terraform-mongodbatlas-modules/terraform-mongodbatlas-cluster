@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget
 from tf_gen.generators.hcl_write import (
-    format_terraform,
     make_description,
+    render_blocks,
     render_description,
 )
 from tf_gen.schema.models import ResourceSchema, SchemaAttribute, SchemaBlockType
@@ -218,5 +218,4 @@ def generate_outputs_tf(
     if log:
         log_set_warnings(collector, log)
 
-    content = "\n\n".join(render_output_block(s) for s in specs)
-    return format_terraform(content)
+    return render_blocks(specs, render_output_block)
