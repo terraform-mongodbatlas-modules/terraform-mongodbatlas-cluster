@@ -5,8 +5,11 @@ from dataclasses import dataclass, field
 
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget
-from tf_gen.generators.hcl_write import format_terraform, render_description
-from tf_gen.generators.variables_tf import DEPRECATED_PREFIX
+from tf_gen.generators.hcl_write import (
+    format_terraform,
+    make_description,
+    render_description,
+)
 from tf_gen.schema.models import ResourceSchema, SchemaAttribute, SchemaBlockType
 from tf_gen.schema.types import NestingMode
 
@@ -84,15 +87,6 @@ def _should_expand_children(
     return child_count <= config.output_attribute_max_children
 
 
-def _make_description(attr: SchemaAttribute) -> str | None:
-    desc = attr.description
-    if attr.deprecated and desc:
-        return f"{DEPRECATED_PREFIX}{desc}"
-    if attr.deprecated:
-        return DEPRECATED_PREFIX.rstrip(": ")
-    return desc
-
-
 def _collect_from_nested_attr(
     collector: OutputCollector,
     parent_name: str,
@@ -127,7 +121,9 @@ def collect_from_attributes(
         # Add parent output unless excluded
         if name not in collector.config.outputs_excluded:
             value = f"{collector.resource_ref}.{name}"
-            desc = _make_description(attr)
+            desc = make_description(
+                attr.description, attr.deprecated, attr.deprecated_message
+            )
             is_set = (
                 attr.nested_type and attr.nested_type.nesting_mode == NestingMode.set
             )

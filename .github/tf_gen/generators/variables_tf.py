@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget
-from tf_gen.generators.hcl_write import format_terraform, render_description
+from tf_gen.generators.hcl_write import (
+    format_terraform,
+    make_description,
+    render_description,
+)
 from tf_gen.schema.models import (
     ResourceSchema,
     SchemaAttribute,
@@ -11,8 +15,6 @@ from tf_gen.schema.models import (
     TfType,
 )
 from tf_gen.schema.types import AttrType, NestingMode, TfTypeKind
-
-DEPRECATED_PREFIX = "DEPRECATED: "
 
 
 class VariableSpec(BaseModel):
@@ -36,7 +38,7 @@ def _render_object_fields(fields: list[str], indent: int = 0) -> str:
 def render_tf_type(tf_type: TfType, indent: int = 0) -> str:
     match tf_type.kind:
         case TfTypeKind.primitive:
-            return "any" if tf_type.primitive == AttrType.dynamic else tf_type.primitive
+            return "any" if tf_type.primitive == AttrType.dynamic else tf_type.primitive  # pyright: ignore[reportReturnType]
         case TfTypeKind.collection:
             elem = (
                 render_tf_type(tf_type.element_type, indent)
@@ -52,7 +54,7 @@ def render_tf_type(tf_type: TfType, indent: int = 0) -> str:
                 for k, v in sorted(tf_type.object_attrs.items())
             ]
             return _render_object_fields(fields, indent)
-    return "any"
+    raise ValueError(f"Unknown TF type kind: {tf_type.kind}")
 
 
 def _render_object_type_with_optionality(
@@ -165,15 +167,9 @@ def attr_to_variable_spec(
 ) -> VariableSpec:
     var_name = f"{config.variables_prefix}{name}" if config.variables_prefix else name
     type_str = _get_attr_type_str(attr)
-    description = attr.description
-    if attr.deprecated:
-        msg = attr.deprecated_message or ""
-        description = (
-            f"{DEPRECATED_PREFIX}{msg}"
-            if msg
-            else f"{DEPRECATED_PREFIX}{description or ''}"
-        )
-
+    description = make_description(
+        attr.description, attr.deprecated, attr.deprecated_message
+    )
     is_required = _determine_required(name, attr.required, config)
     spec = VariableSpec(
         name=var_name,
@@ -191,10 +187,7 @@ def block_type_to_variable_spec(
 ) -> VariableSpec:
     var_name = f"{config.variables_prefix}{name}" if config.variables_prefix else name
     type_str = _get_block_type_str(bt)
-    description = bt.description
-    if bt.deprecated:
-        description = f"{DEPRECATED_PREFIX}{description or ''}"
-
+    description = make_description(bt.description, bt.deprecated)
     is_required = _determine_required(name, bt.is_required, config)
     spec = VariableSpec(
         name=var_name,

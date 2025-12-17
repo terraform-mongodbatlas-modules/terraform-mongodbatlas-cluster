@@ -6,6 +6,23 @@ from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
+DEPRECATED_NAME = "DEPRECATED"
+DEPRECATED_PREFIX = f"{DEPRECATED_NAME}: "
+
+
+def make_description(
+    description: str | None,
+    deprecated: bool,
+    deprecated_message: str | None = None,
+) -> str | None:
+    if not deprecated:
+        return description
+    if deprecated_message:
+        return f"{DEPRECATED_PREFIX}{deprecated_message}"
+    if description:
+        return f"{DEPRECATED_PREFIX}{description}"
+    return DEPRECATED_NAME
+
 
 def render_description(desc: str) -> str:
     if "\n" in desc:
