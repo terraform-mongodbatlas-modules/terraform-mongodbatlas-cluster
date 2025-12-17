@@ -52,9 +52,9 @@ just dev-integration-test     # Single apply test (requires credentials)
 just test-compat              # Terraform version compatibility
 
 # Release (maintainers)
-just release-commit v1.0.0    # Create release branch
-just release-notes v1.0.0     # Generate release notes
-just tf-registry-source       # Show Terraform Registry source
+just check-release-ready v1.0.0  # Validate prerequisites
+just release-commit v1.0.0       # Create commits and tag
+just release-post-push           # Revert after pushing tag
 ```
 
 Run `just --list` for all commands.
@@ -68,7 +68,7 @@ Run `just --list` for all commands.
 | `code-health.yml` | PR, push main, nightly | `check`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
 | `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
-| `release.yml` | manual | `release-commit`, `md-link`, `gen-examples`, `gen-readme`, `fmt` | N/A |
+| `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
 
 ### Provider Testing Policy
 
@@ -197,14 +197,16 @@ Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
 
 - `root_readme.py` - Generates root README TOC and tables
 - `examples_readme.py` - Generates example README.md files
+- `submodule_readme.py` - Transforms submodule README source paths to registry source
 - `generate_inputs_from_readme.py` - Generates grouped Inputs section from terraform-docs output
 - `md_link_absolute.py` - Converts relative links to absolute GitHub URLs for releases
-- `tf_registry_source.py` - Shows Terraform Registry source for the module
+- `tf_registry_source.py` - Computes Terraform Registry source from git remote
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
 - `changelog/build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
 - `changelog/update_changelog_version.py` - Updates CHANGELOG.md version header with current date
+- `changelog/generate_release_body.py` - Generates GitHub release body from CHANGELOG.md
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 
@@ -212,29 +214,46 @@ See [documentation-guide.md](./documentation-guide.md) for detailed documentatio
 
 ## Release Process (Maintainers)
 
+Releases are automated via the `release.yml` GitHub Actions workflow. The workflow uses a 2-commit + revert strategy to keep tags reachable from main branch history.
+
 ### Version Placeholder
 
 During development, `module_version` in `versions.tf` is set to `"local"` as a placeholder. This indicates you're working with a development version and helps distinguish it from released versions. The release process automatically replaces `"local"` with the actual version number.
 
-### Creating a Release
+### Creating a Release (GitHub Actions)
 
-```bash
-# Create release branch with version-specific docs
-just release-commit v1.0.0
-
-# Review and push
-git push origin v1.0.0 --tags
-```
+Trigger the `Release` workflow from GitHub Actions with the version (e.g., `v1.0.0`).
 
 **What happens**:
-1. Creates release branch `v1.0.0`
-2. Updates `module_version` in `versions.tf` from `"local"` to `"v1.0.0"`
-3. Regenerates all docs with absolute links
-4. Commits and tags
+1. Pre-release validation (version format, changelog, docs)
+2. Changelog commit: Updates `CHANGELOG.md` with version header (stays on main)
+3. Release commit: Updates `module_version`, regenerates docs with absolute links, registry source URLs
+4. Tag created on release commit
+5. Tag pushed to origin
+6. Release commit reverted on main (restores `"local"` version and relative links)
+7. GitHub release created with changelog content
 
-**Why separate branches?**
-- Main uses relative links (dev-friendly) and `module_version = "local"`
-- Release branches use absolute links (stable docs for that version) and actual version numbers
+**Result on main after release**:
+```
+main: ──[changelog: v1.0.0]──[release: v1.0.0]──[revert release]──
+                                    │
+                              tag: v1.0.0
+```
+
+### Manual Release (Local)
+
+```bash
+just check-release-ready v1.0.0   # Validate prerequisites
+just release-commit v1.0.0        # Create changelog + release commits, tag
+git push origin v1.0.0            # Push tag
+just release-post-push            # Revert release commit
+git push origin main              # Push main with changelog + revert
+```
+
+**Why 2-commit + revert?**
+- Tags are reachable from main (required for `git describe`, bisect)
+- Tagged commit has correct version-specific values (registry URLs, `module_version`)
+- Main stays in development state (`"local"` version, relative links)
 
 ## Submitting Changes
 

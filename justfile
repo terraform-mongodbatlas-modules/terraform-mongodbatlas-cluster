@@ -131,6 +131,24 @@ gen-examples *args:
 gen-readme *args:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/root_readme.py {{args}}
 
+# Generate submodule README.md files with registry source
+gen-submodule-readme *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run python .github/submodule_readme.py {{args}}
+
+# Generate all release-specific updates (versions, docs, links)
+docs-release version:
+    uv run python .github/update_version.py {{version}}
+    @echo "Module versions updated successfully"
+    just gen-examples --version {{version}}
+    @echo "Examples README.md updated successfully"
+    just gen-submodule-readme --version {{version}}
+    @echo "Submodule README.md updated successfully"
+    just gen-readme
+    @echo "Root README.md updated successfully"
+    just md-link {{version}}
+    @echo "Markdown links converted to absolute URLs"
+    just fmt
+
 # Show Terraform Registry source for this module
 tf-registry-source:
     @uv run python .github/tf_registry_source.py
@@ -156,24 +174,50 @@ check-docs:
 test-compat:
     uv run --with pyyaml python .github/test_compat.py
 
-# Create release branch with version-specific documentation
+# Validate release prerequisites (used locally and by GHA)
+check-release-ready version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Validating version {{version}}..."
+    uv run python .github/validate_version.py {{version}}
+    echo "Checking CHANGELOG.md is up-to-date..."
+    just init-changelog
+    just build-changelog
+    if ! git diff --quiet CHANGELOG.md; then
+        echo "Error: CHANGELOG.md is out of date"
+        echo "Run 'just init-changelog && just build-changelog' and commit changes"
+        git diff CHANGELOG.md
+        exit 1
+    fi
+    echo "CHANGELOG.md is up-to-date"
+    echo "Checking documentation is up-to-date..."
+    just check-docs
+    echo "All pre-release checks passed for {{version}}"
+
+# Create release on main branch with changelog and release commits
 release-commit version:
-    @echo "Creating release {{version}}..."
-    @uv run python .github/validate_version.py {{version}}
-    git checkout -b {{version}}
-    @uv run python .github/update_version.py {{version}}
-    just gen-examples --version {{version}}
-    just gen-readme
-    just md-link {{version}}
-    just fmt
-    @echo "Committing changes..."
+    #!/usr/bin/env bash
+    set -euo pipefail
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    echo "Creating release {{version}} on branch=$current_branch..."
+    just update-changelog-version {{version}}
+    git add CHANGELOG.md
+    git commit -m "chore: update CHANGELOG.md for {{version}}"
+    just docs-release {{version}}
     git add .
     git commit -m "chore: release {{version}}"
     git tag {{version}}
-    @echo ""
-    @echo "✓ Release branch {{version}} ready with tag"
-    @echo "  Review changes, then push:"
-    @echo "  git push origin {{version}} --tags"
+    echo ""
+    echo "Release {{version}} ready with tag"
+    echo "Next steps:"
+    echo "  1. git push origin {{version}}"
+    echo "  2. just release-post-push"
+    echo "  3. git push origin main"
+
+# Revert the release commit after pushing the tag
+release-post-push:
+    git revert HEAD --no-edit
+    @echo "Release commit reverted. Push main: git push origin main"
 
 # Install go-changelog tool (required by build-changelog)
 init-changelog:
@@ -190,6 +234,10 @@ check-changelog-entry-file filepath:
 # Update CHANGELOG.md with version and current date
 update-changelog-version version:
     uv run python .github/changelog/update_changelog_version.py {{version}}
+
+# Generate GitHub release body from CHANGELOG.md
+generate-release-body version:
+    @PYTHONPATH={{justfile_directory()}}/.github uv run python .github/changelog/generate_release_body.py {{version}}
 
 # Build provider from source and create dev.tfrc for dev_overrides
 setup-provider-dev provider_path:
