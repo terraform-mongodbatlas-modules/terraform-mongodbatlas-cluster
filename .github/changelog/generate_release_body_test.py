@@ -4,6 +4,8 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from release import tf_registry_source
+
 from changelog import generate_release_body as mod
 
 
@@ -35,7 +37,6 @@ def test_extract_version_section(tmp_path: Path) -> None:
     """),
         encoding="utf-8",
     )
-
     section = mod.extract_version_section(changelog, "v0.2.0")
     assert "Added new feature" in section
     assert "Fixed a bug" in section
@@ -46,7 +47,6 @@ def test_extract_version_section(tmp_path: Path) -> None:
 def test_extract_version_section_not_found(tmp_path: Path) -> None:
     changelog = tmp_path / "CHANGELOG.md"
     changelog.write_text("## 0.1.0 (October 31, 2025)\n\n* Initial\n", encoding="utf-8")
-
     with pytest.raises(ValueError, match="Version v0.9.0 not found"):
         mod.extract_version_section(changelog, "v0.9.0")
 
@@ -63,9 +63,8 @@ def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:
     """),
         encoding="utf-8",
     )
-
     monkeypatch.setattr(
-        mod,
+        tf_registry_source,
         "get_github_repo_info",
         lambda: (
             "https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster",
@@ -74,13 +73,11 @@ def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        mod,
+        tf_registry_source,
         "get_registry_source",
         lambda: "terraform-mongodbatlas-modules/cluster/mongodbatlas",
     )
-
     body = mod.generate_release_body("v0.2.0", changelog)
-
     assert 'source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"' in body
     assert 'version = "0.2.0"' in body
     assert "## What's Changed" in body

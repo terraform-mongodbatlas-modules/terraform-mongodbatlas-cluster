@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import submodule_readme as mod
+from docs import submodule_readme as mod
 
 
 def test_transform_submodule_source_without_version() -> None:
@@ -58,7 +58,5 @@ module "cluster_import" {
     result = mod.transform_submodule_source(
         content, "owner/module/provider", "cluster_import", "v1.0.0"
     )
-    assert (
-        result.count('source  = "owner/module/provider//modules/cluster_import"') == 2
-    )
+    assert result.count('source  = "owner/module/provider//modules/cluster_import"') == 2
     assert result.count('version = "1.0.0"') == 2

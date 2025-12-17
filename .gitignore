@@ -11,6 +11,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 .vscode
+.venv
 .secrets
 __pycache__
 # Workspace test generated files

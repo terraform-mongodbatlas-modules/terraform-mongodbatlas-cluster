@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tf_ws import models
+
+from workspace import models
 
 
 def test_sanitize_address():
@@ -23,10 +24,8 @@ def test_example_path_found(tmp_path: Path):
     examples_dir.mkdir()
     (examples_dir / "01_basic").mkdir()
     (examples_dir / "02_advanced").mkdir()
-
     ex = models.Example(number=1)
     assert ex.example_path(examples_dir).name == "01_basic"
-
     ex2 = models.Example(number=2)
     assert ex2.example_path(examples_dir).name == "02_advanced"
 
@@ -34,7 +33,6 @@ def test_example_path_found(tmp_path: Path):
 def test_example_path_not_found(tmp_path: Path):
     examples_dir = tmp_path / "examples"
     examples_dir.mkdir()
-
     ex = models.Example(number=99)
     with pytest.raises(ValueError, match="Example 99_\\* not found"):
         ex.example_path(examples_dir)
@@ -44,7 +42,6 @@ def test_title_from_dir(tmp_path: Path):
     examples_dir = tmp_path / "examples"
     examples_dir.mkdir()
     (examples_dir / "01_basic_cluster").mkdir()
-
     ex = models.Example(number=1)
     assert ex.title_from_dir(examples_dir) == "Basic Cluster"
 
@@ -57,9 +54,7 @@ def test_ws_config_exposed_vars():
                 models.WsVar(name="tags", expose_in_workspace=True),
                 models.WsVar(name="project_id", expose_in_workspace=False),
             ],
-            "group1": [
-                models.WsVar(name="region", expose_in_workspace=True),
-            ],
+            "group1": [models.WsVar(name="region", expose_in_workspace=True)],
         },
     )
     exposed = config.exposed_vars()
@@ -105,9 +100,7 @@ def test_ws_config_vars_for_example_duplicate_raises():
         },
     )
     ex = models.Example(number=1, var_groups=["shared", "group1"])
-    with pytest.raises(
-        ValueError, match="Duplicate variable 'project_id' in example 01"
-    ):
+    with pytest.raises(ValueError, match="Duplicate variable 'project_id' in example 01"):
         config.vars_for_example(ex)
 
 
@@ -141,7 +134,6 @@ def test_resolve_workspaces_all(tmp_path: Path):
     (tmp_path / "workspace_one").mkdir()
     (tmp_path / "workspace_two").mkdir()
     (tmp_path / "other_dir").mkdir()
-
     ws_dirs = models.resolve_workspaces("all", tmp_path)
     names = [d.name for d in ws_dirs]
     assert names == ["workspace_one", "workspace_two"]
@@ -151,7 +143,6 @@ def test_resolve_workspaces_specific(tmp_path: Path):
     ws_dir = tmp_path / "workspace_test"
     ws_dir.mkdir()
     (ws_dir / models.WORKSPACE_CONFIG_FILE).write_text("examples: []")
-
     ws_dirs = models.resolve_workspaces("workspace_test", tmp_path)
     assert len(ws_dirs) == 1
     assert ws_dirs[0].name == "workspace_test"
@@ -160,8 +151,6 @@ def test_resolve_workspaces_specific(tmp_path: Path):
 def test_resolve_workspaces_specific_missing_config(tmp_path: Path):
     ws_dir = tmp_path / "workspace_test"
     ws_dir.mkdir()
-    # No config file created
-
     with pytest.raises(ValueError, match=models.WORKSPACE_CONFIG_FILE):
         models.resolve_workspaces("workspace_test", tmp_path)
 

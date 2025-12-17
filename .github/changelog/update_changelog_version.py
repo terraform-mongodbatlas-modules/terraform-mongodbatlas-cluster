@@ -41,9 +41,7 @@ def update_changelog(changelog_path: Path, version: str, current_date: str) -> N
         return
 
     new_header = f"## (Unreleased)\n\n## {version} ({current_date})"
-    new_content = re.sub(
-        unreleased_pattern, new_header, content, count=1, flags=re.MULTILINE
-    )
+    new_content = re.sub(unreleased_pattern, new_header, content, count=1, flags=re.MULTILINE)
     changelog_path.write_text(new_content, encoding="utf-8")
     print(f"Updated CHANGELOG.md: Added {version} ({current_date})")
 

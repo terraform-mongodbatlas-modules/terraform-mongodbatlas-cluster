@@ -40,7 +40,8 @@ just lint                     # Run Terraform linters
 just py-fmt                   # Format Python code
 just py-check                 # Lint Python code
 just py-test                  # Run Python unit tests
-just check                    # Run all checks (fmt, validate, lint, check-docs, py-check, py-test)
+just pre-commit               # Run fast checks (fmt, validate, lint, check-docs, py-check)
+just pre-push                 # Run slower checks (pre-commit + unit-plan-tests, py-test)
 
 # Documentation
 just docs                     # Generate all docs
@@ -65,7 +66,7 @@ Run `just --list` for all commands.
 
 | Workflow | Triggers | Just Targets | Provider |
 |----------|----------|--------------|----------|
-| `code-health.yml` | PR, push main, nightly | `check`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
+| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
 | `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
@@ -193,20 +194,32 @@ When CI fails with "Documentation is out of date":
 
 ### Documentation Scripts
 
-Scripts in `.github/` directory ([Python](https://www.python.org/) 3.10+):
+Scripts are organized in `.github/` subdirectories ([Python](https://www.python.org/) 3.14+, managed via `pyproject.toml`):
 
+**docs/** - Documentation generation:
 - `root_readme.py` - Generates root README TOC and tables
 - `examples_readme.py` - Generates example README.md files
 - `submodule_readme.py` - Transforms submodule README source paths to registry source
 - `generate_inputs_from_readme.py` - Generates grouped Inputs section from terraform-docs output
 - `md_link_absolute.py` - Converts relative links to absolute GitHub URLs for releases
+
+**release/** - Release and versioning:
 - `tf_registry_source.py` - Computes Terraform Registry source from git remote
 - `release_notes.py` - Generates release notes from GitHub commits
 - `update_version.py` - Updates module version in versions.tf
 - `validate_version.py` - Validates version format for releases
-- `changelog/build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
-- `changelog/update_changelog_version.py` - Updates CHANGELOG.md version header with current date
-- `changelog/generate_release_body.py` - Generates GitHub release body from CHANGELOG.md
+
+**changelog/** - Changelog management:
+- `build_changelog.py` - Generates CHANGELOG.md from `.changelog/*.txt` entries
+- `update_changelog_version.py` - Updates CHANGELOG.md version header with current date
+- `generate_release_body.py` - Generates GitHub release body from CHANGELOG.md
+
+**workspace/** - Plan snapshot testing:
+- `gen.py`, `plan.py`, `reg.py`, `run.py` - Workspace test orchestration
+
+**dev/** - Development utilities:
+- `dev_vars.py` - Generates dev.tfvars for local testing
+- `test_compat.py` - Terraform CLI version compatibility testing
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
 

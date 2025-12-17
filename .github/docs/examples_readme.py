@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Generate README.md and versions.tf files for examples using terraform-docs config."""
 
 import argparse
@@ -7,22 +6,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from config_loader import (
-    ExamplesReadmeConfig,
-    VersionsTfConfig,
-    load_examples_config,
-    parse_examples_readme_config,
-)
-from doc_utils import generate_header_comment
+from docs import config_loader, doc_utils
 
 
 def load_template(template_path: Path) -> str:
-    """Load the README template."""
     return template_path.read_text(encoding="utf-8")
 
 
 def get_example_name_from_config(folder_number: int, config: dict) -> str | None:
-    """Get example name from config (name + title_suffix if present)."""
     for table in config.get("tables", []):
         for example_row in table.get("example_rows", []):
             if example_row.get("folder") == folder_number:
@@ -35,26 +26,17 @@ def get_example_name_from_config(folder_number: int, config: dict) -> str | None
 
 
 def get_example_name(folder_name: str, config: dict) -> str:
-    """
-    Get example name from config, or extract from folder name as fallback.
-
-    E.g., '01_production_cluster' -> 'Production Cluster'
-    """
-    # Extract folder number
     match = re.match(r"^(\d+)_", folder_name)
     if match:
         folder_number = int(match.group(1))
         config_name = get_example_name_from_config(folder_number, config)
         if config_name:
             return config_name
-
-    # Fallback: extract from folder name
     name_without_number = re.sub(r"^\d+_", "", folder_name)
     return name_without_number.replace("_", " ").title()
 
 
 def get_registry_source() -> str:
-    """Get Terraform Registry source by calling justfile command."""
     result = subprocess.run(
         ["just", "tf-registry-source"],
         capture_output=True,
@@ -67,59 +49,36 @@ def get_registry_source() -> str:
 def get_example_terraform_files(
     example_dir: Path, additional_files: list[str] | None = None
 ) -> tuple[str, dict[str, str], list[str]]:
-    """
-    Get Terraform files in example directory.
-
-    Returns:
-        Tuple of (main_tf_content, additional_file_contents, other_file_names)
-    """
     main_tf = example_dir / "main.tf"
     main_content = main_tf.read_text(encoding="utf-8") if main_tf.exists() else ""
-
     additional_contents: dict[str, str] = {}
     if additional_files:
         for filename in additional_files:
             file_path = example_dir / filename
             if file_path.exists():
                 additional_contents[filename] = file_path.read_text(encoding="utf-8")
-
     other_files = [
         f.name
         for f in sorted(example_dir.glob("*.tf"))
         if f.name != "main.tf" and f.name not in (additional_files or [])
     ]
-
     return main_content, additional_contents, other_files
 
 
 def transform_main_tf_for_registry(
     main_tf_content: str, registry_source: str, version: str | None = None
 ) -> str:
-    """
-    Transform main.tf to use registry source instead of local path.
-
-    Replaces:
-        source = "../.."
-    With:
-        source  = "registry_source"
-        version = "version"  # if version provided
-    """
-    # Replace source = "../.." with registry source
     transformed = re.sub(
         r'source\s*=\s*"\.\.\/\.\."',
         f'source  = "{registry_source}"',
         main_tf_content,
     )
-
-    # Add version after source if provided
     if version:
-        # Find the source line and add version after it
         transformed = re.sub(
             rf'(source\s*=\s*"{re.escape(registry_source)}")',
             rf'\1\n  version = "{version}"',
             transformed,
         )
-
     return transformed
 
 
@@ -129,44 +88,35 @@ def generate_code_snippet(
     version: str | None = None,
     additional_files: list[str] | None = None,
 ) -> str:
-    """Generate code snippet section for README."""
     main_tf, additional_contents, other_files = get_example_terraform_files(
         example_dir, additional_files
     )
     if not main_tf:
         return ""
-
     transformed_main = transform_main_tf_for_registry(main_tf, registry_source, version)
-
     snippet = "## Code Snippet\n\n"
     snippet += "Copy and use this code to get started quickly:\n\n"
     snippet += "**main.tf**\n"
     snippet += "```hcl\n"
     snippet += transformed_main
     snippet += "```\n\n"
-
     for filename, content in sorted(additional_contents.items()):
-        transformed_content = transform_main_tf_for_registry(
-            content, registry_source, version
-        )
+        transformed_content = transform_main_tf_for_registry(content, registry_source, version)
         snippet += f"**{filename}**\n"
         snippet += "```hcl\n"
         snippet += transformed_content
         snippet += "```\n\n"
-
     if other_files:
         snippet += "**Additional files needed:**\n"
         for filename in sorted(other_files):
             snippet += f"- [{filename}](./{filename})\n"
         snippet += "\n"
-
     return snippet
 
 
 def should_skip_template_var(
     example_name: str, var_key: str, skip_patterns: list[str] | None = None
 ) -> bool:
-    """Check if a template variable should be skipped for this example."""
     if not skip_patterns:
         return False
     example_name_lower = example_name.lower()
@@ -186,43 +136,32 @@ def generate_readme(
     additional_files: list[str] | None = None,
     skip_var_patterns: list[str] | None = None,
 ) -> str:
-    """Generate README content by replacing template variables."""
     header_comment = (
-        generate_header_comment(
+        doc_utils.generate_header_comment(
             description="This file",
             regenerate_command="just gen-examples",
         )
         + "\n"
     )
-
     content = template.replace("{{ .NAME }}", example_name)
-
-    code_snippet = generate_code_snippet(
-        example_dir, registry_source, version, additional_files
-    )
+    code_snippet = generate_code_snippet(example_dir, registry_source, version, additional_files)
     content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
-
     for key, value in sorted(template_vars.items()):
         if should_skip_template_var(example_name, key, skip_var_patterns):
             value = ""
         content = content.replace(f"{{{{ .{key.upper()} }}}}", value.rstrip("\n"))
-
-    # Remove the old template comment if present (first line starting with <!--)
     lines = content.split("\n")
     if lines and lines[0].strip().startswith("<!--") and "used to generate" in lines[0]:
         content = "\n".join(lines[1:])
-
     return header_comment + content
 
 
 def load_root_versions_tf(root_dir: Path) -> str:
-    """Load the root versions.tf file."""
     versions_path = root_dir / "versions.tf"
     return versions_path.read_text(encoding="utf-8")
 
 
 def generate_versions_tf(base_versions_tf: str, provider_config: str) -> str:
-    """Generate versions.tf content by combining base template and provider config."""
     content = base_versions_tf.strip()
     if provider_config:
         content += f"\n\n{provider_config.strip()}"
@@ -231,7 +170,6 @@ def generate_versions_tf(base_versions_tf: str, provider_config: str) -> str:
 
 
 def find_example_folders(examples_dir: Path) -> list[Path]:
-    """Find all example folders (directories starting with numbers)."""
     folders = []
     for item in sorted(examples_dir.iterdir()):
         if item.is_dir() and re.match(r"^\d+_", item.name):
@@ -240,7 +178,6 @@ def find_example_folders(examples_dir: Path) -> list[Path]:
 
 
 def should_skip_example(folder_name: str, skip_list: list[str] | None) -> bool:
-    """Check if example should be skipped."""
     if not skip_list:
         return False
     return folder_name in skip_list
@@ -249,22 +186,18 @@ def should_skip_example(folder_name: str, skip_list: list[str] | None) -> bool:
 def should_generate_versions_tf(
     example_name: str,
     example_dir: Path,
-    versions_tf_config: VersionsTfConfig,
+    versions_tf_config: config_loader.VersionsTfConfig,
 ) -> bool:
-    """Determine if versions.tf should be generated for this example."""
     if versions_tf_config.force_generate:
         return True
-
     versions_path = example_dir / "versions.tf"
     if not versions_path.exists():
         return True
-
     if versions_tf_config.skip_if_name_contains:
         example_name_lower = example_name.lower()
         for pattern in versions_tf_config.skip_if_name_contains:
             if pattern.lower() in example_name_lower:
                 return False
-
     return not versions_tf_config.generate_when_missing_only
 
 
@@ -274,25 +207,17 @@ def process_example(
     base_versions_tf: str,
     config: dict,
     registry_source: str,
-    examples_readme_config: ExamplesReadmeConfig,
+    examples_readme_config: config_loader.ExamplesReadmeConfig,
     version: str | None = None,
     dry_run: bool = False,
     skip_readme: bool = False,
     skip_versions: bool = False,
     check: bool = False,
 ) -> tuple[bool, bool, bool]:
-    """
-    Process a single example directory.
-
-    Returns:
-        Tuple of (readme_generated, versions_generated, has_changes)
-    """
     example_name = get_example_name(example_dir.name, config)
-
     readme_generated = False
     versions_generated = False
     has_changes = False
-
     if not skip_readme:
         readme_path = example_dir / "README.md"
         readme_content = generate_readme(
@@ -305,18 +230,15 @@ def process_example(
             examples_readme_config.code_snippet_files.additional,
             examples_readme_config.template_vars.skip_if_name_contains,
         )
-
         if check and readme_path.exists():
             existing_content = readme_path.read_text(encoding="utf-8")
             if existing_content != readme_content:
                 has_changes = True
         elif check:
             has_changes = True
-
         if not dry_run and not check:
             readme_path.write_text(readme_content, encoding="utf-8")
         readme_generated = True
-
     if not skip_versions:
         if should_generate_versions_tf(
             example_name, example_dir, examples_readme_config.versions_tf
@@ -325,66 +247,36 @@ def process_example(
             versions_content = generate_versions_tf(
                 base_versions_tf, examples_readme_config.versions_tf.add
             )
-
             if check and versions_path.exists():
                 existing_content = versions_path.read_text(encoding="utf-8")
                 if existing_content != versions_content:
                     has_changes = True
             elif check:
                 has_changes = True
-
             if not dry_run and not check:
                 versions_path.write_text(versions_content, encoding="utf-8")
             versions_generated = True
-
     return readme_generated, versions_generated, has_changes
 
 
 def main() -> None:
-    """Main function."""
     parser = argparse.ArgumentParser(
         description="Generate README.md and versions.tf files for examples"
     )
+    parser.add_argument("--dry-run", action="store_true", help="Preview changes without modifying")
+    parser.add_argument("--skip-readme", action="store_true", help="Skip generating README.md")
+    parser.add_argument("--skip-versions", action="store_true", help="Skip generating versions.tf")
+    parser.add_argument("--no-skip", action="store_true", help="Process all examples")
+    parser.add_argument("--check", action="store_true", help="Check if documentation is up-to-date")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Preview changes without modifying files",
+        "--version", type=str, default=None, help="Module version for code snippets"
     )
-    parser.add_argument(
-        "--skip-readme",
-        action="store_true",
-        help="Skip generating README.md files",
-    )
-    parser.add_argument(
-        "--skip-versions",
-        action="store_true",
-        help="Skip generating versions.tf files",
-    )
-    parser.add_argument(
-        "--no-skip",
-        action="store_true",
-        help="Process all examples (don't skip default excluded examples)",
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check if documentation is up-to-date (exits with code 1 if changes needed)",
-    )
-    parser.add_argument(
-        "--version",
-        type=str,
-        default=None,
-        help="Module version to include in code snippets (e.g., v1.0.0) empty for latest",
-    )
-
     args = parser.parse_args()
 
-    # Assume script is run from repo root
     root_dir = Path.cwd()
     examples_dir = root_dir / "examples"
-
-    config = load_examples_config()
-    examples_readme_config = parse_examples_readme_config(config)
+    config = config_loader.load_examples_config()
+    examples_readme_config = config_loader.parse_examples_readme_config(config)
 
     if not examples_readme_config.readme_template:
         print("Error: readme_template not found in config")
@@ -396,12 +288,8 @@ def main() -> None:
         sys.exit(1)
 
     template = load_template(template_path)
-
     base_versions_tf = load_root_versions_tf(root_dir)
-
-    skip_list: list[str] | None = None
-    if not args.no_skip:
-        skip_list = examples_readme_config.skip_examples
+    skip_list: list[str] | None = None if args.no_skip else examples_readme_config.skip_examples
 
     try:
         registry_source = get_registry_source()
@@ -422,12 +310,10 @@ def main() -> None:
         print(f"Skipping examples: {', '.join(skip_list)}")
     print()
 
-    # Find all example folders
     example_folders = find_example_folders(examples_dir)
     print(f"Found {len(example_folders)} example folders")
     print()
 
-    # Process each example
     total_readme = 0
     total_versions = 0
     total_skipped = 0
@@ -436,9 +322,8 @@ def main() -> None:
     for example_dir in example_folders:
         if should_skip_example(example_dir.name, skip_list):
             total_skipped += 1
-            print(f"⊘ {example_dir.name} (skipped)")
+            print(f"- {example_dir.name} (skipped)")
             continue
-
         readme_gen, versions_gen, has_changes = process_example(
             example_dir,
             template,
@@ -452,47 +337,39 @@ def main() -> None:
             skip_versions=args.skip_versions,
             check=args.check,
         )
-
         if readme_gen:
             total_readme += 1
         if versions_gen:
             total_versions += 1
         if has_changes:
             examples_with_changes.append(example_dir.name)
-
         files = []
         if readme_gen:
             files.append("README.md")
         if versions_gen:
             files.append("versions.tf")
-
         if args.check:
-            prefix = "❌" if has_changes else "✓"
+            prefix = "x" if has_changes else "ok"
         else:
-            prefix = "→" if args.dry_run else "✓"
+            prefix = "->" if args.dry_run else "ok"
         files_str = ", ".join(files) if files else "no files"
         print(f"{prefix} {example_dir.name} ({files_str})")
 
     print()
-
-    # Check mode: exit with error if any changes detected
     if args.check:
         if examples_with_changes:
-            print(
-                f"❌ ERROR: {len(examples_with_changes)} example(s) have outdated documentation:"
-            )
+            print(f"ERROR: {len(examples_with_changes)} example(s) have outdated documentation:")
             for example_name in examples_with_changes:
                 print(f"  - {example_name}")
             print()
             print("Run 'just gen-examples' to update documentation")
             sys.exit(1)
         else:
-            print("✓ All example documentation is up to date")
+            print("All example documentation is up to date")
     else:
         action = "would be generated" if args.dry_run else "generated"
-        print(
-            f"Summary: {total_readme} READMEs {action}, {total_versions} versions.tf {action}, {total_skipped} skipped"
-        )
+        print(f"Summary: {total_readme} READMEs {action}, {total_versions} versions.tf {action}")
+        print(f"  {total_skipped} skipped")
 
 
 if __name__ == "__main__":
