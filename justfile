@@ -147,22 +147,6 @@ apply-examples *args:
 destroy-examples *args:
     just ws-run -m destroy {{args}}
 
-# EXAMPLES
-init-examples:
-    #!/bin/bash
-    set -euo pipefail
-    for example in examples/*/; do
-        echo "Initializing $example"
-        (cd "$example" && terraform init -upgrade)
-    done
-
-plan-examples project_id:
-    #!/bin/bash
-    set -euo pipefail
-    for example in examples/*/; do
-        echo "Planning $example"
-        (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
-    done
 
 # CHANGELOG
 init-changelog:
