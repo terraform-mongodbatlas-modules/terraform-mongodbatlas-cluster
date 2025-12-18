@@ -186,9 +186,9 @@ def test_variables_required_override():
     assert spec.default is None
 
 
-def test_use_schema_computability_false():
+def test_all_variables_optional():
     attr = SchemaAttribute(type=TfType.from_primitive(AttrType.string), required=True)
-    config = GenerationTarget(use_schema_computability=False)
+    config = GenerationTarget(all_variables_optional=True)
     spec = attr_to_variable_spec("name", attr, config)
     assert spec.nullable
     assert spec.default == "null"

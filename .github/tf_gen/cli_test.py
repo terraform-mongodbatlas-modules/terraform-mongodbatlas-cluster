@@ -126,9 +126,9 @@ def test_generate_resource_count_mode(cli_testdata_dir: Path, tmp_path: Path):
             assert "mongodbatlas_project" in content
 
 
-def test_generate_no_schema_computability(cli_testdata_dir: Path, tmp_path: Path):
-    """use_schema_computability=false makes all vars nullable with default=null."""
-    config_path = cli_testdata_dir / "no_schema_computability_gen.yaml"
+def test_generate_all_variables_optional(cli_testdata_dir: Path, tmp_path: Path):
+    """all_variables_optional=true makes all vars nullable with default=null."""
+    config_path = cli_testdata_dir / "all_variables_optional_gen.yaml"
     results = generate_for_config(
         config_path,
         dest_path=tmp_path,

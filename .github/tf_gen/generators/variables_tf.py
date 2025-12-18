@@ -157,9 +157,9 @@ def _determine_required(
 ) -> bool:
     if name in config.variables_required:
         return True
-    if config.use_schema_computability:
-        return is_schema_required
-    return False
+    if config.all_variables_optional:
+        return False
+    return is_schema_required
 
 
 def attr_to_variable_spec(
