@@ -19,8 +19,6 @@ class ResourceConfig:
     resource_type: (
         str  # without provider prefix, e.g., "project" not "mongodbatlas_project"
     )
-    test_variables: bool = True
-    test_outputs: bool = False
 
     @property
     def provider_name(self) -> str:
@@ -39,40 +37,14 @@ class ResourceConfig:
 
 
 # Active resources to download and test
-# Grouped by provider for clarity
 ACTIVE_RESOURCES: list[ResourceConfig] = [
     # MongoDB Atlas resources
-    ResourceConfig(
-        provider_source="mongodb/mongodbatlas",
-        resource_type="project",
-        test_variables=True,
-        test_outputs=True,
-    ),
-    ResourceConfig(
-        provider_source="mongodb/mongodbatlas",
-        resource_type="advanced_cluster",
-        test_variables=True,
-        test_outputs=True,
-    ),
-    ResourceConfig(
-        provider_source="mongodb/mongodbatlas",
-        resource_type="cloud_backup_schedule",
-        test_variables=True,
-        test_outputs=True,
-    ),
-    ResourceConfig(
-        provider_source="mongodb/mongodbatlas",
-        resource_type="database_user",
-        test_variables=True,
-        test_outputs=False,
-    ),
+    ResourceConfig("mongodb/mongodbatlas", "project"),
+    ResourceConfig("mongodb/mongodbatlas", "advanced_cluster"),
+    ResourceConfig("mongodb/mongodbatlas", "cloud_backup_schedule"),
+    ResourceConfig("mongodb/mongodbatlas", "database_user"),
     # AWS resources
-    ResourceConfig(
-        provider_source="hashicorp/aws",
-        resource_type="vpc_endpoint",
-        test_variables=True,
-        test_outputs=False,
-    ),
+    ResourceConfig("hashicorp/aws", "vpc_endpoint"),
 ]
 
 

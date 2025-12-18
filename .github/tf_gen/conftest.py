@@ -22,21 +22,13 @@ def schema_cache() -> dict[str, dict]:
 
 @pytest.fixture(scope="session")
 def load_schema(schema_cache: dict[str, dict]):
-    """Factory fixture to load schemas with caching.
-
-    Accepts either:
-    - filename in testdata/ (e.g., "project.json")
-    - path relative to testdata/ (e.g., "schemas/mongodbatlas_project.json")
-    """
+    """Factory fixture to load schemas from testdata/schemas/ with caching."""
 
     def _load(filename: str) -> dict:
         if filename not in schema_cache:
-            # Check schemas/ subdirectory first, then testdata root
             schema_path = SCHEMAS_DIR / filename
             if not schema_path.exists():
-                schema_path = TESTDATA_DIR / filename
-            if not schema_path.exists():
-                raise FileNotFoundError(f"Schema not found: {filename}")
+                raise FileNotFoundError(f"Schema not found: {schema_path}")
             schema_cache[filename] = json.loads(schema_path.read_text())
         return schema_cache[filename]
 
@@ -51,7 +43,7 @@ def backup_schedule_schema(load_schema) -> dict:
 
 @pytest.fixture(scope="module")
 def vpc_endpoint_schema(load_schema) -> dict:
-    return load_schema("vpc_endpoint.json")
+    return load_schema("aws_vpc_endpoint.json")
 
 
 @pytest.fixture(scope="module")
@@ -61,7 +53,7 @@ def advanced_cluster_schema(load_schema) -> dict:
 
 @pytest.fixture(scope="module")
 def project_schema(load_schema) -> dict:
-    return load_schema("project.json")
+    return load_schema("mongodbatlas_project.json")
 
 
 @pytest.fixture(scope="module")
