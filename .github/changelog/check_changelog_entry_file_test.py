@@ -322,10 +322,7 @@ def test_multiple_entries_with_format_errors() -> None:
     assert "Entry 2:" in stderr
     assert "Entry 3:" in stderr
     assert "must not end with a period" in stderr
-    assert (
-        "entry must follow format '<prefix>: <sentence>' where prefix is one of"
-        in stderr
-    )
+    assert "entry must follow format '<prefix>: <sentence>' where prefix is one of" in stderr
 
 
 def test_multiple_entries_with_type_and_format_errors() -> None:
@@ -349,6 +346,4 @@ def test_multiple_entries_with_type_and_format_errors() -> None:
     assert exit_code == 1
     assert "Entry 1:" in stderr and "Unknown changelog type 'invalid-type'" in stderr
     assert "Entry 2:" in stderr and "must have format" in stderr
-    assert (
-        "Entry 3:" in stderr and "Unknown changelog type 'another-bad-type'" in stderr
-    )
+    assert "Entry 3:" in stderr and "Unknown changelog type 'another-bad-type'" in stderr

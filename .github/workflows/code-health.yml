@@ -26,7 +26,7 @@ jobs:
           terraform: 'true'
           docs: 'true'
       - name: Run all validation checks
-        run: just check
+        run: just pre-commit
 
   plan-tests:
     name: Terraform Unit Plan Tests

@@ -6,8 +6,8 @@ import enum
 from pathlib import Path
 
 import typer
-from tf_ws import gen, plan, reg
-from tf_ws.models import DEFAULT_TESTS_DIR, resolve_workspaces
+
+from workspace import gen, models, plan, reg
 
 app = typer.Typer()
 
@@ -27,13 +27,12 @@ def main(
     auto_approve: bool = typer.Option(False, "--auto-approve"),
     skip_init: bool = typer.Option(False, "--skip-init"),
     ws: str = typer.Option("all", "--ws"),
-    tests_dir: Path = typer.Option(DEFAULT_TESTS_DIR, "--tests-dir"),
+    tests_dir: Path = typer.Option(models.DEFAULT_TESTS_DIR, "--tests-dir"),
     var_file: list[Path] = typer.Option([], "--var-file", "-v"),
     force_regen: bool = typer.Option(False, "--force-regen"),
 ) -> None:
-    """Orchestrate workspace test workflows."""
     try:
-        ws_dirs = resolve_workspaces(ws, tests_dir)
+        ws_dirs = models.resolve_workspaces(ws, tests_dir)
     except ValueError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

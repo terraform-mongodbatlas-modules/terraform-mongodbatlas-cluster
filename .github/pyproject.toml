@@ -1,0 +1,24 @@
+[project]
+name = "module-github-scripts"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "pyyaml",
+    "typer",
+    "pytest",
+    "pytest-regressions",
+]
+
+[dependency-groups]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["*_test.py"]

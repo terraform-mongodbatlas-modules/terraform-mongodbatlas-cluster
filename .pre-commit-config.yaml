@@ -1,0 +1,16 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pre-commit
+        name: pre-commit checks
+        entry: just pre-commit
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pre-push
+        name: pre-push checks
+        entry: just pre-push
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

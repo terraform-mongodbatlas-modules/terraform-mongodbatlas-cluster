@@ -84,9 +84,7 @@ def changelog_exists_at_commit(commit_sha: str) -> bool:
 def get_changelog_dir_created_commit(reason: str) -> str:
     """Get the changelog-dir-created commit SHA with informative message."""
     print(f"Using {CHANGELOG_DIR_CREATED_TAG} ({reason})", file=sys.stderr)
-    return get_commit_sha_or_exit(
-        CHANGELOG_DIR_CREATED_TAG, f"{CHANGELOG_DIR_CREATED_TAG} tag"
-    )
+    return get_commit_sha_or_exit(CHANGELOG_DIR_CREATED_TAG, f"{CHANGELOG_DIR_CREATED_TAG} tag")
 
 
 def determine_last_release() -> str:
@@ -105,9 +103,7 @@ def determine_last_release() -> str:
         return last_release
 
     # Latest tag predates changelog system, fall back to changelog-dir-created
-    return get_changelog_dir_created_commit(
-        f"latest tag {latest_tag} has no .changelog"
-    )
+    return get_changelog_dir_created_commit(f"latest tag {latest_tag} has no .changelog")
 
 
 def get_gopath() -> str:
@@ -188,9 +184,7 @@ def find_header_index(lines: list[str], start_idx: int = 0) -> int | None:
     return None
 
 
-def update_unreleased_section(
-    changelog_file: Path, new_unreleased_content: str
-) -> None:
+def update_unreleased_section(changelog_file: Path, new_unreleased_content: str) -> None:
     """Update only the (Unreleased) section in CHANGELOG.md."""
     # Create new file if it doesn't exist
     if not changelog_file.exists():
@@ -215,14 +209,10 @@ def update_unreleased_section(
 
     # Extract sections
     preamble = "\n".join(lines[:first_header_idx]).strip()
-    released_versions = (
-        "\n".join(lines[second_header_idx:]) if second_header_idx else ""
-    )
+    released_versions = "\n".join(lines[second_header_idx:]) if second_header_idx else ""
 
     # Build and write new content
-    new_content = build_changelog_content(
-        new_unreleased_content, preamble, released_versions
-    )
+    new_content = build_changelog_content(new_unreleased_content, preamble, released_versions)
     changelog_file.write_text(new_content, encoding="utf-8")
 
 

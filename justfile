@@ -1,163 +1,104 @@
 set dotenv-load
 
+# Variables
+gh_dir := justfile_directory() + "/.github"
+uv_gh := "uv run --project .github"
+py := "PYTHONPATH=" + gh_dir + " " + uv_gh + " python -m"
+
 # List all commands
 default:
     just --list
 
-# Format all Terraform files
+# CHECKS
+# Run fast checks (suitable for pre-commit hooks)
+pre-commit: fmt validate lint check-docs py-check
+    @echo "Pre-commit checks passed"
+
+# Run slower checks (suitable for pre-push hooks)
+pre-push: pre-commit unit-plan-tests py-test
+    @echo "Pre-push checks passed"
+
+# DEV SETUP
+# Sync Python dependencies
+uv-sync:
+    uv sync --project .github
+
+# Generate dev.tfvars with a project_id (reused for all 5 project slots)
+dev-vars-project project_id:
+    {{py}} dev.dev_vars project {{project_id}}
+
+# Generate dev.tfvars with an org_id (projects created dynamically)
+dev-vars-org org_id:
+    {{py}} dev.dev_vars org {{org_id}}
+
+# Build provider from source and create dev.tfrc for dev_overrides
+setup-provider-dev provider_path:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
+    PLUGIN_DIR="$PROVIDER_ABS/bin"
+    cd "{{provider_path}}"
+    echo "Building provider from source at $PROVIDER_ABS"
+    make build
+    echo "Creating dev.tfrc at {{justfile_directory()}}/dev.tfrc"
+    uv run --directory "{{gh_dir}}" python -m dev.dev_vars tfrc "$PLUGIN_DIR" > "{{justfile_directory()}}/dev.tfrc"
+    echo "Provider built at $PLUGIN_DIR"
+    echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
+
+# FORMATTING
 fmt:
     terraform fmt -recursive .
 
-# Validate all Terraform files  
+py-fmt:
+    {{uv_gh}} ruff format .github
+
 validate:
     terraform init
     terraform validate
 
-# Lint with comprehensive rules
+# LINTING
 lint:
     tflint -f compact --recursive --minimum-failure-severity=warning
     terraform fmt -check -recursive
 
+# Python linting
 py-check:
-    uv run --with ruff ruff check .github
+    {{uv_gh}} ruff check .github
 
-py-fmt:
-    uv run --with ruff ruff format .github
+# Can fix some py-check errors
+py-fix:
+    {{uv_gh}} ruff check --fix .github
 
+# TESTING
 py-test:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
+    {{uv_gh}} pytest .github/ -v --ignore=.github/dev/test_compat.py
 
-# Generate documentation
+unit-plan-tests:
+    terraform init
+    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl
+
+dev-integration-test:
+    terraform init
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+tftest-all:
+    terraform init
+    terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+test-compat:
+    {{py}} dev.test_compat
+
+# DOCUMENTATION
 docs: fmt
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
-    uv run --with pyyaml python .github/generate_inputs_from_readme.py
+    {{py}} docs.generate_inputs_from_readme
     @echo "Inputs documentation updated successfully"
     just gen-readme
     @echo "Root README.md updated successfully"
     just gen-examples
     @echo "Examples README.md updated successfully"
 
-# Run all validation checks
-check: fmt validate lint check-docs py-check py-test
-    @echo "All checks passed successfully"
-
-# Initialize examples
-init-examples:
-    #!/bin/bash
-    set -euo pipefail
-    for example in examples/*/; do
-        echo "Initializing $example"
-        (cd "$example" && terraform init -upgrade)
-    done
-
-# Plan all examples (dry run)
-plan-examples project_id:
-    #!/bin/bash
-    set -euo pipefail
-    for example in examples/*/; do
-        echo "Planning $example"
-        (cd "$example" && terraform plan -var project_id={{project_id}} -var-file=../tags.tfvars )
-    done
-
-# Run dev cluster integration test (fast, single cluster apply/destroy)
-dev-integration-test:
-    terraform init
-    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
-
-# Run all terraform tests (plan + apply tests, no filter)
-tftest-all:
-    terraform init
-    terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
-
-# Run tests matching a file/path/pattern
-unit-plan-tests:
-    terraform init
-    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl
-
-# Generate workspace test files (variables.generated.tf, test_plan_snapshot.py)
-ws-gen *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/gen.py {{args}}
-
-# Run terraform plan for workspace tests
-ws-plan *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_ws/plan.py {{args}}
-
-# Generate snapshot files and run pytest
-ws-reg *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/reg.py {{args}}
-
-# Run workspace test workflow gen ->
-#   1. plan -> snapshot test
-#   2. apply
-# TIP: See plan-only, plan-snapshot-test, and apply-examples for more specific workflows.
-ws-run *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer --with pytest --with pytest-regressions python .github/tf_ws/run.py {{args}}
-
-# Runs workspace generation and terraform plan. TIP: Use `just plan-only --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
-plan-only *args:
-    just ws-run -m plan-only {{args}}
-
-# Runs workspace generation, terraform plan, and snapshot test. TIP: Use `just plan-snapshot-test --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
-plan-snapshot-test *args:
-    just ws-run -m plan-snapshot-test {{args}}
-
-# Runs workspace generation and terraform apply, TIP: Use `just apply-examples --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
-apply-examples *args:
-    just ws-run -m apply {{args}}
-
-# Runs workspace generation and terraform destroy, TIP: Use `just destroy-examples --var-file /{repo_root}/tests/workspace_cluster_examples/dev.tfvars` to run locally.
-destroy-examples *args:
-    just ws-run -m destroy {{args}}
-
-# Generate dev.tfvars with a project_id (reused for all 5 project slots)
-dev-vars-project project_id:
-    uv run --with typer python .github/dev_vars.py project {{project_id}}
-
-# Generate dev.tfvars with an org_id (projects created dynamically)
-dev-vars-org org_id:
-    uv run --with typer python .github/dev_vars.py org {{org_id}}
-
-# Convert relative markdown links to absolute GitHub URLs
-md-link tag_version *args:
-    uv run python .github/md_link_absolute.py {{tag_version}} {{args}}
-
-# Generate README.md and versions.tf files for examples
-gen-examples *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/examples_readme.py {{args}}
-    just fmt
-
-# Generate root README.md TOC and TABLES sections
-gen-readme *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml python .github/root_readme.py {{args}}
-
-# Generate submodule README.md files with registry source
-gen-submodule-readme *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run python .github/submodule_readme.py {{args}}
-
-# Generate all release-specific updates (versions, docs, links)
-docs-release version:
-    uv run python .github/update_version.py {{version}}
-    @echo "Module versions updated successfully"
-    just gen-examples --version {{version}}
-    @echo "Examples README.md updated successfully"
-    just gen-submodule-readme --version {{version}}
-    @echo "Submodule README.md updated successfully"
-    just gen-readme
-    @echo "Root README.md updated successfully"
-    just md-link {{version}}
-    @echo "Markdown links converted to absolute URLs"
-    just fmt
-
-# Show Terraform Registry source for this module
-tf-registry-source:
-    @uv run python .github/tf_registry_source.py
-
-# Generate release notes for a version (requires commits on GitHub)
-release-notes new_version old_version="":
-    @uv run python .github/release_notes.py {{new_version}} {{old_version}}
-
-# Check if documentation is up-to-date (for CI)
 check-docs:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -170,16 +111,86 @@ check-docs:
     fi
     echo "Documentation is up-to-date."
 
-# Run terraform validate across all supported Terraform versions
-test-compat:
-    uv run --with pyyaml python .github/test_compat.py
+gen-readme *args:
+    {{py}} docs.root_readme {{args}}
 
-# Validate release prerequisites (used locally and by GHA)
+gen-examples *args:
+    {{py}} docs.examples_readme {{args}}
+    just fmt
+
+gen-submodule-readme *args:
+    {{py}} docs.submodule_readme {{args}}
+
+md-link tag_version *args:
+    {{py}} docs.md_link_absolute {{tag_version}} {{args}}
+
+tf-registry-source:
+    @{{py}} release.tf_registry_source
+
+# WORKSPACE TESTING
+ws-gen *args:
+    {{py}} workspace.gen {{args}}
+
+ws-plan *args:
+    {{py}} workspace.plan {{args}}
+
+ws-reg *args:
+    {{py}} workspace.reg {{args}}
+
+ws-run *args:
+    {{py}} workspace.run {{args}}
+
+plan-only *args:
+    just ws-run -m plan-only {{args}}
+
+plan-snapshot-test *args:
+    just ws-run -m plan-snapshot-test {{args}}
+
+apply-examples *args:
+    just ws-run -m apply {{args}}
+
+destroy-examples *args:
+    just ws-run -m destroy {{args}}
+
+
+# CHANGELOG
+init-changelog:
+    go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
+
+build-changelog:
+    {{py}} changelog.build_changelog
+
+check-changelog-entry-file filepath:
+    go run -C .github/changelog/check-changelog-entry-file . "{{justfile_directory()}}/{{filepath}}"
+
+update-changelog-version version:
+    {{py}} changelog.update_changelog_version {{version}}
+
+generate-release-body version:
+    @{{py}} changelog.generate_release_body {{version}}
+
+# RELEASE
+docs-release version:
+    {{py}} release.update_version {{version}}
+    @echo "Module versions updated successfully"
+    just gen-examples --version {{version}}
+    @echo "Examples README.md updated successfully"
+    just gen-submodule-readme --version {{version}}
+    @echo "Submodule README.md updated successfully"
+    just gen-readme
+    @echo "Root README.md updated successfully"
+    just md-link {{version}}
+    @echo "Markdown links converted to absolute URLs"
+    just fmt
+
+release-notes new_version old_version="":
+    @{{py}} release.release_notes {{new_version}} {{old_version}}
+
 check-release-ready version:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Validating version {{version}}..."
-    uv run python .github/validate_version.py {{version}}
+    {{py}} release.validate_version {{version}}
     echo "Checking CHANGELOG.md is up-to-date..."
     just init-changelog
     just build-changelog
@@ -194,7 +205,6 @@ check-release-ready version:
     just check-docs
     echo "All pre-release checks passed for {{version}}"
 
-# Create release on main branch with changelog and release commits
 release-commit version:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -214,48 +224,6 @@ release-commit version:
     echo "  2. just release-post-push"
     echo "  3. git push origin main"
 
-# Revert the release commit after pushing the tag
 release-post-push:
     git revert HEAD --no-edit
     @echo "Release commit reverted. Push main: git push origin main"
-
-# Install go-changelog tool (required by build-changelog)
-init-changelog:
-    go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
-
-# Update Unreleased section in CHANGELOG.md from .changelog/*.txt entries
-build-changelog:
-    uv run python .github/changelog/build_changelog.py
-
-# Validate changelog entry file format
-check-changelog-entry-file filepath:
-    go run -C .github/changelog/check-changelog-entry-file . "{{justfile_directory()}}/{{filepath}}"
-
-# Update CHANGELOG.md with version and current date
-update-changelog-version version:
-    uv run python .github/changelog/update_changelog_version.py {{version}}
-
-# Generate GitHub release body from CHANGELOG.md
-generate-release-body version:
-    @PYTHONPATH={{justfile_directory()}}/.github uv run python .github/changelog/generate_release_body.py {{version}}
-
-# Build provider from source and create dev.tfrc for dev_overrides
-setup-provider-dev provider_path:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
-    PLUGIN_DIR="$PROVIDER_ABS/bin"
-    cd "{{provider_path}}"
-    echo "Building provider from source at $PROVIDER_ABS"
-    make build
-    echo "Creating dev.tfrc at {{justfile_directory()}}/dev.tfrc"
-    cat > "{{justfile_directory()}}/dev.tfrc" <<EOF
-    provider_installation {
-      dev_overrides {
-        "mongodb/mongodbatlas" = "$PLUGIN_DIR"
-      }
-      direct {}
-    }
-    EOF
-    echo "Provider built at $PLUGIN_DIR"
-    echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""

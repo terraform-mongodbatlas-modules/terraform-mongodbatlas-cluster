@@ -4,7 +4,7 @@ import re
 import sys
 from pathlib import Path
 
-from tf_registry_source import get_github_repo_info, get_registry_source
+from release import tf_registry_source
 
 
 def extract_version_section(changelog_path: Path, version: str) -> str:
@@ -21,8 +21,8 @@ def extract_version_section(changelog_path: Path, version: str) -> str:
 def generate_release_body(version: str, changelog_path: Path) -> str:
     """Generate complete GitHub release body."""
     version_without_v = version.removeprefix("v")
-    github_url, _, _ = get_github_repo_info()
-    registry_source = get_registry_source()
+    github_url, _, _ = tf_registry_source.get_github_repo_info()
+    registry_source = tf_registry_source.get_registry_source()
     changelog_section = extract_version_section(changelog_path, version)
 
     parts = [

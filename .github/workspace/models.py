@@ -6,7 +6,6 @@ from typing import Any
 
 import yaml
 
-# .github/tf_ws/ -> repo root
 REPO_ROOT = Path(__file__).parent.parent.parent
 DEFAULT_TESTS_DIR = REPO_ROOT / "tests"
 
@@ -73,7 +72,7 @@ class WsConfig:
 
     def vars_for_example(self, example: Example) -> list[WsVar]:
         result: list[WsVar] = []
-        seen: dict[str, str] = {}  # var_name -> group_name
+        seen: dict[str, str] = {}
         for group_name in example.var_groups:
             for var in self.var_groups.get(group_name, []):
                 if var.name in seen:
@@ -135,28 +134,12 @@ def sanitize_address(address: str) -> str:
 WORKSPACE_CONFIG_FILE = "workspace_test_config.yaml"
 
 
-def resolve_workspaces(
-    workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR
-) -> list[Path]:
-    """Resolve workspace directories based on ws name.
-
-    Args:
-        ws: Workspace name or 'all' for all workspace_* directories
-        tests_dir: Path to tests directory
-
-    Returns:
-        List of workspace directory paths
-
-    Raises:
-        ValueError: If tests_dir doesn't exist, ws not found, config missing, or no workspace_* dirs found
-    """
+def resolve_workspaces(workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> list[Path]:
     if not tests_dir.exists():
         raise ValueError(f"{tests_dir} does not exist")
     if workspace == "all":
         ws_dirs = sorted(
-            d
-            for d in tests_dir.iterdir()
-            if d.is_dir() and d.name.startswith("workspace_")
+            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("workspace_")
         )
         if not ws_dirs:
             raise ValueError(f"No workspace_* directories found in {tests_dir}")
