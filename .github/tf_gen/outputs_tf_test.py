@@ -4,7 +4,7 @@ import logging
 
 from tf_gen.config import GenerationTarget, OutputAttributeOverride
 from tf_gen.generators.outputs_tf import (
-    build_resource_ref,
+    build_resource_refs,
     generate_outputs_tf,
     should_generate_output,
 )
@@ -43,20 +43,18 @@ def test_should_generate_output_excluded_list():
     assert not should_generate_output("id", attr, config)
 
 
-def test_build_resource_ref():
+def test_build_resource_refs():
     config = GenerationTarget(label="this")
-    assert (
-        build_resource_ref("mongodbatlas", "project", config)
-        == "mongodbatlas_project.this"
-    )
+    base, indexed = build_resource_refs("mongodbatlas", "project", config)
+    assert base == "mongodbatlas_project.this"
+    assert indexed == "mongodbatlas_project.this"
 
 
-def test_build_resource_ref_with_count():
+def test_build_resource_refs_with_count():
     config = GenerationTarget(label="main", use_resource_count=True)
-    assert (
-        build_resource_ref("mongodbatlas", "project", config)
-        == "mongodbatlas_project.main[0]"
-    )
+    base, indexed = build_resource_refs("mongodbatlas", "project", config)
+    assert base == "mongodbatlas_project.main"
+    assert indexed == "mongodbatlas_project.main[0]"
 
 
 def test_computed_only_output(project_schema: dict):
@@ -231,3 +229,47 @@ def test_sensitive_override_false():
     output = generate_outputs_tf(schema, config, "test")
     assert 'output "secret_key"' in output
     assert "sensitive = true" not in output
+
+
+def test_count_safe_wrapping(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(resource_type="project", use_resource_count=True)
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert "length(mongodbatlas_project.this) > 0 ?" in output
+    assert ": null" in output
+
+
+def test_outputs_prefix(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(resource_type="project", outputs_prefix="main_")
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "main_id"' in output
+    assert 'output "main_created"' in output
+
+
+def test_single_output_mode(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(resource_type="project", use_single_output=True)
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "project"' in output
+    assert "value = {" in output
+    assert "id = mongodbatlas_project.this.id" in output
+
+
+def test_single_output_with_count(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(
+        resource_type="project", use_single_output=True, use_resource_count=True
+    )
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert "length(mongodbatlas_project.this) > 0 ? {" in output
+    assert "} : null" in output
+
+
+def test_single_output_with_prefix(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(
+        resource_type="project", use_single_output=True, outputs_prefix="primary_"
+    )
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "primary_project"' in output

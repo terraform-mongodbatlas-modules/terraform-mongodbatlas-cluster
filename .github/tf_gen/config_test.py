@@ -68,6 +68,20 @@ def test_generation_target_defaults():
     assert "resource" in target.files
     assert "output" in target.files
     assert not target.use_single_variable
+    assert not target.use_single_output
     assert target.use_schema_computability
     assert not target.use_resource_count
     assert not target.include_id_field
+    assert target.outputs_prefix == ""
+
+
+def test_single_output_with_overrides_fails():
+    import pytest
+    from tf_gen.config import OutputAttributeOverride
+    # TODO: avoid local imports
+
+    with pytest.raises(ValueError, match="output_tf_overrides cannot be used"):
+        GenerationTarget(
+            use_single_output=True,
+            output_tf_overrides={"id": OutputAttributeOverride(name="custom_id")},
+        )

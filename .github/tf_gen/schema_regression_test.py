@@ -95,3 +95,22 @@ def test_schema_regression_count(
         content,
         fullpath=REGRESSIONS_DIR / f"{rc.resource_type}_count" / "outputs.tf",
     )
+
+
+@pytest.mark.parametrize("rc", ACTIVE_RESOURCES, ids=lambda rc: rc.resource_type)
+def test_schema_regression_single_output(
+    rc: ResourceConfig,
+    load_schema,
+    file_regression,
+):
+    """Regression test for use_single_output mode (outputs.tf only)."""
+    # TODO: Combine in the single_variable test instead of separate test
+    schema = load_schema(rc.schema_filename)
+    parsed = parse_resource_schema(schema)
+    config = GenerationTarget(resource_type=rc.resource_type, use_single_output=True)
+    content = generate_outputs_tf(parsed, config, rc.provider_name)
+
+    file_regression.check(
+        content,
+        fullpath=REGRESSIONS_DIR / f"{rc.resource_type}_single_output" / "outputs.tf",
+    )

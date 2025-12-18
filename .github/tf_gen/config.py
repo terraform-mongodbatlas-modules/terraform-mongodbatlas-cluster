@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class OutputAttributeOverride(BaseModel):
@@ -15,8 +15,6 @@ class OutputAttributeOverride(BaseModel):
 
 
 class ResourceMetaArgs(BaseModel):
-    """Meta-arguments for Terraform resource blocks."""
-
     count: str | None = None
     provider: str | None = None
     depends_on: list[str] = Field(default_factory=list)
@@ -27,6 +25,7 @@ class GenerationTarget(BaseModel):
     resource_type: str = ""
     output_dir: Path = Field(default_factory=Path.cwd)
     use_single_variable: bool = False
+    use_single_output: bool = False
     use_schema_computability: bool = True
     use_resource_count: bool = False
     include_id_field: bool = False
@@ -41,11 +40,19 @@ class GenerationTarget(BaseModel):
     variables_required: list[str] = Field(default_factory=list)
     variable_tf: dict[str, dict[str, Any]] = Field(default_factory=dict)
     output_filename: str = "output.tf"
+    outputs_prefix: str = ""
     outputs_excluded: list[str] = Field(default_factory=list)
     output_tf_overrides: dict[str, OutputAttributeOverride] = Field(
         default_factory=dict
     )
     output_attribute_max_children: int = 5
+
+    @model_validator(mode="after")
+    def validate_single_output_no_overrides(self) -> Self:
+        if self.use_single_output and self.output_tf_overrides:
+            msg = "output_tf_overrides cannot be used with use_single_output=True"
+            raise ValueError(msg)
+        return self
 
 
 class ProviderGenConfig(BaseModel):
