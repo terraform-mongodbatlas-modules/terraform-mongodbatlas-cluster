@@ -4,4 +4,5 @@ providers:
       project:
         - output_dir: .
           label: this
-          use_single_variable: true
+          use_schema_computability: false
+          variables_required: [name, org_id]
