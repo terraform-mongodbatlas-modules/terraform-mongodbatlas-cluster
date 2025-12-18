@@ -104,12 +104,11 @@ def test_attr_to_variable_with_prefix():
     assert spec.name == "atlas_name"
 
 
-def test_attr_to_variable_deprecated(backup_schedule_schema: dict):
-    schema = parse_resource_schema(backup_schedule_schema)
-    copy_settings = schema.block.block_types["copy_settings"]
-    repl_spec_id = copy_settings.block.attributes["replication_spec_id"]
+def test_attr_to_variable_deprecated(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    attr = schema.block.attributes["is_slow_operation_thresholding_enabled"]
     config = GenerationTarget()
-    spec = attr_to_variable_spec("replication_spec_id", repl_spec_id, config)
+    spec = attr_to_variable_spec("is_slow_operation_thresholding_enabled", attr, config)
     assert spec.description is not None
     assert spec.description.startswith(DEPRECATED_NAME)
 
