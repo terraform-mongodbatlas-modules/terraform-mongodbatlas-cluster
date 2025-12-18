@@ -1,0 +1,243 @@
+{
+  "version": 0,
+  "block": {
+    "attributes": {
+      "custom_dns_configs": {
+        "type": [
+          "list",
+          [
+            "object",
+            {
+              "fqdn": "string",
+              "ip_addresses": [
+                "list",
+                "string"
+              ]
+            }
+          ]
+        ],
+        "description_kind": "plain",
+        "computed": true
+      },
+      "custom_network_interface_name": {
+        "type": "string",
+        "description_kind": "plain",
+        "optional": true
+      },
+      "id": {
+        "type": "string",
+        "description_kind": "plain",
+        "optional": true,
+        "computed": true
+      },
+      "location": {
+        "type": "string",
+        "description_kind": "plain",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "description_kind": "plain",
+        "required": true
+      },
+      "network_interface": {
+        "type": [
+          "list",
+          [
+            "object",
+            {
+              "id": "string",
+              "name": "string"
+            }
+          ]
+        ],
+        "description_kind": "plain",
+        "computed": true
+      },
+      "private_dns_zone_configs": {
+        "type": [
+          "list",
+          [
+            "object",
+            {
+              "id": "string",
+              "name": "string",
+              "private_dns_zone_id": "string",
+              "record_sets": [
+                "list",
+                [
+                  "object",
+                  {
+                    "fqdn": "string",
+                    "ip_addresses": [
+                      "list",
+                      "string"
+                    ],
+                    "name": "string",
+                    "ttl": "number",
+                    "type": "string"
+                  }
+                ]
+              ]
+            }
+          ]
+        ],
+        "description_kind": "plain",
+        "computed": true
+      },
+      "resource_group_name": {
+        "type": "string",
+        "description_kind": "plain",
+        "required": true
+      },
+      "subnet_id": {
+        "type": "string",
+        "description_kind": "plain",
+        "required": true
+      },
+      "tags": {
+        "type": [
+          "map",
+          "string"
+        ],
+        "description_kind": "plain",
+        "optional": true
+      }
+    },
+    "block_types": {
+      "ip_configuration": {
+        "nesting_mode": "list",
+        "block": {
+          "attributes": {
+            "member_name": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true,
+              "computed": true
+            },
+            "name": {
+              "type": "string",
+              "description_kind": "plain",
+              "required": true
+            },
+            "private_ip_address": {
+              "type": "string",
+              "description_kind": "plain",
+              "required": true
+            },
+            "subresource_name": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            }
+          },
+          "description_kind": "plain"
+        }
+      },
+      "private_dns_zone_group": {
+        "nesting_mode": "list",
+        "block": {
+          "attributes": {
+            "id": {
+              "type": "string",
+              "description_kind": "plain",
+              "computed": true
+            },
+            "name": {
+              "type": "string",
+              "description_kind": "plain",
+              "required": true
+            },
+            "private_dns_zone_ids": {
+              "type": [
+                "list",
+                "string"
+              ],
+              "description_kind": "plain",
+              "required": true
+            }
+          },
+          "description_kind": "plain"
+        },
+        "max_items": 1
+      },
+      "private_service_connection": {
+        "nesting_mode": "list",
+        "block": {
+          "attributes": {
+            "is_manual_connection": {
+              "type": "bool",
+              "description_kind": "plain",
+              "required": true
+            },
+            "name": {
+              "type": "string",
+              "description_kind": "plain",
+              "required": true
+            },
+            "private_connection_resource_alias": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "private_connection_resource_id": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "private_ip_address": {
+              "type": "string",
+              "description_kind": "plain",
+              "computed": true
+            },
+            "request_message": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "subresource_names": {
+              "type": [
+                "list",
+                "string"
+              ],
+              "description_kind": "plain",
+              "optional": true
+            }
+          },
+          "description_kind": "plain"
+        },
+        "min_items": 1,
+        "max_items": 1
+      },
+      "timeouts": {
+        "nesting_mode": "single",
+        "block": {
+          "attributes": {
+            "create": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "delete": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "read": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            },
+            "update": {
+              "type": "string",
+              "description_kind": "plain",
+              "optional": true
+            }
+          },
+          "description_kind": "plain"
+        }
+      }
+    },
+    "description_kind": "plain"
+  }
+}

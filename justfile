@@ -27,6 +27,10 @@ py-fmt:
 py-test:
     PYTHONPATH={{justfile_directory()}}/.github uv run --with pytest pytest .github/ -v --ignore=.github/test_compat.py
 
+# Generate Terraform files from provider schema
+tf-gen *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_gen/cli.py {{args}}
+
 # Generate documentation
 docs: fmt
     terraform-docs -c .terraform-docs.yml .

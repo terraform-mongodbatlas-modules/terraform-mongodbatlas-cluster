@@ -1,0 +1,9 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      project:
+        - output_dir: .
+          label: this
+      cloud_backup_schedule:
+        - output_dir: ./backup
+          label: this
