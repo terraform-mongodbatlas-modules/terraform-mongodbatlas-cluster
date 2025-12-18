@@ -11,4 +11,11 @@ resource "mongodbatlas_cloud_provider_access_setup" "this" {
       tenant_id            = azure_config.value.tenant_id
     }
   }
+
+  dynamic "timeouts" {
+    for_each = var.timeouts == null ? [] : [var.timeouts]
+    content {
+      create = timeouts.value.create
+    }
+  }
 }

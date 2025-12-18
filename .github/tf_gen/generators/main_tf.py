@@ -61,9 +61,6 @@ def _render_content_assignments(
 def _render_nested_block(
     name: str, bt: SchemaBlockType, parent_ref: str, indent: str = "      "
 ) -> list[str]:
-    if bt.nesting_mode == NestingMode.map:
-        raise ValueError(f"Unsupported nesting mode for block_type '{name}': map")
-
     is_single = bt.is_single_object or bt.nesting_mode == NestingMode.single
     if is_single:
         for_each = f"{parent_ref} == null ? [] : [{parent_ref}]"
@@ -103,9 +100,6 @@ def _render_dynamic_block(
     indent: str = "  ",
     is_required: bool = False,
 ) -> list[str]:
-    if bt.nesting_mode == NestingMode.map:
-        raise ValueError(f"Unsupported nesting mode for block_type '{name}': map")
-
     is_single = bt.is_single_object or bt.nesting_mode == NestingMode.single
     if is_required:
         for_each = var_ref
@@ -131,9 +125,6 @@ def _render_dynamic_block(
 def render_block(
     name: str, bt: SchemaBlockType, config: GenerationTarget, provider_name: str
 ) -> list[str]:
-    if bt.nesting_mode == NestingMode.map:
-        raise ValueError(f"Unsupported nesting mode for block_type '{name}': map")
-
     var_ref = build_var_ref(name, config, provider_name)
 
     if bt.is_required:
@@ -166,8 +157,6 @@ def generate_main_tf(
     # Block types
     for name, bt in sorted(schema.block.block_types.items()):
         if name in config.variables_excluded:
-            continue
-        if name == "timeouts":
             continue
         lines.append("")
         lines.extend(render_block(name, bt, config, provider_name))

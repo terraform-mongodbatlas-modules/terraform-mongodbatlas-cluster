@@ -31,4 +31,13 @@ resource "aws_vpc_endpoint" "this" {
       subnet_id = subnet_configuration.value.subnet_id
     }
   }
+
+  dynamic "timeouts" {
+    for_each = var.timeouts == null ? [] : [var.timeouts]
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      update = timeouts.value.update
+    }
+  }
 }

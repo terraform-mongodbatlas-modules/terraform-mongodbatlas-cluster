@@ -7,7 +7,6 @@ class NestingMode(StrEnum):
     single = "single"
     list = "list"
     set = "set"
-    map = "map"  # unsupported but may appear in some schemas
 
 
 class AttrType(StrEnum):
