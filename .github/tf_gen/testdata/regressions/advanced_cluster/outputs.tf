@@ -79,23 +79,9 @@ output "create_date" {
   description = "Date and time when MongoDB Cloud created this cluster. This parameter expresses its value in ISO 8601 format in UTC."
 }
 
-output "disk_size_gb" {
-  value       = mongodbatlas_advanced_cluster.this.disk_size_gb
-  description = <<-EOT
-DEPRECATED: Storage capacity of instance data volumes expressed in gigabytes. Increase this number to add capacity.
-
- This value must be equal for all shards and node types.
-
- This value is not configurable on M0/M2/M5 clusters.
-
- MongoDB Cloud requires this parameter if you set **replicationSpecs**.
-
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value. 
-
- Storage charge calculations depend on whether you choose the default value or a custom value.
-
- The maximum value for disk storage cannot exceed 50 times the maximum RAM for the selected cluster. If you require more storage space, consider upgrading your cluster to a higher tier.
-EOT
+output "delete_on_create_timeout" {
+  value       = mongodbatlas_advanced_cluster.this.delete_on_create_timeout
+  description = "Indicates whether to delete the resource being created if a timeout is reached when waiting for completion. When set to `true` and timeout occurs, it triggers the deletion and returns immediately without waiting for deletion to complete. When set to `false`, the timeout will not trigger resource deletion. If you suspect a transient error when the value is `true`, wait before retrying to allow resource deletion to finish. Default is `true`."
 }
 
 output "encryption_at_rest_provider" {
