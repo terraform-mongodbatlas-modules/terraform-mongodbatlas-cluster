@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import pytest
 from tf_gen.config import GenerationTarget
@@ -10,82 +11,71 @@ from tf_gen.schema.models import parse_resource_schema
 
 REGRESSIONS_DIR = Path(__file__).parent / "testdata" / "regressions"
 
+# Schema configurations: (resource_name, schema_file, provider_name, test_types)
+# test_types is a list of which generators to test: "variables", "outputs", or both
+SCHEMA_CONFIGS: list[tuple[str, str, str, list[str]]] = [
+    ("project", "project.json", "mongodbatlas", ["variables", "outputs"]),
+    (
+        "cloud_backup_schedule",
+        "mongodbatlas_cloud_backup_schedule.json",
+        "mongodbatlas",
+        ["variables", "outputs"],
+    ),
+    (
+        "advanced_cluster",
+        "mongodbatlas_advanced_cluster.json",
+        "mongodbatlas",
+        ["variables", "outputs"],
+    ),
+    ("database_user", "mongodbatlas_database_user.json", "mongodbatlas", ["variables"]),
+    ("vpc_endpoint", "vpc_endpoint.json", "aws", ["variables"]),
+    (
+        "advanced_cluster_v2",
+        "mongodbatlas_advanced_clusterv2.json",
+        "mongodbatlas",
+        ["variables"],
+    ),
+]
 
-def regression_path(resource_name: str, filename: str) -> Path:
-    return REGRESSIONS_DIR / resource_name / filename
+
+def _generate_regression_cases():
+    """Generate test cases as (resource_name, schema_file, provider_name, test_type)."""
+    for resource_name, schema_file, provider_name, test_types in SCHEMA_CONFIGS:
+        for test_type in test_types:
+            yield pytest.param(
+                resource_name,
+                schema_file,
+                provider_name,
+                test_type,
+                id=f"{resource_name}-{test_type}",
+            )
 
 
-@pytest.fixture
-def check_variables_regression(file_regression):
-    def _check(schema: dict, resource_name: str, provider_name: str = "mongodbatlas"):
-        parsed = parse_resource_schema(schema)
-        config = GenerationTarget(resource_type=resource_name)
+@pytest.mark.parametrize(
+    "resource_name,schema_file,provider_name,test_type",
+    list(_generate_regression_cases()),
+)
+def test_schema_regression(
+    resource_name: str,
+    schema_file: str,
+    provider_name: str,
+    test_type: Literal["variables", "outputs"],
+    load_schema,
+    file_regression,
+):
+    """Unified regression test for both variables.tf and outputs.tf generation."""
+    schema = load_schema(schema_file)
+    parsed = parse_resource_schema(schema)
+    config = GenerationTarget(resource_type=resource_name)
+
+    if test_type == "variables":
         content = generate_variables_tf(parsed, config, provider_name)
-        file_regression.check(
-            content,
-            fullpath=regression_path(resource_name, "variables.tf"),
-        )
-
-    return _check
-
-
-@pytest.fixture
-def check_outputs_regression(file_regression):
-    def _check(schema: dict, resource_name: str, provider_name: str = "mongodbatlas"):
-        parsed = parse_resource_schema(schema)
-        config = GenerationTarget(resource_type=resource_name)
+        output_file = "variables.tf"
+    else:
         content = generate_outputs_tf(parsed, config, provider_name)
-        file_regression.check(
-            content,
-            fullpath=regression_path(resource_name, "outputs.tf"),
-        )
+        output_file = "outputs.tf"
 
-    return _check
-
-
-def test_project_variables(check_variables_regression, project_schema: dict):
-    check_variables_regression(project_schema, "project")
-
-
-def test_backup_schedule_variables(
-    check_variables_regression, backup_schedule_schema: dict
-):
-    check_variables_regression(backup_schedule_schema, "cloud_backup_schedule")
-
-
-def test_advanced_cluster_variables(
-    check_variables_regression, advanced_cluster_schema: dict
-):
-    check_variables_regression(advanced_cluster_schema, "advanced_cluster")
-
-
-def test_database_user_variables(
-    check_variables_regression, database_user_schema: dict
-):
-    check_variables_regression(database_user_schema, "database_user")
-
-
-def test_vpc_endpoint_variables(check_variables_regression, vpc_endpoint_schema: dict):
-    check_variables_regression(vpc_endpoint_schema, "vpc_endpoint", provider_name="aws")
-
-
-def test_advanced_cluster_v2_variables(
-    check_variables_regression, advanced_cluster_v2_schema: dict
-):
-    check_variables_regression(advanced_cluster_v2_schema, "advanced_cluster_v2")
-
-
-def test_project_outputs(check_outputs_regression, project_schema: dict):
-    check_outputs_regression(project_schema, "project")
-
-
-def test_advanced_cluster_outputs(
-    check_outputs_regression, advanced_cluster_schema: dict
-):
-    check_outputs_regression(advanced_cluster_schema, "advanced_cluster")
-
-
-def test_cloud_backup_schedule_outputs(
-    check_outputs_regression, backup_schedule_schema: dict
-):
-    check_outputs_regression(backup_schedule_schema, "cloud_backup_schedule")
+    file_regression.check(
+        content,
+        fullpath=REGRESSIONS_DIR / resource_name / output_file,
+    )
