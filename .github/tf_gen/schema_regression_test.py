@@ -8,74 +8,53 @@ from tf_gen.config import GenerationTarget
 from tf_gen.generators.outputs_tf import generate_outputs_tf
 from tf_gen.generators.variables_tf import generate_variables_tf
 from tf_gen.schema.models import parse_resource_schema
+from tf_gen.schema_config import ACTIVE_RESOURCES, ResourceConfig
 
 REGRESSIONS_DIR = Path(__file__).parent / "testdata" / "regressions"
 
-# Schema configurations: (resource_name, schema_file, provider_name, test_types)
-# test_types is a list of which generators to test: "variables", "outputs", or both
-SCHEMA_CONFIGS: list[tuple[str, str, str, list[str]]] = [
-    ("project", "project.json", "mongodbatlas", ["variables", "outputs"]),
-    (
-        "cloud_backup_schedule",
-        "mongodbatlas_cloud_backup_schedule.json",
-        "mongodbatlas",
-        ["variables", "outputs"],
-    ),
-    (
-        "advanced_cluster",
-        "mongodbatlas_advanced_cluster.json",
-        "mongodbatlas",
-        ["variables", "outputs"],
-    ),
-    ("database_user", "mongodbatlas_database_user.json", "mongodbatlas", ["variables"]),
-    ("vpc_endpoint", "vpc_endpoint.json", "aws", ["variables"]),
-    (
-        "advanced_cluster_v2",
-        "mongodbatlas_advanced_clusterv2.json",
-        "mongodbatlas",
-        ["variables"],
-    ),
-]
+# Legacy schema filename mappings for files that don't follow the standard naming
+# Maps resource_type -> actual filename in testdata/
+LEGACY_SCHEMA_FILES: dict[str, str] = {
+    "project": "project.json",
+    "vpc_endpoint": "vpc_endpoint.json",
+}
+
+
+def _get_schema_filename(rc: ResourceConfig) -> str:
+    """Get schema filename, using legacy mapping if available."""
+    return LEGACY_SCHEMA_FILES.get(rc.resource_type, rc.schema_filename)
 
 
 def _generate_regression_cases():
-    """Generate test cases as (resource_name, schema_file, provider_name, test_type)."""
-    for resource_name, schema_file, provider_name, test_types in SCHEMA_CONFIGS:
-        for test_type in test_types:
-            yield pytest.param(
-                resource_name,
-                schema_file,
-                provider_name,
-                test_type,
-                id=f"{resource_name}-{test_type}",
-            )
+    """Generate test cases from ACTIVE_RESOURCES config."""
+    for rc in ACTIVE_RESOURCES:
+        if rc.test_variables:
+            yield pytest.param(rc, "variables", id=f"{rc.resource_type}-variables")
+        if rc.test_outputs:
+            yield pytest.param(rc, "outputs", id=f"{rc.resource_type}-outputs")
 
 
-@pytest.mark.parametrize(
-    "resource_name,schema_file,provider_name,test_type",
-    list(_generate_regression_cases()),
-)
+@pytest.mark.parametrize("rc,test_type", list(_generate_regression_cases()))
 def test_schema_regression(
-    resource_name: str,
-    schema_file: str,
-    provider_name: str,
+    rc: ResourceConfig,
     test_type: Literal["variables", "outputs"],
     load_schema,
     file_regression,
 ):
     """Unified regression test for both variables.tf and outputs.tf generation."""
-    schema = load_schema(schema_file)
+    schema_filename = _get_schema_filename(rc)
+    schema = load_schema(schema_filename)
     parsed = parse_resource_schema(schema)
-    config = GenerationTarget(resource_type=resource_name)
+    config = GenerationTarget(resource_type=rc.resource_type)
 
     if test_type == "variables":
-        content = generate_variables_tf(parsed, config, provider_name)
+        content = generate_variables_tf(parsed, config, rc.provider_name)
         output_file = "variables.tf"
     else:
-        content = generate_outputs_tf(parsed, config, provider_name)
+        content = generate_outputs_tf(parsed, config, rc.provider_name)
         output_file = "outputs.tf"
 
     file_regression.check(
         content,
-        fullpath=REGRESSIONS_DIR / resource_name / output_file,
+        fullpath=REGRESSIONS_DIR / rc.resource_type / output_file,
     )

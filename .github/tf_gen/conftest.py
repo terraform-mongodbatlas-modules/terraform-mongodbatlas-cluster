@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 TESTDATA_DIR = Path(__file__).parent / "testdata"
+SCHEMAS_DIR = TESTDATA_DIR / "schemas"
 
 
 @pytest.fixture(scope="session")
@@ -21,11 +22,22 @@ def schema_cache() -> dict[str, dict]:
 
 @pytest.fixture(scope="session")
 def load_schema(schema_cache: dict[str, dict]):
-    """Factory fixture to load schemas with caching."""
+    """Factory fixture to load schemas with caching.
+
+    Accepts either:
+    - filename in testdata/ (e.g., "project.json")
+    - path relative to testdata/ (e.g., "schemas/mongodbatlas_project.json")
+    """
 
     def _load(filename: str) -> dict:
         if filename not in schema_cache:
-            schema_cache[filename] = json.loads((TESTDATA_DIR / filename).read_text())
+            # Check schemas/ subdirectory first, then testdata root
+            schema_path = SCHEMAS_DIR / filename
+            if not schema_path.exists():
+                schema_path = TESTDATA_DIR / filename
+            if not schema_path.exists():
+                raise FileNotFoundError(f"Schema not found: {filename}")
+            schema_cache[filename] = json.loads(schema_path.read_text())
         return schema_cache[filename]
 
     return _load
