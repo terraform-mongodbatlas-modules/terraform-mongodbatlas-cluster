@@ -84,14 +84,14 @@ def test_attribute_flags(backup_schedule_schema: dict):
     assert not cluster_id.optional
     assert cluster_id.is_computed_only
 
-    auto_export = schema.block.attributes["auto_export_enabled"]
-    assert auto_export.computed
-    assert auto_export.optional
-    assert not auto_export.is_computed_only
+    # optional + computed attribute
+    update_snapshots = schema.block.attributes["update_snapshots"]
+    assert update_snapshots.computed
+    assert update_snapshots.optional
+    assert not update_snapshots.is_computed_only
 
 
-def test_deprecated_attribute(backup_schedule_schema: dict):
-    schema = parse_resource_schema(backup_schedule_schema)
-    copy_settings = schema.block.block_types["copy_settings"]
-    replication_spec_id = copy_settings.block.attributes["replication_spec_id"]
-    assert replication_spec_id.deprecated
+def test_deprecated_attribute(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    ip_addresses = schema.block.attributes["ip_addresses"]
+    assert ip_addresses.deprecated

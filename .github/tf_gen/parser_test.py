@@ -75,7 +75,7 @@ def _extract_raw_resource_schema(
 
 
 @pytest.mark.skipif(
-    os.getenv("DOWNLOAD_SCHEMAS", "1") != "1",
+    os.getenv("DOWNLOAD_SCHEMAS") != "1",
     reason="Set DOWNLOAD_SCHEMAS=1 to download schemas",
 )
 def test_schema_download(tmp_path_factory: pytest.TempPathFactory):
