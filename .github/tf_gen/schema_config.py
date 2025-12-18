@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+MONGODB_ATLAS_PROVIDER_SOURCE = "mongodb/mongodbatlas"
+AWS_PROVIDER_SOURCE = "hashicorp/aws"
+
 # Provider sources and versions
 PROVIDER_VERSIONS: dict[str, str] = {
-    "mongodb/mongodbatlas": "~> 2.2",
-    "hashicorp/aws": "~> 5.0",
+    MONGODB_ATLAS_PROVIDER_SOURCE: "~> 2.2",
+    AWS_PROVIDER_SOURCE: "~> 5.0",
 }
 
 
@@ -39,12 +42,15 @@ class ResourceConfig:
 # Active resources to download and test
 ACTIVE_RESOURCES: list[ResourceConfig] = [
     # MongoDB Atlas resources
-    ResourceConfig("mongodb/mongodbatlas", "project"),
-    ResourceConfig("mongodb/mongodbatlas", "advanced_cluster"),
-    ResourceConfig("mongodb/mongodbatlas", "cloud_backup_schedule"),
-    ResourceConfig("mongodb/mongodbatlas", "database_user"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "project"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "advanced_cluster"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_backup_schedule"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "database_user"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "federated_database_instance"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_provider_access_setup"),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_provider_access_authorization"),
     # AWS resources
-    ResourceConfig("hashicorp/aws", "vpc_endpoint"),
+    ResourceConfig(AWS_PROVIDER_SOURCE, "vpc_endpoint"),
 ]
 
 
