@@ -4,17 +4,43 @@ providers:
       cloud_provider_access_setup:
         - output_dir: .
           label: this
-          variables_excluded: [gcp_config, azure_config]
+          use_resource_count: true
+          variables_excluded: [gcp_config, azure_config, delete_on_create_timeout, timeouts]
           outputs_excluded: [gcp_config, azure_config]
+          resource_tf:
+            count: "local.needs_shared_cloud_provider_access ? 1 : 0"
       cloud_provider_access_authorization:
         - output_dir: .
           label: this
+          use_resource_count: true
           variables_excluded: [azure, gcp]
           outputs_excluded: [azure, gcp]
+          resource_tf:
+            count: "local.needs_shared_cloud_provider_access ? 1 : 0"
   - provider_name: aws
     resources:
       vpc_endpoint:
         - output_dir: ./modules/privatelink
-          label: this
-          variables_excluded: [timeouts, tags_all]
-          variables_required: [vpc_id, service_name]
+          label: aws_endpoint
+          use_resource_count: true
+          variables_excluded:
+            - timeouts
+            - tags_all
+            - arn
+            - cidr_blocks
+            - dns_entry
+            - dns_options
+            - network_interface_ids
+            - owner_id
+            - policy
+            - prefix_list_id
+            - private_dns_enabled
+            - requester_managed
+            - route_table_ids
+            - state
+            - auto_accept
+            - ip_address_type
+          outputs_excluded:
+            - dns_options
+          resource_tf:
+            count: "var.create_vpc_endpoint ? 1 : 0"
