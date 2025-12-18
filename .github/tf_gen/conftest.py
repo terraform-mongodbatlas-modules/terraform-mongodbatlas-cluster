@@ -8,6 +8,32 @@ import pytest
 TESTDATA_DIR = Path(__file__).parent / "testdata"
 SCHEMAS_DIR = TESTDATA_DIR / "schemas"
 
+# Default provider configurations for tests
+# Test configs can reference these by provider_name without repeating source/version
+# Version constraints use ~> X.0 to allow any minor version within major X (equivalent to "X.x")
+DEFAULT_PROVIDERS = {
+    "mongodbatlas": {
+        "provider_name": "mongodbatlas",
+        "provider_source": "mongodb/mongodbatlas",
+        "provider_version": "~> 2.0",  # 2.x
+    },
+    "aws": {
+        "provider_name": "aws",
+        "provider_source": "hashicorp/aws",
+        "provider_version": "~> 6.0",  # 6.x
+    },
+    "azurerm": {
+        "provider_name": "azurerm",
+        "provider_source": "hashicorp/azurerm",
+        "provider_version": "~> 4.0",  # 4.x
+    },
+    "google": {
+        "provider_name": "google",
+        "provider_source": "hashicorp/google",
+        "provider_version": "~> 7.0",  # 7.x
+    },
+}
+
 
 @pytest.fixture(scope="session")
 def testdata_dir() -> Path:
