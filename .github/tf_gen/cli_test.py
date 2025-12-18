@@ -2,15 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from tf_gen.cli import generate_for_config
 from tf_gen.conftest import DEFAULT_PROVIDERS
 from tf_gen.section import make_markers, update_section
-
-
-@pytest.fixture
-def cli_testdata_dir(testdata_dir: Path) -> Path:
-    return testdata_dir / "cli"
 
 
 def test_make_markers():

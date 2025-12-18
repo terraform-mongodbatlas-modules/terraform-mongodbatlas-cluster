@@ -90,3 +90,13 @@ def database_user_schema(load_schema) -> dict:
 @pytest.fixture(scope="module")
 def advanced_cluster_v2_schema(load_schema) -> dict:
     return load_schema("mongodbatlas_advanced_clusterv2.json")
+
+
+@pytest.fixture
+def cli_testdata_dir(testdata_dir: Path) -> Path:
+    return testdata_dir / "cli"
+
+
+@pytest.fixture
+def cli_regression_dir(testdata_dir: Path) -> Path:
+    return testdata_dir / "cli_regression"
