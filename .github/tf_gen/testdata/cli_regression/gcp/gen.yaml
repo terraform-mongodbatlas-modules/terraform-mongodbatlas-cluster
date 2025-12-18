@@ -1,0 +1,8 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      cloud_provider_access_setup:
+        - output_dir: .
+          label: this
+          variables_excluded: [aws_config, azure_config]
+          outputs_excluded: [aws_config, azure_config]

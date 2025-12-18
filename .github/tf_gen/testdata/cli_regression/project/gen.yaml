@@ -1,0 +1,15 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      project:
+        - output_dir: .
+          label: this
+          variables_excluded: [teams]
+          variable_tf:
+            name:
+              description: "Name of the MongoDB Atlas project"
+            org_id:
+              description: "MongoDB Atlas organization ID"
+          resource_tf:
+            lifecycle: |
+              ignore_changes = [teams]
