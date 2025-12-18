@@ -8,7 +8,13 @@ from tf_gen.generators.outputs_tf import (
     generate_outputs_tf,
     should_generate_output,
 )
-from tf_gen.schema.models import SchemaAttribute, TfType, parse_resource_schema
+from tf_gen.schema.models import (
+    ResourceSchema,
+    SchemaAttribute,
+    SchemaBlock,
+    TfType,
+    parse_resource_schema,
+)
 from tf_gen.schema.types import AttrType
 
 
@@ -181,3 +187,47 @@ def test_outputs_excluded_parent_keeps_children(advanced_cluster_schema: dict):
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "bi_connector_config"' not in output
     assert 'output "bi_connector_config_enabled"' in output
+
+
+def _schema_with_sensitive_attr() -> ResourceSchema:
+    return ResourceSchema(
+        block=SchemaBlock(
+            attributes={
+                "secret_key": SchemaAttribute(
+                    type=TfType.from_primitive(AttrType.string),
+                    computed=True,
+                    sensitive=True,
+                )
+            }
+        )
+    )
+
+
+def test_sensitive_output_from_schema():
+    schema = _schema_with_sensitive_attr()
+    config = GenerationTarget(resource_type="test")
+    output = generate_outputs_tf(schema, config, "test")
+    assert 'output "secret_key"' in output
+    assert "sensitive = true" in output
+
+
+def test_sensitive_override_true(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(
+        resource_type="project",
+        output_tf_overrides={"id": OutputAttributeOverride(sensitive=True)},
+    )
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "id"' in output
+    assert "sensitive = true" in output
+
+
+def test_sensitive_override_false():
+    schema = _schema_with_sensitive_attr()
+    config = GenerationTarget(
+        resource_type="test",
+        output_tf_overrides={"secret_key": OutputAttributeOverride(sensitive=False)},
+    )
+    output = generate_outputs_tf(schema, config, "test")
+    assert 'output "secret_key"' in output
+    assert "sensitive = true" not in output

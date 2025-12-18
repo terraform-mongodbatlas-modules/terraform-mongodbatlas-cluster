@@ -11,6 +11,7 @@ class OutputAttributeOverride(BaseModel):
     name: str | None = None
     value: str | None = None
     include_children: bool | None = None
+    sensitive: bool | None = None
 
 
 class GenerationTarget(BaseModel):
