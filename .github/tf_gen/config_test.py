@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from tf_gen.config import GenerationTarget, load_config
+import pytest
+from tf_gen.config import GenerationTarget, OutputAttributeOverride, load_config
 
 
 def test_load_config_minimal():
@@ -76,10 +77,6 @@ def test_generation_target_defaults():
 
 
 def test_single_output_with_overrides_fails():
-    import pytest
-    from tf_gen.config import OutputAttributeOverride
-    # TODO: avoid local imports
-
     with pytest.raises(ValueError, match="output_tf_overrides cannot be used"):
         GenerationTarget(
             use_single_output=True,

@@ -1,15 +1,15 @@
 output "authorized_date" {
-  value = mongodbatlas_cloud_provider_access_authorization.this[0].authorized_date
+  value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].authorized_date : null
 }
 
 output "feature_usages" {
-  value = mongodbatlas_cloud_provider_access_authorization.this[0].feature_usages
+  value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].feature_usages : null
 }
 
 output "gcp" {
-  value = mongodbatlas_cloud_provider_access_authorization.this[0].gcp
+  value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].gcp : null
 }
 
 output "id" {
-  value = mongodbatlas_cloud_provider_access_authorization.this[0].id
+  value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].id : null
 }
