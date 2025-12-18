@@ -14,12 +14,11 @@ variable "auto_export_enabled" {
 
 variable "copy_settings" {
   type = list(object({
-    cloud_provider      = optional(string),
-    frequencies         = optional(set(string)),
-    region_name         = optional(string),
-    replication_spec_id = optional(string),
-    should_copy_oplogs  = optional(bool),
-    zone_id             = optional(string)
+    cloud_provider     = optional(string),
+    frequencies        = optional(set(string)),
+    region_name        = optional(string),
+    should_copy_oplogs = optional(bool),
+    zone_id            = optional(string)
   }))
   nullable = true
   default  = null

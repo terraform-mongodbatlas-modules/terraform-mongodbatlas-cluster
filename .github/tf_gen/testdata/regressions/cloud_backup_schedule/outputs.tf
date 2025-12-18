@@ -1,7 +1,3 @@
-output "auto_export_enabled" {
-  value = mongodbatlas_cloud_backup_schedule.this.auto_export_enabled
-}
-
 output "cluster_id" {
   value = mongodbatlas_cloud_backup_schedule.this.cluster_id
 }
@@ -18,12 +14,12 @@ output "copy_settings_region_name" {
   value = mongodbatlas_cloud_backup_schedule.this.copy_settings == null ? null : mongodbatlas_cloud_backup_schedule.this.copy_settings[*].region_name
 }
 
-output "copy_settings_replication_spec_id" {
-  value = mongodbatlas_cloud_backup_schedule.this.copy_settings == null ? null : mongodbatlas_cloud_backup_schedule.this.copy_settings[*].replication_spec_id
-}
-
 output "copy_settings_should_copy_oplogs" {
   value = mongodbatlas_cloud_backup_schedule.this.copy_settings == null ? null : mongodbatlas_cloud_backup_schedule.this.copy_settings[*].should_copy_oplogs
+}
+
+output "copy_settings_zone_id" {
+  value = mongodbatlas_cloud_backup_schedule.this.copy_settings == null ? null : mongodbatlas_cloud_backup_schedule.this.copy_settings[*].zone_id
 }
 
 output "export_export_bucket_id" {
