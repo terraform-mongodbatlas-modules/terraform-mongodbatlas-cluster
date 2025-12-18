@@ -33,7 +33,7 @@ class GenerationTarget(BaseModel):
     output_dir: Path = Field(default_factory=Path.cwd)
     use_single_variable: bool = False
     use_single_output: bool = False
-    use_schema_computability: bool = True
+    all_variables_optional: bool = False
     use_resource_count: bool = False
     include_id_field: bool = False
     files: list[FileType] = Field(default_factory=lambda: list(FileType))

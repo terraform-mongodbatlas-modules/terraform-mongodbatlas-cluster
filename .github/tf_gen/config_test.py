@@ -70,7 +70,7 @@ def test_generation_target_defaults():
     assert "output" in target.files
     assert not target.use_single_variable
     assert not target.use_single_output
-    assert target.use_schema_computability
+    assert not target.all_variables_optional
     assert not target.use_resource_count
     assert not target.include_id_field
     assert target.outputs_prefix == ""
