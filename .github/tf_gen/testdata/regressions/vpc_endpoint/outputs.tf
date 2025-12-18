@@ -1,0 +1,71 @@
+output "arn" {
+  value = aws_vpc_endpoint.this.arn
+}
+
+output "cidr_blocks" {
+  value = aws_vpc_endpoint.this.cidr_blocks
+}
+
+output "dns_entry" {
+  value = aws_vpc_endpoint.this.dns_entry
+}
+
+output "dns_options_dns_record_ip_type" {
+  value = aws_vpc_endpoint.this.dns_options == null ? null : aws_vpc_endpoint.this.dns_options[*].dns_record_ip_type
+}
+
+output "id" {
+  value = aws_vpc_endpoint.this.id
+}
+
+output "ip_address_type" {
+  value = aws_vpc_endpoint.this.ip_address_type
+}
+
+output "network_interface_ids" {
+  value = aws_vpc_endpoint.this.network_interface_ids
+}
+
+output "owner_id" {
+  value = aws_vpc_endpoint.this.owner_id
+}
+
+output "policy" {
+  value = aws_vpc_endpoint.this.policy
+}
+
+output "prefix_list_id" {
+  value = aws_vpc_endpoint.this.prefix_list_id
+}
+
+output "private_dns_enabled" {
+  value = aws_vpc_endpoint.this.private_dns_enabled
+}
+
+output "requester_managed" {
+  value = aws_vpc_endpoint.this.requester_managed
+}
+
+output "route_table_ids" {
+  value = aws_vpc_endpoint.this.route_table_ids
+}
+
+output "security_group_ids" {
+  value = aws_vpc_endpoint.this.security_group_ids
+}
+
+output "service_region" {
+  value = aws_vpc_endpoint.this.service_region
+}
+
+output "state" {
+  value = aws_vpc_endpoint.this.state
+}
+
+output "subnet_ids" {
+  value = aws_vpc_endpoint.this.subnet_ids
+}
+
+output "tags_all" {
+  value = aws_vpc_endpoint.this.tags_all
+}
