@@ -5,8 +5,7 @@
             "auto_export_enabled": {
                 "type": "bool",
                 "description_kind": "plain",
-                "optional": true,
-                "computed": true
+                "optional": true
             },
             "cluster_id": {
                 "type": "string",
@@ -93,13 +92,6 @@
                         "region_name": {
                             "type": "string",
                             "description_kind": "plain",
-                            "optional": true,
-                            "computed": true
-                        },
-                        "replication_spec_id": {
-                            "type": "string",
-                            "description_kind": "plain",
-                            "deprecated": true,
                             "optional": true,
                             "computed": true
                         },
