@@ -35,7 +35,8 @@ class OutputSpec(BaseModel):
 
 @dataclass
 class OutputCollector:
-    resource_ref: str
+    base_ref: str
+    indexed_ref: str
     config: GenerationTarget
     outputs: list[OutputSpec] = field(default_factory=list)
     set_outputs: set[str] = field(default_factory=set)
@@ -54,24 +55,37 @@ def should_generate_output(
     return attr.is_output_candidate
 
 
-def build_resource_ref(
+def build_resource_refs(
     provider_name: str, resource_type: str, config: GenerationTarget
-) -> str:
+) -> tuple[str, str]:
+    """Returns (base_ref, indexed_ref). When not using count, both are the same."""
     base = f"{provider_name}_{resource_type}.{config.label}"
-    return f"{base}[0]" if config.use_resource_count else base
+    if config.use_resource_count:
+        return base, f"{base}[0]"
+    return base, base
+
+
+def _wrap_count_safe(base_ref: str, value_expr: str) -> str:
+    """Wrap value expression with length check for count=0 safety."""
+    length_check = f"length({base_ref}) > 0"
+    # If value already has null check, convert to && short-circuit
+    if " == null ? null : " in value_expr:
+        parts = value_expr.split(" == null ? null : ", 1)
+        return f"{length_check} && {parts[0]} != null ? {parts[1]} : null"
+    return f"{length_check} ? {value_expr} : null"
 
 
 def _build_value_expr(
-    resource_ref: str,
+    indexed_ref: str,
     parent_path: str | None,
     leaf: str,
     nesting: NestingMode | None,
     parent_optional: bool,
 ) -> str:
     if parent_path is None:
-        return f"{resource_ref}.{leaf}"
+        return f"{indexed_ref}.{leaf}"
 
-    full_ref = f"{resource_ref}.{parent_path}"
+    full_ref = f"{indexed_ref}.{parent_path}"
     match nesting:
         case NestingMode.list | NestingMode.set:
             leaf_expr = f"{full_ref}[*].{leaf}"
@@ -114,7 +128,7 @@ def _collect_from_nested_attr(
         if output_name in collector.config.outputs_excluded:
             continue
         value = _build_value_expr(
-            collector.resource_ref, parent_name, child_name, nesting, parent_optional
+            collector.indexed_ref, parent_name, child_name, nesting, parent_optional
         )
         spec = OutputSpec(
             name=output_name,
@@ -134,7 +148,7 @@ def collect_from_attributes(
             continue
         # Add parent output unless excluded
         if name not in collector.config.outputs_excluded:
-            value = f"{collector.resource_ref}.{name}"
+            value = f"{collector.indexed_ref}.{name}"
             desc = make_description(
                 attr.description, attr.deprecated, attr.deprecated_message
             )
@@ -157,7 +171,7 @@ def collect_from_block_types(
     collector: OutputCollector,
 ) -> None:
     for bt_name, bt in block_types.items():
-        if bt_name == "timeouts" or bt_name in collector.config.outputs_excluded:
+        if bt_name in collector.config.outputs_excluded:
             continue
         nesting = bt.nesting_mode
         parent_optional = not bt.is_required
@@ -178,7 +192,7 @@ def collect_from_block_types(
             if output_name in collector.config.outputs_excluded:
                 continue
             value = _build_value_expr(
-                collector.resource_ref, bt_name, child_name, nesting, parent_optional
+                collector.indexed_ref, bt_name, child_name, nesting, parent_optional
             )
             collector.add(
                 OutputSpec(
@@ -215,22 +229,138 @@ def log_set_warnings(collector: OutputCollector, log: logging.Logger) -> None:
         )
 
 
+def _collect_single_output_entries(
+    schema: ResourceSchema,
+    config: GenerationTarget,
+    indexed_ref: str,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """Collect (name, value) entries for single output mode, split by sensitivity."""
+    # TODO: Return a typing.NamedTuple instead
+    non_sensitive: list[tuple[str, str]] = []
+    sensitive: list[tuple[str, str]] = []
+
+    for name, attr in schema.block.attributes.items():
+        if not attr.is_output_candidate or name in config.outputs_excluded:
+            continue
+        entry = (name, f"{indexed_ref}.{name}")
+        if attr.sensitive:
+            sensitive.append(entry)
+        else:
+            non_sensitive.append(entry)
+
+    for bt_name, bt in schema.block.block_types.items():
+        if bt_name in config.outputs_excluded:
+            continue
+        has_computed_child = any(
+            a.is_output_candidate for a in bt.block.attributes.values()
+        )
+        if not has_computed_child:
+            continue
+        has_sensitive_child = any(a.sensitive for a in bt.block.attributes.values())
+        entry = (bt_name, f"{indexed_ref}.{bt_name}")
+        if has_sensitive_child:
+            sensitive.append(entry)
+        else:
+            non_sensitive.append(entry)
+
+    return sorted(non_sensitive), sorted(sensitive)
+
+
+def _render_single_output(
+    name: str,
+    entries: list[tuple[str, str]],
+    base_ref: str,
+    use_count: bool,
+    sensitive: bool = False,
+) -> str:
+    lines = [f'output "{name}" {{']
+    if use_count:
+        lines.append(f"  value = length({base_ref}) > 0 ? {{")
+        for attr, value in entries:
+            lines.append(f"    {attr} = {value}")
+        lines.append("  } : null")
+    else:
+        lines.append("  value = {")
+        for attr, value in entries:
+            lines.append(f"    {attr} = {value}")
+        lines.append("  }")
+    if sensitive:
+        lines.append("  sensitive = true")
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def generate_single_outputs(
+    schema: ResourceSchema,
+    config: GenerationTarget,
+    base_ref: str,
+    indexed_ref: str,
+) -> str:
+    non_sensitive, sensitive = _collect_single_output_entries(
+        schema, config, indexed_ref
+    )
+    output_name = f"{config.outputs_prefix}{config.resource_type}"
+    outputs = []
+
+    if non_sensitive:
+        outputs.append(
+            _render_single_output(
+                output_name, non_sensitive, base_ref, config.use_resource_count
+            )
+        )
+    if sensitive:
+        outputs.append(
+            _render_single_output(
+                f"{output_name}_sensitive",
+                sensitive,
+                base_ref,
+                config.use_resource_count,
+                sensitive=True,
+            )
+        )
+    return "\n\n".join(outputs)
+
+
+def generate_multi_outputs(
+    schema: ResourceSchema,
+    config: GenerationTarget,
+    base_ref: str,
+    indexed_ref: str,
+    log: logging.Logger | None = None,
+) -> str:
+    collector = OutputCollector(
+        base_ref=base_ref, indexed_ref=indexed_ref, config=config
+    )
+    collect_from_attributes(schema.block.attributes, collector)
+    collect_from_block_types(schema.block.block_types, collector)
+
+    specs = [apply_overrides(s, config) for s in collector.outputs]
+
+    # Apply outputs_prefix and count-safe wrapping
+    for spec in specs:
+        if config.outputs_prefix:
+            spec.name = f"{config.outputs_prefix}{spec.name}"
+        if config.use_resource_count:
+            spec.value = _wrap_count_safe(base_ref, spec.value)
+
+    specs.sort(key=lambda s: s.name)
+    if log:
+        log_set_warnings(collector, log)
+
+    return render_blocks(specs, render_output_block)
+
+
 def generate_outputs_tf(
     schema: ResourceSchema,
     config: GenerationTarget,
     provider_name: str,
     log: logging.Logger | None = None,
 ) -> str:
-    resource_ref = build_resource_ref(provider_name, config.resource_type, config)
-    collector = OutputCollector(resource_ref=resource_ref, config=config)
+    base_ref, indexed_ref = build_resource_refs(
+        provider_name, config.resource_type, config
+    )
 
-    collect_from_attributes(schema.block.attributes, collector)
-    collect_from_block_types(schema.block.block_types, collector)
+    if config.use_single_output:
+        return generate_single_outputs(schema, config, base_ref, indexed_ref)
 
-    specs = [apply_overrides(s, config) for s in collector.outputs]
-    specs.sort(key=lambda s: s.name)
-
-    if log:
-        log_set_warnings(collector, log)
-
-    return render_blocks(specs, render_output_block)
+    return generate_multi_outputs(schema, config, base_ref, indexed_ref, log)

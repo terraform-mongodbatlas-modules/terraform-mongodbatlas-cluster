@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 from tf_gen.config import GenerationTarget, ResourceMetaArgs
 from tf_gen.generators.main_tf import (
     build_var_ref,
