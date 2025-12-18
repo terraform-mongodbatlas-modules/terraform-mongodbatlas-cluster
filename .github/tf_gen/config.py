@@ -14,6 +14,15 @@ class OutputAttributeOverride(BaseModel):
     sensitive: bool | None = None
 
 
+class ResourceMetaArgs(BaseModel):
+    """Meta-arguments for Terraform resource blocks."""
+
+    count: str | None = None
+    provider: str | None = None
+    depends_on: list[str] = Field(default_factory=list)
+    lifecycle: str | None = None
+
+
 class GenerationTarget(BaseModel):
     resource_type: str = ""
     output_dir: Path = Field(default_factory=Path.cwd)
@@ -24,7 +33,7 @@ class GenerationTarget(BaseModel):
     files: list[str] = Field(default_factory=lambda: ["variable", "resource", "output"])
     label: str = "this"
     resource_filename: str = "main.tf"
-    resource_tf: dict[str, str] = Field(default_factory=dict)
+    resource_tf: ResourceMetaArgs = Field(default_factory=ResourceMetaArgs)
     resource_tf_var_overrides: dict[str, str] = Field(default_factory=dict)
     variable_filename: str = "variables_resource.tf"
     variables_prefix: str = ""
