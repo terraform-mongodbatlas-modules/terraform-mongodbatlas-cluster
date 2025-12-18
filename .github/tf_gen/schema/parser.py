@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -16,6 +17,12 @@ def fetch_provider_schema(
     provider_version: str,
     cache_dir: Path | None = None,
 ) -> dict:
+    if tf_cli_config := os.environ.get("TF_CLI_CONFIG_FILE"):
+        tf_cli_config_path = Path(tf_cli_config)
+        content = tf_cli_config_path.read_text() if tf_cli_config_path.exists() else None
+        logger.warning(
+            f"TF_CLI_CONFIG_FILE={tf_cli_config} is set; provider schema may come from local build: {content}"
+        )
     cache_key = f"{provider_source.replace('/', '_')}_{provider_version}"
     if cache_dir:
         cache_file = cache_dir / f"{cache_key}.json"
