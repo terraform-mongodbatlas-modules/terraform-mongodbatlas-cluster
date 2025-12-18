@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 
 from pydantic import BaseModel
-from tf_gen.config import GenerationTarget
+from tf_gen.config import GenerationTarget, OutputAttributeOverride
 from tf_gen.generators.hcl_write import (
     make_description,
     render_blocks,
@@ -20,6 +20,17 @@ class OutputSpec(BaseModel):
     name: str
     value: str
     description: str | None = None
+    sensitive: bool = False
+
+    def apply_override(self, override: OutputAttributeOverride) -> OutputSpec:
+        return OutputSpec(
+            name=override.name if override.name else self.name,
+            value=override.value if override.value else self.value,
+            description=self.description,
+            sensitive=override.sensitive
+            if override.sensitive is not None
+            else self.sensitive,
+        )
 
 
 @dataclass
@@ -106,7 +117,10 @@ def _collect_from_nested_attr(
             collector.resource_ref, parent_name, child_name, nesting, parent_optional
         )
         spec = OutputSpec(
-            name=output_name, value=value, description=child_attr.description
+            name=output_name,
+            value=value,
+            description=child_attr.description,
+            sensitive=child_attr.sensitive,
         )
         collector.add(spec, is_set=is_set)
 
@@ -128,7 +142,9 @@ def collect_from_attributes(
                 attr.nested_type and attr.nested_type.nesting_mode == NestingMode.set
             )
             collector.add(
-                OutputSpec(name=name, value=value, description=desc),
+                OutputSpec(
+                    name=name, value=value, description=desc, sensitive=attr.sensitive
+                ),
                 is_set=bool(is_set),
             )
         # Expand children regardless of parent exclusion
@@ -166,7 +182,10 @@ def collect_from_block_types(
             )
             collector.add(
                 OutputSpec(
-                    name=output_name, value=value, description=child_attr.description
+                    name=output_name,
+                    value=value,
+                    description=child_attr.description,
+                    sensitive=child_attr.sensitive,
                 ),
                 is_set=is_set,
             )
@@ -175,19 +194,15 @@ def collect_from_block_types(
 def apply_overrides(spec: OutputSpec, config: GenerationTarget) -> OutputSpec:
     if spec.name not in config.output_tf_overrides:
         return spec
-    override = config.output_tf_overrides[spec.name]
-    data = spec.model_dump()
-    if override.name:
-        data["name"] = override.name
-    if override.value:
-        data["value"] = override.value
-    return OutputSpec(**data)
+    return spec.apply_override(config.output_tf_overrides[spec.name])
 
 
 def render_output_block(spec: OutputSpec) -> str:
     lines = [f'output "{spec.name}" {{', f"  value = {spec.value}"]
     if spec.description:
         lines.append(f"  description = {render_description(spec.description)}")
+    if spec.sensitive:
+        lines.append("  sensitive = true")
     lines.append("}")
     return "\n".join(lines)
 
