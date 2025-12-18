@@ -64,7 +64,7 @@ def test_generation_target_defaults():
     assert target.label == "this"
     assert target.resource_filename == "main.tf"
     assert target.variable_filename == "variables_resource.tf"
-    assert target.output_filename == "output.tf"
+    assert target.output_filename == "outputs.tf"
     assert "variable" in target.files
     assert "resource" in target.files
     assert "output" in target.files

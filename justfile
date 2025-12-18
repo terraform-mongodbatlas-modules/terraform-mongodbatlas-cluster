@@ -45,6 +45,10 @@ setup-provider-dev provider_path:
     echo "Provider built at $PLUGIN_DIR"
     echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
 
+# Generate Terraform files from provider schema
+tf-gen *args:
+    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_gen/cli.py {{args}}
+
 # FORMATTING
 fmt:
     terraform fmt -recursive .

@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Self
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
+
+
+class FileType(StrEnum):
+    variable = "variable"
+    resource = "resource"
+    output = "output"
 
 
 class OutputAttributeOverride(BaseModel):
@@ -29,7 +36,7 @@ class GenerationTarget(BaseModel):
     use_schema_computability: bool = True
     use_resource_count: bool = False
     include_id_field: bool = False
-    files: list[str] = Field(default_factory=lambda: ["variable", "resource", "output"])
+    files: list[FileType] = Field(default_factory=lambda: list(FileType))
     label: str = "this"
     resource_filename: str = "main.tf"
     resource_tf: ResourceMetaArgs = Field(default_factory=ResourceMetaArgs)
@@ -39,7 +46,7 @@ class GenerationTarget(BaseModel):
     variables_excluded: list[str] = Field(default_factory=list)
     variables_required: list[str] = Field(default_factory=list)
     variable_tf: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    output_filename: str = "output.tf"
+    output_filename: str = "outputs.tf"
     outputs_prefix: str = ""
     outputs_excluded: list[str] = Field(default_factory=list)
     output_tf_overrides: dict[str, OutputAttributeOverride] = Field(
@@ -63,11 +70,15 @@ class ProviderGenConfig(BaseModel):
     resources: dict[str, list[GenerationTarget]] = Field(default_factory=dict)
 
 
-def load_config(path: Path) -> list[ProviderGenConfig]:
+def load_config(
+    path: Path, provider_defaults: dict[str, dict[str, str]] | None = None
+) -> list[ProviderGenConfig]:
     raw = yaml.safe_load(path.read_text())
     providers = raw.get("providers", [])
     result = []
     for p in providers:
+        provider_name = p.get("provider_name", "")
+        defaults = (provider_defaults or {}).get(provider_name, {})
         resources: dict[str, list[GenerationTarget]] = {}
         for resource_type, targets in p.get("resources", {}).items():
             if isinstance(targets, list):
@@ -80,9 +91,11 @@ def load_config(path: Path) -> list[ProviderGenConfig]:
                 ]
         result.append(
             ProviderGenConfig(
-                provider_name=p.get("provider_name", ""),
-                provider_source=p.get("provider_source", ""),
-                provider_version=p.get("provider_version", "~> 1.0"),
+                provider_name=provider_name,
+                provider_source=p.get("provider_source")
+                or defaults.get("provider_source", ""),
+                provider_version=p.get("provider_version")
+                or defaults.get("provider_version", "~> 1.0"),
                 provider_config_block=p.get("provider_config_block", ""),
                 resources=resources,
             )
