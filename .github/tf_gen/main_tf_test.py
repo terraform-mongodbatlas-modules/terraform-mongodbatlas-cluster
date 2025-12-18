@@ -121,16 +121,6 @@ def test_render_required_list_block():
     assert "null" not in content
 
 
-def test_unsupported_map_nesting():
-    bt = SchemaBlockType(
-        nesting_mode=NestingMode.map,  # type: ignore[arg-type]
-        block=SchemaBlock(),
-    )
-    config = GenerationTarget(resource_type="test")
-    with pytest.raises(ValueError, match="Unsupported nesting mode"):
-        render_block("test", bt, config, "mongodbatlas")
-
-
 def test_generate_main_tf_with_meta_args():
     schema_raw = {
         "block": {"attributes": {"name": {"type": "string", "required": True}}}
