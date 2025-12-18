@@ -4,4 +4,5 @@ providers:
       project:
         - output_dir: .
           label: this
-          use_single_variable: true
+          use_single_output: true
+          use_resource_count: true

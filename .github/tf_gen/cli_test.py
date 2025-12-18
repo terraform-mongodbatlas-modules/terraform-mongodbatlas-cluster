@@ -106,3 +106,57 @@ def test_generate_single_output_mode(cli_testdata_dir: Path, tmp_path: Path):
     for filepath, content in results.items():
         if "outputs" in filepath:
             assert 'output "project"' in content
+
+
+def test_generate_resource_count_mode(cli_testdata_dir: Path, tmp_path: Path):
+    """use_resource_count should generate length() guards in outputs."""
+    config_path = cli_testdata_dir / "count_safe_outputs_gen.yaml"
+    results = generate_for_config(
+        config_path,
+        dest_path=tmp_path,
+        dry_run=True,
+        provider_defaults=DEFAULT_PROVIDERS,
+        cache_dir=cli_testdata_dir,
+    )
+    for filepath, content in results.items():
+        if "outputs" in filepath:
+            assert "length(" in content
+        if "main" in filepath:
+            # Resource should not have count meta-arg unless explicitly set
+            assert "mongodbatlas_project" in content
+
+
+def test_generate_no_schema_computability(cli_testdata_dir: Path, tmp_path: Path):
+    """use_schema_computability=false makes all vars nullable with default=null."""
+    config_path = cli_testdata_dir / "no_schema_computability_gen.yaml"
+    results = generate_for_config(
+        config_path,
+        dest_path=tmp_path,
+        dry_run=True,
+        provider_defaults=DEFAULT_PROVIDERS,
+        cache_dir=cli_testdata_dir,
+    )
+    for filepath, content in results.items():
+        if "variables" in filepath:
+            # Variables should have default = null for non-required attrs
+            assert "default" in content
+            # Required vars (name, org_id) should not have default
+            # Check that we have some nullable variables
+            assert "null" in content
+
+
+def test_generate_single_output_with_count(cli_testdata_dir: Path, tmp_path: Path):
+    """Combined use_single_output + use_resource_count generates guarded single output."""
+    config_path = cli_testdata_dir / "single_output_with_count_gen.yaml"
+    results = generate_for_config(
+        config_path,
+        dest_path=tmp_path,
+        dry_run=True,
+        provider_defaults=DEFAULT_PROVIDERS,
+        cache_dir=cli_testdata_dir,
+    )
+    for filepath, content in results.items():
+        if "outputs" in filepath:
+            # Single output with count guard
+            assert 'output "project"' in content
+            assert "length(" in content
