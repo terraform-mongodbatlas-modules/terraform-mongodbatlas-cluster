@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from typing import NamedTuple
 
 from pydantic import BaseModel
 from tf_gen.config import GenerationTarget, OutputAttributeOverride
@@ -229,13 +230,17 @@ def log_set_warnings(collector: OutputCollector, log: logging.Logger) -> None:
         )
 
 
+class SingleOutputEntries(NamedTuple):
+    non_sensitive: list[tuple[str, str]]
+    sensitive: list[tuple[str, str]]
+
+
 def _collect_single_output_entries(
     schema: ResourceSchema,
     config: GenerationTarget,
     indexed_ref: str,
-) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+) -> SingleOutputEntries:
     """Collect (name, value) entries for single output mode, split by sensitivity."""
-    # TODO: Return a typing.NamedTuple instead
     non_sensitive: list[tuple[str, str]] = []
     sensitive: list[tuple[str, str]] = []
 
@@ -263,7 +268,7 @@ def _collect_single_output_entries(
         else:
             non_sensitive.append(entry)
 
-    return sorted(non_sensitive), sorted(sensitive)
+    return SingleOutputEntries(sorted(non_sensitive), sorted(sensitive))
 
 
 def _render_single_output(

@@ -54,24 +54,33 @@ def test_schema_regression(
     )
 
 
-@pytest.mark.parametrize("rc,test_type", list(_generate_cases(["variables", "main"])))
+@pytest.mark.parametrize(
+    "rc,test_type", list(_generate_cases(["variables", "main", "outputs"]))
+)
 def test_schema_regression_single_variable(
     rc: ResourceConfig,
     test_type: TestType,
     load_schema,
     file_regression,
 ):
-    """Regression test for single_variable mode (variables.tf and main.tf only)."""
+    """Regression test for single_variable mode (variables.tf, main.tf, and outputs.tf)."""
     schema = load_schema(rc.schema_filename)
     parsed = parse_resource_schema(schema)
-    config = GenerationTarget(resource_type=rc.resource_type, use_single_variable=True)
+    config = GenerationTarget(
+        resource_type=rc.resource_type,
+        use_single_variable=True,
+        use_single_output=True,
+    )
 
     if test_type == "variables":
         content = generate_variables_tf(parsed, config, rc.provider_name)
         output_file = "variables.tf"
-    else:
+    elif test_type == "main":
         content = generate_main_tf(parsed, config, rc.provider_name)
         output_file = "main.tf"
+    else:
+        content = generate_outputs_tf(parsed, config, rc.provider_name)
+        output_file = "outputs.tf"
 
     file_regression.check(
         content,
@@ -94,23 +103,4 @@ def test_schema_regression_count(
     file_regression.check(
         content,
         fullpath=REGRESSIONS_DIR / f"{rc.resource_type}_count" / "outputs.tf",
-    )
-
-
-@pytest.mark.parametrize("rc", ACTIVE_RESOURCES, ids=lambda rc: rc.resource_type)
-def test_schema_regression_single_output(
-    rc: ResourceConfig,
-    load_schema,
-    file_regression,
-):
-    """Regression test for use_single_output mode (outputs.tf only)."""
-    # TODO: Combine in the single_variable test instead of separate test
-    schema = load_schema(rc.schema_filename)
-    parsed = parse_resource_schema(schema)
-    config = GenerationTarget(resource_type=rc.resource_type, use_single_output=True)
-    content = generate_outputs_tf(parsed, config, rc.provider_name)
-
-    file_regression.check(
-        content,
-        fullpath=REGRESSIONS_DIR / f"{rc.resource_type}_single_output" / "outputs.tf",
     )
