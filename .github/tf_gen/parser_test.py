@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from tf_gen.schema.parser import (
     extract_resource_schema,
     fetch_provider_schema,

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import NamedTuple
 
 from pydantic import BaseModel
+
 from tf_gen.config import GenerationTarget, OutputAttributeOverride
 from tf_gen.generators.hcl_write import (
     make_description,

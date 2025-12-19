@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
+
 from tf_gen.config import GenerationTarget
 from tf_gen.generators.hcl_write import (
     make_description,

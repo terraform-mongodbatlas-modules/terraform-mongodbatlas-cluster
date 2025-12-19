@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
+
 from tf_gen.config import GenerationTarget, OutputAttributeOverride, load_config
 
 

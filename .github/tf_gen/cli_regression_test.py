@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from tf_gen.cli import generate_for_config
 from tf_gen.conftest import DEFAULT_PROVIDERS
 

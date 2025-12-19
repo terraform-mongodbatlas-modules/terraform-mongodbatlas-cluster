@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 import typer
+
 from tf_gen.config import FileType, GenerationTarget, load_config
 from tf_gen.generators import (
     generate_main_tf,

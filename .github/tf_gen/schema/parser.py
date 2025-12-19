@@ -28,7 +28,7 @@ def fetch_provider_schema(
             tf_cli_config_path.read_text() if tf_cli_config_path.exists() else None
         )
         logger.warning(
-            f"TF_CLI_CONFIG_FILE={tf_cli_config} is set; provider schema may come from local build: {content}"
+            f"TF_CLI_CONFIG_FILE={tf_cli_config} is set; provider schema may come from local build: {content}"  # noqa: E501
         )
     cache_key = _make_cache_key(provider_source)
     if cache_dir:
