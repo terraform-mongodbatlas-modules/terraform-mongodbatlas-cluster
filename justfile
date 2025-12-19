@@ -47,7 +47,7 @@ setup-provider-dev provider_path:
 
 # Generate Terraform files from provider schema
 tf-gen *args:
-    PYTHONPATH={{justfile_directory()}}/.github uv run --with pyyaml --with typer python .github/tf_gen/cli.py {{args}}
+    {{py}} tf_gen {{args}}
 
 # FORMATTING
 fmt:

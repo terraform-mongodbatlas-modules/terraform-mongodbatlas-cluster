@@ -3,11 +3,15 @@ name = "module-github-scripts"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
+    "pydantic",
     "pyyaml",
     "typer",
     "pytest",
     "pytest-regressions",
 ]
+
+[project.scripts]
+tf-gen = "tf_gen.cli:app"
 
 [dependency-groups]
 dev = ["ruff"]
