@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from tf_gen.config import GenerationTarget, VariableAttributeOverride
+from tf_gen.config import GenerationTarget, ValidationBlock, VariableAttributeOverride
 from tf_gen.generators.hcl_write import (
     make_description,
     render_blocks,
@@ -25,9 +25,11 @@ class VariableSpec(BaseModel):
     default: str | None = None
     nullable: bool = False
     sensitive: bool = False
+    validations: list[ValidationBlock] = Field(default_factory=list)
 
     def apply_override(self, override: VariableAttributeOverride) -> VariableSpec:
         new_default = override.default if override.default is not None else self.default
+        new_validations = normalize_validations(override.validation)
         return VariableSpec(
             name=override.name if override.name else self.name,
             type_str=override.type if override.type else self.type_str,
@@ -41,7 +43,18 @@ class VariableSpec(BaseModel):
             sensitive=override.sensitive
             if override.sensitive is not None
             else self.sensitive,
+            validations=new_validations if new_validations else self.validations,
         )
+
+
+def normalize_validations(
+    raw: ValidationBlock | list[ValidationBlock] | None,
+) -> list[ValidationBlock]:
+    if raw is None:
+        return []
+    if isinstance(raw, ValidationBlock):
+        return [raw]
+    return raw
 
 
 def _render_object_fields(fields: list[str], indent: int = 0) -> str:
@@ -206,6 +219,14 @@ def block_type_to_variable_spec(
     return _apply_overrides(spec, name, config)
 
 
+def render_validation_block(v: ValidationBlock) -> str:
+    return f"""\
+  validation {{
+    condition     = {v.condition}
+    error_message = {render_description(v.error_message)}
+  }}"""
+
+
 def render_variable_block(spec: VariableSpec) -> str:
     lines = [f'variable "{spec.name}" {{', f"  type = {spec.type_str}"]
     if spec.description:
@@ -216,6 +237,9 @@ def render_variable_block(spec: VariableSpec) -> str:
         lines.append(f"  default = {spec.default}")
     if spec.sensitive:
         lines.append("  sensitive = true")
+    for v in spec.validations:
+        lines.append("")
+        lines.append(render_validation_block(v))
     lines.append("}")
     return "\n".join(lines)
 

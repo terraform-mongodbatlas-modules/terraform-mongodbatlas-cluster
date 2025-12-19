@@ -14,13 +14,18 @@ class FileType(StrEnum):
     output = "output"
 
 
+class ValidationBlock(BaseModel):
+    condition: str
+    error_message: str
+
+
 class VariableAttributeOverride(BaseModel):
     name: str | None = None
     description: str | None = None
     default: str | None = None
     type: str | None = None
     sensitive: bool | None = None
-    validation: str | None = None
+    validation: ValidationBlock | list[ValidationBlock] | None = None
 
 
 class OutputAttributeOverride(BaseModel):

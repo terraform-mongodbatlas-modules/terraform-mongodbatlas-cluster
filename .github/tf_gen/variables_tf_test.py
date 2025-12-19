@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from tf_gen.config import GenerationTarget, VariableAttributeOverride
+from tf_gen.config import GenerationTarget, ValidationBlock, VariableAttributeOverride
 from tf_gen.generators.hcl_write import DEPRECATED_NAME
 from tf_gen.generators.variables_tf import (
+    VariableSpec,
     attr_to_variable_spec,
     block_type_to_variable_spec,
     generate_variables_tf,
+    normalize_validations,
     render_tf_type,
+    render_validation_block,
     render_variable_block,
     should_generate_variable,
 )
@@ -266,3 +269,68 @@ def test_inline_object_type(vpc_endpoint_schema: dict):
     )
     assert "object(" in spec.type_str
     assert "dns_name" in spec.type_str
+
+
+def test_render_validation_block():
+    v = ValidationBlock(condition="var.x != null", error_message="x is required")
+    output = render_validation_block(v)
+    assert "validation {" in output
+    assert "condition     = var.x != null" in output
+    assert 'error_message = "x is required"' in output
+
+
+def test_render_variable_block_with_validation():
+    spec = VariableSpec(
+        name="provider_name",
+        type_str="string",
+        nullable=True,
+        default="null",
+        validations=[
+            ValidationBlock(
+                condition='contains(["AWS", "AZURE", "GCP"], var.provider_name)',
+                error_message="Only AWS/AZURE/GCP allowed.",
+            )
+        ],
+    )
+    output = render_variable_block(spec)
+    assert 'variable "provider_name"' in output
+    assert "validation {" in output
+    assert "condition" in output
+    assert "error_message" in output
+
+
+def test_render_variable_block_multiple_validations():
+    spec = VariableSpec(
+        name="size",
+        type_str="string",
+        validations=[
+            ValidationBlock(condition="c1", error_message="m1"),
+            ValidationBlock(condition="c2", error_message="m2"),
+        ],
+    )
+    output = render_variable_block(spec)
+    assert output.count("validation {") == 2
+
+
+def test_normalize_validations():
+    assert normalize_validations(None) == []
+    single = ValidationBlock(condition="c", error_message="m")
+    assert normalize_validations(single) == [single]
+    multi = [single, single]
+    assert normalize_validations(multi) == multi
+
+
+def test_variable_tf_override_with_validation():
+    attr = SchemaAttribute(type=TfType.from_primitive(AttrType.string), optional=True)
+    config = GenerationTarget(
+        variable_tf={
+            "name": VariableAttributeOverride(
+                validation=ValidationBlock(
+                    condition="var.name != null", error_message="required"
+                )
+            )
+        }
+    )
+    spec = attr_to_variable_spec("name", attr, config)
+    assert len(spec.validations) == 1
+    assert spec.validations[0].condition == "var.name != null"
