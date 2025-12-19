@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tf_gen.config import GenerationTarget
+from tf_gen.config import GenerationTarget, VariableAttributeOverride
 from tf_gen.generators.hcl_write import DEPRECATED_NAME
 from tf_gen.generators.variables_tf import (
     attr_to_variable_spec,
@@ -167,10 +167,10 @@ def test_variable_tf_overrides():
     attr = SchemaAttribute(type=TfType.from_primitive(AttrType.string), optional=True)
     config = GenerationTarget(
         variable_tf={
-            "name": {
-                "description": "Custom description",
-                "sensitive": True,
-            }
+            "name": VariableAttributeOverride(
+                description="Custom description",
+                sensitive=True,
+            )
         }
     )
     spec = attr_to_variable_spec("name", attr, config)

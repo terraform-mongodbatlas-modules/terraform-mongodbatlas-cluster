@@ -5,7 +5,12 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from tf_gen.config import GenerationTarget, OutputAttributeOverride, load_config
+from tf_gen.config import (
+    GenerationTarget,
+    OutputAttributeOverride,
+    VariableAttributeOverride,
+    load_config,
+)
 
 
 def test_load_config_minimal():
@@ -83,3 +88,14 @@ def test_single_output_with_overrides_fails():
             use_single_output=True,
             output_tf_overrides={"id": OutputAttributeOverride(name="custom_id")},
         )
+
+
+def test_variable_tf_accepts_dict_or_model():
+    # Can be constructed with dict (Pydantic auto-converts)
+    target = GenerationTarget(variable_tf={"name": {"description": "Test"}})
+    assert target.variable_tf["name"].description == "Test"
+    # Can also be constructed with model directly
+    target2 = GenerationTarget(
+        variable_tf={"name": VariableAttributeOverride(sensitive=True)}
+    )
+    assert target2.variable_tf["name"].sensitive is True

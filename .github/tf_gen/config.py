@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Self
+from typing import Self
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -12,6 +12,15 @@ class FileType(StrEnum):
     variable = "variable"
     resource = "resource"
     output = "output"
+
+
+class VariableAttributeOverride(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    default: str | None = None
+    type: str | None = None
+    sensitive: bool | None = None
+    validation: str | None = None
 
 
 class OutputAttributeOverride(BaseModel):
@@ -45,7 +54,7 @@ class GenerationTarget(BaseModel):
     variables_prefix: str = ""
     variables_excluded: list[str] = Field(default_factory=list)
     variables_required: list[str] = Field(default_factory=list)
-    variable_tf: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    variable_tf: dict[str, VariableAttributeOverride] = Field(default_factory=dict)
     output_filename: str = "outputs.tf"
     outputs_prefix: str = ""
     outputs_excluded: list[str] = Field(default_factory=list)

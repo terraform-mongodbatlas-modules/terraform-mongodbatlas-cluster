@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from tf_gen.config import GenerationTarget
+from tf_gen.config import GenerationTarget, VariableAttributeOverride
 from tf_gen.generators.hcl_write import (
     make_description,
     render_blocks,
@@ -25,6 +25,23 @@ class VariableSpec(BaseModel):
     default: str | None = None
     nullable: bool = False
     sensitive: bool = False
+
+    def apply_override(self, override: VariableAttributeOverride) -> VariableSpec:
+        new_default = override.default if override.default is not None else self.default
+        return VariableSpec(
+            name=override.name if override.name else self.name,
+            type_str=override.type if override.type else self.type_str,
+            description=override.description
+            if override.description
+            else self.description,
+            default=new_default,
+            nullable=new_default == "null"
+            if override.default is not None
+            else self.nullable,
+            sensitive=override.sensitive
+            if override.sensitive is not None
+            else self.sensitive,
+        )
 
 
 def _render_object_fields(fields: list[str], indent: int = 0) -> str:
@@ -138,19 +155,8 @@ def should_generate_variable(
 def _apply_overrides(
     spec: VariableSpec, name: str, config: GenerationTarget
 ) -> VariableSpec:
-    overrides = config.variable_tf.get(name, {})
-    if override_name := overrides.get("name"):
-        spec.name = override_name
-    if override_desc := overrides.get("description"):
-        spec.description = override_desc
-    if override_type := overrides.get("type"):
-        spec.type_str = override_type
-    if "default" in overrides:
-        spec.default = overrides["default"]
-        spec.nullable = spec.default == "null"
-    if "sensitive" in overrides:
-        spec.sensitive = overrides["sensitive"]
-    return spec
+    override = config.variable_tf.get(name)
+    return spec.apply_override(override) if override else spec
 
 
 def _determine_required(
