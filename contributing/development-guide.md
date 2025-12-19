@@ -51,6 +51,10 @@ just pre-push                 # Run slower checks (pre-commit + unit-plan-tests,
 just docs                     # Generate all docs
 just check-docs               # Verify docs are up-to-date (CI mode)
 
+# Terraform file generation
+just tf-gen --config gen.yaml     # Generate all targets from config
+just tf-gen --config gen.yaml --dry-run  # Preview without writing
+
 # Testing (see test-guide.md for full details)
 just unit-plan-tests          # Plan-only tests (no credentials)
 just dev-integration-test     # Single apply test (requires credentials)
@@ -242,6 +246,14 @@ Scripts are organized in `.github/` subdirectories ([Python](https://www.python.
 - `test_compat.py` - Terraform CLI version compatibility testing
 
 **Testing**: Python unit tests use [pytest](https://pytest.org/). Run `just py-test` to execute all tests in `*_test.py` files (excludes `test_compat.py`).
+
+**tf_gen/** - Terraform file generation:
+- `cli.py` - CLI entry point for `just tf-gen`
+- `config.py` - Configuration models (GenerationTarget, ProviderGenConfig)
+- `generators/` - File generators (variables_tf.py, main_tf.py, outputs_tf.py)
+- `schema/` - Provider schema parsing
+
+See [tf-gen README](../.github/tf_gen/README.md) for configuration reference and examples.
 
 See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
 
