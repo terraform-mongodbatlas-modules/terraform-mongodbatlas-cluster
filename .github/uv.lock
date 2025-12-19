@@ -81,15 +81,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "pydantic" },
-    { name = "pytest" },
-    { name = "pytest-regressions" },
-    { name = "pyyaml" },
-    { name = "typer" },
+    { name = "pydantic", specifier = "~=2.12" },
+    { name = "pytest", specifier = "~=9.0" },
+    { name = "pytest-regressions", specifier = "~=2.8" },
+    { name = "pyyaml", specifier = "~=6.0" },
+    { name = "typer", specifier = "~=0.20" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff" }]
+dev = [{ name = "ruff", specifier = "~=0.14" }]
 
 [[package]]
 name = "packaging"
