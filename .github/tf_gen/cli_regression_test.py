@@ -24,7 +24,7 @@ def test_cli_module_regression(
         dest_path=dest_path,
         dry_run=True,
         provider_defaults=DEFAULT_PROVIDERS,
-        cache_dir=cli_regression_dir,
+        cache_dir=cli_regression_dir / "schema_cache",
     )
     for filepath, content in sorted(results.items()):
         file_regression.check(content, fullpath=Path(filepath))

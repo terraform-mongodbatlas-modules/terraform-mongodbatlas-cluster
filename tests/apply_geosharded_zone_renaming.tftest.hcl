@@ -1,3 +1,19 @@
+run "apply_random_name" {
+  module {
+    source = "./tests/random_name_generator"
+  }
+}
+
+run "create_project" {
+  module {
+    source = "./tests/project_generator"
+  }
+
+  variables {
+    project_name = "test-acc-tf-p-${run.apply_random_name.name_project}" # DO NOT EDIT, prefix used by the cleanup-test-env.yml
+  }
+}
+
 # Step 1: Apply the initial configuration
 run "geo_zone_initial_apply" {
   command   = apply
@@ -8,7 +24,7 @@ run "geo_zone_initial_apply" {
   }
   variables {
     name          = "tf-test-geo-zone"
-    project_id    = var.project_id
+    project_id    = run.create_project.project_id
     provider_name = "AWS"
     cluster_type  = "GEOSHARDED"
     regions = [
@@ -16,8 +32,6 @@ run "geo_zone_initial_apply" {
       { name = "EU_WEST_1", node_count = 3, zone_name = "EU" }
     ]
   }
-
-
 }
 
 # Step 2: Test the plan for renaming the zone
@@ -31,7 +45,7 @@ run "geo_zone_rename_plan" {
 
   variables {
     name          = "tf-test-geo-zone"
-    project_id    = var.project_id
+    project_id    = run.create_project.project_id
     provider_name = "AWS"
     cluster_type  = "GEOSHARDED"
     regions = [
