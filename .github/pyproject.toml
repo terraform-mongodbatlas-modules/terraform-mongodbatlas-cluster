@@ -3,14 +3,15 @@ name = "module-github-scripts"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
-    "pyyaml",
-    "typer",
-    "pytest",
-    "pytest-regressions",
+    "pydantic~=2.12",
+    "pyyaml~=6.0",
+    "typer~=0.20",
+    "pytest~=9.0",
+    "pytest-regressions~=2.8",
 ]
 
 [dependency-groups]
-dev = ["ruff"]
+dev = ["ruff~=0.14"]
 
 [tool.ruff]
 line-length = 100

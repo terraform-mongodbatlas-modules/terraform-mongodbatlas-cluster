@@ -1,0 +1,235 @@
+{
+    "version": 0,
+    "block": {
+        "attributes": {
+            "arn": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "auto_accept": {
+                "type": "bool",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "cidr_blocks": {
+                "type": [
+                    "list",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "dns_entry": {
+                "type": [
+                    "list",
+                    [
+                        "object",
+                        {
+                            "dns_name": "string",
+                            "hosted_zone_id": "string"
+                        }
+                    ]
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "id": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "ip_address_type": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "network_interface_ids": {
+                "type": [
+                    "set",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "owner_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "policy": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "prefix_list_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "private_dns_enabled": {
+                "type": "bool",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "requester_managed": {
+                "type": "bool",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "resource_configuration_arn": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "route_table_ids": {
+                "type": [
+                    "set",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "security_group_ids": {
+                "type": [
+                    "set",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "service_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "service_network_arn": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "service_region": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "state": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "subnet_ids": {
+                "type": [
+                    "set",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "tags": {
+                "type": [
+                    "map",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "optional": true
+            },
+            "tags_all": {
+                "type": [
+                    "map",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "vpc_endpoint_type": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "vpc_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            }
+        },
+        "block_types": {
+            "dns_options": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "dns_record_ip_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "private_dns_only_for_inbound_resolver_endpoint": {
+                            "type": "bool",
+                            "description_kind": "plain",
+                            "optional": true
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "subnet_configuration": {
+                "nesting_mode": "set",
+                "block": {
+                    "attributes": {
+                        "ipv4": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        },
+                        "ipv6": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        },
+                        "subnet_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "timeouts": {
+                "nesting_mode": "single",
+                "block": {
+                    "attributes": {
+                        "create": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        },
+                        "delete": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        },
+                        "update": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            }
+        },
+        "description_kind": "plain"
+    }
+}

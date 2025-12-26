@@ -1,0 +1,111 @@
+{
+    "version": 0,
+    "block": {
+        "attributes": {
+            "aws_config": {
+                "type": [
+                    "list",
+                    [
+                        "object",
+                        {
+                            "atlas_assumed_role_external_id": "string",
+                            "atlas_aws_account_arn": "string"
+                        }
+                    ]
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "created_date": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "delete_on_create_timeout": {
+                "type": "bool",
+                "description": "Indicates whether to delete the resource being created if a timeout is reached when waiting for completion. When set to `true` and timeout occurs, it triggers the deletion and returns immediately without waiting for deletion to complete. When set to `false`, the timeout will not trigger resource deletion. If you suspect a transient error when the value is `true`, wait before retrying to allow resource deletion to finish. Default is `true`.",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "gcp_config": {
+                "type": [
+                    "list",
+                    [
+                        "object",
+                        {
+                            "service_account_for_atlas": "string",
+                            "status": "string"
+                        }
+                    ]
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "id": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "last_updated_date": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "project_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "provider_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "role_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            }
+        },
+        "block_types": {
+            "azure_config": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "atlas_azure_app_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "service_principal_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "timeouts": {
+                "nesting_mode": "single",
+                "block": {
+                    "attributes": {
+                        "create": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            }
+        },
+        "description_kind": "plain"
+    }
+}

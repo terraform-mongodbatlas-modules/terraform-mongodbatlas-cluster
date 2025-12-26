@@ -1,0 +1,305 @@
+{
+    "version": 0,
+    "block": {
+        "attributes": {
+            "auto_export_enabled": {
+                "type": "bool",
+                "description_kind": "plain",
+                "optional": true
+            },
+            "cluster_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "cluster_name": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "id": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "id_policy": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "next_snapshot": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            },
+            "project_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "reference_hour_of_day": {
+                "type": "number",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "reference_minute_of_hour": {
+                "type": "number",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "restore_window_days": {
+                "type": "number",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "update_snapshots": {
+                "type": "bool",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "use_org_and_group_names_in_export_prefix": {
+                "type": "bool",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            }
+        },
+        "block_types": {
+            "copy_settings": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "cloud_provider": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "frequencies": {
+                            "type": [
+                                "set",
+                                "string"
+                            ],
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "region_name": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "should_copy_oplogs": {
+                            "type": "bool",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "zone_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "export": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "export_bucket_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "policy_item_daily": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "frequency_interval": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "retention_unit": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "retention_value": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "policy_item_hourly": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "frequency_interval": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "retention_unit": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "retention_value": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "policy_item_monthly": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "frequency_interval": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "retention_unit": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "retention_value": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "policy_item_weekly": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "frequency_interval": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "retention_unit": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "retention_value": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "policy_item_yearly": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "frequency_interval": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "frequency_type": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "retention_unit": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "retention_value": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            }
+        },
+        "description_kind": "plain"
+    }
+}

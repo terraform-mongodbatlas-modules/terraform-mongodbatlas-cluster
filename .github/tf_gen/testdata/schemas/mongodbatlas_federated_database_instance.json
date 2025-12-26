@@ -1,0 +1,419 @@
+{
+    "version": 0,
+    "block": {
+        "attributes": {
+            "hostnames": {
+                "type": [
+                    "list",
+                    "string"
+                ],
+                "description_kind": "plain",
+                "computed": true
+            },
+            "id": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+            },
+            "name": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "project_id": {
+                "type": "string",
+                "description_kind": "plain",
+                "required": true
+            },
+            "state": {
+                "type": "string",
+                "description_kind": "plain",
+                "computed": true
+            }
+        },
+        "block_types": {
+            "cloud_provider_config": {
+                "nesting_mode": "list",
+                "block": {
+                    "block_types": {
+                        "aws": {
+                            "nesting_mode": "list",
+                            "block": {
+                                "attributes": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "iam_assumed_role_arn": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "iam_user_arn": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "role_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "required": true
+                                    },
+                                    "test_s3_bucket": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "required": true
+                                    }
+                                },
+                                "description_kind": "plain"
+                            },
+                            "max_items": 1
+                        },
+                        "azure": {
+                            "nesting_mode": "list",
+                            "block": {
+                                "attributes": {
+                                    "atlas_app_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "role_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "required": true
+                                    },
+                                    "service_principal_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "tenant_id": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    }
+                                },
+                                "description_kind": "plain"
+                            },
+                            "max_items": 1
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "data_process_region": {
+                "nesting_mode": "list",
+                "block": {
+                    "attributes": {
+                        "cloud_provider": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        },
+                        "region": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "required": true
+                        }
+                    },
+                    "description_kind": "plain"
+                },
+                "max_items": 1
+            },
+            "storage_databases": {
+                "nesting_mode": "set",
+                "block": {
+                    "attributes": {
+                        "max_wildcard_collections": {
+                            "type": "number",
+                            "description_kind": "plain",
+                            "computed": true
+                        },
+                        "name": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        }
+                    },
+                    "block_types": {
+                        "collections": {
+                            "nesting_mode": "set",
+                            "block": {
+                                "attributes": {
+                                    "name": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "optional": true,
+                                        "computed": true
+                                    }
+                                },
+                                "block_types": {
+                                    "data_sources": {
+                                        "nesting_mode": "set",
+                                        "block": {
+                                            "attributes": {
+                                                "allow_insecure": {
+                                                    "type": "bool",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "collection": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "collection_regex": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "database": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "database_regex": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "dataset_name": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "default_format": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "path": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "provenance_field_name": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "store_name": {
+                                                    "type": "string",
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                },
+                                                "urls": {
+                                                    "type": [
+                                                        "list",
+                                                        "string"
+                                                    ],
+                                                    "description_kind": "plain",
+                                                    "optional": true,
+                                                    "computed": true
+                                                }
+                                            },
+                                            "description_kind": "plain"
+                                        }
+                                    }
+                                },
+                                "description_kind": "plain"
+                            }
+                        },
+                        "views": {
+                            "nesting_mode": "set",
+                            "block": {
+                                "attributes": {
+                                    "name": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "pipeline": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "computed": true
+                                    }
+                                },
+                                "description_kind": "plain"
+                            }
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            },
+            "storage_stores": {
+                "nesting_mode": "set",
+                "block": {
+                    "attributes": {
+                        "additional_storage_classes": {
+                            "type": [
+                                "list",
+                                "string"
+                            ],
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "allow_insecure": {
+                            "type": "bool",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "bucket": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "cluster_name": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "default_format": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "delimiter": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "include_tags": {
+                            "type": "bool",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "name": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "prefix": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "project_id": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "provider": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "public": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "region": {
+                            "type": "string",
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        },
+                        "urls": {
+                            "type": [
+                                "list",
+                                "string"
+                            ],
+                            "description_kind": "plain",
+                            "optional": true,
+                            "computed": true
+                        }
+                    },
+                    "block_types": {
+                        "read_preference": {
+                            "nesting_mode": "list",
+                            "block": {
+                                "attributes": {
+                                    "max_staleness_seconds": {
+                                        "type": "number",
+                                        "description_kind": "plain",
+                                        "optional": true,
+                                        "computed": true
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "optional": true,
+                                        "computed": true
+                                    }
+                                },
+                                "block_types": {
+                                    "tag_sets": {
+                                        "nesting_mode": "list",
+                                        "block": {
+                                            "block_types": {
+                                                "tags": {
+                                                    "nesting_mode": "list",
+                                                    "block": {
+                                                        "attributes": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description_kind": "plain",
+                                                                "optional": true,
+                                                                "computed": true
+                                                            },
+                                                            "value": {
+                                                                "type": "string",
+                                                                "description_kind": "plain",
+                                                                "optional": true,
+                                                                "computed": true
+                                                            }
+                                                        },
+                                                        "description_kind": "plain"
+                                                    },
+                                                    "min_items": 1
+                                                }
+                                            },
+                                            "description_kind": "plain"
+                                        }
+                                    }
+                                },
+                                "description_kind": "plain"
+                            },
+                            "max_items": 1
+                        }
+                    },
+                    "description_kind": "plain"
+                }
+            }
+        },
+        "description_kind": "plain"
+    }
+}

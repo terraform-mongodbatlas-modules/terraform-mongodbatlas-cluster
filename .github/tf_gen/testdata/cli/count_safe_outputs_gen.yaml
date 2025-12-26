@@ -1,0 +1,7 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      project:
+        - output_dir: .
+          label: this
+          use_resource_count: true

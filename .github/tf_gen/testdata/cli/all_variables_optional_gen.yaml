@@ -1,0 +1,8 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      project:
+        - output_dir: .
+          label: this
+          all_variables_optional: true
+          variables_required: [name, org_id]

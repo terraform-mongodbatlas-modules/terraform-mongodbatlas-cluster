@@ -1,0 +1,7 @@
+providers:
+  - provider_name: mongodbatlas
+    resources:
+      project:
+        - output_dir: .
+          label: this
+          variables_excluded: [teams]
