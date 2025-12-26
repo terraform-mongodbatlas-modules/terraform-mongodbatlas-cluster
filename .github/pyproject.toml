@@ -21,6 +21,6 @@ target-version = "py314"
 select = ["E", "F", "I", "W"]
 
 [tool.pytest.ini_options]
-addopts = "--force-regen"
+# addopts = "--force-regen" # Uncomment to force regeneration of test data
 testpaths = ["."]
 python_files = ["*_test.py"]
