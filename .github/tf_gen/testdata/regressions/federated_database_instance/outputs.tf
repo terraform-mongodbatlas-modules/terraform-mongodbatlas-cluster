@@ -2,10 +2,6 @@ output "hostnames" {
   value = mongodbatlas_federated_database_instance.this.hostnames
 }
 
-output "id" {
-  value = mongodbatlas_federated_database_instance.this.id
-}
-
 output "state" {
   value = mongodbatlas_federated_database_instance.this.state
 }

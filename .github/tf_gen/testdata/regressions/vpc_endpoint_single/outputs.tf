@@ -4,7 +4,6 @@ output "vpc_endpoint" {
     cidr_blocks = aws_vpc_endpoint.this.cidr_blocks
     dns_entry = aws_vpc_endpoint.this.dns_entry
     dns_options = aws_vpc_endpoint.this.dns_options
-    id = aws_vpc_endpoint.this.id
     ip_address_type = aws_vpc_endpoint.this.ip_address_type
     network_interface_ids = aws_vpc_endpoint.this.network_interface_ids
     owner_id = aws_vpc_endpoint.this.owner_id

@@ -11,10 +11,6 @@ output "dns_entry" {
   value = length(aws_vpc_endpoint.aws_endpoint) > 0 ? aws_vpc_endpoint.aws_endpoint[0].dns_entry : null
 }
 
-output "id" {
-  value = length(aws_vpc_endpoint.aws_endpoint) > 0 ? aws_vpc_endpoint.aws_endpoint[0].id : null
-}
-
 output "ip_address_type" {
   value = length(aws_vpc_endpoint.aws_endpoint) > 0 ? aws_vpc_endpoint.aws_endpoint[0].ip_address_type : null
 }

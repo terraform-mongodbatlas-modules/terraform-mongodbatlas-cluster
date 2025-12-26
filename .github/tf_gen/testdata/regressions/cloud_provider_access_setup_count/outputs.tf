@@ -10,10 +10,6 @@ output "gcp_config" {
   value = length(mongodbatlas_cloud_provider_access_setup.this) > 0 ? mongodbatlas_cloud_provider_access_setup.this[0].gcp_config : null
 }
 
-output "id" {
-  value = length(mongodbatlas_cloud_provider_access_setup.this) > 0 ? mongodbatlas_cloud_provider_access_setup.this[0].id : null
-}
-
 output "last_updated_date" {
   value = length(mongodbatlas_cloud_provider_access_setup.this) > 0 ? mongodbatlas_cloud_provider_access_setup.this[0].last_updated_date : null
 }

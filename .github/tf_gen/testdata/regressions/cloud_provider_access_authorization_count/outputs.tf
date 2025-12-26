@@ -9,7 +9,3 @@ output "feature_usages" {
 output "gcp" {
   value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].gcp : null
 }
-
-output "id" {
-  value = length(mongodbatlas_cloud_provider_access_authorization.this) > 0 ? mongodbatlas_cloud_provider_access_authorization.this[0].id : null
-}

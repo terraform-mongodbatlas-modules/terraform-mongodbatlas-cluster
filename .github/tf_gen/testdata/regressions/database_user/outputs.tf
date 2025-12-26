@@ -2,10 +2,6 @@ output "aws_iam_type" {
   value = mongodbatlas_database_user.this.aws_iam_type
 }
 
-output "id" {
-  value = mongodbatlas_database_user.this.id
-}
-
 output "labels_key" {
   value = mongodbatlas_database_user.this.labels == null ? null : mongodbatlas_database_user.this.labels[*].key
 }

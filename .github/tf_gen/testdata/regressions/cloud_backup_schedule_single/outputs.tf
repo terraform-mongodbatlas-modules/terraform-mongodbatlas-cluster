@@ -3,7 +3,6 @@ output "cloud_backup_schedule" {
     cluster_id = mongodbatlas_cloud_backup_schedule.this.cluster_id
     copy_settings = mongodbatlas_cloud_backup_schedule.this.copy_settings
     export = mongodbatlas_cloud_backup_schedule.this.export
-    id = mongodbatlas_cloud_backup_schedule.this.id
     id_policy = mongodbatlas_cloud_backup_schedule.this.id_policy
     next_snapshot = mongodbatlas_cloud_backup_schedule.this.next_snapshot
     policy_item_daily = mongodbatlas_cloud_backup_schedule.this.policy_item_daily

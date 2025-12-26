@@ -9,7 +9,3 @@ output "feature_usages" {
 output "gcp" {
   value = mongodbatlas_cloud_provider_access_authorization.this.gcp
 }
-
-output "id" {
-  value = mongodbatlas_cloud_provider_access_authorization.this.id
-}

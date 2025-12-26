@@ -52,6 +52,8 @@ class OutputCollector:
 def should_generate_output(
     name: str, attr: SchemaAttribute, config: GenerationTarget
 ) -> bool:
+    if name == "id" and not config.include_id_field:
+        return False
     if name in config.outputs_excluded:
         return False
     return attr.is_output_candidate
@@ -147,6 +149,8 @@ def collect_from_attributes(
 ) -> None:
     for name, attr in attrs.items():
         if not attr.is_output_candidate:
+            continue
+        if name == "id" and not collector.config.include_id_field:
             continue
         # Add parent output unless excluded
         if name not in collector.config.outputs_excluded:
@@ -247,6 +251,8 @@ def _collect_single_output_entries(
 
     for name, attr in schema.block.attributes.items():
         if not attr.is_output_candidate or name in config.outputs_excluded:
+            continue
+        if name == "id" and not config.include_id_field:
             continue
         entry = (name, f"{indexed_ref}.{name}")
         if attr.sensitive:

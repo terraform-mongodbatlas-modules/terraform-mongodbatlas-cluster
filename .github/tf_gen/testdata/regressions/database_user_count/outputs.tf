@@ -2,10 +2,6 @@ output "aws_iam_type" {
   value = length(mongodbatlas_database_user.this) > 0 ? mongodbatlas_database_user.this[0].aws_iam_type : null
 }
 
-output "id" {
-  value = length(mongodbatlas_database_user.this) > 0 ? mongodbatlas_database_user.this[0].id : null
-}
-
 output "labels_key" {
   value = length(mongodbatlas_database_user.this) > 0 && mongodbatlas_database_user.this[0].labels != null ? mongodbatlas_database_user.this[0].labels[*].key : null
 }
