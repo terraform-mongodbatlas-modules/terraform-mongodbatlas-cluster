@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import subprocess
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from tf_gen.schema.parser import extract_resource_schema, fetch_provider_schema
 from tf_gen.section import make_markers, update_section
 
 app = typer.Typer(no_args_is_help=True)
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_file_content(
@@ -49,9 +52,10 @@ def generate_for_target(
     provider_name: str,
     config_filename: str,
     dest_path: Path,
+    accumulated: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    """Generate files for a single target. Returns {filepath: content}."""
-    results: dict[str, str] = {}
+    """Generate files for a single target. Updates accumulated dict in-place and returns it."""
+    results = accumulated if accumulated is not None else {}
     begin, end = make_markers(config_filename, target.resource_type)
     output_dir = dest_path / target.output_dir
 
@@ -64,7 +68,7 @@ def generate_for_target(
         filepath = output_dir / filename
         key = str(filepath)
 
-        # Handle existing content or merge with previous results
+        # Handle existing content: prefer accumulated results, then disk, then empty
         if key in results:
             existing = results[key]
         elif filepath.exists():
@@ -88,6 +92,7 @@ def generate_for_config(
     """Core generation logic. Returns {filepath: content}."""
     if dest_path is None:
         dest_path = Path.cwd()
+        logger.warning(f"dest_path is not set, using current directory: {dest_path}")
 
     configs = load_config(config_path, provider_defaults)
     config_filename = config_path.name
@@ -108,19 +113,20 @@ def generate_for_config(
 
         for resource_type, targets in provider_config.resources.items():
             if target and resource_type != target:
+                logger.info(f"Skipping target: {resource_type} (not in target list)")
                 continue
             resource_schema = extract_resource_schema(
                 full_schema, provider_config.provider_name, resource_type
             )
             for gen_target in targets:
-                results = generate_for_target(
+                generate_for_target(
                     resource_schema,
                     gen_target,
                     provider_config.provider_name,
                     config_filename,
                     dest_path,
+                    accumulated=all_results,
                 )
-                all_results.update(results)
 
     if not dry_run:
         _write_and_format(all_results)
@@ -171,6 +177,10 @@ def main(
     """Generate Terraform files from provider schemas."""
     targets = target if target else [None]  # type: ignore[list-item]
     for t in targets:
+        if t:
+            logger.info(f"Generating for target: {t}")
+        else:
+            logger.info("Generating for all targets")
         results = generate_for_config(
             config, target=t, dest_path=dest_path, dry_run=dry_run, cache_dir=cache_dir
         )
@@ -181,5 +191,12 @@ def main(
                 typer.echo()
 
 
-if __name__ == "__main__":
+def configure_logging_and_run():
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     app()
+
+
+if __name__ == "__main__":
+    configure_logging_and_run()

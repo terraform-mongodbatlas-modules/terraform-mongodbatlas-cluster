@@ -17,11 +17,34 @@ def _make_cache_key(provider_source: str) -> str:
     return provider_source.split("/")[-1]
 
 
+def _run_terraform(
+    args: list[str], cwd: Path, context: str
+) -> subprocess.CompletedProcess:
+    """Run terraform command with proper error handling."""
+    try:
+        return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True)
+    except FileNotFoundError as e:
+        msg = "terraform CLI not found. Install terraform to fetch provider schemas."
+        raise RuntimeError(msg) from e
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr or ""
+        stdout = e.stdout or ""
+        msg = f"{context} failed (exit {e.returncode}):\nstderr: {stderr}\nstdout: {stdout}"
+        raise RuntimeError(msg) from e
+
+
 def fetch_provider_schema(
     provider_source: str,
     provider_version: str,
     cache_dir: Path | None = None,
 ) -> dict:
+    if not provider_source:
+        raise ValueError("provider_source is required (e.g., 'mongodb/mongodbatlas')")
+    if not provider_version:
+        raise ValueError(
+            f"provider_version is required for {provider_source} (e.g., '1.0.0')"
+        )
+
     if tf_cli_config := os.environ.get("TF_CLI_CONFIG_FILE"):
         tf_cli_config_path = Path(tf_cli_config)
         content = (
@@ -49,15 +72,15 @@ terraform {{
   }}
 }}
 ''')
-        subprocess.run(
-            ["terraform", "init"], cwd=tmp_path, check=True, capture_output=True
+        _run_terraform(
+            ["terraform", "init"],
+            cwd=tmp_path,
+            context=f"terraform init for {provider_source}@{provider_version}",
         )
-        result = subprocess.run(
+        result = _run_terraform(
             ["terraform", "providers", "schema", "-json"],
             cwd=tmp_path,
-            check=True,
-            capture_output=True,
-            text=True,
+            context=f"terraform providers schema for {provider_source}@{provider_version}",
         )
         schema = json.loads(result.stdout)
 

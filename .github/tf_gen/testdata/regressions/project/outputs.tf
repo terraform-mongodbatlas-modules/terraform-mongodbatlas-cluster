@@ -6,10 +6,6 @@ output "created" {
   value = mongodbatlas_project.this.created
 }
 
-output "id" {
-  value = mongodbatlas_project.this.id
-}
-
 output "ip_addresses" {
   value       = mongodbatlas_project.this.ip_addresses
   description = "DEPRECATED"

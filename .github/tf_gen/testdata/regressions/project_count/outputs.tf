@@ -6,10 +6,6 @@ output "created" {
   value = length(mongodbatlas_project.this) > 0 ? mongodbatlas_project.this[0].created : null
 }
 
-output "id" {
-  value = length(mongodbatlas_project.this) > 0 ? mongodbatlas_project.this[0].id : null
-}
-
 output "ip_addresses" {
   value       = length(mongodbatlas_project.this) > 0 ? mongodbatlas_project.this[0].ip_addresses : null
   description = "DEPRECATED"

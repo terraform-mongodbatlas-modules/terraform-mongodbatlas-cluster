@@ -2,7 +2,6 @@ output "project" {
   value = {
     cluster_count = mongodbatlas_project.this.cluster_count
     created = mongodbatlas_project.this.created
-    id = mongodbatlas_project.this.id
     ip_addresses = mongodbatlas_project.this.ip_addresses
     is_collect_database_specifics_statistics_enabled = mongodbatlas_project.this.is_collect_database_specifics_statistics_enabled
     is_data_explorer_enabled = mongodbatlas_project.this.is_data_explorer_enabled

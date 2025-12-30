@@ -1,4 +1,4 @@
-from tf_gen.cli import app
+from tf_gen.cli import configure_logging_and_run
 
 if __name__ == "__main__":
-    app()
+    configure_logging_and_run()

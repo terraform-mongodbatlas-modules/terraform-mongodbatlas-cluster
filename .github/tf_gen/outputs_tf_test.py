@@ -20,13 +20,18 @@ from tf_gen.schema.types import AttrType
 
 def test_should_generate_output_computed_only():
     attr = SchemaAttribute(type=TfType.from_primitive(AttrType.string), computed=True)
-    assert should_generate_output("id", attr, GenerationTarget())
+    assert should_generate_output("name", attr, GenerationTarget())
+
+
+def test_should_generate_output_excludes_id_by_default():
+    attr = SchemaAttribute(type=TfType.from_primitive(AttrType.string), computed=True)
+    assert not should_generate_output("id", attr, GenerationTarget())
+    config_with_id = GenerationTarget(include_id_field=True)
+    assert should_generate_output("id", attr, config_with_id)
 
 
 def test_should_generate_output_computed_optional():
-    attr = SchemaAttribute(
-        type=TfType.from_primitive(AttrType.bool), computed=True, optional=True
-    )
+    attr = SchemaAttribute(type=TfType.from_primitive(AttrType.bool), computed=True, optional=True)
     assert should_generate_output("enabled", attr, GenerationTarget())
 
 
@@ -61,8 +66,15 @@ def test_computed_only_output(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget(resource_type="project")
     output = generate_outputs_tf(schema, config, "mongodbatlas")
-    assert 'output "id"' in output
+    assert 'output "id"' not in output  # id excluded by default
     assert 'output "created"' in output
+
+
+def test_computed_only_output_with_id(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(resource_type="project", include_id_field=True)
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "id"' in output
     assert "mongodbatlas_project.this.id" in output
 
 
@@ -100,14 +112,10 @@ def test_single_nested_children(advanced_cluster_schema: dict):
 
 def test_skip_children_over_threshold(advanced_cluster_schema: dict):
     schema = parse_resource_schema(advanced_cluster_schema)
-    config = GenerationTarget(
-        resource_type="advanced_cluster", output_attribute_max_children=2
-    )
+    config = GenerationTarget(resource_type="advanced_cluster", output_attribute_max_children=2)
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "bi_connector_config_enabled"' in output  # 2 children <= 2
-    assert (
-        'output "advanced_configuration_javascript_enabled"' not in output
-    )  # 13 children > 2
+    assert 'output "advanced_configuration_javascript_enabled"' not in output  # 13 children > 2
 
 
 def test_include_children_override_true(advanced_cluster_schema: dict):
@@ -115,9 +123,7 @@ def test_include_children_override_true(advanced_cluster_schema: dict):
     config = GenerationTarget(
         resource_type="advanced_cluster",
         output_attribute_max_children=1,
-        output_tf_overrides={
-            "bi_connector_config": OutputAttributeOverride(include_children=True)
-        },
+        output_tf_overrides={"bi_connector_config": OutputAttributeOverride(include_children=True)},
     )
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "bi_connector_config_enabled"' in output
@@ -140,6 +146,7 @@ def test_output_name_override(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget(
         resource_type="project",
+        include_id_field=True,
         output_tf_overrides={"id": OutputAttributeOverride(name="project_id")},
     )
     output = generate_outputs_tf(schema, config, "mongodbatlas")
@@ -150,6 +157,7 @@ def test_output_value_override(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget(
         resource_type="project",
+        include_id_field=True,
         output_tf_overrides={
             "id": OutputAttributeOverride(value="upper(mongodbatlas_project.this.id)")
         },
@@ -172,8 +180,7 @@ def test_set_warning_logged(project_schema: dict, caplog):
     with caplog.at_level(logging.WARNING):
         generate_outputs_tf(schema, config, "mongodbatlas", log=logging.getLogger())
     assert any(
-        "limits_current_usage" in r.message and "set splat" in r.message
-        for r in caplog.records
+        "limits_current_usage" in r.message and "set splat" in r.message for r in caplog.records
     )
 
 
@@ -213,6 +220,7 @@ def test_sensitive_override_true(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget(
         resource_type="project",
+        include_id_field=True,
         output_tf_overrides={"id": OutputAttributeOverride(sensitive=True)},
     )
     output = generate_outputs_tf(schema, config, "mongodbatlas")
@@ -243,8 +251,17 @@ def test_outputs_prefix(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget(resource_type="project", outputs_prefix="main_")
     output = generate_outputs_tf(schema, config, "mongodbatlas")
-    assert 'output "main_id"' in output
+    assert 'output "main_id"' not in output  # id excluded by default
     assert 'output "main_created"' in output
+
+
+def test_outputs_prefix_with_id(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(
+        resource_type="project", outputs_prefix="main_", include_id_field=True
+    )
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "main_id"' in output
 
 
 def test_single_output_mode(project_schema: dict):
@@ -253,6 +270,17 @@ def test_single_output_mode(project_schema: dict):
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "project"' in output
     assert "value = {" in output
+    assert "id = mongodbatlas_project.this.id" not in output  # id excluded by default
+    assert "created = mongodbatlas_project.this.created" in output
+
+
+def test_single_output_mode_with_id(project_schema: dict):
+    schema = parse_resource_schema(project_schema)
+    config = GenerationTarget(
+        resource_type="project", use_single_output=True, include_id_field=True
+    )
+    output = generate_outputs_tf(schema, config, "mongodbatlas")
+    assert 'output "project"' in output
     assert "id = mongodbatlas_project.this.id" in output
 
 

@@ -14,10 +14,6 @@ output "dns_options_dns_record_ip_type" {
   value = aws_vpc_endpoint.this.dns_options == null ? null : aws_vpc_endpoint.this.dns_options[*].dns_record_ip_type
 }
 
-output "id" {
-  value = aws_vpc_endpoint.this.id
-}
-
 output "ip_address_type" {
   value = aws_vpc_endpoint.this.ip_address_type
 }

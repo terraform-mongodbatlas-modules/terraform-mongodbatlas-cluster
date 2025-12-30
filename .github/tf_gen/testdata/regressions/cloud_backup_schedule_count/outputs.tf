@@ -30,10 +30,6 @@ output "export_frequency_type" {
   value = length(mongodbatlas_cloud_backup_schedule.this) > 0 && mongodbatlas_cloud_backup_schedule.this[0].export != null ? mongodbatlas_cloud_backup_schedule.this[0].export[*].frequency_type : null
 }
 
-output "id" {
-  value = length(mongodbatlas_cloud_backup_schedule.this) > 0 ? mongodbatlas_cloud_backup_schedule.this[0].id : null
-}
-
 output "id_policy" {
   value = length(mongodbatlas_cloud_backup_schedule.this) > 0 ? mongodbatlas_cloud_backup_schedule.this[0].id_policy : null
 }
