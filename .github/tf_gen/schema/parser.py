@@ -27,8 +27,8 @@ def _run_terraform(
         msg = "terraform CLI not found. Install terraform to fetch provider schemas."
         raise RuntimeError(msg) from e
     except subprocess.CalledProcessError as e:
-        stderr = e.stderr if e.stderr else ""
-        stdout = e.stdout if e.stdout else ""
+        stderr = e.stderr or ""
+        stdout = e.stdout or ""
         msg = f"{context} failed (exit {e.returncode}):\nstderr: {stderr}\nstdout: {stdout}"
         raise RuntimeError(msg) from e
 

@@ -191,7 +191,7 @@ def main(
                 typer.echo()
 
 
-def configure_and_launch():
+def configure_logging_and_run():
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -199,4 +199,4 @@ def configure_and_launch():
 
 
 if __name__ == "__main__":
-    configure_and_launch()
+    configure_logging_and_run()
