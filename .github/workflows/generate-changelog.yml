@@ -31,7 +31,7 @@ jobs:
           branch: ${{ github.event_name == 'pull_request' && 'main' || github.ref_name }}
           apix_bot_pat: ${{ secrets.APIX_BOT_PAT }}
           gpg_private_key: ${{ secrets.APIX_BOT_GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}     
+          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}
 
   slack-notification:
       needs: [generate-and-update-changelog]
