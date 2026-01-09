@@ -34,27 +34,27 @@ jobs:
           passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}
 
   slack-notification:
-      needs: [generate-and-update-changelog]
-      if: ${{ !cancelled() && needs.generate-and-update-changelog.result == 'failure' }}
-      runs-on: ubuntu-latest
-      permissions: {}
-      steps:
-        - name: Send Slack message
-          id: slack
-          uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
-          with:
-            webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-            webhook-type: incoming-webhook
-            payload: |
-              {
-                "text": "Automatic Changelog update failed",
-                "blocks": [
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "❌ *Automatic Changelog update failed* ${{ secrets.SLACK_ONCALL_TAG }} . <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|Failed action >"
-                    }
+    needs: [generate-and-update-changelog]
+    if: ${{ !cancelled() && needs.generate-and-update-changelog.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Send Slack message
+        id: slack
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Automatic Changelog update failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Automatic Changelog update failed* ${{ secrets.SLACK_ONCALL_TAG }} . <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|Failed action >"
                   }
-                ]
-              }
+                }
+              ]
+            }
