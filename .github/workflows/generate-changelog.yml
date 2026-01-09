@@ -16,20 +16,14 @@ jobs:
     if: github.event.pull_request.merged || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       - uses: ./.github/actions/setup
         with:
           just: 'true'
           uv: 'true'
           go: 'true'
-      - name: Install changelog-build tool
-        run: just init-changelog
       - uses: mongodb/terraform-provider-mongodbatlas/.github/templates/run-script-and-commit@master
         with:
-          script_call: 'just build-changelog'
+          script_call: 'just init-changelog build-changelog'
           file_to_commit: 'CHANGELOG.md'
           commit_message: "${{ github.event_name == 'workflow_dispatch' && 'chore: Updates CHANGELOG.md (Manual Trigger)' || format('chore: Updates CHANGELOG.md for #{0}', github.event.pull_request.number) }}"
           apix_bot_pat: ${{ secrets.APIX_BOT_PAT }}
