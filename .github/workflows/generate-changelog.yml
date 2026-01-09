@@ -31,7 +31,7 @@ jobs:
         with:
           script_call: 'just build-changelog'
           file_to_commit: 'CHANGELOG.md'
-          commit_message: ${{ github.event_name == 'workflow_dispatch' && 'chore: Updates CHANGELOG.md (Manual Trigger)' || format('chore: Updates CHANGELOG.md for #{0}', github.event.pull_request.number) }}
+          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'chore: Updates CHANGELOG.md (Manual Trigger)' || format('chore: Updates CHANGELOG.md for #{0}', github.event.pull_request.number) }}"
           apix_bot_pat: ${{ secrets.APIX_BOT_PAT }}
           remote: https://svc-apix-bot:${{ secrets.APIX_BOT_PAT }}@github.com/${{ github.repository }}  
           gpg_private_key: ${{ secrets.APIX_BOT_GPG_PRIVATE_KEY }}
