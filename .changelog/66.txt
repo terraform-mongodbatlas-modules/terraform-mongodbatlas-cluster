@@ -1,3 +1,0 @@
-```release-note:enhancement
-module: This is a test for apix bot
-```
