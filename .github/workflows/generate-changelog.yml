@@ -1,5 +1,5 @@
 name: Generate Changelog
-# Based on https://github.com/mongodb/terraform-provider-mongodbatlas/blob/master/.github/workflows/generate-changelog.yml
+
 on:
   pull_request:
     types: [closed]
@@ -18,46 +18,62 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          token: ${{ secrets.APIX_BOT_PAT }}
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          token: ${{ secrets.APIX_BOT_PAT }}
+
       - uses: ./.github/actions/setup
         with:
           just: 'true'
           uv: 'true'
           go: 'true'
-      - uses: mongodb/terraform-provider-mongodbatlas/.github/templates/run-script-and-commit@master
+
+      - name: Generate changelog
+        run: just init-changelog build-changelog
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec
         with:
-          script_call: 'just init-changelog build-changelog'
-          file_to_commit: 'CHANGELOG.md'
-          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'chore: Updates CHANGELOG.md (Manual Trigger)' || format('chore: Updates CHANGELOG.md for #{0}', github.event.pull_request.number) }}"
-          apix_bot_pat: ${{ secrets.APIX_BOT_PAT }}
-          remote: https://svc-apix-bot:${{ secrets.APIX_BOT_PAT }}@github.com/${{ github.repository }}  
           gpg_private_key: ${{ secrets.APIX_BOT_GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}     
+          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Commit and push changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            git pull
+            git config --local user.email svc-api-experience-integrations-escalation@mongodb.com
+            git config --local user.name svc-apix-bot
+            git add CHANGELOG.md
+            git commit -m "${{ github.event_name == 'workflow_dispatch' && 'chore: Updates CHANGELOG.md (Manual Trigger)' || format('chore: Updates CHANGELOG.md for #{0}', github.event.pull_request.number) }}"
+            git push origin
+          else
+            echo "No changes to commit."
+          fi
 
   slack-notification:
-      needs: [generate-and-update-changelog]
-      if: ${{ !cancelled() && needs.generate-and-update-changelog.result == 'failure' }}
-      runs-on: ubuntu-latest
-      permissions: {}
-      steps:
-        - name: Send Slack message
-          id: slack
-          uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
-          with:
-            webhook: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
-            webhook-type: incoming-webhook
-            payload: |
-              {
-                "text": "Automatic Changelog update failed",
-                "blocks": [
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "❌ *Automatic Changelog update failed* ${{ secrets.SLACK_ONCALL_TAG }} . <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|Failed action >"
-                    }
+    needs: [generate-and-update-changelog]
+    if: ${{ !cancelled() && needs.generate-and-update-changelog.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Send Slack message
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Automatic Changelog update failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Automatic Changelog update failed* ${{ secrets.SLACK_ONCALL_TAG }} . <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|Failed action >"
                   }
-                ]
-              }
+                }
+              ]
+            }
