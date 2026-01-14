@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Update CHANGELOG.md with version and current date."""
 
 import re
