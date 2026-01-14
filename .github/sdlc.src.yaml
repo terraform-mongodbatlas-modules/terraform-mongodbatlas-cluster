@@ -12,7 +12,9 @@ paths:
   - src_path: .github/pyproject.toml
   - src_path: .github/uv.lock
   - src_path: .github/workspace/
-  - src_path: .github/dev/
+  - src_path: .github/dev/__init__.py
+  - src_path: .github/dev/test_compat.py
+  # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
   # Workflows & actions
   - src_path: .github/workflows/
   - src_path: .github/actions/
@@ -25,8 +27,7 @@ paths:
   # Terraform docs & config
   - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
-  # Doc templates
-  - src_path: docs/example_readme.md
+  # NOTE: docs/example_readme.md is NOT synced - each module has its own template
 destinations:
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
