@@ -7,6 +7,11 @@ paths:
     sync_mode: replace
   - src_path: .github/changelog/*.tmpl
     sync_mode: replace
+  - src_path: .github/changelog/check-changelog-entry-file/*.go
+  - src_path: .github/changelog/check-changelog-entry-file/go.mod
+    sync_mode: replace
+  - src_path: .github/changelog/check-changelog-entry-file/go.sum
+    sync_mode: replace
   - src_path: .github/docs/
   - src_path: .github/release/
   - src_path: .github/pyproject.toml
