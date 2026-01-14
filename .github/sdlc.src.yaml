@@ -17,6 +17,10 @@ paths:
   # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
   # Workflows & actions
   - src_path: .github/workflows/
+    exclude_file_patterns:
+    - cleanup-test-env.yml
+    - dev-integration-test.yml
+    - pre-release-tests.yml
   - src_path: .github/actions/
   # GitHub config
   - src_path: .github/CODEOWNERS
