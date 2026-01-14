@@ -8,6 +8,7 @@ paths:
   - src_path: .github/pyproject.toml
   - src_path: .github/uv.lock
   - src_path: .github/workspace/
+  - src_path: .github/dev/
   # Workflows & actions
   - src_path: .github/workflows/
   - src_path: .github/actions/
@@ -17,8 +18,9 @@ paths:
   - src_path: .github/ISSUE_TEMPLATE/
   # Justfile with sections
   - src_path: justfile
-  # Terraform docs
+  # Terraform docs & config
   - src_path: .terraform-docs.yml
+  - src_path: .terraform-versions.yaml
   # Doc templates
   - src_path: docs/example_readme.md
 destinations:

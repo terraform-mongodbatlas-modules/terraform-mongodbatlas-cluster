@@ -194,10 +194,7 @@ apply-examples *args:
 destroy-examples *args:
     just ws-run -m destroy {{args}}
 
-# === OK_EDIT: path-sync footer ===
-# Module-specific recipes below (not synced)
-
-# DEV SETUP (cluster-specific)
+# DEV SETUP
 dev-vars-project project_id:
     {{py}} dev.dev_vars project {{project_id}}
 
@@ -217,17 +214,20 @@ setup-provider-dev provider_path:
     echo "Provider built at $PLUGIN_DIR"
     echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
 
-tf-gen *args:
-    {{py}} tf_gen {{args}}
-
-# TESTING (cluster-specific)
-dev-integration-test:
-    terraform init
-    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
-
+# TESTING
 tftest-all:
     terraform init
     terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 test-compat:
     {{py}} dev.test_compat
+
+# === OK_EDIT: path-sync footer ===
+# Module-specific recipes below (not synced)
+
+tf-gen *args:
+    {{py}} tf_gen {{args}}
+
+dev-integration-test:
+    terraform init
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
