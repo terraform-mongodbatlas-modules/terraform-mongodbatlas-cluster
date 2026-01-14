@@ -2,7 +2,11 @@ name: sdlc
 src_repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster
 paths:
   # Python tooling - explicit folders (avoid .venv)
-  - src_path: .github/changelog/
+  - src_path: .github/changelog/*.py
+  - src_path: .github/changelog/*.txt
+    sync_mode: replace
+  - src_path: .github/changelog/*.tmpl
+    sync_mode: replace
   - src_path: .github/docs/
   - src_path: .github/release/
   - src_path: .github/pyproject.toml

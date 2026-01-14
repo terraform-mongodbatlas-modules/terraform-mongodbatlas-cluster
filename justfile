@@ -222,7 +222,7 @@ tftest-all:
 test-compat:
     {{py}} dev.test_compat
 
-# === OK_EDIT: path-sync footer ===
+# === OK_EDIT: path-sync standard ===
 # Module-specific recipes below (not synced)
 
 tf-gen *args:
