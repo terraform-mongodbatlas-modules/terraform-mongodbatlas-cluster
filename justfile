@@ -1,53 +1,29 @@
+# path-sync copy -n sdlc
+
+# === OK_EDIT: path-sync header ===
+# Module-specific configuration
+PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl"
+
+# === DO_NOT_EDIT: path-sync standard ===
 set dotenv-load
 
-# Variables
 gh_dir := justfile_directory() + "/.github"
 uv_gh := "uv run --project .github"
 py := "PYTHONPATH=" + gh_dir + " " + uv_gh + " python -m"
 
-# List all commands
 default:
     just --list
 
 # CHECKS
-# Run fast checks (suitable for pre-commit hooks)
 pre-commit: fmt validate lint check-docs py-check
     @echo "Pre-commit checks passed"
 
-# Run slower checks (suitable for pre-push hooks)
 pre-push: pre-commit unit-plan-tests py-test
     @echo "Pre-push checks passed"
 
 # DEV SETUP
-# Sync Python dependencies
 uv-sync:
     uv sync --project .github
-
-# Generate dev.tfvars with a project_id (reused for all 5 project slots)
-dev-vars-project project_id:
-    {{py}} dev.dev_vars project {{project_id}}
-
-# Generate dev.tfvars with an org_id (projects created dynamically)
-dev-vars-org org_id:
-    {{py}} dev.dev_vars org {{org_id}}
-
-# Build provider from source and create dev.tfrc for dev_overrides
-setup-provider-dev provider_path:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
-    PLUGIN_DIR="$PROVIDER_ABS/bin"
-    cd "{{provider_path}}"
-    echo "Building provider from source at $PROVIDER_ABS"
-    make build
-    echo "Creating dev.tfrc at {{justfile_directory()}}/dev.tfrc"
-    uv run --directory "{{gh_dir}}" python -m dev.dev_vars tfrc "$PLUGIN_DIR" > "{{justfile_directory()}}/dev.tfrc"
-    echo "Provider built at $PLUGIN_DIR"
-    echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
-
-# Generate Terraform files from provider schema
-tf-gen *args:
-    {{py}} tf_gen {{args}}
 
 # FORMATTING
 fmt:
@@ -65,32 +41,19 @@ lint:
     tflint -f compact --recursive --minimum-failure-severity=warning
     terraform fmt -check -recursive
 
-# Python linting
 py-check:
     {{uv_gh}} ruff check .github
 
-# Can fix some py-check errors
 py-fix:
     {{uv_gh}} ruff check --fix .github
 
 # TESTING
 py-test:
-    {{uv_gh}} pytest .github/ -v --ignore=.github/dev/test_compat.py
+    {{uv_gh}} pytest .github/ -v --ignore=.github/dev/
 
 unit-plan-tests:
     terraform init
-    terraform test -filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl
-
-dev-integration-test:
-    terraform init
-    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
-
-tftest-all:
-    terraform init
-    terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
-
-test-compat:
-    {{py}} dev.test_compat
+    terraform test {{PLAN_TEST_FILES}}
 
 # DOCUMENTATION
 docs: fmt
@@ -130,32 +93,6 @@ md-link tag_version *args:
 
 tf-registry-source:
     @{{py}} release.tf_registry_source
-
-# WORKSPACE TESTING
-ws-gen *args:
-    {{py}} workspace.gen {{args}}
-
-ws-plan *args:
-    {{py}} workspace.plan {{args}}
-
-ws-reg *args:
-    {{py}} workspace.reg {{args}}
-
-ws-run *args:
-    {{py}} workspace.run {{args}}
-
-plan-only *args:
-    just ws-run -m plan-only {{args}}
-
-plan-snapshot-test *args:
-    just ws-run -m plan-snapshot-test {{args}}
-
-apply-examples *args:
-    just ws-run -m apply {{args}}
-
-destroy-examples *args:
-    just ws-run -m destroy {{args}}
-
 
 # CHANGELOG
 init-changelog:
@@ -231,3 +168,66 @@ release-commit version:
 release-post-push:
     git revert HEAD --no-edit
     @echo "Release commit reverted. Push main: git push origin main"
+
+# WORKSPACE TESTING
+ws-gen *args:
+    {{py}} workspace.gen {{args}}
+
+ws-plan *args:
+    {{py}} workspace.plan {{args}}
+
+ws-reg *args:
+    {{py}} workspace.reg {{args}}
+
+ws-run *args:
+    {{py}} workspace.run {{args}}
+
+plan-only *args:
+    just ws-run -m plan-only {{args}}
+
+plan-snapshot-test *args:
+    just ws-run -m plan-snapshot-test {{args}}
+
+apply-examples *args:
+    just ws-run -m apply {{args}}
+
+destroy-examples *args:
+    just ws-run -m destroy {{args}}
+
+# === OK_EDIT: path-sync footer ===
+# Module-specific recipes below (not synced)
+
+# DEV SETUP (cluster-specific)
+dev-vars-project project_id:
+    {{py}} dev.dev_vars project {{project_id}}
+
+dev-vars-org org_id:
+    {{py}} dev.dev_vars org {{org_id}}
+
+setup-provider-dev provider_path:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PROVIDER_ABS="$(cd "{{provider_path}}" && pwd)"
+    PLUGIN_DIR="$PROVIDER_ABS/bin"
+    cd "{{provider_path}}"
+    echo "Building provider from source at $PROVIDER_ABS"
+    make build
+    echo "Creating dev.tfrc at {{justfile_directory()}}/dev.tfrc"
+    uv run --directory "{{gh_dir}}" python -m dev.dev_vars tfrc "$PLUGIN_DIR" > "{{justfile_directory()}}/dev.tfrc"
+    echo "Provider built at $PLUGIN_DIR"
+    echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
+
+tf-gen *args:
+    {{py}} tf_gen {{args}}
+
+# TESTING (cluster-specific)
+dev-integration-test:
+    terraform init
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+tftest-all:
+    terraform init
+    terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+test-compat:
+    {{py}} dev.test_compat

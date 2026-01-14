@@ -1,0 +1,28 @@
+name: sdlc
+src_repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster
+paths:
+  # Python tooling - explicit folders (avoid .venv)
+  - src_path: .github/changelog/
+  - src_path: .github/docs/
+  - src_path: .github/release/
+  - src_path: .github/pyproject.toml
+  - src_path: .github/uv.lock
+  - src_path: .github/workspace/
+  # Workflows & actions
+  - src_path: .github/workflows/
+  - src_path: .github/actions/
+  # GitHub config
+  - src_path: .github/CODEOWNERS
+  - src_path: .github/pull_request_template.md
+  - src_path: .github/ISSUE_TEMPLATE/
+  # Justfile with sections
+  - src_path: justfile
+  # Terraform docs
+  - src_path: .terraform-docs.yml
+  # Doc templates
+  - src_path: docs/example_readme.md
+destinations:
+  - name: azure
+    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
+    dest_path_relative: ../azure
+    default_branch: main
