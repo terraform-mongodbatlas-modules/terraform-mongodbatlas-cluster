@@ -28,10 +28,10 @@ paths:
   - src_path: .github/ISSUE_TEMPLATE/
   # Justfile with sections
   - src_path: justfile
+  - src_path: .pre-commit-config.yaml
   # Terraform docs & config
   - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
-  # NOTE: docs/example_readme.md is NOT synced - each module has its own template
 destinations:
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
