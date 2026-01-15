@@ -8,9 +8,20 @@ from pathlib import Path
 from docs import config_loader, doc_utils
 
 
-def find_example_folder(folder_number: int, examples_dir: Path) -> str | None:
+def find_example_folder(folder_id: str | int, examples_dir: Path) -> str | None:
+    """Find example folder by numeric prefix (e.g., 01) or exact name match."""
     for folder in examples_dir.iterdir():
-        if folder.is_dir() and folder.name.startswith(f"{folder_number:02d}_"):
+        if not folder.is_dir():
+            continue
+        # Try numeric prefix match (e.g., "01" -> "01_example_name")
+        if isinstance(folder_id, int) or (
+            isinstance(folder_id, str) and folder_id.isdigit()
+        ):
+            prefix = int(folder_id)
+            if folder.name.startswith(f"{prefix:02d}_"):
+                return folder.name
+        # Try exact name match (e.g., "cloud_provider_access")
+        elif folder.name == folder_id:
             return folder.name
     return None
 
@@ -47,12 +58,17 @@ def generate_tables(tables: list[config_loader.TableConfig], examples_dir: Path)
     tables_output = []
     for table_config in tables:
         tables_output.append(f"## {table_config.name}\n")
-        header = " | ".join(col.replace("_", " ").title() for col in table_config.columns)
+        header = " | ".join(
+            col.replace("_", " ").title() for col in table_config.columns
+        )
         separator = " | ".join("---" for _ in table_config.columns)
         tables_output.append(header)
         tables_output.append(separator)
         for row in table_config.example_rows:
-            folder_name = find_example_folder(row.folder, examples_dir)
+            folder_id = row.folder if row.folder is not None else row.folder_name
+            if not folder_id:
+                continue
+            folder_name = find_example_folder(folder_id, examples_dir)
             if not folder_name:
                 continue
             row_data = []
@@ -67,10 +83,14 @@ def generate_tables(tables: list[config_loader.TableConfig], examples_dir: Path)
                     cluster_type = row.cluster_type
                     if not cluster_type:
                         example_folder_path = examples_dir / folder_name
-                        cluster_type = extract_cluster_type_from_example(example_folder_path)
+                        cluster_type = extract_cluster_type_from_example(
+                            example_folder_path
+                        )
                     row_data.append(cluster_type)
                 elif col == "environment":
                     row_data.append(row.environment)
+                elif col == "feature":
+                    row_data.append(row.feature)
                 elif col == "name":
                     display_name = row.name
                     if row.title_suffix:
@@ -106,10 +126,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate and update root README.md TOC and TABLES sections"
     )
-    parser.add_argument("--dry-run", action="store_true", help="Preview without modifying")
-    parser.add_argument("--skip-toc", action="store_true", help="Skip updating TOC section")
-    parser.add_argument("--skip-tables", action="store_true", help="Skip updating TABLES section")
-    parser.add_argument("--check", action="store_true", help="Check if documentation is up-to-date")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview without modifying"
+    )
+    parser.add_argument(
+        "--skip-toc", action="store_true", help="Skip updating TOC section"
+    )
+    parser.add_argument(
+        "--skip-tables", action="store_true", help="Skip updating TABLES section"
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Check if documentation is up-to-date"
+    )
     args = parser.parse_args()
 
     root_dir = Path.cwd()

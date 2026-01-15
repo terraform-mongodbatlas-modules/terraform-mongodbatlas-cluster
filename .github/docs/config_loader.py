@@ -31,18 +31,34 @@ class VersionsTfConfig:
 class ExamplesReadmeConfig:
     readme_template: str
     skip_examples: list[str] = field(default_factory=list)
-    code_snippet_files: CodeSnippetFilesConfig = field(default_factory=CodeSnippetFilesConfig)
+    code_snippet_files: CodeSnippetFilesConfig = field(
+        default_factory=CodeSnippetFilesConfig
+    )
     template_vars: TemplateVarsConfig = field(default_factory=TemplateVarsConfig)
     versions_tf: VersionsTfConfig = field(default_factory=VersionsTfConfig)
 
 
 @dataclass
 class ExampleRow:
-    folder: int
     name: str
+    folder: int | None = None
+    folder_name: str = ""
     environment: str = ""
     title_suffix: str = ""
     cluster_type: str = ""
+    feature: str = ""
+
+
+    def __post_init__(self):
+        if self.folder is None and self.folder_name == "":
+            raise ValueError("Either folder or folder_name must be provided")
+        if self.folder is not None and self.folder_name != "":
+            raise ValueError("Either folder or folder_name must be provided, but not both")
+        if self.folder:
+            try:
+                int(self.folder)
+            except ValueError:
+                raise ValueError("Folder must be an integer")
 
 
 @dataclass
@@ -90,8 +106,12 @@ def parse_tables_config(config_dict: dict) -> list[TableConfig]:
     tables_list = config_dict.get("tables", [])
     tables = []
     for table_dict in tables_list:
-        example_rows = [ExampleRow(**row_dict) for row_dict in table_dict.get("example_rows", [])]
-        table_dict_filtered = {k: v for k, v in table_dict.items() if k != "example_rows"}
+        example_rows = [
+            ExampleRow(**row_dict) for row_dict in table_dict.get("example_rows", [])
+        ]
+        table_dict_filtered = {
+            k: v for k, v in table_dict.items() if k != "example_rows"
+        }
         table = TableConfig(**table_dict_filtered, example_rows=example_rows)
         tables.append(table)
     return tables

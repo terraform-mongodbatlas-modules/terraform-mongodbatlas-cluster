@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Generate changelog from latest release to HEAD and update CHANGELOG.md.
 
 This script automates changelog generation by:
