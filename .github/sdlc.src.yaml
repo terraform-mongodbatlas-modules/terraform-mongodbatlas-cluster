@@ -29,9 +29,14 @@ paths:
     - dev-integration-test.yml
     - pre-release-tests.yml
   - src_path: .github/actions/
-  # GitHub config
+  # Contributing guides
   - src_path: contributing/sdlc-sync.md
-    sync_mode: replace
+  - src_path: contributing/changelog-process.md
+  - src_path: contributing/documentation-guide.md
+  - src_path: contributing/README.md
+  - src_path: CONTRIBUTING.md
+    sync_mode: scaffold
+  # GitHub config
   - src_path: .github/CODEOWNERS
   - src_path: .github/pull_request_template.md
   - src_path: .github/ISSUE_TEMPLATE/
