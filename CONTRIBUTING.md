@@ -10,6 +10,7 @@ All contributing documentation has been organized in the [`contributing/`](contr
 - **[Test Guide](contributing/test-guide.md)** - Running unit, integration, and plan snapshot tests
 - **[Documentation Guide](contributing/documentation-guide.md)** - Working with auto-generated documentation
 - **[Changelog Guide](contributing/changelog-process.md)** - Creating changelog entries and understanding the changelog workflow
+- **[SDLC Sync Guide](contributing/sdlc-sync.md)** - How tooling is shared between Terraform modules
 
 ## Quick Start
 

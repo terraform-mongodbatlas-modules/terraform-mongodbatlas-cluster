@@ -231,3 +231,9 @@ tf-gen *args:
 dev-integration-test:
     terraform init
     terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+
+sdlc-sync-dry:
+   uvx path-sync copy -n sdlc --local --dry-run
+
+sdlc-sync:
+   uvx path-sync copy -n sdlc --local

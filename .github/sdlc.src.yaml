@@ -1,3 +1,5 @@
+# SDLC Sync Configuration
+# See contributing/sdlc-sync.md for documentation on how this sync mechanism works
 name: sdlc
 src_repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster
 paths:

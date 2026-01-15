@@ -49,6 +49,18 @@ class ExampleRow:
     feature: str = ""
 
 
+    def __post_init__(self):
+        if self.folder is None and self.folder_name == "":
+            raise ValueError("Either folder or folder_name must be provided")
+        if self.folder is not None and self.folder_name != "":
+            raise ValueError("Either folder or folder_name must be provided, but not both")
+        if self.folder:
+            try:
+                int(self.folder)
+            except ValueError:
+                raise ValueError("Folder must be an integer")
+
+
 @dataclass
 class TableConfig:
     name: str
