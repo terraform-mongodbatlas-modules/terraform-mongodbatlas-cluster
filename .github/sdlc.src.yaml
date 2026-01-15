@@ -73,5 +73,5 @@ destinations:
     default_branch: main
   - name: project
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
-    dest_path_relative: ../azure
+    dest_path_relative: ../project
     default_branch: main
