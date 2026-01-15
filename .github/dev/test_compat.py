@@ -23,7 +23,6 @@ from pathlib import Path
 
 import yaml
 
-MIN_TFTEST_VERSION = (1, 11)
 MAX_WORKERS = min(os.cpu_count() or 4, 8)
 INIT_MAX_RETRIES = 3
 INIT_RETRY_DELAY_SECONDS = 10
@@ -42,10 +41,6 @@ class TestJob:
     version: str
     target: Path
     use_temp_dir: bool
-
-
-def parse_version(version: str) -> tuple[int, ...]:
-    return tuple(int(x) for x in version.split("."))
 
 
 def load_versions(config_path: Path) -> list[str]:
@@ -189,13 +184,12 @@ def main() -> int:
     targets = discover_targets(repo_root)
 
     jobs: list[TestJob] = []
+    # Always use temp dirs for root module to avoid .terraform directory conflicts
+    # when running multiple versions in parallel
     for version in versions:
-        version_tuple = parse_version(version)
-        use_temp_for_root = version_tuple < MIN_TFTEST_VERSION
         for target in targets:
             is_root = target == repo_root
-            use_temp = use_temp_for_root and is_root
-            jobs.append(TestJob(version=version, target=target, use_temp_dir=use_temp))
+            jobs.append(TestJob(version=version, target=target, use_temp_dir=is_root))
 
     total_jobs = len(jobs)
     print(f"Testing {len(versions)} Terraform versions against {len(targets)} targets...")
