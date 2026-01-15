@@ -222,6 +222,9 @@ tftest-all:
 test-compat:
     {{py}} dev.test_compat
 
+# No Authorized Changes Validation (only for destination repos)
+sdlc-validate:
+  uvx path-sync validate-no-changes -b main
 # === OK_EDIT: path-sync standard ===
 # Module-specific recipes below (not synced)
 

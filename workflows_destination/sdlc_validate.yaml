@@ -1,0 +1,22 @@
+# path-sync copy -n sdlc
+# Validates that synced files have not been modified without authorization
+# Only relevant for destination repos (not cluster)
+name: SDLC Validate
+on:
+  push:
+    branches-ignore: [main, sync/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need the `main` branch history to compare against
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+      - run: just sdlc-validate

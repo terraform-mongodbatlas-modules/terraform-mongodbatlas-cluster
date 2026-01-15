@@ -28,6 +28,8 @@ paths:
     - cleanup-test-env.yml
     - dev-integration-test.yml
     - pre-release-tests.yml
+  - src_path: workflows_destination/sdlc_validate.yaml
+    dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
   # Contributing guides
   - src_path: contributing/sdlc-sync.md
