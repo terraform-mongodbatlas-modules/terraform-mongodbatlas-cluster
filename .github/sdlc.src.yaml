@@ -46,7 +46,7 @@ paths:
     - dev-integration-test.yml
     - pre-release-tests.yml
     - sdlc-copy.yml
-  - src_path: workflows_destination/sdlc_validate.yaml
+  - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
   # Contributing guides

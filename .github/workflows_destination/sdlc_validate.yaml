@@ -5,8 +5,6 @@ name: SDLC Validate
 on:
   push:
     branches-ignore: [main, sync/**]
-  pull_request:
-    branches: [main]
 
 jobs:
   validate:
