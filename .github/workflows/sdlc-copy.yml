@@ -1,0 +1,18 @@
+# Syncs SDLC tooling from cluster (source) to destination repos (azure, etc.)
+# Creates PRs in destination repos with the synced files
+name: SDLC Copy
+on:
+  schedule:
+    - cron: "0 6 * * *"  # Daily at 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      # Not using just target - this commits, pushes, and creates PRs in destination repos
+      - run: uvx path-sync copy -n sdlc --checkout-from-default -y
+        env:
+          GH_TOKEN: ${{ secrets.APIX_BOT_PAT }}
