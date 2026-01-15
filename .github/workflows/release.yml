@@ -55,7 +55,9 @@ jobs:
           terraform: 'true'
           docs: 'true'
       - name: Pre-release validation
-        run: just check-release-ready ${{ inputs.version }}
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: just check-release-ready "$RELEASE_VERSION"
 
   release-tag:
     needs: pre-release-checks
@@ -85,11 +87,15 @@ jobs:
           fi
       - name: Create release commits and tag
         id: create_commits
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          just release-commit ${{ inputs.version }}
+          just release-commit "$RELEASE_VERSION"
           echo "release_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Push commits and tag
-        run: git push origin main ${{ inputs.version }}
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: git push origin main "$RELEASE_VERSION"
 
   release-github:
     needs: release-tag
@@ -106,8 +112,10 @@ jobs:
           uv: 'true'
       - name: Generate release body
         id: release_body
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          BODY=$(just generate-release-body ${{ inputs.version }})
+          BODY=$(just generate-release-body "$RELEASE_VERSION")
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
