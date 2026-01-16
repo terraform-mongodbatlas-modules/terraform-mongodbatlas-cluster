@@ -11,9 +11,7 @@ def make_markers(config_filename: str, resource_type: str) -> tuple[str, str]:
     return begin, end
 
 
-def update_section(
-    content: str, begin_marker: str, end_marker: str, new_content: str
-) -> str:
+def update_section(content: str, begin_marker: str, end_marker: str, new_content: str) -> str:
     """Replace content between markers. Append if markers not found."""
     pattern = re.compile(
         re.escape(begin_marker) + r".*?" + re.escape(end_marker),

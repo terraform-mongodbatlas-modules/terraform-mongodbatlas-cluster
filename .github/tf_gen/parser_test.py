@@ -29,9 +29,7 @@ def schema_cache_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 @pytest.fixture(scope="module")
 def mongodbatlas_schema(schema_cache_dir: Path) -> dict:
-    return fetch_provider_schema(
-        MONGODBATLAS_SOURCE, MONGODBATLAS_VERSION, schema_cache_dir
-    )
+    return fetch_provider_schema(MONGODBATLAS_SOURCE, MONGODBATLAS_VERSION, schema_cache_dir)
 
 
 def test_fetch_and_list_resource_types(mongodbatlas_schema: dict):
@@ -61,14 +59,10 @@ def _find_provider_key(full_schema: dict, provider_name: str) -> str:
     raise ValueError(f"Provider {provider_name} not found in schema")
 
 
-def _extract_raw_resource_schema(
-    full_schema: dict, provider_name: str, resource_type: str
-) -> dict:
+def _extract_raw_resource_schema(full_schema: dict, provider_name: str, resource_type: str) -> dict:
     """Extract raw resource schema dict (not parsed) for dumping to file."""
     provider_key = _find_provider_key(full_schema, provider_name)
-    resources = full_schema["provider_schemas"][provider_key].get(
-        "resource_schemas", {}
-    )
+    resources = full_schema["provider_schemas"][provider_key].get("resource_schemas", {})
     full_resource_type = f"{provider_name}_{resource_type}"
     if full_resource_type not in resources:
         raise ValueError(f"Resource {full_resource_type} not found")

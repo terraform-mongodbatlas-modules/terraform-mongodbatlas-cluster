@@ -37,11 +37,25 @@ class PlanRegression:
 
 @dataclass
 class Example:
-    number: int
+    number: int | None = None
+    name: str | None = None
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
 
+    @property
+    def identifier(self) -> str:
+        if self.name:
+            return self.name
+        if self.number is not None:
+            return f"{self.number:02d}"
+        raise ValueError("Example must have either name or number")
+
     def example_path(self, examples_dir: Path) -> Path:
+        if self.name:
+            path = examples_dir / self.name
+            if not path.exists():
+                raise ValueError(f"Example '{self.name}' not found in {examples_dir}")
+            return path
         for p in examples_dir.iterdir():
             if p.is_dir() and p.name.startswith(f"{self.number:02d}_"):
                 return p
@@ -49,6 +63,8 @@ class Example:
 
     def title_from_dir(self, examples_dir: Path) -> str:
         dir_name = self.example_path(examples_dir).name
+        if self.name:
+            return dir_name.replace("_", " ").title()
         return dir_name.split("_", 1)[1].replace("_", " ").title()
 
 
@@ -77,7 +93,7 @@ class WsConfig:
             for var in self.var_groups.get(group_name, []):
                 if var.name in seen:
                     raise ValueError(
-                        f"Duplicate variable '{var.name}' in example {example.number:02d}: "
+                        f"Duplicate variable '{var.name}' in example {example.identifier}: "
                         f"defined in both '{seen[var.name]}' and '{group_name}'"
                     )
                 seen[var.name] = group_name
@@ -109,7 +125,8 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
         ]
         examples.append(
             Example(
-                number=ex["number"],
+                number=ex.get("number"),
+                name=ex.get("name"),
                 var_groups=ex.get("var_groups", []),
                 plan_regressions=regressions,
             )

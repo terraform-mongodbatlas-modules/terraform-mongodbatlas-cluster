@@ -95,7 +95,5 @@ def test_variable_tf_accepts_dict_or_model():
     target = GenerationTarget(variable_tf={"name": {"description": "Test"}})
     assert target.variable_tf["name"].description == "Test"
     # Can also be constructed with model directly
-    target2 = GenerationTarget(
-        variable_tf={"name": VariableAttributeOverride(sensitive=True)}
-    )
+    target2 = GenerationTarget(variable_tf={"name": VariableAttributeOverride(sensitive=True)})
     assert target2.variable_tf["name"].sensitive is True

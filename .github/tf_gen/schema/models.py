@@ -19,9 +19,7 @@ class TfType(BaseModel):
         return cls(kind=TfTypeKind.primitive, primitive=primitive)
 
     @classmethod
-    def from_collection(
-        cls, collection_kind: CollectionKind, element_type: TfType
-    ) -> Self:
+    def from_collection(cls, collection_kind: CollectionKind, element_type: TfType) -> Self:
         return cls(
             kind=TfTypeKind.collection,
             collection_kind=collection_kind,
@@ -156,12 +154,8 @@ def parse_block_type(raw: dict) -> SchemaBlockType:
 
 
 def parse_block(raw: dict) -> SchemaBlock:
-    attributes = {
-        name: parse_attribute(attr) for name, attr in raw.get("attributes", {}).items()
-    }
-    block_types = {
-        name: parse_block_type(bt) for name, bt in raw.get("block_types", {}).items()
-    }
+    attributes = {name: parse_attribute(attr) for name, attr in raw.get("attributes", {}).items()}
+    block_types = {name: parse_block_type(bt) for name, bt in raw.get("block_types", {}).items()}
     return SchemaBlock(
         attributes=attributes,
         block_types=block_types,

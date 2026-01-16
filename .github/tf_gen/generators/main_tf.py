@@ -32,9 +32,7 @@ def build_var_ref(name: str, config: GenerationTarget, provider_name: str) -> st
     return f"var.{var_name}"
 
 
-def _render_direct_assignments(
-    block: SchemaBlock, var_ref: str, indent: str = "    "
-) -> list[str]:
+def _render_direct_assignments(block: SchemaBlock, var_ref: str, indent: str = "    ") -> list[str]:
     lines: list[str] = []
     for attr_name, attr in sorted(block.attributes.items()):
         if attr.is_computed_only:
@@ -132,9 +130,7 @@ def render_block(
     return _render_dynamic_block(name, bt, var_ref)
 
 
-def generate_main_tf(
-    schema: ResourceSchema, config: GenerationTarget, provider_name: str
-) -> str:
+def generate_main_tf(schema: ResourceSchema, config: GenerationTarget, provider_name: str) -> str:
     full_type = f"{provider_name}_{config.resource_type}"
     lines = [f'resource "{full_type}" "{config.label}" {{']
 

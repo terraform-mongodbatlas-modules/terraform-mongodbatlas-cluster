@@ -38,9 +38,7 @@ def format_terraform(content: str) -> str:
         with NamedTemporaryFile(mode="w", suffix=".tf", delete=False) as f:
             f.write(content)
             f.flush()
-            subprocess.run(
-                ["terraform", "fmt", f.name], check=True, capture_output=True
-            )
+            subprocess.run(["terraform", "fmt", f.name], check=True, capture_output=True)
             return open(f.name).read()
     except (subprocess.CalledProcessError, FileNotFoundError):
         logger.warning("terraform fmt unavailable, returning unformatted")

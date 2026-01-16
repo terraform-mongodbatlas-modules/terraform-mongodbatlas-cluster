@@ -15,7 +15,7 @@ default:
     just --list
 
 # CHECKS
-pre-commit: fmt validate lint check-docs py-check
+pre-commit: fmt validate lint check-docs py-check py-fmt
     @echo "Pre-commit checks passed"
 
 pre-push: pre-commit unit-plan-tests py-test

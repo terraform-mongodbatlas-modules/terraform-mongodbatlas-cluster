@@ -33,16 +33,10 @@ class VariableSpec(BaseModel):
         return VariableSpec(
             name=override.name if override.name else self.name,
             type_str=override.type if override.type else self.type_str,
-            description=override.description
-            if override.description
-            else self.description,
+            description=override.description if override.description else self.description,
             default=new_default,
-            nullable=new_default == "null"
-            if override.default is not None
-            else self.nullable,
-            sensitive=override.sensitive
-            if override.sensitive is not None
-            else self.sensitive,
+            nullable=new_default == "null" if override.default is not None else self.nullable,
+            sensitive=override.sensitive if override.sensitive is not None else self.sensitive,
             validations=new_validations if new_validations else self.validations,
         )
 
@@ -71,11 +65,7 @@ def render_tf_type(tf_type: TfType, indent: int = 0) -> str:
         case TfTypeKind.primitive:
             return "any" if tf_type.primitive == AttrType.dynamic else tf_type.primitive  # pyright: ignore[reportReturnType]
         case TfTypeKind.collection:
-            elem = (
-                render_tf_type(tf_type.element_type, indent)
-                if tf_type.element_type
-                else "any"
-            )
+            elem = render_tf_type(tf_type.element_type, indent) if tf_type.element_type else "any"
             return f"{tf_type.collection_kind}({elem})"
         case TfTypeKind.object:
             if not tf_type.object_attrs:
@@ -124,9 +114,7 @@ def _get_attr_type_str(attr: SchemaAttribute, indent: int = 0) -> str:
 
 
 def _render_nested_type(nested: SchemaBlock, indent: int = 0) -> str:
-    obj_type = _render_object_type_with_optionality(
-        nested.attributes, nested.block_types, indent
-    )
+    obj_type = _render_object_type_with_optionality(nested.attributes, nested.block_types, indent)
     match nested.nesting_mode:
         case NestingMode.single | None:
             return obj_type
@@ -153,9 +141,7 @@ def _get_block_type_str(bt: SchemaBlockType, indent: int = 0) -> str:
     return obj_type
 
 
-def should_generate_variable(
-    name: str, attr: SchemaAttribute, config: GenerationTarget
-) -> bool:
+def should_generate_variable(name: str, attr: SchemaAttribute, config: GenerationTarget) -> bool:
     if attr.is_computed_only:
         return False
     if name == "id" and not config.include_id_field:
@@ -165,16 +151,12 @@ def should_generate_variable(
     return True
 
 
-def _apply_overrides(
-    spec: VariableSpec, name: str, config: GenerationTarget
-) -> VariableSpec:
+def _apply_overrides(spec: VariableSpec, name: str, config: GenerationTarget) -> VariableSpec:
     override = config.variable_tf.get(name)
     return spec.apply_override(override) if override else spec
 
 
-def _determine_required(
-    name: str, is_schema_required: bool, config: GenerationTarget
-) -> bool:
+def _determine_required(name: str, is_schema_required: bool, config: GenerationTarget) -> bool:
     if name in config.variables_required:
         return True
     if config.all_variables_optional:
@@ -187,9 +169,7 @@ def attr_to_variable_spec(
 ) -> VariableSpec:
     var_name = f"{config.variables_prefix}{name}" if config.variables_prefix else name
     type_str = _get_attr_type_str(attr)
-    description = make_description(
-        attr.description, attr.deprecated, attr.deprecated_message
-    )
+    description = make_description(attr.description, attr.deprecated, attr.deprecated_message)
     is_required = _determine_required(name, attr.required, config)
     spec = VariableSpec(
         name=var_name,
@@ -275,9 +255,7 @@ def generate_variables_tf(
     specs.sort(key=lambda s: (s.nullable, s.name))
 
     if config.use_single_variable:
-        single_spec = _build_single_variable_spec(
-            specs, provider_name, config.resource_type
-        )
+        single_spec = _build_single_variable_spec(specs, provider_name, config.resource_type)
         return render_blocks([single_spec], render_variable_block)
 
     return render_blocks(specs, render_variable_block)

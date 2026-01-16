@@ -19,9 +19,7 @@ class ResourceConfig:
     """Configuration for a resource schema test."""
 
     provider_source: str
-    resource_type: (
-        str  # without provider prefix, e.g., "project" not "mongodbatlas_project"
-    )
+    resource_type: str  # without provider prefix, e.g., "project" not "mongodbatlas_project"
 
     @property
     def provider_name(self) -> str:
@@ -48,9 +46,7 @@ ACTIVE_RESOURCES: list[ResourceConfig] = [
     ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "database_user"),
     ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "federated_database_instance"),
     ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_provider_access_setup"),
-    ResourceConfig(
-        MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_provider_access_authorization"
-    ),
+    ResourceConfig(MONGODB_ATLAS_PROVIDER_SOURCE, "cloud_provider_access_authorization"),
     # AWS resources
     ResourceConfig(AWS_PROVIDER_SOURCE, "vpc_endpoint"),
 ]

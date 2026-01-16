@@ -69,9 +69,9 @@ def dump_resource_yaml(
 
 
 def find_matching_address(
-    resources: dict[str, dict[str, Any]], suffix: str, example_num: int
+    resources: dict[str, dict[str, Any]], suffix: str, example_id: str
 ) -> str | None:
-    example_prefix = f"module.ex_{example_num:02d}."
+    example_prefix = f"module.ex_{example_id}."
     for addr in resources:
         if addr.endswith(suffix) and addr.startswith(example_prefix):
             return addr
@@ -97,11 +97,11 @@ def process_workspace(ws_dir: Path, force_regen: bool) -> None:
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
         for reg in ex.plan_regressions:
-            full_addr = find_matching_address(resources, reg.address, ex.number)
+            full_addr = find_matching_address(resources, reg.address, ex.identifier)
             if not full_addr:
                 typer.echo(f"  Warning: {reg.address} not found in plan", err=True)
                 continue
-            filename = f"{ex.number:02d}_{models.sanitize_address(reg.address)}.yaml"
+            filename = f"{ex.identifier}_{models.sanitize_address(reg.address)}.yaml"
             content = dump_resource_yaml(resources[full_addr], config, reg.dump)
             (actual_dir / filename).write_text(content)
             typer.echo(f"  Generated {filename}")

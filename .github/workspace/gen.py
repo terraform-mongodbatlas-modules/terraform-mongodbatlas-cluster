@@ -39,8 +39,12 @@ def parse_include_examples(value: str, config: models.WsConfig) -> list[models.E
         return config.examples
     if value == "none":
         return []
-    numbers = {int(n.strip()) for n in value.split(",")}
-    return [ex for ex in config.examples if ex.number in numbers]
+    filters = {f.strip() for f in value.split(",")}
+    return [
+        ex
+        for ex in config.examples
+        if ex.identifier in filters or (ex.number is not None and str(ex.number) in filters)
+    ]
 
 
 def generate_modules_tf(
@@ -54,8 +58,8 @@ def generate_modules_tf(
     for ex in examples:
         example_path = ex.example_path(examples_dir)
         title = ex.title_from_dir(examples_dir)
-        lines.append(f"# Example {ex.number:02d}: {title}")
-        lines.append(f'module "ex_{ex.number:02d}" {{')
+        lines.append(f"# Example {ex.identifier}: {title}")
+        lines.append(f'module "ex_{ex.identifier}" {{')
         lines.append(f'  source = "{rel_examples}/{example_path.name}"')
         for var in config.vars_for_example(ex):
             val = f"var.{var.name}" if var.expose_in_workspace else var.module_value
@@ -77,7 +81,7 @@ def generate_pytest_file(config: models.WsConfig) -> str:
     ]
     for ex in config.examples:
         for reg in ex.plan_regressions:
-            name = f"{ex.number:02d}_{models.sanitize_address(reg.address)}"
+            name = f"{ex.identifier}_{models.sanitize_address(reg.address)}"
             lines.append(f'    "{name}",')
     lines.extend(
         [
