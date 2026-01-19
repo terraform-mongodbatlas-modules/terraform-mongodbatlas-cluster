@@ -76,6 +76,7 @@ def generate_pytest_file(config: models.WsConfig) -> str:
         "import pytest",
         "",
         f'ACTUAL_DIR = Path(__file__).parent / "{PLAN_SNAPSHOTS_ACTUAL_DIR}"',
+        f'EXPECTED_DIR = Path(__file__).parent / "{PLAN_SNAPSHOTS_DIR}"',
         "",
         "TEST_CASES = [",
     ]
@@ -91,8 +92,9 @@ def generate_pytest_file(config: models.WsConfig) -> str:
             '@pytest.mark.parametrize("name", TEST_CASES)',
             "def test_plan_snapshot(name: str, file_regression) -> None:",
             '    actual_file = ACTUAL_DIR / f"{name}.yaml"',
+            '    expected_file = EXPECTED_DIR / f"{name}.yaml"',
             "    assert actual_file.exists(), f'Actual file not found: {actual_file}'",
-            '    file_regression.check(actual_file.read_text(), basename=name, extension=".yaml")',
+            "    file_regression.check(actual_file.read_text(), fullpath=expected_file)",
             "",
         ]
     )
