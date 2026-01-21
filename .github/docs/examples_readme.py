@@ -191,9 +191,7 @@ def find_example_folders(examples_dir: Path) -> list[Path]:
             return (0, int(match.group(1)), p.name)
         return (1, 0, p.name)
 
-    return sorted(
-        folders, key=lambda p: (sort_key(p)[0], sort_key(p)[1], sort_key(p)[2])
-    )
+    return sorted(folders, key=sort_key)
 
 
 def should_skip_example(folder_name: str, skip_list: list[str] | None) -> bool:
