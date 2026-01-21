@@ -7,6 +7,7 @@ cluster_type: GEOSHARDED
 delete_on_create_timeout: true
 name: multi-zone-geo-sharded
 pit_enabled: true
+project_id: <project_id>
 redact_client_log_data: true
 replication_specs:
 - region_configs:
@@ -168,3 +169,4 @@ replication_specs:
     region_name: EU_WEST_2
   zone_name: EU2
 retain_backups_enabled: true
+tags: <tags>
