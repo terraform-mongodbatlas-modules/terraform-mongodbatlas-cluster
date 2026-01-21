@@ -78,21 +78,22 @@ def generate_pytest_file(config: models.WsConfig) -> str:
         f'ACTUAL_DIR = Path(__file__).parent / "{PLAN_SNAPSHOTS_ACTUAL_DIR}"',
         f'EXPECTED_DIR = Path(__file__).parent / "{PLAN_SNAPSHOTS_DIR}"',
         "",
+        "# (example_id, sanitized_address)",
         "TEST_CASES = [",
     ]
     for ex in config.examples:
         for reg in ex.plan_regressions:
-            name = f"{ex.identifier}_{models.sanitize_address(reg.address)}"
-            lines.append(f'    "{name}",')
+            sanitized = models.sanitize_address(reg.address)
+            lines.append(f"    ({repr(ex.identifier)}, {repr(sanitized)}),")
     lines.extend(
         [
             "]",
             "",
             "",
-            '@pytest.mark.parametrize("name", TEST_CASES)',
-            "def test_plan_snapshot(name: str, file_regression) -> None:",
-            '    actual_file = ACTUAL_DIR / f"{name}.yaml"',
-            '    expected_file = EXPECTED_DIR / f"{name}.yaml"',
+            '@pytest.mark.parametrize("example_id,address", TEST_CASES)',
+            "def test_plan_snapshot(example_id: str, address: str, file_regression) -> None:",
+            '    actual_file = ACTUAL_DIR / example_id / f"{address}.yaml"',
+            '    expected_file = EXPECTED_DIR / example_id / f"{address}.yaml"',
             "    assert actual_file.exists(), f'Actual file not found: {actual_file}'",
             "    file_regression.check(actual_file.read_text(), fullpath=expected_file)",
             "",

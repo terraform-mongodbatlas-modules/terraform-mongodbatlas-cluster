@@ -30,6 +30,12 @@ def main(
     tests_dir: Path = typer.Option(models.DEFAULT_TESTS_DIR, "--tests-dir"),
     var_file: list[Path] = typer.Option([], "--var-file", "-v"),
     force_regen: bool = typer.Option(False, "--force-regen"),
+    show_uncovered: bool = typer.Option(
+        False,
+        "--show-uncovered",
+        "-u",
+        help="Show resources not covered by plan_regressions",
+    ),
 ) -> None:
     try:
         ws_dirs = models.resolve_workspaces(ws, tests_dir)
@@ -50,7 +56,12 @@ def main(
             plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
 
         if mode == RunMode.PLAN_SNAPSHOT_TEST:
-            reg.process_workspace(ws_dir, force_regen)
+            reg.process_workspace(
+                ws_dir,
+                force_regen=force_regen,
+                show_uncovered=show_uncovered,
+                skip_tests=False,
+            )
 
         if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
             plan.run_terraform_apply(ws_dir, var_file, auto_approve)
