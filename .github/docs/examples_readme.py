@@ -16,10 +16,12 @@ def load_template(template_path: Path) -> str:
 def get_example_name_from_config(
     folder_name: str, folder_number: int | None, config: dict
 ) -> str | None:
+    folder_name_lower = folder_name.lower()
     for table in config.get("tables", []):
         for example_row in table.get("example_rows", []):
-            # Match by folder_name (string) or folder (numeric prefix)
-            if example_row.get("folder_name") == folder_name or (
+            # Match by folder_name (string, case-insensitive) or folder (numeric prefix)
+            config_folder_name = example_row.get("folder_name", "")
+            if config_folder_name.lower() == folder_name_lower or (
                 folder_number is not None and example_row.get("folder") == folder_number
             ):
                 name = example_row.get("name", "")
@@ -178,9 +180,26 @@ def generate_versions_tf(base_versions_tf: str, provider_config: str) -> str:
 
 
 def find_example_folders(examples_dir: Path) -> list[Path]:
-    """Find example folders - supports both numeric prefixes (01_name) and plain names."""
+    """Find and sort example folders within a directory.
+
+    An example folder is any subdirectory of ``examples_dir`` that contains a
+    ``main.tf`` file. The returned list is sorted so that:
+
+    * Folders with a leading numeric prefix in the form ``NN_name`` (for example
+      ``01_basic``) appear first, ordered by the numeric value of the prefix.
+    * Remaining folders without such a prefix appear afterwards, ordered
+      alphabetically by their directory name.
+
+    Args:
+        examples_dir: Directory containing example subfolders to scan.
+
+    Returns:
+        A list of paths to example folders under ``examples_dir``, sorted with
+        numeric-prefixed folders first (by numeric value) and all others
+        alphabetically by name.
+    """
     folders = []
-    for item in sorted(examples_dir.iterdir()):
+    for item in examples_dir.iterdir():
         if item.is_dir() and (item / "main.tf").exists():
             folders.append(item)
 
