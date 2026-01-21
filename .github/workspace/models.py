@@ -74,6 +74,9 @@ class Example:
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
 
+    def uses_nested_snapshots(self) -> bool:
+        return len(self.plan_regressions) > 1
+
     @property
     def identifier(self) -> str:
         if self.name:

@@ -175,17 +175,25 @@ def process_workspace(
     actual_dir = ws_dir / PLAN_SNAPSHOTS_ACTUAL_DIR
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
-        example_dir = actual_dir / ex.identifier
-        example_dir.mkdir(exist_ok=True)
+        nested = ex.uses_nested_snapshots()
+        if nested:
+            example_dir = actual_dir / ex.identifier
+            example_dir.mkdir(exist_ok=True)
         for reg in ex.plan_regressions:
             full_addr = find_matching_address(resources, reg.address, ex.identifier)
             if not full_addr:
                 typer.echo(f"  Warning: {reg.address} not found in plan", err=True)
                 continue
-            filename = f"{models.sanitize_address(reg.address)}.yaml"
+            sanitized = models.sanitize_address(reg.address)
             content = dump_resource_yaml(resources[full_addr], config, reg.dump)
-            (example_dir / filename).write_text(content)
-            typer.echo(f"  Generated {ex.identifier}/{filename}")
+            if nested:
+                filepath = actual_dir / ex.identifier / f"{sanitized}.yaml"
+                display_path = f"{ex.identifier}/{sanitized}.yaml"
+            else:
+                filepath = actual_dir / f"{ex.identifier}_{sanitized}.yaml"
+                display_path = f"{ex.identifier}_{sanitized}.yaml"
+            filepath.write_text(content)
+            typer.echo(f"  Generated {display_path}")
     if skip_tests:
         return
     typer.echo(f"Running pytest for {ws_dir.name}...")
