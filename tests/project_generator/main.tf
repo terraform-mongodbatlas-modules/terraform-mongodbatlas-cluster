@@ -4,16 +4,48 @@ terraform {
       source  = "mongodb/mongodbatlas"
       version = "~> 2.1"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
-  required_version = ">= 1.6"
+  required_version = ">= 1.9"
 }
 
-variable "org_id" { type = string }
-variable "project_name" { type = string }
+variable "org_id" {
+  type        = string
+  description = "Organization ID for creating the project."
+}
 
-resource "mongodbatlas_project" "project_test" {
+variable "project_name" {
+  type        = string
+  default     = ""
+  description = "Project name. If empty, generates from prefix + random suffix."
+}
+
+variable "project_name_prefix" {
+  type        = string
+  default     = "test-acc-tf-p-" # DO NOT EDIT, prefix used by cleanup-test-env.yml
+  description = "Project name prefix when auto-generating name."
+}
+
+resource "random_string" "suffix" {
+  count = var.project_name == "" ? 1 : 0
+  keepers = {
+    first = timestamp()
+  }
+  length  = 6
+  special = false
+  upper   = false
+}
+
+locals {
+  project_name = var.project_name != "" ? var.project_name : "${var.project_name_prefix}${random_string.suffix[0].id}"
+}
+
+resource "mongodbatlas_project" "this" {
   org_id = var.org_id
-  name   = var.project_name
+  name   = local.project_name
 
   lifecycle {
     precondition {
@@ -24,5 +56,9 @@ resource "mongodbatlas_project" "project_test" {
 }
 
 output "project_id" {
-  value = mongodbatlas_project.project_test.id
+  value = mongodbatlas_project.this.id
+}
+
+output "project_name" {
+  value = mongodbatlas_project.this.name
 }

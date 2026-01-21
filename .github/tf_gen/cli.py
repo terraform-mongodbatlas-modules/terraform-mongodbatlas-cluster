@@ -100,9 +100,7 @@ def generate_for_config(
     schema_cache: dict[str, dict] = {}
 
     for provider_config in configs:
-        cache_key = (
-            f"{provider_config.provider_source}_{provider_config.provider_version}"
-        )
+        cache_key = f"{provider_config.provider_source}_{provider_config.provider_version}"
         if cache_key not in schema_cache:
             schema_cache[cache_key] = fetch_provider_schema(
                 provider_config.provider_source,
@@ -145,13 +143,9 @@ def _write_and_format(results: dict[str, str]) -> None:
     files = list(results.keys())
     if files:
         try:
-            subprocess.run(
-                ["terraform", "fmt"] + files, check=True, capture_output=True
-            )
+            subprocess.run(["terraform", "fmt"] + files, check=True, capture_output=True)
         except FileNotFoundError as e:
-            msg = (
-                "terraform CLI not found. Install terraform to format generated files."
-            )
+            msg = "terraform CLI not found. Install terraform to format generated files."
             raise RuntimeError(msg) from e
         except subprocess.CalledProcessError as e:
             msg = f"terraform fmt failed: {e.stderr.decode() if e.stderr else str(e)}"
@@ -161,9 +155,7 @@ def _write_and_format(results: dict[str, str]) -> None:
 @app.command()
 def main(
     config: Path = typer.Option(..., "--config", "-c", help="Path to gen.yaml"),
-    target: list[str] | None = typer.Option(
-        None, "--target", "-t", help="Filter by resource type"
-    ),
+    target: list[str] | None = typer.Option(None, "--target", "-t", help="Filter by resource type"),
     dest_path: Path = typer.Option(
         Path.cwd(), "--dest-path", "-d", help="Base directory for output"
     ),
@@ -192,9 +184,7 @@ def main(
 
 
 def configure_logging_and_run():
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     app()
 
 

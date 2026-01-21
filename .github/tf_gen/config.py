@@ -63,9 +63,7 @@ class GenerationTarget(BaseModel):
     output_filename: str = "outputs.tf"
     outputs_prefix: str = ""
     outputs_excluded: list[str] = Field(default_factory=list)
-    output_tf_overrides: dict[str, OutputAttributeOverride] = Field(
-        default_factory=dict
-    )
+    output_tf_overrides: dict[str, OutputAttributeOverride] = Field(default_factory=dict)
     output_attribute_max_children: int = 5
 
     @model_validator(mode="after")
@@ -106,8 +104,7 @@ def load_config(
         result.append(
             ProviderGenConfig(
                 provider_name=provider_name,
-                provider_source=p.get("provider_source")
-                or defaults.get("provider_source", ""),
+                provider_source=p.get("provider_source") or defaults.get("provider_source", ""),
                 provider_version=p.get("provider_version")
                 or defaults.get("provider_version", "~> 1.0"),
                 provider_config_block=p.get("provider_config_block", ""),

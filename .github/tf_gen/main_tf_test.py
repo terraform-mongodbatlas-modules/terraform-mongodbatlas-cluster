@@ -48,9 +48,7 @@ def test_build_var_ref_with_prefix():
 
 def test_build_var_ref_single_variable():
     config = GenerationTarget(resource_type="project", use_single_variable=True)
-    assert (
-        build_var_ref("name", config, "mongodbatlas") == "var.mongodbatlas_project.name"
-    )
+    assert build_var_ref("name", config, "mongodbatlas") == "var.mongodbatlas_project.name"
 
 
 def test_build_var_ref_override():
@@ -121,9 +119,7 @@ def test_render_required_list_block():
 
 
 def test_generate_main_tf_with_meta_args():
-    schema_raw = {
-        "block": {"attributes": {"name": {"type": "string", "required": True}}}
-    }
+    schema_raw = {"block": {"attributes": {"name": {"type": "string", "required": True}}}}
     schema = parse_resource_schema(schema_raw)
     config = GenerationTarget(
         resource_type="project",

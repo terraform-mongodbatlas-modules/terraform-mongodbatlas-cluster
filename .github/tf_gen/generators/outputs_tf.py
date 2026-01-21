@@ -29,9 +29,7 @@ class OutputSpec(BaseModel):
             name=override.name if override.name else self.name,
             value=override.value if override.value else self.value,
             description=self.description,
-            sensitive=override.sensitive
-            if override.sensitive is not None
-            else self.sensitive,
+            sensitive=override.sensitive if override.sensitive is not None else self.sensitive,
         )
 
 
@@ -49,9 +47,7 @@ class OutputCollector:
             self.set_outputs.add(spec.name)
 
 
-def should_generate_output(
-    name: str, attr: SchemaAttribute, config: GenerationTarget
-) -> bool:
+def should_generate_output(name: str, attr: SchemaAttribute, config: GenerationTarget) -> bool:
     if name == "id" and not config.include_id_field:
         return False
     if name in config.outputs_excluded:
@@ -103,9 +99,7 @@ def _build_value_expr(
             return leaf_expr
 
 
-def _should_expand_children(
-    name: str, attr: SchemaAttribute, config: GenerationTarget
-) -> bool:
+def _should_expand_children(name: str, attr: SchemaAttribute, config: GenerationTarget) -> bool:
     if name in config.output_tf_overrides:
         override = config.output_tf_overrides[name]
         if override.include_children is not None:
@@ -155,16 +149,10 @@ def collect_from_attributes(
         # Add parent output unless excluded
         if name not in collector.config.outputs_excluded:
             value = f"{collector.indexed_ref}.{name}"
-            desc = make_description(
-                attr.description, attr.deprecated, attr.deprecated_message
-            )
-            is_set = (
-                attr.nested_type and attr.nested_type.nesting_mode == NestingMode.set
-            )
+            desc = make_description(attr.description, attr.deprecated, attr.deprecated_message)
+            is_set = attr.nested_type and attr.nested_type.nesting_mode == NestingMode.set
             collector.add(
-                OutputSpec(
-                    name=name, value=value, description=desc, sensitive=attr.sensitive
-                ),
+                OutputSpec(name=name, value=value, description=desc, sensitive=attr.sensitive),
                 is_set=bool(is_set),
             )
         # Expand children regardless of parent exclusion
@@ -184,9 +172,7 @@ def collect_from_block_types(
         is_set = nesting == NestingMode.set
 
         computed_children = [
-            (name, attr)
-            for name, attr in bt.block.attributes.items()
-            if attr.is_output_candidate
+            (name, attr) for name, attr in bt.block.attributes.items() if attr.is_output_candidate
         ]
         if len(computed_children) > collector.config.output_attribute_max_children:
             computed_children = sorted(computed_children, key=lambda x: x[0])[
@@ -263,9 +249,7 @@ def _collect_single_output_entries(
     for bt_name, bt in schema.block.block_types.items():
         if bt_name in config.outputs_excluded:
             continue
-        has_computed_child = any(
-            a.is_output_candidate for a in bt.block.attributes.values()
-        )
+        has_computed_child = any(a.is_output_candidate for a in bt.block.attributes.values())
         if not has_computed_child:
             continue
         has_sensitive_child = any(a.sensitive for a in bt.block.attributes.values())
@@ -308,17 +292,13 @@ def generate_single_outputs(
     base_ref: str,
     indexed_ref: str,
 ) -> str:
-    non_sensitive, sensitive = _collect_single_output_entries(
-        schema, config, indexed_ref
-    )
+    non_sensitive, sensitive = _collect_single_output_entries(schema, config, indexed_ref)
     output_name = f"{config.outputs_prefix}{config.resource_type}"
     outputs = []
 
     if non_sensitive:
         outputs.append(
-            _render_single_output(
-                output_name, non_sensitive, base_ref, config.use_resource_count
-            )
+            _render_single_output(output_name, non_sensitive, base_ref, config.use_resource_count)
         )
     if sensitive:
         outputs.append(
@@ -340,9 +320,7 @@ def generate_multi_outputs(
     indexed_ref: str,
     log: logging.Logger | None = None,
 ) -> str:
-    collector = OutputCollector(
-        base_ref=base_ref, indexed_ref=indexed_ref, config=config
-    )
+    collector = OutputCollector(base_ref=base_ref, indexed_ref=indexed_ref, config=config)
     collect_from_attributes(schema.block.attributes, collector)
     collect_from_block_types(schema.block.block_types, collector)
 
@@ -368,9 +346,7 @@ def generate_outputs_tf(
     provider_name: str,
     log: logging.Logger | None = None,
 ) -> str:
-    base_ref, indexed_ref = build_resource_refs(
-        provider_name, config.resource_type, config
-    )
+    base_ref, indexed_ref = build_resource_refs(provider_name, config.resource_type, config)
 
     if config.use_single_output:
         return generate_single_outputs(schema, config, base_ref, indexed_ref)

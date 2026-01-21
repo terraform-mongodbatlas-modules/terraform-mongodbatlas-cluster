@@ -25,9 +25,7 @@ def _generate_cases(test_types: list[TestType]):
             yield pytest.param(rc, test_type, id=f"{rc.resource_type}-{test_type}")
 
 
-@pytest.mark.parametrize(
-    "rc,test_type", list(_generate_cases(["variables", "outputs", "main"]))
-)
+@pytest.mark.parametrize("rc,test_type", list(_generate_cases(["variables", "outputs", "main"])))
 def test_schema_regression(
     rc: ResourceConfig,
     test_type: TestType,
@@ -55,9 +53,7 @@ def test_schema_regression(
     )
 
 
-@pytest.mark.parametrize(
-    "rc,test_type", list(_generate_cases(["variables", "main", "outputs"]))
-)
+@pytest.mark.parametrize("rc,test_type", list(_generate_cases(["variables", "main", "outputs"])))
 def test_schema_regression_single_variable(
     rc: ResourceConfig,
     test_type: TestType,

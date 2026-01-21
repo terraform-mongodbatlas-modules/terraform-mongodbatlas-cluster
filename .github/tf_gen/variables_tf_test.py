@@ -30,18 +30,9 @@ def test_render_primitive_types():
 
 def test_render_collection_types():
     elem = TfType.from_primitive(AttrType.string)
-    assert (
-        render_tf_type(TfType.from_collection(CollectionKind.list, elem))
-        == "list(string)"
-    )
-    assert (
-        render_tf_type(TfType.from_collection(CollectionKind.set, elem))
-        == "set(string)"
-    )
-    assert (
-        render_tf_type(TfType.from_collection(CollectionKind.map, elem))
-        == "map(string)"
-    )
+    assert render_tf_type(TfType.from_collection(CollectionKind.list, elem)) == "list(string)"
+    assert render_tf_type(TfType.from_collection(CollectionKind.set, elem)) == "set(string)"
+    assert render_tf_type(TfType.from_collection(CollectionKind.map, elem)) == "map(string)"
 
 
 def test_render_object_type():
@@ -81,9 +72,7 @@ def test_should_generate_variable_excluded(backup_schedule_schema: dict):
 def test_attr_to_variable_required(backup_schedule_schema: dict):
     schema = parse_resource_schema(backup_schedule_schema)
     config = GenerationTarget()
-    spec = attr_to_variable_spec(
-        "cluster_name", schema.block.attributes["cluster_name"], config
-    )
+    spec = attr_to_variable_spec("cluster_name", schema.block.attributes["cluster_name"], config)
     assert spec.name == "cluster_name"
     assert spec.type_str == "string"
     assert not spec.nullable
@@ -119,9 +108,7 @@ def test_attr_to_variable_deprecated(project_schema: dict):
 def test_attr_to_variable_sensitive(database_user_schema: dict):
     schema = parse_resource_schema(database_user_schema)
     config = GenerationTarget()
-    spec = attr_to_variable_spec(
-        "password", schema.block.attributes["password"], config
-    )
+    spec = attr_to_variable_spec("password", schema.block.attributes["password"], config)
     assert spec.sensitive
 
 
@@ -138,9 +125,7 @@ def test_block_type_list_variable(backup_schedule_schema: dict):
 def test_block_type_single_object(backup_schedule_schema: dict):
     schema = parse_resource_schema(backup_schedule_schema)
     config = GenerationTarget()
-    spec = block_type_to_variable_spec(
-        "export", schema.block.block_types["export"], config
-    )
+    spec = block_type_to_variable_spec("export", schema.block.block_types["export"], config)
     assert spec.type_str.startswith("object(")
     assert not spec.type_str.startswith("list(")
 
@@ -148,9 +133,7 @@ def test_block_type_single_object(backup_schedule_schema: dict):
 def test_block_type_set_nesting(project_schema: dict):
     schema = parse_resource_schema(project_schema)
     config = GenerationTarget()
-    spec = block_type_to_variable_spec(
-        "limits", schema.block.block_types["limits"], config
-    )
+    spec = block_type_to_variable_spec("limits", schema.block.block_types["limits"], config)
     assert spec.type_str.startswith("set(object(")
 
 
@@ -237,9 +220,7 @@ def test_generate_variables_tf_ordering(backup_schedule_schema: dict):
 
 def test_generate_variables_tf_single_variable(backup_schedule_schema: dict):
     schema = parse_resource_schema(backup_schedule_schema)
-    config = GenerationTarget(
-        resource_type="cloud_backup_schedule", use_single_variable=True
-    )
+    config = GenerationTarget(resource_type="cloud_backup_schedule", use_single_variable=True)
     output = generate_variables_tf(schema, config, "mongodbatlas")
     assert 'variable "mongodbatlas_cloud_backup_schedule"' in output
     assert output.count('variable "') == 1
@@ -264,9 +245,7 @@ def test_map_string_variable(project_schema: dict):
 def test_inline_object_type(vpc_endpoint_schema: dict):
     schema = parse_resource_schema(vpc_endpoint_schema)
     config = GenerationTarget()
-    spec = attr_to_variable_spec(
-        "dns_entry", schema.block.attributes["dns_entry"], config
-    )
+    spec = attr_to_variable_spec("dns_entry", schema.block.attributes["dns_entry"], config)
     assert "object(" in spec.type_str
     assert "dns_name" in spec.type_str
 
@@ -325,9 +304,7 @@ def test_variable_tf_override_with_validation():
     config = GenerationTarget(
         variable_tf={
             "name": VariableAttributeOverride(
-                validation=ValidationBlock(
-                    condition="var.name != null", error_message="required"
-                )
+                validation=ValidationBlock(condition="var.name != null", error_message="required")
             )
         }
     )

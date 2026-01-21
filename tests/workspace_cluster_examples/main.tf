@@ -4,10 +4,6 @@ terraform {
       source  = "mongodb/mongodbatlas"
       version = "~> 2.1"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
   }
   required_version = ">= 1.9"
 }
@@ -30,34 +26,17 @@ variable "project_ids" {
     project5 = null
   }
 }
-variable "project_name_prefix" {
-  type        = string
-  default     = "test-acc-tf-p-" # DO NOT EDIT, prefix used by the cleanup-test-env.yml
-  description = "Project name prefix when creating via project_generator."
-}
 
 variable "org_id" {
   type        = string
-  description = "Organization ID for creating a project via project_generator."
+  description = "Organization ID for creating projects via project_generator."
   default     = ""
 }
 
-resource "random_string" "unique_project_part" {
-  count = length(local.missing_project_ids) > 0 ? 1 : 0
-  keepers = {
-    first = timestamp()
-  }
-  length  = 6
-  special = false
-}
-
-# Creates projects for examples that don't have a project_id in var.project_ids
 module "proj" {
   for_each = toset(local.missing_project_ids)
-
-  source       = "../project_generator"
-  org_id       = var.org_id
-  project_name = "${var.project_name_prefix}${each.key}-${random_string.unique_project_part[0].id}"
+  source   = "../project_generator"
+  org_id   = var.org_id
 }
 
 locals {

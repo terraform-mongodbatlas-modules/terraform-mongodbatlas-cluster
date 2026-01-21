@@ -17,9 +17,7 @@ def _make_cache_key(provider_source: str) -> str:
     return provider_source.split("/")[-1]
 
 
-def _run_terraform(
-    args: list[str], cwd: Path, context: str
-) -> subprocess.CompletedProcess:
+def _run_terraform(args: list[str], cwd: Path, context: str) -> subprocess.CompletedProcess:
     """Run terraform command with proper error handling."""
     try:
         return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True)
@@ -41,15 +39,11 @@ def fetch_provider_schema(
     if not provider_source:
         raise ValueError("provider_source is required (e.g., 'mongodb/mongodbatlas')")
     if not provider_version:
-        raise ValueError(
-            f"provider_version is required for {provider_source} (e.g., '1.0.0')"
-        )
+        raise ValueError(f"provider_version is required for {provider_source} (e.g., '1.0.0')")
 
     if tf_cli_config := os.environ.get("TF_CLI_CONFIG_FILE"):
         tf_cli_config_path = Path(tf_cli_config)
-        content = (
-            tf_cli_config_path.read_text() if tf_cli_config_path.exists() else None
-        )
+        content = tf_cli_config_path.read_text() if tf_cli_config_path.exists() else None
         logger.warning(
             f"TF_CLI_CONFIG_FILE={tf_cli_config} is set; provider schema may come from local build: {content}"  # noqa: E501
         )
@@ -101,9 +95,7 @@ def _find_provider_key(full_schema: dict, provider_name: str) -> str:
 
 def list_resource_types(full_schema: dict, provider_name: str) -> list[str]:
     provider_key = _find_provider_key(full_schema, provider_name)
-    resources = full_schema["provider_schemas"][provider_key].get(
-        "resource_schemas", {}
-    )
+    resources = full_schema["provider_schemas"][provider_key].get("resource_schemas", {})
     prefix = f"{provider_name}_"
     return [k.removeprefix(prefix) for k in sorted(resources.keys())]
 
@@ -112,9 +104,7 @@ def extract_resource_schema(
     full_schema: dict, provider_name: str, resource_type: str
 ) -> ResourceSchema:
     provider_key = _find_provider_key(full_schema, provider_name)
-    resources = full_schema["provider_schemas"][provider_key].get(
-        "resource_schemas", {}
-    )
+    resources = full_schema["provider_schemas"][provider_key].get("resource_schemas", {})
     full_resource_type = f"{provider_name}_{resource_type}"
     if full_resource_type not in resources:
         raise ValueError(f"Resource {full_resource_type} not found")

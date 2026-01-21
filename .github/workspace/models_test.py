@@ -46,6 +46,40 @@ def test_title_from_dir(tmp_path: Path):
     assert ex.title_from_dir(examples_dir) == "Basic Cluster"
 
 
+def test_example_name_path_found(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "backup_export").mkdir()
+    ex = models.Example(name="backup_export")
+    assert ex.example_path(examples_dir).name == "backup_export"
+    assert ex.identifier == "backup_export"
+    assert ex.title_from_dir(examples_dir) == "Backup Export"
+
+
+def test_example_name_path_not_found(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    ex = models.Example(name="missing")
+    with pytest.raises(ValueError, match="Example 'missing' not found"):
+        ex.example_path(examples_dir)
+
+
+def test_example_identifier_number():
+    ex = models.Example(number=5)
+    assert ex.identifier == "05"
+
+
+def test_example_identifier_name():
+    ex = models.Example(name="encryption")
+    assert ex.identifier == "encryption"
+
+
+def test_example_identifier_missing():
+    ex = models.Example()
+    with pytest.raises(ValueError, match="must have either name or number"):
+        _ = ex.identifier
+
+
 def test_ws_config_exposed_vars():
     config = models.WsConfig(
         examples=[],
@@ -128,6 +162,28 @@ var_groups:
     assert config.examples[0].plan_regressions[0].address == "module.cluster.this"
     assert "shared" in config.var_groups
     assert config.var_groups["shared"][0].name == "tags"
+
+
+def test_parse_ws_config_named_example(tmp_path: Path):
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
+examples:
+  - name: backup_export
+    var_groups: [shared]
+    plan_regressions:
+      - address: module.atlas_azure.mongodbatlas_cloud_provider_access_setup.this[0]
+
+var_groups:
+  shared:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id
+""")
+    config = models.parse_ws_config(ws_config)
+    assert len(config.examples) == 1
+    assert config.examples[0].name == "backup_export"
+    assert config.examples[0].number is None
+    assert config.examples[0].identifier == "backup_export"
 
 
 def test_resolve_workspaces_all(tmp_path: Path):
