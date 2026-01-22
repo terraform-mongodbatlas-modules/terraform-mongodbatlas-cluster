@@ -67,6 +67,10 @@ paths:
   - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
 destinations:
+  - name: aws
+    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
+    dest_path_relative: ../aws
+    default_branch: main
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
