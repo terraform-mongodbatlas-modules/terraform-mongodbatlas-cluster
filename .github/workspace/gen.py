@@ -82,7 +82,7 @@ def generate_pytest_file(config: models.WsConfig) -> str:
         "TEST_CASES = [",
     ]
     for ex in config.examples:
-        nested = ex.uses_nested_snapshots()
+        nested = ex.should_use_nested_snapshots()
         for reg in ex.plan_regressions:
             sanitized = models.sanitize_address(reg.address)
             lines.append(f"    ({repr(ex.identifier)}, {repr(sanitized)}, {nested}),")
