@@ -30,10 +30,7 @@ variable "project_name_prefix" {
 }
 
 resource "random_string" "suffix" {
-  count = var.project_name == "" ? 1 : 0
-  keepers = {
-    first = timestamp()
-  }
+  count   = var.project_name == "" ? 1 : 0
   length  = 6
   special = false
   upper   = false

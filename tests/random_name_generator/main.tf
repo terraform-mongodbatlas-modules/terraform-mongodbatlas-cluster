@@ -9,9 +9,6 @@ terraform {
 }
 
 resource "random_string" "name_project" {
-  keepers = {
-    first = timestamp()
-  }
   length  = 16
   special = false
   numeric = false
