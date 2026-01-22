@@ -154,9 +154,7 @@ def report_uncovered(uncovered: dict[str, list[str]]) -> None:
             typer.echo(f"      # [{category}] - address: {addr}")
 
 
-def process_workspace(
-    ws_dir: Path, force_regen: bool, show_uncovered: bool, skip_tests: bool
-) -> None:
+def process_workspace(ws_dir: Path, force_regen: bool, show_uncovered: bool) -> None:
     ws_config = ws_dir / models.WORKSPACE_CONFIG_FILE
     plan_path = ws_dir / PLAN_JSON
     if not ws_config.exists():
@@ -194,8 +192,6 @@ def process_workspace(
                 display_path = f"{ex.identifier}_{sanitized}.yaml"
             filepath.write_text(content)
             typer.echo(f"  Generated {display_path}")
-    if skip_tests:
-        return
     typer.echo(f"Running pytest for {ws_dir.name}...")
     pytest_args = ["pytest", TEST_PLAN_SNAPSHOT_PY, "-v"]
     if force_regen:
@@ -216,7 +212,6 @@ def main(
         "-u",
         help="Show resources not covered by plan_regressions",
     ),
-    skip_tests: bool = typer.Option(False, "--skip-tests", help="Skip running pytest"),
 ) -> None:
     try:
         ws_dirs = models.resolve_workspaces(ws, tests_dir)
@@ -224,7 +219,7 @@ def main(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
     for ws_dir in ws_dirs:
-        process_workspace(ws_dir, force_regen, show_uncovered, skip_tests)
+        process_workspace(ws_dir, force_regen, show_uncovered)
     typer.echo("Done.")
 
 

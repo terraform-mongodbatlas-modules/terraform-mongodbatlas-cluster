@@ -60,7 +60,6 @@ def main(
                 ws_dir,
                 force_regen=force_regen,
                 show_uncovered=show_uncovered,
-                skip_tests=False,
             )
 
         if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
