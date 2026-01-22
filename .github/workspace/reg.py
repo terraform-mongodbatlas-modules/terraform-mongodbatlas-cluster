@@ -175,7 +175,7 @@ def process_workspace(
     actual_dir = ws_dir / PLAN_SNAPSHOTS_ACTUAL_DIR
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
-        nested = ex.uses_nested_snapshots()
+        nested = ex.should_use_nested_snapshots()
         if nested:
             example_dir = actual_dir / ex.identifier
             example_dir.mkdir(exist_ok=True)

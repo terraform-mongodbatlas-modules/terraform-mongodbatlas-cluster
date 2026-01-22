@@ -74,7 +74,13 @@ class Example:
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
 
-    def uses_nested_snapshots(self) -> bool:
+    def should_use_nested_snapshots(self) -> bool:
+        """Determine if snapshots for this example should use nested directory structure.
+
+        Returns True when there are multiple plan_regressions, indicating snapshots
+        should be organized in subdirectories (e.g., 11/resource1.yaml, 11/resource2.yaml)
+        rather than flat files (e.g., 01_resource.yaml).
+        """
         return len(self.plan_regressions) > 1
 
     @property
