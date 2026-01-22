@@ -15,7 +15,7 @@ default:
     just --list
 
 # CHECKS
-pre-commit: fmt validate lint check-docs py-check py-fmt
+pre-commit: fmt validate lint check-docs py-check
     @echo "Pre-commit checks passed"
 
 pre-push: pre-commit unit-plan-tests py-test
@@ -43,6 +43,7 @@ lint:
 
 py-check:
     {{uv_gh}} ruff check .github
+    {{uv_gh}} ruff format --check .github
 
 py-fix:
     {{uv_gh}} ruff check --fix .github
