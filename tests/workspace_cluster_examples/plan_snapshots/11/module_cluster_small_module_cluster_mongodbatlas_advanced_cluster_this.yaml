@@ -7,6 +7,7 @@ cluster_type: REPLICASET
 delete_on_create_timeout: true
 name: small
 pit_enabled: true
+project_id: <project_id>
 redact_client_log_data: true
 replication_specs:
 - region_configs:
@@ -29,3 +30,4 @@ replication_specs:
     provider_name: AWS
     region_name: US_EAST_1
 retain_backups_enabled: true
+tags: <tags>

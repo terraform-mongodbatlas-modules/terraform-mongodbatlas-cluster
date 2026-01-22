@@ -18,10 +18,23 @@ class WsVar:
     var_type: str = ""
 
 
+DEFAULT_REDACT_ATTRIBUTES: list[str] = [
+    "secret",
+    "password",
+    "token",
+    "credentials",
+    "private_key",
+    "client_secret",
+    "tenant_id",
+]
+
+
 @dataclass
 class SkipLines:
     substring_attributes: list[str] = field(default_factory=list)
     substring_values: list[str] = field(default_factory=list)
+    redact_attributes: list[str] = field(default_factory=list)
+    use_default_redact: bool = True
 
 
 @dataclass
@@ -31,6 +44,25 @@ class DumpConfig:
 
 @dataclass
 class PlanRegression:
+    """Configuration for a plan regression test.
+
+    Attributes:
+        address: The exact resource address after the example prefix.
+            Must be the full path as it appears in the terraform plan,
+            minus the `module.ex_{example_id}.` prefix.
+
+            For example, if the full plan address is:
+                module.ex_encryption.module.atlas_azure.module.encryption[0].azurerm_role_assignment.key_vault_crypto
+
+            The address should be:
+                module.atlas_azure.module.encryption[0].azurerm_role_assignment.key_vault_crypto
+
+            This ensures clear, unambiguous matching and makes it easy to find
+            resources in the plan output.
+
+        dump: Configuration for how to dump the resource values to YAML.
+    """
+
     address: str
     dump: DumpConfig = field(default_factory=DumpConfig)
 
@@ -41,6 +73,15 @@ class Example:
     name: str | None = None
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
+
+    def should_use_nested_snapshots(self) -> bool:
+        """Determine if snapshots for this example should use nested directory structure.
+
+        Returns True when there are multiple plan_regressions, indicating snapshots
+        should be organized in subdirectories (e.g., 11/resource1.yaml, 11/resource2.yaml)
+        rather than flat files (e.g., 01_resource.yaml).
+        """
+        return len(self.plan_regressions) > 1
 
     @property
     def identifier(self) -> str:
@@ -73,7 +114,8 @@ class WsConfig:
     examples: list[Example]
     var_groups: dict[str, list[WsVar]]
 
-    def skip_attributes(self) -> list[str]:
+    def redact_var_attributes(self) -> list[str]:
+        """Variable names that should be redacted (not skipped) in snapshots."""
         return [v.name for vs in self.var_groups.values() for v in vs]
 
     def exposed_vars(self) -> list[WsVar]:
@@ -140,6 +182,8 @@ def _parse_dump_config(data: dict[str, Any]) -> DumpConfig:
         skip_lines=SkipLines(
             substring_attributes=skip.get("substring_attributes", []),
             substring_values=skip.get("substring_values", []),
+            redact_attributes=skip.get("redact_attributes", []),
+            use_default_redact=skip.get("use_default_redact", True),
         )
     )
 
