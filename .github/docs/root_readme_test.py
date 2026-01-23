@@ -29,3 +29,20 @@ terraform init
 def test_extract_getting_started_no_markers() -> None:
     template = "# Example\n## Section\nContent"
     assert mod.extract_getting_started(template) == ""
+
+
+def test_downgrade_headers() -> None:
+    content = """\
+# H1 stays the same
+## H2 becomes H3
+### H3 becomes H4
+#### H4 becomes H5
+Regular text stays the same
+##No space also works"""
+    result = mod.downgrade_headers(content)
+    assert "# H1 stays the same" in result  # H1 unchanged
+    assert "### H2 becomes H3" in result
+    assert "#### H3 becomes H4" in result
+    assert "##### H4 becomes H5" in result
+    assert "Regular text stays the same" in result
+    assert "###No space also works" in result

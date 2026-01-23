@@ -12,12 +12,9 @@ GETTING_STARTED_PATTERN = re.compile(
 )
 
 
-def convert_l2_to_l3_headers(content: str) -> str:
-    """Convert level 2 headers (##) to level 3 headers (###)."""
-    lines = content.splitlines()
-    return "\n".join(
-        "###" + ln[2:] if ln.startswith("##") and not ln.startswith("###") else ln for ln in lines
-    )
+def downgrade_headers(content: str) -> str:
+    """Downgrade all headers (## and greater) by one level (e.g., ## -> ###, ### -> ####)."""
+    return re.sub(r"^(#{2,})", r"#\1", content, flags=re.MULTILINE)
 
 
 def extract_getting_started(template_text: str) -> str:
@@ -25,7 +22,7 @@ def extract_getting_started(template_text: str) -> str:
     match = GETTING_STARTED_PATTERN.search(template_text)
     if not match:
         return ""
-    return convert_l2_to_l3_headers(match.group(1).strip()) + "\n"
+    return downgrade_headers(match.group(1).strip()) + "\n"
 
 
 def find_example_folder(folder_id: str | int, examples_dir: Path) -> str | None:
