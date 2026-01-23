@@ -1,4 +1,4 @@
-"""Generate and update root README.md TOC and TABLES sections."""
+"""Generate and update root README.md sections (TOC, TABLES, GETTING_STARTED)."""
 
 import argparse
 import re
@@ -6,6 +6,19 @@ import sys
 from pathlib import Path
 
 from docs import config_loader, doc_utils
+
+GETTING_STARTED_PATTERN = re.compile(
+    r"<!-- BEGIN_GETTING_STARTED -->\s*(.*?)\s*<!-- END_GETTING_STARTED -->", re.DOTALL
+)
+
+
+def extract_getting_started(template_text: str) -> str:
+    """Extract content between GETTING_STARTED markers, downgrading ## to ###."""
+    match = GETTING_STARTED_PATTERN.search(template_text)
+    if not match:
+        return ""
+    lines = match.group(1).strip().splitlines()
+    return "\n".join("###" + ln[2:] if ln.startswith("## ") else ln for ln in lines) + "\n"
 
 
 def find_example_folder(folder_id: str | int, examples_dir: Path) -> str | None:
@@ -123,6 +136,9 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Preview without modifying")
     parser.add_argument("--skip-toc", action="store_true", help="Skip updating TOC section")
     parser.add_argument("--skip-tables", action="store_true", help="Skip updating TABLES section")
+    parser.add_argument(
+        "--skip-getting-started", action="store_true", help="Skip updating GETTING_STARTED section"
+    )
     parser.add_argument("--check", action="store_true", help="Check if documentation is up-to-date")
     args = parser.parse_args()
 
@@ -181,6 +197,31 @@ def main() -> None:
         )
         print("ok TABLES generated")
         modified = True
+
+    if not args.skip_getting_started:
+        print("Generating GETTING_STARTED from example template...")
+        examples_cfg = config_loader.parse_examples_readme_config(config_dict)
+        template_path = root_dir / (examples_cfg.readme_template or "docs/example_readme.md")
+        if not template_path.exists():
+            print(f"Warning: template not found at {template_path}; skipping GETTING_STARTED")
+        else:
+            content = extract_getting_started(template_path.read_text(encoding="utf-8"))
+            if content:
+                readme_content = update_section(
+                    readme_content,
+                    "GETTING_STARTED",
+                    content,
+                    "<!-- BEGIN_GETTING_STARTED -->",
+                    "<!-- END_GETTING_STARTED -->",
+                    doc_utils.generate_header_comment_for_section(
+                        description="This section",
+                        regenerate_command="just gen-readme",
+                    ),
+                )
+                print("ok GETTING_STARTED generated")
+                modified = True
+            else:
+                print("Warning: No GETTING_STARTED markers found in template")
 
     if args.check:
         if readme_content != original_readme_content:
