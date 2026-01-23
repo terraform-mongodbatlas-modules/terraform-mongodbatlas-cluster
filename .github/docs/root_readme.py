@@ -12,13 +12,20 @@ GETTING_STARTED_PATTERN = re.compile(
 )
 
 
+def convert_l2_to_l3_headers(content: str) -> str:
+    """Convert level 2 headers (##) to level 3 headers (###)."""
+    lines = content.splitlines()
+    return "\n".join(
+        "###" + ln[2:] if ln.startswith("##") and not ln.startswith("###") else ln for ln in lines
+    )
+
+
 def extract_getting_started(template_text: str) -> str:
     """Extract content between GETTING_STARTED markers, downgrading ## to ###."""
     match = GETTING_STARTED_PATTERN.search(template_text)
     if not match:
         return ""
-    lines = match.group(1).strip().splitlines()
-    return "\n".join("###" + ln[2:] if ln.startswith("## ") else ln for ln in lines) + "\n"
+    return convert_l2_to_l3_headers(match.group(1).strip()) + "\n"
 
 
 def find_example_folder(folder_id: str | int, examples_dir: Path) -> str | None:
@@ -137,7 +144,9 @@ def main() -> None:
     parser.add_argument("--skip-toc", action="store_true", help="Skip updating TOC section")
     parser.add_argument("--skip-tables", action="store_true", help="Skip updating TABLES section")
     parser.add_argument(
-        "--skip-getting-started", action="store_true", help="Skip updating GETTING_STARTED section"
+        "--skip-getting-started",
+        action="store_true",
+        help="Skip updating GETTING_STARTED section",
     )
     parser.add_argument("--check", action="store_true", help="Check if documentation is up-to-date")
     args = parser.parse_args()

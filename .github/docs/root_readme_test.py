@@ -22,6 +22,7 @@ terraform init
     assert "### Pre Requirements" in result
     assert "### Commands" in result
     assert result.startswith("### ")  # headings downgraded from ##
+    assert result.endswith("\n")  # ensure trailing newline is present
     assert "Other Section" not in result
 
 
