@@ -1,6 +1,9 @@
 locals {
   DEFAULT_INSTANCE_SIZE = "M10"
 
+  # pit_enabled: null → inherit from backup_enabled, explicit value → use as-is
+  effective_pit_enabled = coalesce(var.pit_enabled, var.backup_enabled)
+
   regions = coalesce(var.regions, [])
 
   is_geosharded                       = var.cluster_type == "GEOSHARDED"
@@ -278,7 +281,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   mongo_db_major_version                           = var.mongo_db_major_version
   paused                                           = var.paused
   pinned_fcv                                       = var.pinned_fcv
-  pit_enabled                                      = var.pit_enabled
+  pit_enabled                                      = local.effective_pit_enabled
   redact_client_log_data                           = var.redact_client_log_data
   replica_set_scaling_strategy                     = var.replica_set_scaling_strategy
   retain_backups_enabled                           = var.retain_backups_enabled

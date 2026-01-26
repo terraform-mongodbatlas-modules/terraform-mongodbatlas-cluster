@@ -135,10 +135,15 @@ variable "pinned_fcv" {
 }
 
 variable "pit_enabled" {
-  description = "Recommended for production clusters. Flag that indicates whether the cluster uses continuous cloud backups."
+  description = "Flag for continuous cloud backups. Defaults to `backup_enabled` value when null. Set true/false to override."
   type        = bool
-  nullable    = false
-  default     = true
+  nullable    = true
+  default     = null
+
+  validation {
+    condition     = !(var.pit_enabled == true && var.backup_enabled == false)
+    error_message = "Cannot set pit_enabled=true when backup_enabled=false. Point-in-time restore requires Cloud Backup."
+  }
 }
 
 variable "project_id" {

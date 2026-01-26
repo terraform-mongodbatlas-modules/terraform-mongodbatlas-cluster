@@ -498,11 +498,11 @@ Default: `true`
 
 ### pit_enabled
 
-Recommended for production clusters. Flag that indicates whether the cluster uses continuous cloud backups.
+Flag for continuous cloud backups. Defaults to `backup_enabled` value when null. Set true/false to override.
 
 Type: `bool`
 
-Default: `true`
+Default: `null`
 
 ### retain_backups_enabled
 
