@@ -211,12 +211,18 @@ def main() -> None:
         if not template_path.exists():
             print(f"Warning: template not found at {template_path}; skipping GETTING_STARTED")
         else:
-            content = extract_getting_started(template_path.read_text(encoding="utf-8"))
-            if content:
+            getting_started = extract_getting_started(template_path.read_text(encoding="utf-8"))
+            if getting_started:
+                getting_started = doc_utils.apply_template_vars(
+                    getting_started,
+                    examples_cfg.template_vars.vars,
+                    context_name="root",
+                    skip_rules=examples_cfg.template_vars.skip_rules,
+                )
                 readme_content = update_section(
                     readme_content,
                     "GETTING_STARTED",
-                    content,
+                    getting_started,
                     "<!-- BEGIN_GETTING_STARTED -->",
                     "<!-- END_GETTING_STARTED -->",
                     doc_utils.generate_header_comment_for_section(
