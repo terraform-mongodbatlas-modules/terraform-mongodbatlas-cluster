@@ -71,3 +71,9 @@ jobs:
           provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
+  required-check:
+    needs: [check, plan-tests, compat-tests, plan-snapshot-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required jobs passed"
