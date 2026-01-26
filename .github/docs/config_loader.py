@@ -14,8 +14,16 @@ class CodeSnippetFilesConfig:
 
 
 @dataclass
+class SkipRule:
+    """Rule for skipping template variables based on context name pattern."""
+
+    context_pattern: str
+    skip_vars: list[str] = field(default_factory=list)
+
+
+@dataclass
 class TemplateVarsConfig:
-    skip_if_name_contains: list[str] = field(default_factory=list)
+    skip_rules: list[SkipRule] = field(default_factory=list)
     vars: dict[str, str] = field(default_factory=dict)
 
 
@@ -80,10 +88,9 @@ def parse_examples_readme_config(config_dict: dict) -> ExamplesReadmeConfig:
     code_snippet_files_dict = examples_readme_dict.get("code_snippet_files", {})
     code_snippet_files = CodeSnippetFilesConfig(**code_snippet_files_dict)
     template_vars_dict = examples_readme_dict.get("template_vars", {})
-    skip_if_name_contains = template_vars_dict.pop("skip_if_name_contains", [])
-    template_vars = TemplateVarsConfig(
-        skip_if_name_contains=skip_if_name_contains, vars=template_vars_dict
-    )
+    skip_rules_list = template_vars_dict.pop("skip_rules", [])
+    skip_rules = [SkipRule(**rule) for rule in skip_rules_list]
+    template_vars = TemplateVarsConfig(skip_rules=skip_rules, vars=template_vars_dict)
     versions_tf_dict = examples_readme_dict.get("versions_tf", {})
     versions_tf = VersionsTfConfig(**versions_tf_dict)
     examples_readme_dict_filtered = {

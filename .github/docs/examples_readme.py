@@ -120,18 +120,6 @@ def generate_code_snippet(
     return snippet
 
 
-def should_skip_template_var(
-    example_name: str, var_key: str, skip_patterns: list[str] | None = None
-) -> bool:
-    if not skip_patterns:
-        return False
-    example_name_lower = example_name.lower()
-    for pattern in skip_patterns:
-        if pattern.lower() in example_name_lower and var_key.startswith("production"):
-            return True
-    return False
-
-
 def generate_readme(
     template: str,
     example_name: str,
@@ -140,7 +128,7 @@ def generate_readme(
     template_vars: dict[str, str],
     version: str | None = None,
     additional_files: list[str] | None = None,
-    skip_var_patterns: list[str] | None = None,
+    skip_rules: list[config_loader.SkipRule] | None = None,
 ) -> str:
     header_comment = (
         doc_utils.generate_header_comment(
@@ -152,10 +140,12 @@ def generate_readme(
     content = template.replace("{{ .NAME }}", example_name)
     code_snippet = generate_code_snippet(example_dir, registry_source, version, additional_files)
     content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
-    for key, value in sorted(template_vars.items()):
-        if should_skip_template_var(example_name, key, skip_var_patterns):
-            value = ""
-        content = content.replace(f"{{{{ .{key.upper()} }}}}", value.rstrip("\n"))
+    content = doc_utils.apply_template_vars(
+        content,
+        template_vars,
+        context_name=example_name,
+        skip_rules=skip_rules,
+    )
     lines = content.split("\n")
     if lines and lines[0].strip().startswith("<!--") and "used to generate" in lines[0]:
         content = "\n".join(lines[1:])
@@ -260,7 +250,7 @@ def process_example(
             examples_readme_config.template_vars.vars,
             version,
             examples_readme_config.code_snippet_files.additional,
-            examples_readme_config.template_vars.skip_if_name_contains,
+            examples_readme_config.template_vars.skip_rules,
         )
         if check and readme_path.exists():
             existing_content = readme_path.read_text(encoding="utf-8")
