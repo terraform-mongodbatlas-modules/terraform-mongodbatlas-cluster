@@ -1,5 +1,9 @@
 ## (Unreleased)
 
+ENHANCEMENTS:
+
+* variable/pit_enabled: Auto-disable when `backup_enabled=false`, add validation for invalid config: `pit_enabled=true`, `backup_enabled=false` ([#78](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/78))
+
 ## 0.2.0 (December 17, 2025)
 
 ENHANCEMENTS:
