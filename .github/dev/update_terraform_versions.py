@@ -3,8 +3,10 @@
 Fetches Terraform releases from GitHub API, filters to minor versions >= MIN_VERSION,
 and updates the versions list while preserving the header.
 
+Requires MIN_VERSION environment variable to be set.
+
 Usage:
-    just update-terraform-versions
+    MIN_VERSION=1.9 just update-terraform-versions
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ import re
 import subprocess
 from pathlib import Path
 
-MIN_VERSION = os.environ.get("MIN_VERSION", "1.9")
+MIN_VERSION = os.environ["MIN_VERSION"]
 
 
 def fetch_terraform_versions(min_version: str) -> list[str]:
