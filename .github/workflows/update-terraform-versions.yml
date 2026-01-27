@@ -1,0 +1,53 @@
+name: Update Terraform Versions
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # Daily at 7:00 AM UTC
+  workflow_dispatch:
+    inputs:
+      min_version:
+        description: 'Minimum Terraform version'
+        required: false
+
+env:
+  MIN_VERSION: ${{ inputs.min_version || '1.9' }}
+
+jobs:
+  update-terraform-versions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+
+      - name: Update Terraform versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: just update-terraform-versions
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec
+        with:
+          gpg_private_key: ${{ secrets.APIX_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
+        with:
+          token: ${{ secrets.APIX_BOT_PAT }}
+          title: 'chore: Update Terraform versions'
+          commit-message: 'chore: Update Terraform versions'
+          branch: terraform-versions-update
+          delete-branch: true
+          committer: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
+          author: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
+          body: |
+            Automated update of `.terraform-versions.yaml` with latest supported Terraform versions.

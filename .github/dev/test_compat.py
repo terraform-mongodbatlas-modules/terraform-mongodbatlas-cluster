@@ -23,6 +23,8 @@ from pathlib import Path
 
 import yaml
 
+from dev import REPO_ROOT, VERSIONS_FILE
+
 MAX_WORKERS = min(os.cpu_count() or 4, 8)
 INIT_MAX_RETRIES = 3
 INIT_RETRY_DELAY_SECONDS = 10
@@ -49,9 +51,9 @@ def load_versions(config_path: Path) -> list[str]:
     return config["versions"]
 
 
-def discover_targets(repo_root: Path) -> list[Path]:
-    targets = [repo_root]
-    examples_dir = repo_root / "examples"
+def discover_targets() -> list[Path]:
+    targets = [REPO_ROOT]
+    examples_dir = REPO_ROOT / "examples"
     if examples_dir.exists():
         for example in sorted(examples_dir.iterdir()):
             if example.is_dir() and (example / "main.tf").exists():
@@ -169,26 +171,23 @@ def preinstall_versions(versions: list[str]) -> bool:
 
 
 def main() -> int:
-    repo_root = Path(__file__).parent.parent.parent
-    config_path = repo_root / ".terraform-versions.yaml"
-
-    if not config_path.exists():
-        print(f"Error: {config_path} not found", file=sys.stderr)
+    if not VERSIONS_FILE.exists():
+        print(f"Error: {VERSIONS_FILE} not found", file=sys.stderr)
         return 1
 
-    versions = load_versions(config_path)
+    versions = load_versions(VERSIONS_FILE)
 
     if not preinstall_versions(versions):
         return 1
 
-    targets = discover_targets(repo_root)
+    targets = discover_targets()
 
     jobs: list[TestJob] = []
     # Always use temp dirs for root module to avoid .terraform directory conflicts
     # when running multiple versions in parallel
     for version in versions:
         for target in targets:
-            is_root = target == repo_root
+            is_root = target == REPO_ROOT
             jobs.append(TestJob(version=version, target=target, use_temp_dir=is_root))
 
     total_jobs = len(jobs)
