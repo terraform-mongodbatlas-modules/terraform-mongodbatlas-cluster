@@ -37,6 +37,7 @@ jobs:
         with:
           just: 'true'
           terraform: 'true'
+          uv: 'true'
       - name: Setup provider (default branch)
         uses: ./.github/actions/setup-provider-dev
         if: inputs.provider_ref == 'default'
