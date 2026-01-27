@@ -3,6 +3,7 @@ name: Update Terraform Versions
 on:
   schedule:
     - cron: '0 7 * * *'  # Daily at 7:00 AM UTC
+  pull_request:
   workflow_dispatch:
     inputs:
       min_version:
@@ -46,7 +47,7 @@ jobs:
           title: 'chore: Update Terraform versions'
           commit-message: 'chore: Update Terraform versions'
           branch: terraform-versions-update
-          base: main
+          base: ${{ github.head_ref || 'main' }}
           delete-branch: true
           committer: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
           author: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
