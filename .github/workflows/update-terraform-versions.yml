@@ -1,7 +1,6 @@
 name: Update Terraform Versions
 
 on:
-  pull_request: # TODO: TEMPORARY - remove after testing
   schedule:
     - cron: '0 7 * * *'  # Daily at 7:00 AM UTC
   workflow_dispatch:
