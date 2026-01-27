@@ -42,6 +42,14 @@ jobs:
             echo '${{ steps.versions.outputs.versions }}' | jq -r '.[] | "  - \"" + . + "\""'
           } > .terraform-versions.yaml.tmp && mv .terraform-versions.yaml.tmp .terraform-versions.yaml
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec
+        with:
+          gpg_private_key: ${{ secrets.APIX_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.APIX_BOT_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
         with:
@@ -51,5 +59,7 @@ jobs:
           branch: terraform-versions-update
           base: ${{ github.head_ref || 'main' }}
           delete-branch: true
+          committer: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
+          author: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
           body: |
             Automated update of `.terraform-versions.yaml` with latest supported Terraform versions.
