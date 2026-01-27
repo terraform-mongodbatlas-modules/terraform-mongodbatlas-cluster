@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths: ['**.tf', '**.tftest.hcl']
   pull_request:
+    paths: ['**.tf', '**.tftest.hcl']
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
@@ -34,12 +35,11 @@ jobs:
       - uses: ./.github/actions/setup-provider-dev
         with:
           provider-ref: ${{ inputs.provider_ref }}
-      - run: exit 1  # TODO: revert - simulating failure for Slack notification test
-        # - run: just dev-integration-test
+      - run: just dev-integration-test
 
   slack-notification:
     needs: [dev-integration-test]
-    if: ${{ !cancelled() && needs.dev-integration-test.result == 'failure' }}
+    if: ${{ github.event_name == 'schedule' && !cancelled() && needs.dev-integration-test.result == 'failure' }}
     runs-on: ubuntu-latest
     permissions: {}
     steps:
