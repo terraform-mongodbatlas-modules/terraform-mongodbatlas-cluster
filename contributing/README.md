@@ -1,8 +1,6 @@
 <!-- === OK_EDIT: path-sync header === -->
 # Contributing Guides
 
-TEMPORARY CHANGE 
-
 This directory contains guides for contributors to the terraform-mongodbatlas-cluster module.
 
 ## Available Guides
