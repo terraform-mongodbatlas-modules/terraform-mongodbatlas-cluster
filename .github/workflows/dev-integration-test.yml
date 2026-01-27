@@ -36,3 +36,28 @@ jobs:
         with:
           provider-ref: ${{ inputs.provider_ref }}
       - run: just dev-integration-test
+
+  slack-notification:
+    needs: [dev-integration-test]
+    if: ${{ github.event_name == 'schedule' && !cancelled() && needs.dev-integration-test.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Send Slack message
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Dev Integration Test scheduled run failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":x: *Dev Integration Test scheduled run failed* ${{ secrets.SLACK_ONCALL_TAG }}. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>"
+                  }
+                }
+              ]
+            }
