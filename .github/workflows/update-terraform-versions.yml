@@ -46,7 +46,6 @@ jobs:
           title: 'chore: Update Terraform versions'
           commit-message: 'chore: Update Terraform versions'
           branch: terraform-versions-update
-          base: main
           delete-branch: true
           committer: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
           author: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
