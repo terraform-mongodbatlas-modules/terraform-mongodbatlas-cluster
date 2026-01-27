@@ -6,6 +6,7 @@ on:
     paths: ['**.tf', '**.tftest.hcl']
   pull_request:
     paths: ['**.tf', '**.tftest.hcl']
+    paths: ['**.tf', '**.tftest.hcl']
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
