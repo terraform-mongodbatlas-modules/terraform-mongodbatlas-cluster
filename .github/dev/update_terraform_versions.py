@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 MIN_VERSION = os.environ.get("MIN_VERSION", "1.9")
@@ -53,7 +52,7 @@ def update_versions_file(versions_file: Path, versions: list[str]) -> bool:
     return True
 
 
-def main() -> int:
+def main() -> None:
     repo_root = Path(__file__).parent.parent.parent
     versions_file = repo_root / ".terraform-versions.yaml"
 
@@ -61,8 +60,7 @@ def main() -> int:
     changed = update_versions_file(versions_file, versions)
 
     print("Updated" if changed else "No changes needed")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
