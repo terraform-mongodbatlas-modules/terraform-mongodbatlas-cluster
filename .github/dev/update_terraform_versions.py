@@ -14,11 +14,11 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-from pathlib import Path
 
 from dev import REPO_ROOT
 
 MIN_VERSION = os.environ["MIN_VERSION"]
+VERSIONS_FILE = REPO_ROOT / ".terraform-versions.yaml"
 
 
 def fetch_terraform_versions(min_version: str) -> list[str]:
@@ -43,24 +43,22 @@ def fetch_terraform_versions(min_version: str) -> list[str]:
     return sorted(versions, key=lambda v: list(map(int, v.split("."))))
 
 
-def update_versions_file(versions_file: Path, versions: list[str]) -> bool:
+def update_versions_file(versions: list[str]) -> bool:
     """Update versions file preserving header. Returns True if changed."""
-    content = versions_file.read_text()
+    content = VERSIONS_FILE.read_text()
     header = content[: content.index("versions:") + len("versions:")]
     new_content = header + "\n" + "\n".join(f'  - "{v}"' for v in versions) + "\n"
 
     if new_content == content:
         return False
 
-    versions_file.write_text(new_content)
+    VERSIONS_FILE.write_text(new_content)
     return True
 
 
 def main() -> None:
-    versions_file = REPO_ROOT / ".terraform-versions.yaml"
-
     versions = fetch_terraform_versions(MIN_VERSION)
-    changed = update_versions_file(versions_file, versions)
+    changed = update_versions_file(versions)
 
     print("Updated" if changed else "No changes needed")
 
