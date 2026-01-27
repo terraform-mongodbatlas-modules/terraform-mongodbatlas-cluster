@@ -30,7 +30,7 @@ jobs:
           versions=$(gh api repos/hashicorp/terraform/releases --paginate | \
             jq -r '.[].tag_name | select(test("^v[0-9]+\\.[0-9]+\\.0$")) | ltrimstr("v") | rtrimstr(".0")' | \
             sort -V -u | \
-            awk -F. -v min="$MIN_VERSION" 'BEGIN { split(min, m, ".") } ($1 > m[1]) || ($1 == m[1] && $2 >= m[2])' | \
+            awk -F. -v min="$MIN_VERSION" 'BEGIN { split(min, m, ".") } ($1 > m[1]) || (($1 == m[1]) && ($2 >= m[2]))' | \
             jq -Rsc 'split("\n") | map(select(length > 0))')
           echo "versions=$versions" >> "$GITHUB_OUTPUT"
 
@@ -57,7 +57,7 @@ jobs:
           title: 'chore: Update Terraform versions'
           commit-message: 'chore: Update Terraform versions'
           branch: terraform-versions-update
-          base: ${{ github.head_ref || 'main' }}
+          base: main
           delete-branch: true
           committer: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
           author: svc-apix-bot <svc-api-experience-integrations-escalation@mongodb.com>
