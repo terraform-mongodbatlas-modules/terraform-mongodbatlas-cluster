@@ -27,7 +27,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          versions=$(gh api repos/hashicorp/terraform/releases --paginate | jq --arg min "$MIN_VERSION" '
+          versions=$(gh api repos/hashicorp/terraform/releases --paginate | jq -c --arg min "$MIN_VERSION" '
             [.[].tag_name
              | select(test("^v[0-9]+\\.[0-9]+\\.0$"))
              | ltrimstr("v")
