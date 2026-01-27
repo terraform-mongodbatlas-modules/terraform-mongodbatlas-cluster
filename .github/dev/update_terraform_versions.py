@@ -16,6 +16,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from dev import REPO_ROOT
+
 MIN_VERSION = os.environ["MIN_VERSION"]
 
 
@@ -55,8 +57,7 @@ def update_versions_file(versions_file: Path, versions: list[str]) -> bool:
 
 
 def main() -> None:
-    repo_root = Path(__file__).parent.parent.parent
-    versions_file = repo_root / ".terraform-versions.yaml"
+    versions_file = REPO_ROOT / ".terraform-versions.yaml"
 
     versions = fetch_terraform_versions(MIN_VERSION)
     changed = update_versions_file(versions_file, versions)
