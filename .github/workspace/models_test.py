@@ -10,6 +10,7 @@ from workspace import models
 def test_sanitize_address():
     assert models.sanitize_address("module.cluster.this") == "module_cluster_this"
     assert models.sanitize_address("resource.name") == "resource_name"
+    assert models.sanitize_address('resource["203.0.113.0/24"]') == 'resource["203_0_113_0_24"]'
 
 
 def test_ws_var_defaults():
