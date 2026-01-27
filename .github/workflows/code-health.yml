@@ -51,7 +51,8 @@ jobs:
           just: 'true'
           uv: 'true'
           mise: 'true'
-      - run: just test-compat
+      - run: exit 1  # TODO: revert - simulating failure for Slack notification test
+        # - run: just test-compat
 
   plan-snapshot-tests:
     name: Terraform Examples Plan Snapshot Tests
@@ -75,7 +76,7 @@ jobs:
 
   slack-notification:
     needs: [check, plan-tests, compat-tests, plan-snapshot-tests]
-    if: ${{ github.event_name == 'schedule' && !cancelled() && contains(needs.*.result, 'failure') }}
+    if: ${{ !cancelled() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
     permissions: {}
     steps:
