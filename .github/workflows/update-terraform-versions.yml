@@ -59,6 +59,7 @@ jobs:
           title: 'chore: Update Terraform versions'
           commit-message: 'chore: Update Terraform versions'
           branch: terraform-versions-update
+          base: ${{ github.head_ref || 'main' }}
           delete-branch: true
           body: |
             Automated update of `.terraform-versions.yaml` with latest supported Terraform versions.
