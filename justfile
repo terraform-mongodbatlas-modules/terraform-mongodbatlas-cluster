@@ -223,6 +223,9 @@ tftest-all:
 test-compat:
     {{py}} dev.test_compat
 
+update-terraform-versions:
+    {{py}} dev.update_terraform_versions
+
 # No Authorized Changes Validation (only for destination repos)
 sdlc-validate:
   uvx path-sync validate-no-changes -b main

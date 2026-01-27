@@ -21,26 +21,15 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - name: Fetch and filter Terraform versions
-        id: versions
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+
+      - name: Update Terraform versions
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          # Extract minor versions (e.g., "1.9") from .0 releases, sort numerically, filter >= MIN_VERSION
-          versions=$(gh api repos/hashicorp/terraform/releases --paginate | \
-            jq -r '.[].tag_name | select(test("^v[0-9]+\\.[0-9]+\\.0$")) | ltrimstr("v") | rtrimstr(".0")' | \
-            sort -V -u | \
-            awk -F. -v min="$MIN_VERSION" 'BEGIN { split(min, m, ".") } ($1 > m[1]) || (($1 == m[1]) && ($2 >= m[2]))' | \
-            jq -Rsc 'split("\n") | map(select(length > 0))')
-          echo "versions=$versions" >> "$GITHUB_OUTPUT"
-
-      - name: Update .terraform-versions.yaml
-        run: |
-          # Preserve header comments, replace versions list
-          {
-            sed '/^versions:/q' .terraform-versions.yaml
-            echo '${{ steps.versions.outputs.versions }}' | jq -r '.[] | "  - \"" + . + "\""'
-          } > .terraform-versions.yaml.tmp && mv .terraform-versions.yaml.tmp .terraform-versions.yaml
+        run: just update-terraform-versions
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec
