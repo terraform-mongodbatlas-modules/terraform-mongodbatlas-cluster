@@ -23,7 +23,7 @@ from pathlib import Path
 
 import yaml
 
-from dev import REPO_ROOT
+from dev import REPO_ROOT, VERSIONS_FILE
 
 MAX_WORKERS = min(os.cpu_count() or 4, 8)
 INIT_MAX_RETRIES = 3
@@ -171,13 +171,11 @@ def preinstall_versions(versions: list[str]) -> bool:
 
 
 def main() -> int:
-    config_path = REPO_ROOT / ".terraform-versions.yaml"
-
-    if not config_path.exists():
-        print(f"Error: {config_path} not found", file=sys.stderr)
+    if not VERSIONS_FILE.exists():
+        print(f"Error: {VERSIONS_FILE} not found", file=sys.stderr)
         return 1
 
-    versions = load_versions(config_path)
+    versions = load_versions(VERSIONS_FILE)
 
     if not preinstall_versions(versions):
         return 1

@@ -15,10 +15,9 @@ import os
 import re
 import subprocess
 
-from dev import REPO_ROOT
+from dev import VERSIONS_FILE
 
 MIN_VERSION = os.environ["MIN_VERSION"]
-VERSIONS_FILE = REPO_ROOT / ".terraform-versions.yaml"
 
 
 def fetch_terraform_versions(min_version: str) -> list[str]:
