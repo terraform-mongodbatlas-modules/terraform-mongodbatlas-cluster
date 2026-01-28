@@ -19,9 +19,6 @@ run "geo_zone_initial_apply" {
   command   = apply
   state_key = "geo_zone_renaming" # used to ensure state is preserved between runs
 
-  module {
-    source = "../"
-  }
   variables {
     name          = "tf-test-geo-zone"
     project_id    = run.create_project.project_id
@@ -38,10 +35,6 @@ run "geo_zone_initial_apply" {
 run "geo_zone_rename_plan" {
   command   = plan
   state_key = "geo_zone_renaming" # used to ensure state is preserved between runs
-
-  module {
-    source = "../"
-  }
 
   variables {
     name          = "tf-test-geo-zone"
