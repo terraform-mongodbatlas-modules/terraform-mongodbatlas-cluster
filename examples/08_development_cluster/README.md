@@ -58,7 +58,6 @@ resource "random_pet" "generated_name" {
 
 module "cluster" {
   source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  version = "v0.3.0"
 
   # Disable default production values
   auto_scaling = {
@@ -89,8 +88,8 @@ output "cluster" {
 ```
 
 **Additional files needed:**
-- [variables.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/examples/08_development_cluster/variables.tf)
-- [versions.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/examples/08_development_cluster/versions.tf)
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
 
 
 
@@ -112,4 +111,4 @@ resource "mongodbatlas_project" "this" {
 }
 ```
 
-- You can use this and replace the `var.project_id` with `mongodbatlas_project.this.project_id` in the [main.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/examples/08_development_cluster/main.tf) file.
+- You can use this and replace the `var.project_id` with `mongodbatlas_project.this.project_id` in the [main.tf](./main.tf) file.

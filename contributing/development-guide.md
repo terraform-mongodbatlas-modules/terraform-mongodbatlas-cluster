@@ -117,7 +117,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ## Testing
 
-See [test-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/contributing/test-guide.md) for detailed testing documentation including:
+See [test-guide.md](./test-guide.md) for detailed testing documentation including:
 - Authentication setup
 - Unit and integration tests
 - Version compatibility testing
@@ -153,7 +153,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/contributing/docs/terraform_version_requirements.md) for details.
+**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 
@@ -253,9 +253,9 @@ Scripts are organized in `.github/` subdirectories ([Python](https://www.python.
 - `generators/` - File generators (variables_tf.py, main_tf.py, outputs_tf.py)
 - `schema/` - Provider schema parsing
 
-See [tf-gen README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/tf_gen/README.md) for configuration reference and examples.
+See [tf-gen README](../.github/tf_gen/README.md) for configuration reference and examples.
 
-See [documentation-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/contributing/documentation-guide.md) for detailed documentation contributor guidelines.
+See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
 
 ## Release Process (Maintainers)
 
@@ -318,6 +318,6 @@ git push origin feature/your-feature-name
 
 ## Getting Help
 
-- Check [Issues](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/../../../issues) for similar problems
+- Check [Issues](../../../issues) for similar problems
 - Create new issue with output from `just pre-commit` if needed
 - See [Terraform docs](https://www.terraform.io/docs) and [MongoDB Atlas Provider docs](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs)
