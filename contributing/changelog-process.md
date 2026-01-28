@@ -84,7 +84,7 @@ provider/mongodbatlas: Requires minimum version 3.0.0
 ## Reference
 
 **Validation rules:**
-1. Type in [allowed-types.txt](../.github/changelog/allowed-types.txt), prefix in [allowed-prefixes.txt](../.github/changelog/allowed-prefixes.txt).
+1. Type in [allowed-types.txt](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/changelog/allowed-types.txt), prefix in [allowed-prefixes.txt](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/changelog/allowed-prefixes.txt).
 2. Format: `<prefix>: <sentence>` (one space after colon).
 3. Slash prefixes: `<prefix>/<word>: <sentence>`.
 4. Sentence: 3rd person singular, single line, capital first letter, no ending period, no extra whitespace.
@@ -92,11 +92,11 @@ provider/mongodbatlas: Requires minimum version 3.0.0
 
 **Files:**
 - `.changelog/<PR_NUMBER>.txt` - Changelog entries.
-- [`.github/changelog/allowed-types.txt`](../.github/changelog/allowed-types.txt) - Valid types.
-- [`.github/changelog/allowed-prefixes.txt`](../.github/changelog/allowed-prefixes.txt) - Valid prefixes.
-- [`.github/changelog/check-changelog-entry-file/main.go`](../.github/changelog/check-changelog-entry-file/main.go) - Validation script.
-- [`.github/workflows/check-changelog-entry-file.yml`](../.github/workflows/check-changelog-entry-file.yml) - Validation GitHub Action.
-- [`.github/workflows/generate-changelog.yml`](../.github/workflows/generate-changelog.yml) - Generate Changelog GitHub Action.
+- [`.github/changelog/allowed-types.txt`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/changelog/allowed-types.txt) - Valid types.
+- [`.github/changelog/allowed-prefixes.txt`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/changelog/allowed-prefixes.txt) - Valid prefixes.
+- [`.github/changelog/check-changelog-entry-file/main.go`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/changelog/check-changelog-entry-file/main.go) - Validation script.
+- [`.github/workflows/check-changelog-entry-file.yml`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/workflows/check-changelog-entry-file.yml) - Validation GitHub Action.
+- [`.github/workflows/generate-changelog.yml`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/workflows/generate-changelog.yml) - Generate Changelog GitHub Action.
 
 **Local validation:**
 ```bash

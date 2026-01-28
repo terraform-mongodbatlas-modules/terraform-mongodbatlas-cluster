@@ -4,7 +4,7 @@ This guide explains how SDLC tooling is shared from the **cluster module** (sour
 
 ## How It Works
 
-The cluster module defines shared tooling in [`.github/sdlc.src.yaml`](../.github/sdlc.src.yaml). The `path-sync` tool copies files one-way from cluster to destination modules.
+The cluster module defines shared tooling in [`.github/sdlc.src.yaml`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/.github/sdlc.src.yaml). The `path-sync` tool copies files one-way from cluster to destination modules.
 
 ```
 cluster (source) ──sync──> atlas-azure (destination)

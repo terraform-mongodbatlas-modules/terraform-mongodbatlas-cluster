@@ -23,7 +23,8 @@ Create a `main.tf` file that uses this module to import a specific cluster:
 
 ```hcl
 module "cluster_import" {
-  source = "../../modules/cluster_import"
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas//modules/cluster_import"
+  version = "0.3.0"
   
   cluster_name     = "my-cluster-name"
   project_id       = var.project_id
@@ -43,7 +44,8 @@ module "cluster_import" {
     for cluster in data.mongodbatlas_advanced_clusters.this.results : cluster.name => cluster
   }
   
-  source = "../../modules/cluster_import"
+  source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas//modules/cluster_import"
+  version = "0.3.0"
   
   cluster_name     = each.key
   project_id       = var.project_id
@@ -95,4 +97,4 @@ terraform plan  # Should show "No changes"
 - Generated configuration is a starting point - manual review is required
 - Some cluster configurations may require additional adjustments
 - Test in a non-production environment first
-- See the [example](../../examples/13_example_import/) for a complete working example
+- See the [example](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.3.0/examples/13_example_import) for a complete working example
