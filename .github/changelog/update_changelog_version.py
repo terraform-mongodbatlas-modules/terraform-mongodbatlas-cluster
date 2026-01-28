@@ -18,8 +18,21 @@ def get_current_date() -> str:
     return datetime.now().strftime("%B %d, %Y")
 
 
+def ensure_changelog_dir(repo_root: Path) -> None:
+    """Ensure .changelog directory exists with a .keep file."""
+    changelog_dir = repo_root / ".changelog"
+    if not changelog_dir.exists():
+        changelog_dir.mkdir()
+        keep_file = changelog_dir / ".keep"
+        keep_file.write_text("", encoding="utf-8")
+        print(f"Created {changelog_dir} directory")
+
+
 def create_initial_changelog(changelog_path: Path, version: str, current_date: str) -> None:
-    """Create initial CHANGELOG.md for first release."""
+    """Create initial CHANGELOG.md and .changelog directory for first release."""
+    repo_root = changelog_path.parent
+    ensure_changelog_dir(repo_root)
+
     content = f"""## (Unreleased)
 
 ## {version} ({current_date})

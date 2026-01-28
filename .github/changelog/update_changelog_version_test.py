@@ -71,7 +71,7 @@ def test_update_changelog_version_already_exists(tmp_path: Path, capsys) -> None
 
 
 def test_update_changelog_creates_initial_file(tmp_path: Path, capsys) -> None:
-    """Test that a new CHANGELOG.md is created if it doesn't exist."""
+    """Test that a new CHANGELOG.md and .changelog dir are created if they don't exist."""
     changelog_file = tmp_path / "CHANGELOG.md"
 
     mod.update_changelog(changelog_file, "0.1.0", "December 12, 2025")
@@ -81,7 +81,15 @@ def test_update_changelog_creates_initial_file(tmp_path: Path, capsys) -> None:
     assert "## (Unreleased)" in content
     assert "## 0.1.0 (December 12, 2025)" in content
     assert "* module: Initial version" in content
-    assert "Created CHANGELOG.md" in capsys.readouterr().out
+
+    # Verify .changelog directory was created
+    changelog_dir = tmp_path / ".changelog"
+    assert changelog_dir.exists()
+    assert (changelog_dir / ".keep").exists()
+
+    output = capsys.readouterr().out
+    assert "Created CHANGELOG.md" in output
+    assert "Created" in output and ".changelog" in output
 
 
 def test_update_changelog_missing_unreleased_header(tmp_path: Path) -> None:
