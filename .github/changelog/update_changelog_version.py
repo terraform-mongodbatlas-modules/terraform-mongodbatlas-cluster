@@ -18,11 +18,25 @@ def get_current_date() -> str:
     return datetime.now().strftime("%B %d, %Y")
 
 
+def create_initial_changelog(changelog_path: Path, version: str, current_date: str) -> None:
+    """Create initial CHANGELOG.md for first release."""
+    content = f"""## (Unreleased)
+
+## {version} ({current_date})
+
+NOTES:
+
+* module: Initial version
+"""
+    changelog_path.write_text(content, encoding="utf-8")
+    print(f"Created CHANGELOG.md with initial version {version} ({current_date})")
+
+
 def update_changelog(changelog_path: Path, version: str, current_date: str) -> None:
     """Update CHANGELOG.md with version and current date."""
     if not changelog_path.exists():
-        print(f"Error: File not found: {changelog_path}", file=sys.stderr)
-        sys.exit(1)
+        create_initial_changelog(changelog_path, version, current_date)
+        return
 
     content = changelog_path.read_text(encoding="utf-8")
 
