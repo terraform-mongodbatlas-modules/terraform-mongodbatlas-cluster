@@ -36,23 +36,49 @@ def has_provider_meta(content: str) -> bool:
     return bool(re.search(PROVIDER_META_PATTERN, content))
 
 
-def inject_provider_meta(content: str, module_name: str, version: str) -> str:
-    """Inject provider_meta block before the closing brace of terraform block."""
+def inject_provider_meta(content: str, module_name: str, version: str) -> str | None:
+    """Inject provider_meta block inside the terraform block, before its closing brace.
+
+    Returns the updated content, or None if injection failed (e.g., no terraform block found).
+    """
     provider_meta_block = f'''
   provider_meta "mongodbatlas" {{
     module_name    = "{module_name}"
     module_version = "{version}"
   }}
 '''
-    # Find the last closing brace that ends the terraform block
-    # We need to insert before the final }
-    lines = content.rstrip().split("\n")
-    # Find the last line that is just "}"
-    for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip() == "}":
-            # Insert provider_meta before this closing brace
-            lines.insert(i, provider_meta_block.rstrip())
+    # Normalize content and split into lines
+    lines = content.rstrip("\n").split("\n")
+
+    # Find the start of the terraform block
+    terraform_start_index: int | None = None
+    terraform_block_pattern = re.compile(r"^\s*terraform\s*\{")
+    for idx, line in enumerate(lines):
+        if terraform_block_pattern.search(line):
+            terraform_start_index = idx
             break
+
+    # If no terraform block is found, return None to signal failure
+    if terraform_start_index is None:
+        return None
+
+    # Walk forward from the terraform block start to find its matching closing brace
+    brace_depth = 0
+    closing_index: int | None = None
+    for idx in range(terraform_start_index, len(lines)):
+        line = lines[idx]
+        brace_depth += line.count("{")
+        brace_depth -= line.count("}")
+        if brace_depth == 0:
+            closing_index = idx
+            break
+
+    # If we couldn't find a proper closing brace, return None to signal failure
+    if closing_index is None:
+        return None
+
+    # Insert provider_meta block just before the closing brace of the terraform block
+    lines.insert(closing_index, provider_meta_block.rstrip())
     return "\n".join(lines) + "\n"
 
 
@@ -91,6 +117,13 @@ def update_versions_tf(
             )
             return
         new_content = inject_provider_meta(content, module_name, version)
+        if new_content is None:
+            print(
+                f"Warning: Could not find terraform block to inject provider_meta "
+                f"in {relative_path}; leaving file unchanged.",
+                file=sys.stderr,
+            )
+            return
         file_path.write_text(new_content, encoding="utf-8")
         print(
             f"ok Added provider_meta to {relative_path}: "
