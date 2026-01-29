@@ -135,7 +135,7 @@ jobs:
   # Only runs if release-tag succeeded (no point reverting if no commit was created)
   post-release-revert:
     needs: release-tag
-    if: ${{ !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
+    if: ${{ always() && !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
