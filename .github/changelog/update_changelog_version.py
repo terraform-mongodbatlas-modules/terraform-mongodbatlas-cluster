@@ -19,11 +19,11 @@ def get_current_date() -> str:
 
 
 def ensure_changelog_dir(repo_root: Path) -> None:
-    """Ensure .changelog directory exists with a .keep file."""
+    """Ensure .changelog directory exists with a .gitkeep file."""
     changelog_dir = repo_root / ".changelog"
     if not changelog_dir.exists():
         changelog_dir.mkdir()
-        keep_file = changelog_dir / ".keep"
+        keep_file = changelog_dir / ".gitkeep"
         keep_file.write_text("", encoding="utf-8")
         print(f"Created {changelog_dir} directory")
 

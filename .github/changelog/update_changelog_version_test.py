@@ -85,7 +85,7 @@ def test_update_changelog_creates_initial_file(tmp_path: Path, capsys) -> None:
     # Verify .changelog directory was created
     changelog_dir = tmp_path / ".changelog"
     assert changelog_dir.exists()
-    assert (changelog_dir / ".keep").exists()
+    assert (changelog_dir / ".gitkeep").exists()
 
     output = capsys.readouterr().out
     assert "Created CHANGELOG.md" in output
