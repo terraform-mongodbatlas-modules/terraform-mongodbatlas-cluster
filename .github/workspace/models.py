@@ -114,9 +114,9 @@ class WsConfig:
     examples: list[Example]
     var_groups: dict[str, list[WsVar]]
 
-    def redact_var_attributes(self) -> list[str]:
-        """Variable names that should be redacted (not skipped) in snapshots."""
-        return [v.name for vs in self.var_groups.values() for v in vs]
+    def redact_var_attributes_for_example(self, example: Example) -> list[str]:
+        """Variable names to redact for a specific example's var_groups."""
+        return [v.name for g in example.var_groups for v in self.var_groups.get(g, [])]
 
     def exposed_vars(self) -> list[WsVar]:
         seen: set[str] = set()
