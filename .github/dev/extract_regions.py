@@ -375,13 +375,19 @@ def create_validated_mappings(
     return mappings
 
 
-def print_validation_summary(mappings: dict[str, dict[str, dict]]) -> None:
-    """Print validation summary."""
+def print_validation_summary(mappings: dict[str, dict[str, dict]]) -> int:
+    """Print validation summary.
+
+    Returns:
+        Total count of invalid/unmapped regions across all providers
+    """
     print("\n=== Validation Summary ===")
 
+    total_invalid = 0
     for provider, regions in sorted(mappings.items()):
         valid_count = sum(1 for r in regions.values() if r["valid"])
         invalid_count = len(regions) - valid_count
+        total_invalid += invalid_count
 
         print(f"\n{provider}: {valid_count}/{len(regions)} valid")
 
@@ -395,6 +401,8 @@ def print_validation_summary(mappings: dict[str, dict[str, dict]]) -> None:
                     print(f"    {atlas_region} -> (NO MAPPING - legacy/unsupported)")
                 else:
                     print(f"    {atlas_region} -> {provider_region} (NOT FOUND)")
+
+    return total_invalid
 
 
 def generate_terraform_locals(
@@ -565,6 +573,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Output directory for regions.tf (default: script directory)",
     )
+    parser.add_argument(
+        "--fail-on-unmapped",
+        action="store_true",
+        help="Exit with error code 1 if any regions are unmapped (for CI validation)",
+    )
     return parser.parse_args()
 
 
@@ -578,6 +591,7 @@ def main():
     provider_upper = provider.upper() if provider else None
     include_invalid = args.include_invalid
     output_dir = args.output_dir or script_dir  # For .tf files only
+    fail_on_unmapped = args.fail_on_unmapped
 
     # Step 1: Load or fetch Atlas regions
     print("=== Step 1: Load/fetch Atlas regions ===")
@@ -603,7 +617,12 @@ def main():
     mappings = create_validated_mappings(atlas_regions, provider_regions)
 
     # Print validation summary
-    print_validation_summary(mappings)
+    invalid_count = print_validation_summary(mappings)
+
+    # Check for unmapped regions if --fail-on-unmapped is set
+    if fail_on_unmapped and invalid_count > 0:
+        print(f"\n❌ Found {invalid_count} unmapped region(s). Exiting with error.")
+        sys.exit(1)
 
     # Step 5: Generate output
     if provider:
