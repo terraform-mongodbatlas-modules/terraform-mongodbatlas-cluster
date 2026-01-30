@@ -41,12 +41,12 @@ paths:
   - src_path: .github/dev/test_compat.py
   # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
   # Workflows & actions
-  - src_path: .github/workflows/
-    exclude_file_patterns:
-    - cleanup-test-env.yml
-    - dev-integration-test.yml
-    - pre-release-tests.yml
-    - sdlc-copy.yml
+  - src_path: .github/workflows/check-changelog-entry-file.yml
+  - src_path: .github/workflows/code-health.yml
+  - src_path: .github/workflows/generate-changelog.yml
+  - src_path: .github/workflows/notify-docs-team.yml
+  - src_path: .github/workflows/release.yml
+  - src_path: .github/workflows/update-terraform-versions.yml
   - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/

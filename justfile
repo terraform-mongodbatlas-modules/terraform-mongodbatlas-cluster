@@ -248,5 +248,5 @@ dev-integration-test:
 sdlc-sync-dry:
    uvx path-sync copy -n sdlc --local --dry-run
 
-sdlc-sync:
-   uvx path-sync copy -n sdlc --local
+sdlc-sync *args:
+   uvx path-sync copy -n sdlc --local {{args}}
