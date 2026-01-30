@@ -61,7 +61,7 @@ jobs:
 
   release-tag:
     needs: pre-release-checks
-    if: ${{ always() && !inputs.skip-release-tag && (needs.pre-release-checks.result == 'success' || needs.pre-release-checks.result == 'skipped') }}
+    if: ${{ !cancelled() && !inputs.skip-release-tag && (needs.pre-release-checks.result == 'success' || needs.pre-release-checks.result == 'skipped') }}
     runs-on: ubuntu-latest
     outputs:
       release_commit_sha: ${{ steps.create_commits.outputs.release_commit_sha }}
@@ -99,7 +99,7 @@ jobs:
 
   release-github:
     needs: release-tag
-    if: ${{ always() && !inputs.skip-release-github && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
+    if: ${{ !cancelled() && !inputs.skip-release-github && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -135,7 +135,7 @@ jobs:
   # Only runs if release-tag succeeded (no point reverting if no commit was created)
   post-release-revert:
     needs: release-tag
-    if: ${{ !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
+    if: ${{ !cancelled() && !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
