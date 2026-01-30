@@ -161,13 +161,10 @@ def load_or_fetch_provider_regions(
         # Try to load existing file first
         if output_file.exists():
             with open(output_file) as f:
-                regions = json.load(f)
-            if regions:
-                print(
-                    f"  {provider.upper()}: Loaded {len(regions)} regions from {output_file.name}"
-                )
-                all_regions[provider] = regions
-                continue
+                if regions := json.load(f):
+                    print(f"  {provider.upper()}: Loaded {len(regions)} from {output_file.name}")
+                    all_regions[provider] = regions
+                    continue
 
         # Fetch from CLI
         print(f"  {provider.upper()}: Fetching from CLI...")
@@ -199,8 +196,7 @@ def extract_atlas_regions(data: dict, provider_filter: str | None = None) -> dic
     filter_upper = provider_filter.upper() if provider_filter else None
 
     for result in data.get("results", []):
-        provider = result.get("provider")
-        if not provider:
+        if not (provider := result.get("provider")):
             continue
 
         # Skip if filtering and this isn't the requested provider
@@ -212,8 +208,7 @@ def extract_atlas_regions(data: dict, provider_filter: str | None = None) -> dic
 
         for instance_size in result.get("instanceSizes", []):
             for region in instance_size.get("availableRegions", []):
-                region_name = region.get("name")
-                if region_name:
+                if region_name := region.get("name"):
                     provider_regions[provider].add(region_name)
 
     return provider_regions
@@ -393,12 +388,13 @@ def print_validation_summary(mappings: dict[str, dict[str, dict]]) -> None:
         if invalid_count > 0:
             print("  Invalid mappings:")
             for atlas_region, info in sorted(regions.items()):
-                if not info["valid"]:
-                    provider_region = info["provider_region"]
-                    if provider_region is None:
-                        print(f"    {atlas_region} -> (NO MAPPING - legacy/unsupported)")
-                    else:
-                        print(f"    {atlas_region} -> {provider_region} (NOT FOUND)")
+                if info["valid"]:
+                    continue
+                provider_region = info["provider_region"]
+                if provider_region is None:
+                    print(f"    {atlas_region} -> (NO MAPPING - legacy/unsupported)")
+                else:
+                    print(f"    {atlas_region} -> {provider_region} (NOT FOUND)")
 
 
 def generate_terraform_locals(
@@ -528,10 +524,9 @@ def load_or_fetch_atlas_regions(cache_dir: Path, project_id: str | None) -> dict
     # Try to load existing file first
     if output_file.exists():
         with open(output_file) as f:
-            data = json.load(f)
-        if data:
-            print(f"  ATLAS: Loaded from {output_file.name}")
-            return data
+            if data := json.load(f):
+                print(f"  ATLAS: Loaded from {output_file.name}")
+                return data
 
     # Fetch from CLI
     if not project_id:
