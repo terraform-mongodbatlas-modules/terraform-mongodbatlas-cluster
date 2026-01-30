@@ -1,8 +1,11 @@
 """Extract Atlas region mappings from listClusterProviderRegions API response.
 
-Usage:
-    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run ./extract_regions.py
-    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run ./extract_regions.py --provider aws
+Usage (from repository root):
+    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run .github/dev/extract_regions.py
+    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run .github/dev/extract_regions.py --provider aws
+
+    Or use the justfile recipe:
+    just extract-regions aws
 
 Requires:
     - atlas CLI (authenticated)
@@ -275,7 +278,7 @@ AZURE_REGION_MAP: dict[str, str] = {
     "US_WEST": "westus",
     "US_WEST_2": "westus2",
     "US_WEST_3": "westus3",
-    "US_WEST_CENTRAL": "westcentralus",  # fmt: on
+    "US_WEST_CENTRAL": "westcentralus",
 }
 
 GCP_REGION_MAP: dict[str, str | None] = {
