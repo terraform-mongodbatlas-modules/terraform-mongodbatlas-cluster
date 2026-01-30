@@ -38,6 +38,7 @@ paths:
   - src_path: .github/workspace/
   - src_path: .github/dev/__init__.py
   - src_path: .github/dev/extract_regions.py
+  - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
   # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
   # Workflows & actions
@@ -72,7 +73,7 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
     dest_path_relative: ../aws
     default_branch: main
-    skip_file_patterns: [.github/dev/extract_regions.py] # not needed for AWS
+    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for AWS
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
@@ -81,4 +82,4 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
     default_branch: main
-    skip_file_patterns: [.github/dev/extract_regions.py] # not needed for Project
+    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for Project
