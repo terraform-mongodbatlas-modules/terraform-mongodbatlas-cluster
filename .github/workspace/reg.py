@@ -67,13 +67,18 @@ def filter_values(
 
 
 def dump_resource_yaml(
-    values: dict[str, Any], config: models.WsConfig, dump_config: models.DumpConfig
+    values: dict[str, Any],
+    config: models.WsConfig,
+    example: models.Example,
+    dump_config: models.DumpConfig,
 ) -> str:
     skip_attrs = dump_config.skip_lines.substring_attributes
     skip_values = dump_config.skip_lines.substring_values
     if "null" not in skip_values:
         skip_values = skip_values + ["null"]
-    redact_attrs = config.redact_var_attributes() + dump_config.skip_lines.redact_attributes
+    redact_attrs = (
+        config.redact_var_attributes_for_example(example) + dump_config.skip_lines.redact_attributes
+    )
     if dump_config.skip_lines.use_default_redact:
         redact_attrs = redact_attrs + models.DEFAULT_REDACT_ATTRIBUTES
     filtered = filter_values(values, skip_attrs, skip_values, redact_attrs)
@@ -183,7 +188,7 @@ def process_workspace(ws_dir: Path, force_regen: bool, show_uncovered: bool) -> 
                 typer.echo(f"  Warning: {reg.address} not found in plan", err=True)
                 continue
             sanitized = models.sanitize_address(reg.address)
-            content = dump_resource_yaml(resources[full_addr], config, reg.dump)
+            content = dump_resource_yaml(resources[full_addr], config, ex, reg.dump)
             if nested:
                 filepath = actual_dir / ex.identifier / f"{sanitized}.yaml"
                 display_path = f"{ex.identifier}/{sanitized}.yaml"
