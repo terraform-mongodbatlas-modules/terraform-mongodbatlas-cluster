@@ -15,7 +15,7 @@ default:
     just --list
 
 # CHECKS
-pre-commit: fmt validate lint check-docs py-check
+pre-commit: fmt py-check validate lint check-docs
     @echo "Pre-commit checks passed"
 
 pre-push: pre-commit unit-plan-tests py-test
@@ -42,8 +42,8 @@ lint:
     terraform fmt -check -recursive
 
 py-check:
+    {{uv_gh}} ruff format --exit-non-zero-on-format .github
     {{uv_gh}} ruff check .github
-    {{uv_gh}} ruff format --check .github
 
 py-fix:
     {{uv_gh}} ruff check --fix .github
@@ -215,6 +215,12 @@ setup-provider-dev provider_path:
     echo "Provider built at $PLUGIN_DIR"
     echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
 
+extract-regions provider *args: # use --output-dir to specify the output directory
+    {{py}} dev.extract_regions --provider {{provider}} {{args}}
+
+validate-regions provider:
+    {{py}} dev.extract_regions --provider {{provider}} --fail-on-unmapped
+
 # TESTING
 tftest-all:
     terraform init
@@ -242,5 +248,5 @@ dev-integration-test:
 sdlc-sync-dry:
    uvx path-sync copy -n sdlc --local --dry-run
 
-sdlc-sync:
-   uvx path-sync copy -n sdlc --local
+sdlc-sync *args:
+   uvx path-sync copy -n sdlc --local {{args}}

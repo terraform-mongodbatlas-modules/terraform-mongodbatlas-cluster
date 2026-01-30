@@ -37,15 +37,17 @@ paths:
   - src_path: .github/uv.lock
   - src_path: .github/workspace/
   - src_path: .github/dev/__init__.py
+  - src_path: .github/dev/extract_regions.py
+  - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
   # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
   # Workflows & actions
-  - src_path: .github/workflows/
-    exclude_file_patterns:
-    - cleanup-test-env.yml
-    - dev-integration-test.yml
-    - pre-release-tests.yml
-    - sdlc-copy.yml
+  - src_path: .github/workflows/check-changelog-entry-file.yml
+  - src_path: .github/workflows/code-health.yml
+  - src_path: .github/workflows/generate-changelog.yml
+  - src_path: .github/workflows/notify-docs-team.yml
+  - src_path: .github/workflows/release.yml
+  - src_path: .github/workflows/update-terraform-versions.yml
   - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
@@ -71,6 +73,7 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
     dest_path_relative: ../aws
     default_branch: main
+    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for AWS
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
@@ -79,3 +82,4 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
     default_branch: main
+    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for Project
