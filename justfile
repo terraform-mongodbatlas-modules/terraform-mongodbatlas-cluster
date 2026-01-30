@@ -218,6 +218,9 @@ setup-provider-dev provider_path:
 extract-regions provider *args: # use --output-dir to specify the output directory
     {{py}} dev.extract_regions --provider {{provider}} {{args}}
 
+validate-regions provider:
+    {{py}} dev.extract_regions --provider {{provider}} --fail-on-unmapped
+
 # TESTING
 tftest-all:
     terraform init
