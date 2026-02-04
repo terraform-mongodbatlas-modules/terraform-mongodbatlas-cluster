@@ -74,7 +74,7 @@ module "cluster" {
   regions = [
     {
       name          = "US_EAST_1" # https://www.mongodb.com/docs/atlas/cloud-providers-regions/
-      node_count    = 3           # Minimum node count. Most be an odd number to support elections.
+      node_count    = 3           # Minimum node count >= 3. Must be an odd number to support elections.
       instance_size = "M10"       # 2vCPUs and 2GB Ram
     }
   ]
