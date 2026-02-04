@@ -21,9 +21,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Get .changelog files that are not the expected file
+          # Get .changelog files that are not the expected file (ignoring .gitkeep)
           OTHER_FILES=$(gh pr view "${PR_NUMBER}" --json files \
-            --jq ".files[].path | select(startswith(\".changelog/\") and . != \"${CHANGELOG_FILE}\")")
+            --jq ".files[].path | select(startswith(\".changelog/\") and . != \"${CHANGELOG_FILE}\" and . != \".changelog/.gitkeep\")")
 
           if [ -n "${OTHER_FILES}" ]; then
             printf "Error: Only ${CHANGELOG_FILE} should be modified in this PR\nOther files found:\n${OTHER_FILES}\n"
