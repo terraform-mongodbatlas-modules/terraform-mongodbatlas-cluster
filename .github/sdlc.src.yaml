@@ -89,6 +89,9 @@ paths:
   - src_path: .github/destination_scaffold/examples.yaml
     dest_path: docs/examples.yaml
     sync_mode: scaffold
+  - src_path: .github/destination_scaffold/inputs_groups.yaml
+    dest_path: docs/inputs_groups.yaml
+    sync_mode: scaffold
   - src_path: docs/example_readme.md
     sync_mode: scaffold
   

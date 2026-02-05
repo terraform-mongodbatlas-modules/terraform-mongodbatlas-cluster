@@ -7,7 +7,7 @@ examples_readme:
     production_considerations_comment: ""
     production_considerations: ""
     skip_if_name_contains: []
-  versions_tf:
+  versions_tf: {}
     # add: |
     #   provider "mongodbatlas" {}
     # skip_if_name_contains: []
@@ -18,7 +18,7 @@ tables:
   - name: Examples
     columns: ["feature", "name"]
     link_column: name
-    example_rows:
+    example_rows: []
       # TODO: ADD examples here
       # - folder_name: basic
       #   feature: Project Setup
