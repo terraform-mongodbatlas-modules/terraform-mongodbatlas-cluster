@@ -76,7 +76,6 @@ paths:
   - src_path: justfile
   - src_path: .pre-commit-config.yaml
   # Terraform docs & config
-  - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
   # Scaffolded files (only synced if not existing)
   - src_path: CONTRIBUTING.md
@@ -94,7 +93,9 @@ paths:
     sync_mode: scaffold
   - src_path: docs/example_readme.md
     sync_mode: scaffold
-  
+  - src_path: .github/destination_scaffold/.terraform-docs.yml
+    dest_path: .terraform-docs.yml
+    sync_mode: scaffold
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
