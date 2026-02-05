@@ -65,8 +65,6 @@ paths:
   - src_path: contributing/changelog-process.md
   - src_path: contributing/documentation-guide.md
   - src_path: contributing/README.md
-  - src_path: CONTRIBUTING.md
-    sync_mode: scaffold
   # GitHub config
   - src_path: .github/CODEOWNERS
   - src_path: .github/pull_request_template.md
@@ -80,6 +78,20 @@ paths:
   # Terraform docs & config
   - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
+  # Scaffolded files (only synced if not existing)
+  - src_path: CONTRIBUTING.md
+    sync_mode: scaffold
+  - src_path: .changelog/.gitkeep
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/empty-changelog.md
+    dest_path: CHANGELOG.md
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/examples.yaml
+    dest_path: docs/examples.yaml
+    sync_mode: scaffold
+  - src_path: docs/example_readme.md
+    sync_mode: scaffold
+  
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
