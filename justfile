@@ -4,7 +4,7 @@
 # Module-specific configuration
 PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl -filter=tests/plan_backup_pit.tftest.hcl"
 
-# === DO_NOT_EDIT: path-sync standard ===
+# === DO_NOT_EDIT: path-sync core ===
 set dotenv-load
 
 gh_dir := justfile_directory() + "/.github"
@@ -13,18 +13,24 @@ py := "PYTHONPATH=" + gh_dir + " " + uv_gh + " python -m"
 
 default:
     just --list
+# === OK_EDIT: path-sync core ===
 
+# === DO_NOT_EDIT: path-sync checks ===
 # CHECKS
 pre-commit: fmt py-check validate lint check-docs
     @echo "Pre-commit checks passed"
 
 pre-push: pre-commit unit-plan-tests py-test
     @echo "Pre-push checks passed"
+# === OK_EDIT: path-sync checks ===
 
+# === DO_NOT_EDIT: path-sync dev-setup ===
 # DEV SETUP
 uv-sync:
     uv sync --project .github
+# === OK_EDIT: path-sync dev-setup ===
 
+# === DO_NOT_EDIT: path-sync formatting ===
 # FORMATTING
 fmt:
     terraform fmt -recursive .
@@ -35,27 +41,33 @@ py-fmt:
 validate:
     terraform init
     terraform validate
+# === OK_EDIT: path-sync formatting ===
 
+# === DO_NOT_EDIT: path-sync linting ===
 # LINTING
 lint:
     tflint -f compact --recursive --minimum-failure-severity=warning
     terraform fmt -check -recursive
 
 py-check:
-    {{uv_gh}} ruff format --exit-non-zero-on-format .github
+    {{uv_gh}} ruff format --exit-non-zero-on-format .github # avoids having to manually run `just py-fmt` after pre-commit check
     {{uv_gh}} ruff check .github
 
 py-fix:
     {{uv_gh}} ruff check --fix .github
+# === OK_EDIT: path-sync linting ===
 
-# TESTING
+# === DO_NOT_EDIT: path-sync testing-unit ===
+# PYTHON TESTING
 py-test:
     {{uv_gh}} pytest .github/ -v --ignore=.github/dev/
 
 unit-plan-tests:
     terraform init
     terraform test {{PLAN_TEST_FILES}}
+# === OK_EDIT: path-sync testing-unit ===
 
+# === DO_NOT_EDIT: path-sync docs ===
 # DOCUMENTATION
 docs: fmt
     terraform-docs -c .terraform-docs.yml .
@@ -94,7 +106,9 @@ md-link tag_version *args:
 
 tf-registry-source:
     @{{py}} release.tf_registry_source
+# === OK_EDIT: path-sync docs ===
 
+# === DO_NOT_EDIT: path-sync changelog ===
 # CHANGELOG
 init-changelog:
     go install github.com/hashicorp/go-changelog/cmd/changelog-build@latest
@@ -110,7 +124,9 @@ update-changelog-version version:
 
 generate-release-body version:
     @{{py}} changelog.generate_release_body {{version}}
+# === OK_EDIT: path-sync changelog ===
 
+# === DO_NOT_EDIT: path-sync release ===
 # RELEASE
 docs-release version:
     {{py}} release.update_version {{version}}
@@ -169,7 +185,9 @@ release-commit version:
 release-post-push:
     git revert HEAD --no-edit
     @echo "Release commit reverted. Push main: git push origin main"
+# === OK_EDIT: path-sync release ===
 
+# === DO_NOT_EDIT: path-sync workspace ===
 # WORKSPACE TESTING
 ws-gen *args:
     {{py}} workspace.gen {{args}}
@@ -194,14 +212,10 @@ apply-examples *args:
 
 destroy-examples *args:
     just ws-run -m destroy {{args}}
+# === OK_EDIT: path-sync workspace ===
 
-# DEV SETUP
-dev-vars-project project_id:
-    {{py}} dev.dev_vars project {{project_id}}
-
-dev-vars-org org_id:
-    {{py}} dev.dev_vars org {{org_id}}
-
+# === DO_NOT_EDIT: path-sync provider-dev ===
+# PROVIDER DEV SETUP
 setup-provider-dev provider_path:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -214,14 +228,25 @@ setup-provider-dev provider_path:
     uv run --directory "{{gh_dir}}" python -m dev.dev_vars tfrc "$PLUGIN_DIR" > "{{justfile_directory()}}/dev.tfrc"
     echo "Provider built at $PLUGIN_DIR"
     echo "Run: export TF_CLI_CONFIG_FILE=\"{{justfile_directory()}}/dev.tfrc\""
+# === OK_EDIT: path-sync provider-dev ===
 
+# === DO_NOT_EDIT: path-sync dev-vars-org ===
+# DEV VARS - ORG (for modules that need org context)
+dev-vars-org org_id:
+    {{py}} dev.dev_vars org {{org_id}}
+# === OK_EDIT: path-sync dev-vars-org ===
+
+# === DO_NOT_EDIT: path-sync regions ===
+# REGION EXTRACTION (for CSP modules with region mappings)
 extract-regions provider *args: # use --output-dir to specify the output directory
     {{py}} dev.extract_regions --provider {{provider}} {{args}}
 
 validate-regions provider:
     {{py}} dev.extract_regions --provider {{provider}} --fail-on-unmapped
+# === OK_EDIT: path-sync regions ===
 
-# TESTING
+# === DO_NOT_EDIT: path-sync testing-tf ===
+# TERRAFORM TESTING
 tftest-all:
     terraform init
     terraform test -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
@@ -231,12 +256,18 @@ test-compat:
 
 update-terraform-versions:
     {{py}} dev.update_terraform_versions
+# === OK_EDIT: path-sync testing-tf ===
 
-# No Authorized Changes Validation (only for destination repos)
+# === DO_NOT_EDIT: path-sync sdlc-validate ===
+# SDLC VALIDATION (only for destination repos)
 sdlc-validate:
-  uvx path-sync validate-no-changes -b main
-# === OK_EDIT: path-sync standard ===
-# Module-specific recipes below (not synced)
+    uvx path-sync validate-no-changes -b main
+# === OK_EDIT: path-sync sdlc-validate ===
+
+# ---- Module-specific recipes (not synced) ----
+
+dev-vars-project project_id:
+    {{py}} dev.dev_vars project {{project_id}}
 
 tf-gen *args:
     {{py}} tf_gen {{args}}
@@ -246,7 +277,7 @@ dev-integration-test:
     terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 sdlc-sync-dry:
-   uvx path-sync copy -n sdlc --local --dry-run
+    uvx path-sync copy -n sdlc --local --dry-run
 
 sdlc-sync *args:
-   uvx path-sync copy -n sdlc --local {{args}}
+    uvx path-sync copy -n sdlc --local {{args}}
