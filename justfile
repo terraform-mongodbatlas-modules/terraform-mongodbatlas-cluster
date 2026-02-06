@@ -277,7 +277,7 @@ dev-integration-test:
     terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 sdlc-sync-dry:
-    uvx path-sync copy -n sdlc --local --dry-run
+    uvx path-sync copy -n sdlc --skip-commit --dry-run
 
 sdlc-sync *args:
-    uvx path-sync copy -n sdlc --local {{args}}
+    uvx path-sync copy -n sdlc --skip-commit {{args}}
