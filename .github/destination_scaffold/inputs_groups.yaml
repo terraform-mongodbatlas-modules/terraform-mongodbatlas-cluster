@@ -1,0 +1,6 @@
+sections:
+  # TODO: ADD sections here
+  - id: optional
+    title: "Optional Variables"
+    level: 2
+    is_default: true
