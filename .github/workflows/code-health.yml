@@ -1,3 +1,5 @@
+# path-sync copy -n sdlc
+# === DO_NOT_EDIT: path-sync triggers ===
 name: Code Health
 
 on:
@@ -14,8 +16,10 @@ on:
         description: 'Provider git ref (empty = default branch)'
         required: false
         type: string
+# === OK_EDIT: path-sync triggers ===
 
 jobs:
+  # === DO_NOT_EDIT: path-sync job-check ===
   check:
     name: Code Quality & Validation
     runs-on: ubuntu-latest
@@ -28,7 +32,9 @@ jobs:
           docs: 'true'
       - name: Run all validation checks
         run: just pre-commit
+  # === OK_EDIT: path-sync job-check ===
 
+  # === DO_NOT_EDIT: path-sync job-plan-tests ===
   plan-tests:
     name: Terraform Unit Plan Tests
     runs-on: ubuntu-latest
@@ -40,7 +46,9 @@ jobs:
           terraform: 'true'
       - name: Run Terraform plan tests
         run: just unit-plan-tests
+  # === OK_EDIT: path-sync job-plan-tests ===
 
+  # === DO_NOT_EDIT: path-sync job-compat-tests ===
   compat-tests:
     name: Terraform CLI Version Compatibility
     runs-on: ubuntu-latest
@@ -52,14 +60,19 @@ jobs:
           uv: 'true'
           mise: 'true'
       - run: just test-compat
+  # === OK_EDIT: path-sync job-compat-tests ===
 
+  # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   plan-snapshot-tests:
     name: Terraform Examples Plan Snapshot Tests
     runs-on: ubuntu-latest
-    env: # Using a static project to avoid generating 5 projects for every run
+  # === OK_EDIT: path-sync job-snapshot-tests ===
+    env:
+      # Module-specific: Add required cloud provider credentials
       MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
       MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
       MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+  # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/setup
@@ -70,9 +83,14 @@ jobs:
       - uses: ./.github/actions/setup-provider-dev
         with:
           provider-ref: ${{ inputs.provider_ref }}
+  # === OK_EDIT: path-sync job-snapshot-tests ===
+      # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+  # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
+  # === OK_EDIT: path-sync job-snapshot-tests ===
 
+  # === DO_NOT_EDIT: path-sync job-slack ===
   slack-notification:
     needs: [check, plan-tests, compat-tests, plan-snapshot-tests]
     if: ${{ github.event_name == 'schedule' && !cancelled() && contains(needs.*.result, 'failure') }}
@@ -97,3 +115,4 @@ jobs:
                 }
               ]
             }
+  # === OK_EDIT: path-sync job-slack ===

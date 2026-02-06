@@ -48,8 +48,7 @@ paths:
   - src_path: .github/dev/extract_regions.py
   - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
-  # TODO: Let's support scaffold for dev_vars.py as it is most likely to be a module-specific file
-  # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
+  # NOTE: dev_vars.py is NOT synced - see scaffolded below
   # Workflows & actions
   - src_path: .github/workflows/check-changelog-entry-file.yml
   - src_path: .github/workflows/code-health.yml
@@ -96,6 +95,7 @@ paths:
   - src_path: .github/destination_scaffold/.terraform-docs.yml
     dest_path: .terraform-docs.yml
     sync_mode: scaffold
+  - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
@@ -127,6 +127,7 @@ destinations:
     default_branch: main
     skip_sections:
       justfile: [dev-vars-org]  # GCP needs regions but not org vars
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-org
     dest_path_relative: ../org
@@ -136,3 +137,4 @@ destinations:
       - ".github/dev/extract_regions.py"
     skip_sections:
       justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
