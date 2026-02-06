@@ -129,7 +129,7 @@ destinations:
       justfile: [dev-vars-org]  # GCP needs regions but not org vars
       .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
   - name: org
-    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-org
+    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
     default_branch: main
     skip_file_patterns:
