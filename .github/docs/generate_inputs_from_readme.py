@@ -1,6 +1,7 @@
 """Generate grouped inputs markdown from terraform-docs output in README.md."""
 
 import argparse
+import logging
 import re
 import sys
 import textwrap
@@ -10,6 +11,8 @@ from pathlib import Path
 import yaml
 
 from docs import doc_utils
+
+logger = logging.getLogger(__name__)
 
 BEGIN_MARKER = "<!-- BEGIN_TF_INPUTS_RAW -->"
 END_MARKER = "<!-- END_TF_INPUTS_RAW -->"
@@ -184,8 +187,7 @@ def parse_terraform_docs_inputs(inputs_block: str) -> list[Variable]:
             )
 
     if not variables:
-        msg = "No variables were parsed from the terraform-docs inputs section."
-        raise SystemExit(msg)
+        logger.warning("No variables were parsed from the terraform-docs inputs section.")
     return variables
 
 
@@ -312,13 +314,18 @@ def main() -> None:
     )
     parser.add_argument("--readme", type=Path, default=Path("README.md"), help="Path to README.md")
     parser.add_argument(
-        "--config", type=Path, default=Path("docs/inputs_groups.yaml"), help="Groupings config"
+        "--config",
+        type=Path,
+        default=Path("docs/inputs_groups.yaml"),
+        help="Groupings config",
     )
     args = parser.parse_args()
 
     readme_content = load_readme(args.readme)
     inputs_block = extract_inputs_block(readme_content)
     variables = parse_terraform_docs_inputs(inputs_block)
+    if not variables:
+        return
     sections = load_group_config(args.config)
     output_markdown = render_grouped_markdown(variables, sections)
     replacement = f"{BEGIN_MARKER}\n{output_markdown}\n{END_MARKER}"

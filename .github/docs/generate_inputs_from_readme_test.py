@@ -92,11 +92,11 @@ def test_parse_terraform_docs_inputs_preserves_fenced_type_and_default() -> None
     assert regions.default.strip().endswith("```")
 
 
-def test_parse_terraform_docs_inputs_raises_on_empty_block() -> None:
+def test_parse_terraform_docs_inputs_warns_on_empty_block(caplog: pytest.LogCaptureFixture) -> None:
     empty_block = "## Required Inputs\n\nThe following input variables are required:\n\n"
-    with pytest.raises(SystemExit) as exc_info:
-        mod.parse_terraform_docs_inputs(empty_block)
-    assert "No variables were parsed" in str(exc_info.value)
+    result = mod.parse_terraform_docs_inputs(empty_block)
+    assert result == []
+    assert "No variables were parsed" in caplog.text
 
 
 def test_render_grouped_markdown_with_section_description() -> None:

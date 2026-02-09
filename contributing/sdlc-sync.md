@@ -18,8 +18,8 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 | Category | Paths | Notes |
 |----------|-------|-------|
 | Python tooling | `.github/{changelog,docs,release,workspace}/` | Excludes `dev_vars.py` |
-| Workflows | `.github/workflows/` | Excludes module-specific tests |
-| Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | |
+| Workflows | `.github/workflows/` | `code-health.yml` has per-job section markers |
+| Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | `justfile` has section markers |
 | GitHub | `.github/CODEOWNERS`, `pull_request_template.md`, `ISSUE_TEMPLATE/` | |
 
 **Not synced** (module-specific):
@@ -35,9 +35,11 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 | `sync` (default) | Copy if destination missing or source newer |
 | `replace` | Always overwrite destination |
 
-## Section Markers (Justfile)
+## Section Markers
 
-The justfile uses section markers to mix shared and module-specific content:
+Section markers allow mixing shared and module-specific content within synced files. They work in both `justfile` and workflow files like `code-health.yml`.
+
+### Basic Sections
 
 ```makefile
 # === OK_EDIT: path-sync header ===
@@ -57,6 +59,55 @@ pre-commit: fmt validate lint check-docs py-check
 |---------|--------|----------|
 | Header | `OK_EDIT: path-sync header` | Module-specific variables, preserved |
 | Standard | `DO_NOT_EDIT: path-sync standard` | Shared recipes, replaced |
+
+### Resumable Sections (Workflows)
+
+Resumable sections allow user-editable gaps within a managed section. The same section ID can pause (`OK_EDIT`) and resume (`DO_NOT_EDIT`):
+
+```yaml
+# === DO_NOT_EDIT: path-sync job-snapshot-tests ===
+plan-snapshot-tests:
+  name: Terraform Examples Plan Snapshot Tests
+  runs-on: ubuntu-latest
+# === OK_EDIT: path-sync job-snapshot-tests ===
+  env:
+    # User-managed: Add cloud provider credentials
+    MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
+# === DO_NOT_EDIT: path-sync job-snapshot-tests ===
+  steps:
+    - uses: actions/checkout@v4
+# === OK_EDIT: path-sync job-snapshot-tests ===
+```
+
+**Behavior**:
+- Managed parts (between `DO_NOT_EDIT` and `OK_EDIT`) are synced from source
+- Gap content (between `OK_EDIT` and next `DO_NOT_EDIT` of same ID) is preserved in destination
+- New files use source gap content as boilerplate/template
+
+### Workflow Sections (code-health.yml)
+
+The `code-health.yml` workflow uses per-job section markers:
+
+| Section ID | Job | Notes |
+|------------|-----|-------|
+| `triggers` | - | Workflow triggers (on: push, PR, etc.) |
+| `job-check` | `check` | Code quality validation |
+| `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
+| `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
+| `job-snapshot-tests` | `plan-snapshot-tests` | Plan snapshot tests with resumable gaps for env vars and commands |
+| `job-slack` | `slack-notification` | Slack notification on failure |
+
+**Gradual enablement**: New repos can use `skip_sections` to exclude jobs not yet ready:
+
+```yaml
+# sdlc.src.yaml
+destinations:
+  - name: gcp
+    skip_sections:
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
+```
+
+When workspace tests are ready, remove from `skip_sections` and re-sync to enable the jobs.
 
 ## For Destination Module Developers
 

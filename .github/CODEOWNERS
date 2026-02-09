@@ -3,4 +3,5 @@
 
 # Documentation - Cloud Docs team
 .changelog/ @terraform-mongodbatlas-modules/Cloud_Docs
-*.md @terraform-mongodbatlas-modules/Cloud_Docs
+README.md @terraform-mongodbatlas-modules/Cloud_Docs
+docs/*.md @terraform-mongodbatlas-modules/Cloud_Docs

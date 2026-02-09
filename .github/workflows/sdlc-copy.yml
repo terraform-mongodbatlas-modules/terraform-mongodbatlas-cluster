@@ -10,8 +10,13 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          terraform: 'true'
+          docs: 'true'
+          uv: 'true'
       # Not using just target - this commits, pushes, and creates PRs in destination repos
       - run: uvx path-sync copy -n sdlc --checkout-from-default -y
         env:

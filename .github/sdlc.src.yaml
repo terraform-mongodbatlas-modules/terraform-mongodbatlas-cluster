@@ -19,6 +19,14 @@ pr_defaults:
     
     1. Look at the 1st line of the file, if it has `# path-sync copy -n sdlc` it means it is managed by path-sync
     2. Or look in the src repo for the `.github/sdlc.src.yaml` file that contains the mapping of files to sync.
+verify:
+  steps:
+    - run: just uv-sync
+    - run: just docs
+      commit:
+        message: "chore: docs after sdlc-sync"
+        add_paths: ["."]
+
 paths:
   # Python tooling - explicit folders (avoid .venv)
   - src_path: .github/changelog/*.py
@@ -40,7 +48,7 @@ paths:
   - src_path: .github/dev/extract_regions.py
   - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
-  # NOTE: dev_vars.py is NOT synced - it has module-specific workspace paths
+  # NOTE: dev_vars.py is NOT synced - see scaffolded files below
   # Workflows & actions
   - src_path: .github/workflows/check-changelog-entry-file.yml
   - src_path: .github/workflows/code-health.yml
@@ -56,30 +64,77 @@ paths:
   - src_path: contributing/changelog-process.md
   - src_path: contributing/documentation-guide.md
   - src_path: contributing/README.md
-  - src_path: CONTRIBUTING.md
-    sync_mode: scaffold
   # GitHub config
   - src_path: .github/CODEOWNERS
   - src_path: .github/pull_request_template.md
   - src_path: .github/ISSUE_TEMPLATE/
-  # Justfile with sections
+  # Justfile with sections (see justfile for section names)
+  # Sections: header, core, checks, dev-setup, formatting, linting, testing-unit,
+  #           docs, changelog, release, workspace, provider-dev, dev-vars-org,
+  #           regions, testing-tf, sdlc-validate
   - src_path: justfile
   - src_path: .pre-commit-config.yaml
   # Terraform docs & config
-  - src_path: .terraform-docs.yml
   - src_path: .terraform-versions.yaml
+  # Scaffolded files (only synced if not existing)
+  - src_path: CONTRIBUTING.md
+    sync_mode: scaffold
+  - src_path: .changelog/.gitkeep
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/empty-changelog.md
+    dest_path: CHANGELOG.md
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/examples.yaml
+    dest_path: docs/examples.yaml
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/inputs_groups.yaml
+    dest_path: docs/inputs_groups.yaml
+    sync_mode: scaffold
+  - src_path: docs/example_readme.md
+    sync_mode: scaffold
+  - src_path: .github/destination_scaffold/.terraform-docs.yml
+    dest_path: .terraform-docs.yml
+    sync_mode: scaffold
+  - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
     dest_path_relative: ../aws
     default_branch: main
-    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for AWS
+    skip_file_patterns:
+      - ".github/dev/.gitignore"
+      - ".github/dev/extract_regions.py"
+    skip_sections:
+      justfile: [dev-vars-org, regions]  # AWS doesn't need org vars or region extraction
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
     default_branch: main
+    skip_sections:
+      justfile: [dev-vars-org]  # Azure needs regions but not org vars
   - name: project
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
     default_branch: main
-    skip_file_patterns: [".github/dev/.gitignore", ".github/dev/extract_regions.py"] # not needed for Project
+    skip_file_patterns:
+      - ".github/dev/.gitignore"
+      - ".github/dev/extract_regions.py"
+    skip_sections:
+      justfile: [regions]  # Project needs org vars but not region extraction
+  - name: gcp
+    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp
+    dest_path_relative: ../gcp
+    default_branch: main
+    skip_sections:
+      justfile: [dev-vars-org]  # GCP needs regions but not org vars
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
+  - name: org
+    repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
+    dest_path_relative: ../org
+    default_branch: main
+    skip_file_patterns:
+      - ".github/dev/.gitignore"
+      - ".github/dev/extract_regions.py"
+    skip_sections:
+      justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
