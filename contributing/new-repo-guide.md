@@ -9,7 +9,7 @@ Before starting, ensure:
 - You have push access to the cluster repo (source of SDLC sync)
 - You have a local clone of the cluster repo with the destination repo checked out as a sibling directory (e.g., `../gcp` relative to cluster)
 
-If the repo does not exist yet, add a `.tf` file in the management repo's `modules/` directory coying an existing file, e.g., `atlas-gcp-repository.tf`, remember to update:
+If the repo does not exist yet, add a `.tf` file in the management repo's `modules/` directory copying an existing file, e.g., `atlas-gcp-repository.tf`, remember to update:
 - name
 - description
 
@@ -60,7 +60,6 @@ destinations:
 
 When the module is ready for these features, remove from `skip_sections` and re-sync.
 
-
 ## Step 2: Run SDLC Sync from Branch
 
 Create a branch in the cluster repo and run the sync targeting only the new destination:
@@ -109,7 +108,10 @@ The destination repo needs secrets for CI workflows to function. Use [GitHub CLI
 ```bash
 cd <destination-repo>
 gh secret set -f <secrets-file>.env
+# you can find the "base" file in our secrets manager, search for "terraform-mongodbatlas-modules"
 ```
+
+> **Warning**: Do not commit the `.env` secrets file to git. Ensure it is listed in `.gitignore` or stored outside the repo directory.
 
 ## Step 5: Merge and Tag
 
