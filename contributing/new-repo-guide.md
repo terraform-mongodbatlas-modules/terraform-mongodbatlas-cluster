@@ -79,13 +79,13 @@ The sync will:
 2. Run verify steps (`just uv-sync`, `just docs`).
 3. Commit changes and create a PR in the destination repo.
 
-Alternatively, trigger the `SDLC Copy` workflow via `workflow_dispatch` from your branch in GitHub Actions (syncs all destinations).
+Alternatively, trigger the `SDLC Copy` workflow via `workflow_dispatch` from your branch in GitHub Actions. Use the `extra-args` input to target specific destinations (e.g., `-d gcp` or `-d gcp -d azure`), or leave it empty to sync all.
 
 ## Step 3: Modify the Generated PR
 
 In the destination repo, the sync creates a PR on a `sync/sdlc` branch. Switch to that branch and make these changes:
 
-1. Set `PLAN_TEST_FILES := ""` in the top of the justfile:
+1. Set `PLAN_TEST_FILES := ""` in the top of the justfile (clears the Terraform test targets used by the `unit-plan-tests` recipe since the new module won't have plan validation tests yet):
    ```makefile
    # path-sync copy -n sdlc
    PLAN_TEST_FILES := ""
