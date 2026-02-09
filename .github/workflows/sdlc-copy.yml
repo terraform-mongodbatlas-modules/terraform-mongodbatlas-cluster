@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 6 * * *"  # Daily at 6 AM UTC
   workflow_dispatch:
+    inputs:
+      extra-args:
+        description: "Extra CLI args for path-sync copy (e.g. '-d dest1 -d dest2' to sync specific destinations)"
+        required: false
+        default: ""
 
 jobs:
   sync:
@@ -18,6 +23,7 @@ jobs:
           docs: 'true'
           uv: 'true'
       # Not using just target - this commits, pushes, and creates PRs in destination repos
-      - run: uvx path-sync copy -n sdlc --checkout-from-default -y
+      - run: uvx path-sync copy -n sdlc --checkout-from-default -y $EXTRA_ARGS
         env:
           GH_TOKEN: ${{ secrets.APIX_BOT_PAT }}
+          EXTRA_ARGS: ${{ inputs.extra-args }}
