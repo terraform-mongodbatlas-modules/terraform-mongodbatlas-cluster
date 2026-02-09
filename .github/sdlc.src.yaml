@@ -48,7 +48,7 @@ paths:
   - src_path: .github/dev/extract_regions.py
   - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
-  # NOTE: dev_vars.py is NOT synced - see scaffolded below
+  # NOTE: dev_vars.py is NOT synced - see scaffolded files below
   # Workflows & actions
   - src_path: .github/workflows/check-changelog-entry-file.yml
   - src_path: .github/workflows/code-health.yml
