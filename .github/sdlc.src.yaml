@@ -28,6 +28,7 @@ verify:
         add_paths: ["."]
 
 paths:
+  - src_path: .gitignore
   # Python tooling - explicit folders (avoid .venv)
   - src_path: .github/changelog/*.py
   - src_path: .github/changelog/*.txt
