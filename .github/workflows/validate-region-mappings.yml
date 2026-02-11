@@ -14,7 +14,7 @@ env:
 # Add module specific env-vars here
 
 jobs:
-  # === DO_NOT_EDIT: path-sync job-validate===
+  # === DO_NOT_EDIT: path-sync job-validate ===
   validate-regions:
     name: Validate Region Mappings
     runs-on: ubuntu-latest
@@ -40,4 +40,3 @@ jobs:
   # Validate regions here
   #   - name: Validate regions
   #     run: just validate-regions <provider> --output-format variable
-
