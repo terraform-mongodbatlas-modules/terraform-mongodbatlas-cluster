@@ -57,6 +57,7 @@ paths:
   - src_path: .github/workflows/notify-docs-team.yml
   - src_path: .github/workflows/release.yml
   - src_path: .github/workflows/update-terraform-versions.yml
+  - src_path: .github/workflows/validate-region-mappings.yml
   - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
@@ -105,6 +106,7 @@ destinations:
     skip_file_patterns:
       - ".github/dev/.gitignore"
       - ".github/dev/extract_regions.py"
+      - ".github/workflows/validate-region-mappings.yml"
     skip_sections:
       justfile: [dev-vars-org, regions]  # AWS doesn't need org vars or region extraction
   - name: azure
@@ -120,6 +122,7 @@ destinations:
     skip_file_patterns:
       - ".github/dev/.gitignore"
       - ".github/dev/extract_regions.py"
+      - ".github/workflows/validate-region-mappings.yml"
     skip_sections:
       justfile: [regions]  # Project needs org vars but not region extraction
   - name: gcp
@@ -136,6 +139,7 @@ destinations:
     skip_file_patterns:
       - ".github/dev/.gitignore"
       - ".github/dev/extract_regions.py"
+      - ".github/workflows/validate-region-mappings.yml"
     skip_sections:
       justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
       .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist

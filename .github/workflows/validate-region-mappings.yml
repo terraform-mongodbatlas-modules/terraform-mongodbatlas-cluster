@@ -1,22 +1,22 @@
 name: Validate Region Mappings
-
+# === DO_NOT_EDIT: path-sync header ===
 on:
   schedule:
     - cron: '0 8 * * 1'  # Weekly on Monday at 8:00 AM UTC
   workflow_dispatch:
 
 env:
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   MONGODB_ATLAS_PROJECT_ID: ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
   MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
   MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
   MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+# === OK_EDIT: path-sync header ===
+# Add module specific env-vars here
 
 jobs:
-  validate-azure-regions:
-    name: Validate Azure Region Mappings
+  # === DO_NOT_EDIT: path-sync job-validate===
+  validate-regions:
+    name: Validate Region Mappings
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -27,8 +27,6 @@ jobs:
           uv: 'true'
           terraform: 'true'
 
-      - name: Install Azure CLI
-        run: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
       - name: Install Atlas CLI
         run: |
@@ -37,8 +35,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mongodb-atlas-cli
 
-      - name: Azure login
-        run: az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
+  # === OK_EDIT: path-sync job-validate ===
+  # ADD GCP/Azure Login and
+  # Validate regions here
+  #   - name: Validate regions
+  #     run: just validate-regions <provider> --output-format variable
 
-      - name: Validate Azure regions
-        run: just validate-regions azure --output-format variable
