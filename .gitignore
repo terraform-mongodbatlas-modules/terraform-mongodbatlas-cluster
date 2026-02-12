@@ -1,9 +1,10 @@
+# === DO_NOT_EDIT: path-sync gitignore-base ===
 **/.terraform/*
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 crash.log
-*.auto.tfvars
+*.tfvars
 override.tf
 override.tf.json
 *_override.tf
@@ -13,12 +14,16 @@ terraform.rc
 .vscode
 .venv
 .secrets
-__pycache__
+__pycache__/
+*.pyc
+# === OK_EDIT: path-sync gitignore-base ===
+
+# === DO_NOT_EDIT: path-sync gitignore-workspace ===
 # Workspace test generated files
 *.generated.tf
-dev.tfvars
 plan.bin
 plan.json
 plan_snapshots_actual/
 dev.tfrc
 provider-src/
+# === OK_EDIT: path-sync gitignore-workspace ===
