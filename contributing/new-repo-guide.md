@@ -90,11 +90,15 @@ In the destination repo, the sync creates a PR on a `sync/sdlc` branch. Switch t
    # path-sync copy -n sdlc
    PLAN_TEST_FILES := ""
    ```
-2. Run `just docs` to generate documentation from the module's current state.
-3. Commit the changes:
+2. Copy `.gitignore` from the cluster repo. The template has a minimal `.gitignore` (Todo update: CLOUDP-380709). Verify the file exists and contains the expected entries, or copy it manually:
+   ```bash
+   cp ../cluster/.gitignore .gitignore
+   ```
+3. Run `just docs` to generate documentation from the module's current state.
+4. Commit the changes:
    ```bash
    git add .
-   git commit -m "chore: set PLAN_TEST_FILES and regenerate docs"
+   git commit -m "chore: set PLAN_TEST_FILES, add .gitignore, fix code-health jobs, and regenerate docs"
    git push
    ```
 

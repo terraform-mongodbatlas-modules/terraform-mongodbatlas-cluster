@@ -66,7 +66,7 @@ paths:
   - src_path: contributing/changelog-process.md
   - src_path: contributing/documentation-guide.md
   - src_path: contributing/README.md
-  # GitHub config
+  # GitHub config (replaced to force updates from initial template)
   - src_path: .github/CODEOWNERS
     sync_mode: replace
   - src_path: .github/pull_request_template.md
@@ -100,6 +100,7 @@ paths:
   - src_path: .github/destination_scaffold/.terraform-docs.yml
     dest_path: .terraform-docs.yml
     sync_mode: scaffold
+  - src_path: tests/project_generator/
   - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
 destinations:
   - name: aws
@@ -126,6 +127,7 @@ destinations:
       - ".github/dev/.gitignore"
       - ".github/dev/extract_regions.py"
       - ".github/workflows/validate-region-mappings.yml"
+      - "tests/project_generator/"  # Project module creates projects inline, no need for generator
     skip_sections:
       justfile: [regions]  # Project needs org vars but not region extraction
   - name: gcp
@@ -134,7 +136,6 @@ destinations:
     default_branch: main
     skip_sections:
       justfile: [dev-vars-org]  # GCP needs regions but not org vars
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
@@ -143,6 +144,7 @@ destinations:
       - ".github/dev/.gitignore"
       - ".github/dev/extract_regions.py"
       - ".github/workflows/validate-region-mappings.yml"
+      - "tests/project_generator/"  # No workspace tests that need project generation
     skip_sections:
       justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
       .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
