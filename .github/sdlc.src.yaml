@@ -68,8 +68,11 @@ paths:
   - src_path: contributing/README.md
   # GitHub config
   - src_path: .github/CODEOWNERS
+    sync_mode: replace
   - src_path: .github/pull_request_template.md
+    sync_mode: replace
   - src_path: .github/ISSUE_TEMPLATE/
+    sync_mode: replace
   # Justfile with sections (see justfile for section names)
   # Sections: header, core, checks, dev-setup, formatting, linting, testing-unit,
   #           docs, changelog, release, workspace, provider-dev, dev-vars-org,
