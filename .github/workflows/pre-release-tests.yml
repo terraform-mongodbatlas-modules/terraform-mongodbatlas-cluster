@@ -1,3 +1,5 @@
+# path-sync copy -n sdlc
+# === DO_NOT_EDIT: path-sync header ===
 name: Pre-Release Tests
 run-name: "Pre-Release: examples=${{ inputs.include_examples }}, provider=${{ inputs.provider_ref }}${{ inputs.skip_tftest && ', skip_tftest' || '' }}"
 
@@ -19,14 +21,18 @@ on:
         required: false
         type: boolean
         default: false
+# === OK_EDIT: path-sync header ===
 
+# === DO_NOT_EDIT: path-sync env ===
 env:
   MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
   MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
   MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
   MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+# === OK_EDIT: path-sync env ===
 
 jobs:
+  # === DO_NOT_EDIT: path-sync job-tftest ===
   tftest-all:
     name: All Terraform Tests
     if: ${{ !inputs.skip_tftest }}
@@ -47,11 +53,13 @@ jobs:
         with:
           provider-ref: ${{ inputs.provider_ref }}
       - run: just tftest-all
+  # === OK_EDIT: path-sync job-tftest ===
 
   apply-and-destroy:
     name: Apply & Destroy Examples
     runs-on: ubuntu-latest
     steps:
+      # === DO_NOT_EDIT: path-sync job-apply-setup ===
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/setup
         with:
@@ -66,6 +74,7 @@ jobs:
         if: inputs.provider_ref != 'registry' && inputs.provider_ref != 'default'
         with:
           provider-ref: ${{ inputs.provider_ref }}
+      # === OK_EDIT: path-sync job-apply-setup ===
       - run: just dev-vars-org "${MONGODB_ATLAS_ORG_ID}"
       - name: Apply examples
         env:
