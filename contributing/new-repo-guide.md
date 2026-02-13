@@ -96,8 +96,8 @@ Alternatively, trigger the `SDLC Copy` workflow via `workflow_dispatch` from you
 
 In the destination repo, the sync creates a PR on a `sync/sdlc` branch. Switch to that branch and make module-specific edits:
 
-1. **`pre-release-tests.yml` env vars** - if you included `pre_release`, edit the `OK_EDIT: env` section to add CSP-specific credentials (e.g., `AWS_ACCESS_KEY_ID` for aws, `ARM_*` for azure, `GOOGLE_*` for gcp).
-2. **`pre-release-tests.yml` apply commands** - edit the `OK_EDIT: job-apply-setup` tail to set the correct `dev-vars-*` recipe and `workspace_<module>_examples` directory.
+1. **`pre-release-tests.yml` env vars** - if you included `pre_release`, add CSP-specific env vars after the `OK_EDIT: path-sync env` marker, indented under `env:` (e.g., `GCP_PROJECT_ID` for gcp, `AWS_ACCESS_KEY_ID` for aws). See the [gcp workflow](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp/blob/main/.github/workflows/pre-release-tests.yml) for reference.
+2. **`pre-release-tests.yml` apply steps** - after the `OK_EDIT: path-sync job-apply-setup` marker in the `apply-and-destroy` steps, add CSP-specific setup (e.g., GCP workload identity auth) and customize `dev-vars-*` / example commands. Job-level config like `permissions` goes before `steps:` after the first `OK_EDIT: path-sync job-apply-setup` marker at job level.
 3. Commit and push:
    ```bash
    git add .
