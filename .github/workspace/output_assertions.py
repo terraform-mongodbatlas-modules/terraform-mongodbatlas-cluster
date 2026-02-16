@@ -24,13 +24,19 @@ def _extract_example_outputs(
             continue
         example_id = key.removeprefix(EXAMPLE_OUTPUT_PREFIX)
         value = entry.get("value", {})
-        result[example_id] = value if isinstance(value, dict) else {}
+        if not isinstance(value, dict):
+            typer.echo(
+                f"  WARNING: output ex_{example_id} is {type(value).__name__}, expected dict",
+                err=True,
+            )
+            value = {}
+        result[example_id] = value
     return result
 
 
 def _check_assertion(value: Any, assertion: models.OutputAssertion) -> str:
     if assertion.not_empty:
-        if value is None or value == "" or value == {}:
+        if value is None or value == "" or value == {} or value == []:
             return f"expected non-empty value, got {value!r}"
     if assertion.pattern:
         str_value = str(value) if value is not None else ""

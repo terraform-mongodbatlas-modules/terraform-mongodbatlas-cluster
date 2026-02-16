@@ -62,6 +62,14 @@ def test_not_empty_fail_missing_key():
     assert not output_assertions.run_output_assertions(config, raw)
 
 
+def test_not_empty_fail_empty_list():
+    raw = {"ex_test": {"value": {"items": []}}}
+    config = _config_with_assertions(
+        "test", [models.OutputAssertion(output="items", not_empty=True)]
+    )
+    assert not output_assertions.run_output_assertions(config, raw)
+
+
 def test_no_assertions_returns_true():
     config = models.WsConfig(
         examples=[models.Example(name="test")],
