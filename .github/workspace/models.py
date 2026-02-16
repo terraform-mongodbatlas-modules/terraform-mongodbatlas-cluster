@@ -68,11 +68,19 @@ class PlanRegression:
 
 
 @dataclass
+class OutputAssertion:
+    output: str
+    pattern: str = ""
+    not_empty: bool = False
+
+
+@dataclass
 class Example:
     number: int | None = None
     name: str | None = None
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
+    output_assertions: list[OutputAssertion] = field(default_factory=list)
 
     def should_use_nested_snapshots(self) -> bool:
         """Determine if snapshots for this example should use nested directory structure.
@@ -165,12 +173,21 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
             )
             for r in ex.get("plan_regressions", [])
         ]
+        assertions = [
+            OutputAssertion(
+                output=a["output"],
+                pattern=a.get("pattern", ""),
+                not_empty=a.get("not_empty", False),
+            )
+            for a in ex.get("output_assertions", [])
+        ]
         examples.append(
             Example(
                 number=ex.get("number"),
                 name=ex.get("name"),
                 var_groups=ex.get("var_groups", []),
                 plan_regressions=regressions,
+                output_assertions=assertions,
             )
         )
     return WsConfig(examples=examples, var_groups=var_groups)

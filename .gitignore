@@ -24,6 +24,7 @@ __pycache__/
 plan.bin
 plan.json
 plan_snapshots_actual/
+outputs_actual.json
 dev.tfrc
 provider-src/
 # === OK_EDIT: path-sync gitignore-workspace ===

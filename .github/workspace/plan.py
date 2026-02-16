@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -13,6 +15,7 @@ app = typer.Typer()
 
 PLAN_BIN = "plan.bin"
 PLAN_JSON = "plan.json"
+OUTPUTS_ACTUAL_JSON = "outputs_actual.json"
 INIT_MAX_RETRIES = 3
 
 
@@ -57,6 +60,24 @@ def run_terraform_apply(ws_dir: Path, var_files: list[Path], auto_approve: bool 
     typer.echo("Running terraform apply...")
     if run_cmd(apply_cmd, ws_dir) != 0:
         raise typer.Exit(1)
+
+
+def run_terraform_output_json(ws_dir: Path) -> dict[str, Any]:
+    typer.echo("Capturing terraform output...")
+    result = subprocess.run(
+        ["terraform", "output", "-json"],
+        cwd=ws_dir,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        typer.echo(f"terraform output failed: {result.stderr}", err=True)
+        raise typer.Exit(1)
+    outputs = json.loads(result.stdout)
+    output_path = ws_dir / OUTPUTS_ACTUAL_JSON
+    output_path.write_text(json.dumps(outputs, indent=2) + "\n")
+    typer.echo(f"Outputs saved to {OUTPUTS_ACTUAL_JSON}")
+    return outputs
 
 
 def run_terraform_destroy(ws_dir: Path, var_files: list[Path], auto_approve: bool = False) -> None:
