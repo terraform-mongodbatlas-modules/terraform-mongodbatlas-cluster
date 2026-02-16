@@ -54,6 +54,22 @@ def test_not_empty_fail_none():
     assert not output_assertions.run_output_assertions(config, raw)
 
 
+def test_not_empty_fail_empty_string():
+    raw = {"ex_test": {"value": {"name": ""}}}
+    config = _config_with_assertions(
+        "test", [models.OutputAssertion(output="name", not_empty=True)]
+    )
+    assert not output_assertions.run_output_assertions(config, raw)
+
+
+def test_not_empty_fail_empty_dict():
+    raw = {"ex_test": {"value": {"details": {}}}}
+    config = _config_with_assertions(
+        "test", [models.OutputAssertion(output="details", not_empty=True)]
+    )
+    assert not output_assertions.run_output_assertions(config, raw)
+
+
 def test_not_empty_fail_missing_key():
     raw = {"ex_test": {"value": {}}}
     config = _config_with_assertions(
@@ -68,6 +84,18 @@ def test_not_empty_fail_empty_list():
         "test", [models.OutputAssertion(output="items", not_empty=True)]
     )
     assert not output_assertions.run_output_assertions(config, raw)
+
+
+def test_pattern_match_non_string_values():
+    raw = {"ex_test": {"value": {"count": 42, "enabled": True}}}
+    config = _config_with_assertions(
+        "test",
+        [
+            models.OutputAssertion(output="count", pattern=r"^42$"),
+            models.OutputAssertion(output="enabled", pattern=r"^True$"),
+        ],
+    )
+    assert output_assertions.run_output_assertions(config, raw)
 
 
 def test_no_assertions_returns_true():
