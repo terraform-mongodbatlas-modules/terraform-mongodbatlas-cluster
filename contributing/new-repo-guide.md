@@ -26,10 +26,13 @@ Required fields:
 - `default_branch` - typically `main`.
 
 Optional fields:
-- `skip_file_patterns` - list of file globs to exclude from sync (e.g., dev files not needed by the module).
+- `include_groups` - list of `path_groups` to include for this destination. Available groups:
+  - `regions` - region extraction files (`extract_regions.py`, `validate-region-mappings.yml`). Include for CSP modules with region mappings (azure, gcp).
+  - `project_generator` - workspace test project generator. Include for modules with workspace tests.
+  - `pre_release` - `pre-release-tests.yml` workflow. Include for modules that run pre-release apply/destroy tests. Omit for repos without examples (e.g., org).
 - `skip_sections` - map of `file: [section-ids]` to skip specific sections per file.
 
-### Example: Destination with Section Skipping
+### Example: Destination with Groups and Section Skipping
 
 ```yaml
 destinations:
@@ -37,12 +40,20 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp
     dest_path_relative: ../gcp
     default_branch: main
+    include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org]
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
 ```
 
-### Deciding What to Skip
+### Deciding What to Include/Skip
+
+**`include_groups`** - opt-in for file groups the module needs:
+
+| Group | When to include |
+|-------|-----------------|
+| `regions` | Module has CSP region mappings (e.g., azure, gcp). |
+| `project_generator` | Module has workspace tests that need project generation. |
+| `pre_release` | Module has examples for apply/destroy pre-release testing. |
 
 **`justfile` sections** - skip sections the module does not need:
 
@@ -81,26 +92,22 @@ The sync will:
 
 Alternatively, trigger the `SDLC Copy` workflow via `workflow_dispatch` from your branch in GitHub Actions. Use the `extra-args` input to target specific destinations (e.g., `-d gcp` or `-d gcp -d azure`), or leave it empty to sync all.
 
-## Step 3: Modify the Generated PR
+## Step 3: Customize the Generated PR
 
-In the destination repo, the sync creates a PR on a `sync/sdlc` branch. Switch to that branch and make these changes:
+In the destination repo, the sync creates a PR on a `sync/sdlc` branch. Switch to that branch and make module-specific edits:
 
-1. Set `PLAN_TEST_FILES := ""` in the top of the justfile (clears the Terraform test targets used by the `unit-plan-tests` recipe since the new module won't have plan validation tests yet):
-   ```makefile
-   # path-sync copy -n sdlc
-   PLAN_TEST_FILES := ""
-   ```
-2. Copy `.gitignore` from the cluster repo. The template has a minimal `.gitignore` (Todo update: CLOUDP-380709). Verify the file exists and contains the expected entries, or copy it manually:
-   ```bash
-   cp ../cluster/.gitignore .gitignore
-   ```
-3. Run `just docs` to generate documentation from the module's current state.
-4. Commit the changes:
+1. **`pre-release-tests.yml` env vars** - if you included `pre_release`, add CSP-specific env vars after the `OK_EDIT: path-sync env` marker, indented under `env:` (e.g., `GCP_PROJECT_ID` for gcp, `AWS_ACCESS_KEY_ID` for aws). See the [gcp workflow](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp/blob/main/.github/workflows/pre-release-tests.yml) for reference.
+2. **`pre-release-tests.yml` apply steps** - after the `OK_EDIT: path-sync job-apply-setup` marker in the `apply-and-destroy` steps, add CSP-specific setup (e.g., GCP workload identity auth) and customize `dev-vars-*` / example commands. Job-level config like `permissions` goes before `steps:` after the first `OK_EDIT: path-sync job-apply-setup` marker at job level.
+3. Commit and push:
    ```bash
    git add .
-   git commit -m "chore: set PLAN_TEST_FILES, add .gitignore, fix code-health jobs, and regenerate docs"
+   git commit -m "chore: customize pre-release workflow for <module>"
    git push
    ```
+
+The [template](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-module-template) repo includes a minimal `justfile` with `PLAN_TEST_FILES := ""`, so no manual override is needed. `.gitignore` is synced automatically via section markers.
+
+> If the repo was created from an older template version, delete any stale workflows (`terraform-test.yml`, `terraform-code-lint.yml`) that are now replaced by `code-health.yml`.
 
 ## Step 4: Sync GitHub Secrets
 

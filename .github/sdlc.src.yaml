@@ -46,8 +46,6 @@ paths:
   - src_path: .github/uv.lock
   - src_path: .github/workspace/
   - src_path: .github/dev/__init__.py
-  - src_path: .github/dev/extract_regions.py
-  - src_path: .github/dev/.gitignore
   - src_path: .github/dev/test_compat.py
   # NOTE: dev_vars.py is NOT synced - see scaffolded files below
   # Workflows & actions
@@ -57,7 +55,6 @@ paths:
   - src_path: .github/workflows/notify-docs-team.yml
   - src_path: .github/workflows/release.yml
   - src_path: .github/workflows/update-terraform-versions.yml
-  - src_path: .github/workflows/validate-region-mappings.yml
   - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
@@ -100,51 +97,52 @@ paths:
   - src_path: .github/destination_scaffold/.terraform-docs.yml
     dest_path: .terraform-docs.yml
     sync_mode: scaffold
-  - src_path: tests/project_generator/
   - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
+
+path_groups:
+  regions:
+    - src_path: .github/dev/extract_regions.py
+    - src_path: .github/dev/.gitignore
+    - src_path: .github/workflows/validate-region-mappings.yml
+  project_generator:
+    - src_path: tests/project_generator/
+  pre_release:
+    - src_path: .github/workflows/pre-release-tests.yml
+
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
     dest_path_relative: ../aws
     default_branch: main
-    skip_file_patterns:
-      - ".github/dev/.gitignore"
-      - ".github/dev/extract_regions.py"
-      - ".github/workflows/validate-region-mappings.yml"
+    include_groups: [project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org, regions]  # AWS doesn't need org vars or region extraction
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
     default_branch: main
+    include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org]  # Azure needs regions but not org vars
   - name: project
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
     default_branch: main
-    skip_file_patterns:
-      - ".github/dev/.gitignore"
-      - ".github/dev/extract_regions.py"
-      - ".github/workflows/validate-region-mappings.yml"
-      - "tests/project_generator/"  # Project module creates projects inline, no need for generator
+    include_groups: [pre_release]
     skip_sections:
       justfile: [regions]  # Project needs org vars but not region extraction
   - name: gcp
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp
     dest_path_relative: ../gcp
     default_branch: main
+    include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org]  # GCP needs regions but not org vars
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
     default_branch: main
-    skip_file_patterns:
-      - ".github/dev/.gitignore"
-      - ".github/dev/extract_regions.py"
-      - ".github/workflows/validate-region-mappings.yml"
-      - "tests/project_generator/"  # No workspace tests that need project generation
+    # no include_groups (no regions, no project_generator, no pre-release)
     skip_sections:
       justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
       .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
