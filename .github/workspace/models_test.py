@@ -187,6 +187,40 @@ var_groups:
     assert config.examples[0].identifier == "backup_export"
 
 
+def test_parse_ws_config_output_assertions(tmp_path: Path):
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
+examples:
+  - name: backup_export
+    var_groups: [shared]
+    output_assertions:
+      - output: export_bucket_id
+        pattern: "^[a-f0-9]{24}$"
+      - output: cluster_name
+        not_empty: true
+
+var_groups:
+  shared:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id
+""")
+    config = models.parse_ws_config(ws_config)
+    assert len(config.examples[0].output_assertions) == 2
+    a0 = config.examples[0].output_assertions[0]
+    assert a0.output == "export_bucket_id"
+    assert a0.pattern == "^[a-f0-9]{24}$"
+    assert not a0.not_empty
+    a1 = config.examples[0].output_assertions[1]
+    assert a1.output == "cluster_name"
+    assert a1.not_empty
+
+
+def test_output_assertion_invalid_regex():
+    with pytest.raises(ValueError, match="invalid regex pattern"):
+        models.OutputAssertion(output="name", pattern=r"[invalid")
+
+
 def test_resolve_workspaces_all(tmp_path: Path):
     (tmp_path / "workspace_one").mkdir()
     (tmp_path / "workspace_two").mkdir()

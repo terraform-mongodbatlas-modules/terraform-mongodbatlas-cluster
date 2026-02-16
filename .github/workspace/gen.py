@@ -65,6 +65,9 @@ def generate_modules_tf(
             val = f"var.{var.name}" if var.expose_in_workspace else var.module_value
             lines.append(f"  {var.name} = {val}")
         lines.extend(["}", ""])
+        lines.append(f'output "ex_{ex.identifier}" {{')
+        lines.append(f"  value = module.ex_{ex.identifier}")
+        lines.extend(["}", ""])
     return "\n".join(lines)
 
 

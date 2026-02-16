@@ -201,6 +201,9 @@ ws-reg *args:
 ws-run *args:
     {{py}} workspace.run {{args}}
 
+ws-output-assertions *args:
+    {{py}} workspace.output_assertions {{args}}
+
 plan-only *args:
     just ws-run -m plan-only {{args}}
 
@@ -209,6 +212,9 @@ plan-snapshot-test *args:
 
 apply-examples *args:
     just ws-run -m apply {{args}}
+
+check-outputs *args:
+    just ws-run -m check-outputs {{args}}
 
 destroy-examples *args:
     just ws-run -m destroy {{args}}

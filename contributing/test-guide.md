@@ -97,13 +97,48 @@ Then run `just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen` and com
 
 **Sensitive value redaction**: Values are redacted as `<field_name>` instead of omitted entirely. Default redacted attributes include `secret`, `password`, `token`, `credentials`, `private_key`, `client_secret`, `tenant_id`, plus all variables from `var_groups`.
 
+## Output Assertions
+
+Output assertions validate apply-time output values against expected patterns. Unlike plan snapshots (which verify planned resource configs), output assertions catch bugs where an output references the wrong attribute -- a class of bug only visible after `terraform apply`.
+
+### Running Output Assertions
+
+```bash
+# After apply, check outputs against configured assertions
+just check-outputs
+
+# Or run standalone (requires existing terraform state)
+just ws-output-assertions
+```
+
+### Configuration
+
+Add `output_assertions` per example in `workspace_test_config.yaml`:
+
+```yaml
+examples:
+  - name: backup_export
+    var_groups: [backup_export]
+    output_assertions:
+      - output: export_bucket_id
+        pattern: "^[a-f0-9]{24}$"
+      - output: backup_export
+        not_empty: true
+```
+
+- **`pattern`**: regex matched against the string representation of the output value
+- **`not_empty`**: asserts the value is not `None`, empty string, or empty dict
+
+The `check-outputs` mode runs `terraform output -json`, saves to `outputs_actual.json`, and validates each assertion. It is intentionally separate from `apply` so a failed assertion does not affect resource state.
+
 ### Workspace Test Scripts
 
 Scripts in `.github/workspace/` directory:
 - `run.py` - Orchestrates workspace test runs
-- `gen.py` - Generates workspace configurations
-- `plan.py` - Runs terraform plan operations
+- `gen.py` - Generates workspace configurations and output blocks
+- `plan.py` - Runs terraform plan/apply/output operations
 - `reg.py` - Handles regression snapshot generation and comparison
+- `output_assertions.py` - Validates apply-time output values
 
 ## Provider Dev Branch Testing
 
