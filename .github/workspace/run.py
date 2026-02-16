@@ -67,7 +67,7 @@ def main(
             plan.run_terraform_apply(ws_dir, var_file, auto_approve)
 
         if mode == RunMode.CHECK_OUTPUTS:
-            output_assertions.process_workspace(ws_dir)
+            output_assertions.process_workspace(ws_dir, include_examples)
 
         if mode == RunMode.DESTROY:
             plan.run_terraform_destroy(ws_dir, var_file, auto_approve)

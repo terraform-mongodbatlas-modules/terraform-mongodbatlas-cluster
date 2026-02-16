@@ -8,7 +8,7 @@ from typing import Any
 
 import typer
 
-from workspace import models, plan
+from workspace import gen, models, plan
 
 app = typer.Typer()
 
@@ -59,19 +59,21 @@ def run_output_assertions(config: models.WsConfig, raw_outputs: dict[str, Any]) 
     return all_passed
 
 
-def process_workspace(ws_dir: Path) -> None:
+def process_workspace(ws_dir: Path, include_examples: str = "all") -> None:
     ws_config_path = ws_dir / models.WORKSPACE_CONFIG_FILE
     if not ws_config_path.exists():
         typer.echo(f"Skipping {ws_dir.name}: no {models.WORKSPACE_CONFIG_FILE} found")
         return
     config = models.parse_ws_config(ws_config_path)
-    has_assertions = any(ex.output_assertions for ex in config.examples)
+    examples = gen.parse_include_examples(include_examples, config)
+    filtered_config = models.WsConfig(examples=examples, var_groups=config.var_groups)
+    has_assertions = any(ex.output_assertions for ex in filtered_config.examples)
     if not has_assertions:
         typer.echo(f"  No output_assertions configured in {ws_dir.name}, skipping")
         return
     raw_outputs = plan.run_terraform_output_json(ws_dir)
     typer.echo("Running output assertions...")
-    if not run_output_assertions(config, raw_outputs):
+    if not run_output_assertions(filtered_config, raw_outputs):
         typer.echo("Output assertions FAILED", err=True)
         raise typer.Exit(1)
     typer.echo("All output assertions passed")
@@ -81,6 +83,7 @@ def process_workspace(ws_dir: Path) -> None:
 def main(
     ws: str = typer.Option("all", "--ws"),
     tests_dir: Path = typer.Option(models.DEFAULT_TESTS_DIR, "--tests-dir"),
+    include_examples: str = typer.Option("all", "--include-examples", "-e"),
 ) -> None:
     try:
         ws_dirs = models.resolve_workspaces(ws, tests_dir)
@@ -88,7 +91,7 @@ def main(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
     for ws_dir in ws_dirs:
-        process_workspace(ws_dir)
+        process_workspace(ws_dir, include_examples)
     typer.echo("Done.")
 
 
