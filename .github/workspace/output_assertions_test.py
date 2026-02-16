@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from workspace import assertions, models
+from workspace import models, output_assertions
 
 
 def _config_with_assertions(
-    example_id: str, output_assertions: list[models.OutputAssertion]
+    example_id: str, assertions: list[models.OutputAssertion]
 ) -> models.WsConfig:
     return models.WsConfig(
-        examples=[models.Example(name=example_id, output_assertions=output_assertions)],
+        examples=[models.Example(name=example_id, output_assertions=assertions)],
         var_groups={},
     )
 
@@ -18,7 +18,7 @@ def test_extract_example_outputs():
         "ex_enc": {"value": {"key": "xyz"}},
         "unrelated": {"value": "ignored"},
     }
-    result = assertions._extract_example_outputs(raw)
+    result = output_assertions._extract_example_outputs(raw)
     assert result == {"backup": {"bucket_id": "abc123"}, "enc": {"key": "xyz"}}
 
 
@@ -27,7 +27,7 @@ def test_pattern_match_pass():
     config = _config_with_assertions(
         "test", [models.OutputAssertion(output="bucket_id", pattern=r"^[a-f0-9]{12}$")]
     )
-    assert assertions.run_output_assertions(config, raw)
+    assert output_assertions.run_output_assertions(config, raw)
 
 
 def test_pattern_match_fail():
@@ -35,7 +35,7 @@ def test_pattern_match_fail():
     config = _config_with_assertions(
         "test", [models.OutputAssertion(output="bucket_id", pattern=r"^[a-f0-9]{12}$")]
     )
-    assert not assertions.run_output_assertions(config, raw)
+    assert not output_assertions.run_output_assertions(config, raw)
 
 
 def test_not_empty_pass():
@@ -43,7 +43,7 @@ def test_not_empty_pass():
     config = _config_with_assertions(
         "test", [models.OutputAssertion(output="name", not_empty=True)]
     )
-    assert assertions.run_output_assertions(config, raw)
+    assert output_assertions.run_output_assertions(config, raw)
 
 
 def test_not_empty_fail_none():
@@ -51,7 +51,7 @@ def test_not_empty_fail_none():
     config = _config_with_assertions(
         "test", [models.OutputAssertion(output="name", not_empty=True)]
     )
-    assert not assertions.run_output_assertions(config, raw)
+    assert not output_assertions.run_output_assertions(config, raw)
 
 
 def test_not_empty_fail_missing_key():
@@ -59,7 +59,7 @@ def test_not_empty_fail_missing_key():
     config = _config_with_assertions(
         "test", [models.OutputAssertion(output="missing", not_empty=True)]
     )
-    assert not assertions.run_output_assertions(config, raw)
+    assert not output_assertions.run_output_assertions(config, raw)
 
 
 def test_no_assertions_returns_true():
@@ -67,4 +67,4 @@ def test_no_assertions_returns_true():
         examples=[models.Example(name="test")],
         var_groups={},
     )
-    assert assertions.run_output_assertions(config, {})
+    assert output_assertions.run_output_assertions(config, {})

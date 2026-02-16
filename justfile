@@ -201,8 +201,8 @@ ws-reg *args:
 ws-run *args:
     {{py}} workspace.run {{args}}
 
-ws-assertions *args:
-    {{py}} workspace.assertions {{args}}
+ws-output-assertions *args:
+    {{py}} workspace.output_assertions {{args}}
 
 plan-only *args:
     just ws-run -m plan-only {{args}}
