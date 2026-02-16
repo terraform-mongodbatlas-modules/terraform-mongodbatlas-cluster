@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,15 @@ class OutputAssertion:
     output: str
     pattern: str = ""
     not_empty: bool = False
+
+    def __post_init__(self) -> None:
+        if self.pattern:
+            try:
+                re.compile(self.pattern)
+            except re.error as exc:
+                raise ValueError(
+                    f"invalid regex pattern {self.pattern!r} for output {self.output!r}: {exc}"
+                ) from exc
 
 
 @dataclass

@@ -216,6 +216,11 @@ var_groups:
     assert a1.not_empty
 
 
+def test_output_assertion_invalid_regex():
+    with pytest.raises(ValueError, match="invalid regex pattern"):
+        models.OutputAssertion(output="name", pattern=r"[invalid")
+
+
 def test_resolve_workspaces_all(tmp_path: Path):
     (tmp_path / "workspace_one").mkdir()
     (tmp_path / "workspace_two").mkdir()
