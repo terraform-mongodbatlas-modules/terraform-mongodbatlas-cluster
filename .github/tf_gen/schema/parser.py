@@ -70,7 +70,8 @@ terraform {{
         try:
             tf_retry.run_terraform_init(["terraform", "init"], tmp_path)
         except tf_retry.TerraformInitError as e:
-            msg = f"terraform init for {provider_source}@{provider_version} failed: {e.stderr}"
+            stderr = (e.stderr or "")[:200]
+            msg = f"terraform init for {provider_source}@{provider_version} failed: {stderr}"
             raise RuntimeError(msg) from e
         result = _run_terraform(
             ["terraform", "providers", "schema", "-json"],

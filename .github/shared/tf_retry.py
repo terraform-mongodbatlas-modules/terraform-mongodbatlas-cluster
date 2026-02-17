@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import shutil
 import subprocess
@@ -44,7 +45,8 @@ def _cleanup_terraform_cache(work_dir: Path) -> None:
         path = work_dir / subdir
         if path.exists():
             logger.info(f"removing stale cache: {path}")
-            shutil.rmtree(path)
+            with contextlib.suppress(FileNotFoundError):
+                shutil.rmtree(path)
 
 
 def _log_retry(state: RetryCallState) -> None:
