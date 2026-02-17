@@ -93,14 +93,13 @@ jobs:
   # === DO_NOT_EDIT: path-sync job-slack ===
   slack-notification:
     needs: [check, plan-tests, compat-tests, plan-snapshot-tests]
-    if: ${{ github.event_name == 'schedule' && !cancelled() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - name: Send Slack message
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
           webhook-type: incoming-webhook
           payload: |
             {
