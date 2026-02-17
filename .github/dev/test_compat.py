@@ -16,7 +16,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,10 +23,9 @@ from pathlib import Path
 import yaml
 
 from dev import REPO_ROOT, VERSIONS_FILE
+from shared import tf_retry
 
 MAX_WORKERS = min(os.cpu_count() or 4, 8)
-INIT_MAX_RETRIES = 3
-INIT_RETRY_DELAY_SECONDS = 10
 
 
 @dataclass
@@ -89,20 +87,14 @@ def run_validate(job: TestJob) -> TestResult:
             "init",
             "-backend=false",
         ]
-        init_result = None
-        for attempt in range(1, INIT_MAX_RETRIES + 1):
-            init_result = subprocess.run(init_cmd, cwd=work_dir, capture_output=True, text=True)
-            if init_result.returncode == 0:
-                break
-            if attempt < INIT_MAX_RETRIES:
-                time.sleep(INIT_RETRY_DELAY_SECONDS)
-
-        if init_result.returncode != 0:
+        try:
+            tf_retry.run_terraform_init(init_cmd, work_dir)
+        except tf_retry.TerraformInitError as e:
             return TestResult(
                 version=job.version,
                 target=target_name,
                 passed=False,
-                output=f"init failed after {INIT_MAX_RETRIES} attempts:\n{init_result.stderr}",
+                output=f"init failed: {e.stderr}",
             )
 
         validate_cmd = ["mise", "x", f"terraform@{job.version}", "--", "terraform", "validate"]

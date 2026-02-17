@@ -3,20 +3,23 @@
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 from pathlib import Path
 from typing import Any
 
 import typer
 
+from shared import tf_retry
 from workspace import models
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer()
 
 PLAN_BIN = "plan.bin"
 PLAN_JSON = "plan.json"
 OUTPUTS_ACTUAL_JSON = "outputs_actual.json"
-INIT_MAX_RETRIES = 3
 
 
 def run_cmd(cmd: list[str], cwd: Path) -> int:
@@ -24,15 +27,13 @@ def run_cmd(cmd: list[str], cwd: Path) -> int:
     return result.returncode
 
 
-def run_terraform_init(ws_dir: Path, retries: int = INIT_MAX_RETRIES) -> None:
-    for attempt in range(1, retries + 1):
-        typer.echo(f"Running terraform init in {ws_dir.name} (attempt {attempt}/{retries})...")
-        if run_cmd(["terraform", "init", "-upgrade", "-input=false"], ws_dir) == 0:
-            return
-        if attempt < retries:
-            typer.echo("Init failed, retrying...")
-    typer.echo("terraform init failed after all retries", err=True)
-    raise typer.Exit(1)
+def run_terraform_init(ws_dir: Path) -> None:
+    logger.info(f"Running terraform init in {ws_dir.name}...")
+    try:
+        tf_retry.run_terraform_init(["terraform", "init", "-upgrade", "-input=false"], ws_dir)
+    except tf_retry.TerraformInitError as e:
+        logger.error(f"terraform init failed: {e.stderr[:200]}")
+        raise typer.Exit(1) from e
 
 
 def run_terraform_plan(ws_dir: Path, var_files: list[Path], skip_init: bool = False) -> None:
