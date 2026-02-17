@@ -49,9 +49,8 @@ def _cleanup_terraform_cache(work_dir: Path) -> None:
 
 def _log_retry(state: RetryCallState) -> None:
     exc = state.outcome.exception() if state.outcome else None
-    logger.warning(
-        f"terraform init retry #{state.attempt_number} in {getattr(exc, 'work_dir', '?')}"
-    )
+    work_dir = exc.work_dir if isinstance(exc, TerraformInitError) else "?"
+    logger.warning(f"terraform init retry #{state.attempt_number} in {work_dir}")
 
 
 def _before_retry(state: RetryCallState) -> None:
