@@ -56,7 +56,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":x: *${{ github.event.repository.name }}: Dev Integration Test scheduled run failed* ${{ secrets.SLACK_ONCALL_TAG }}. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>"
+                    "text": ":x: *${{ github.event.repository.name }}: Dev Integration Test scheduled run failed* ${{ secrets.SLACK_ONCALL_TAG }} <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>"
                   }
                 }
               ]
