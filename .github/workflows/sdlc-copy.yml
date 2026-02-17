@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       extra-args:
-        description: "Extra CLI args for path-sync copy (e.g. '-d dest1 -d dest2' to sync specific destinations)"
+        description: "Extra CLI args for path-sync copy (e.g. '-d aws,azure' to sync specific destinations)"
         required: false
         default: ""
 
