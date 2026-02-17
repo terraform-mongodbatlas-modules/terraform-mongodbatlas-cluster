@@ -43,6 +43,7 @@ paths:
   - src_path: .github/docs/
   - src_path: .github/release/
   - src_path: .github/pyproject.toml
+  - src_path: .github/shared/
   - src_path: .github/uv.lock
   - src_path: .github/workspace/
   - src_path: .github/dev/__init__.py
