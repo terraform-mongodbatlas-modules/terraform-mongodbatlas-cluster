@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from shared import tf_retry
 from tf_gen.schema.models import ResourceSchema, parse_resource_schema
 
 logger = logging.getLogger(__name__)
@@ -66,11 +67,12 @@ terraform {{
   }}
 }}
 ''')
-        _run_terraform(
-            ["terraform", "init"],
-            cwd=tmp_path,
-            context=f"terraform init for {provider_source}@{provider_version}",
-        )
+        try:
+            tf_retry.run_terraform_init(["terraform", "init"], tmp_path)
+        except tf_retry.TerraformInitError as e:
+            stderr = (e.stderr or "")[:200]
+            msg = f"terraform init for {provider_source}@{provider_version} failed: {stderr}"
+            raise RuntimeError(msg) from e
         result = _run_terraform(
             ["terraform", "providers", "schema", "-json"],
             cwd=tmp_path,
