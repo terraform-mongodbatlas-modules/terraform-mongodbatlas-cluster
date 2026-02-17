@@ -11,6 +11,7 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
@@ -205,4 +206,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     sys.exit(main())
