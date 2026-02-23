@@ -21,7 +21,7 @@ def get_previous_tag(current_version: str) -> str | None:
             return None
         sorted_tags = sorted(tags, key=lambda t: [int(x) for x in t.lstrip("v").split(".")])
         return sorted_tags[-1] if sorted_tags else None
-    except (subprocess.CalledProcessError, ValueError):
+    except subprocess.CalledProcessError, ValueError:
         return None
 
 

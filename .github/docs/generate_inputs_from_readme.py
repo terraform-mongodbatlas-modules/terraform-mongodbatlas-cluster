@@ -244,7 +244,7 @@ def render_grouped_markdown(variables: list[Variable], sections: list[dict[str, 
         level_raw = section.get("level", 2)
         try:
             level = int(level_raw)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             level = 2
         level = min(max(level, 1), 6)
         description = section.get("description")
