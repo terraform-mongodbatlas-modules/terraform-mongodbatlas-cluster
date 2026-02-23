@@ -40,7 +40,7 @@ def format_terraform(content: str) -> str:
             f.flush()
             subprocess.run(["terraform", "fmt", f.name], check=True, capture_output=True)
             return open(f.name).read()
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         logger.warning("terraform fmt unavailable, returning unformatted")
         return content
 
