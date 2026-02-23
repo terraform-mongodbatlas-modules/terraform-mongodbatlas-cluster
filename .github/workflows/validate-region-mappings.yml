@@ -9,7 +9,8 @@ env:
   MONGODB_ATLAS_PROJECT_ID: ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
   MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
   MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
-  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+  # MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }} Currently only `MONGODB_ATLAS_OPS_MANAGER_URL` is read from env-vars CLOUDP-383021
+  MONGODB_ATLAS_OPS_MANAGER_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
 # === OK_EDIT: path-sync header ===
 # Add module specific env-vars here
 
@@ -28,15 +29,35 @@ jobs:
           terraform: 'true'
 
 
-      - name: Install Atlas CLI
-        run: |
-          curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-          echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-          sudo apt-get update
-          sudo apt-get install -y mongodb-atlas-cli
+      - name: Setup AtlasCLI
+        uses: mongodb/atlas-github-action@07d212bf80c068dfcfbf6e15b22c61ae6e66d96e # v0.2.0
 
   # === OK_EDIT: path-sync job-validate ===
-  # ADD GCP/Azure Login and
-  # Validate regions here
-  #   - name: Validate regions
-  #     run: just validate-regions <provider> --output-format variable
+  # ADD cloud provider login and validate regions step
+
+  # === DO_NOT_EDIT: path-sync job-slack ===
+  slack-notification:
+    needs: [validate-regions]
+    if: ${{ github.event_name == 'schedule' && !cancelled() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Send Slack message
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "${{ github.event.repository.name }}: Validate Region Mappings scheduled run failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":x: *${{ github.event.repository.name }}: Validate Region Mappings scheduled run failed* ${{ secrets.SLACK_ONCALL_TAG }} <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>"
+                  }
+                }
+              ]
+            }
+  # === OK_EDIT: path-sync job-slack ===
