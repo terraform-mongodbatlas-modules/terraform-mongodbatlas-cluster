@@ -653,9 +653,10 @@ def main():
     print("=== Step 1: Load/fetch Atlas regions ===")
     atlas_data = load_or_fetch_atlas_regions(script_dir, project_id)
     if not atlas_data:
-        print("\nError: No Atlas regions data available.")
-        print("Either provide regions.json or set MONGODB_ATLAS_PROJECT_ID env var.")
-        return
+        sys.exit(
+            "Error: No Atlas regions data available."
+            " Either provide regions.json or set MONGODB_ATLAS_PROJECT_ID env var."
+        )
 
     # Step 2: Load or fetch provider regions (JSON files go to script_dir)
     print("\n=== Step 2: Load/fetch provider regions ===")
@@ -683,8 +684,7 @@ def main():
     # Step 5: Generate output
     if provider:
         if provider_upper not in mappings:
-            print(f"\nError: No mappings found for provider '{provider}'")
-            return
+            sys.exit(f"Error: No mappings found for provider '{provider}'")
 
         generate_fn = (
             generate_terraform_variable
