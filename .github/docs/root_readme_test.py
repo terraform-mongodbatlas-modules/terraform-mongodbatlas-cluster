@@ -98,6 +98,23 @@ def test_generate_tables_explicit_extra_overrides_auto(tmp_path: Path) -> None:
     assert "REPLICASET" not in result
 
 
+def test_resolve_auto_column_file_not_found(tmp_path: Path) -> None:
+    auto_config = config_loader.AutoColumnConfig(
+        file="missing.tf",
+        pattern=r'key\s*=\s*"(?P<value>[^"]+)"',
+    )
+    assert mod._resolve_auto_column(auto_config, tmp_path) == ""
+
+
+def test_resolve_auto_column_pattern_no_match(tmp_path: Path) -> None:
+    (tmp_path / "main.tf").write_text("no_match_here = true")
+    auto_config = config_loader.AutoColumnConfig(
+        file="main.tf",
+        pattern=r'cluster_type\s*=\s*"(?P<value>[^"]+)"',
+    )
+    assert mod._resolve_auto_column(auto_config, tmp_path) == ""
+
+
 def test_downgrade_headers() -> None:
     content = """\
 # H1 stays the same

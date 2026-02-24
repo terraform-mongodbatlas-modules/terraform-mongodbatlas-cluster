@@ -46,9 +46,23 @@ def _resolve_auto_column(auto_config: config_loader.AutoColumnConfig, example_fo
     if not target.exists():
         return ""
     content = target.read_text(encoding="utf-8")
-    if match := re.search(auto_config.pattern, content):
-        return match.group("value")
-    return ""
+    try:
+        match = re.search(auto_config.pattern, content)
+    except re.error as e:
+        raise ValueError(f"invalid auto_column pattern {auto_config.pattern!r}: {e}") from e
+    if not match:
+        return ""
+    if "value" not in match.groupdict():
+        raise ValueError(
+            f"auto_column pattern {auto_config.pattern!r} must contain a (?P<value>...) named group"
+        )
+    return match.group("value")
+
+
+def _display_name(row: config_loader.ExampleRow) -> str:
+    if row.title_suffix:
+        return f"{row.name} {row.title_suffix}"
+    return row.name
 
 
 def _resolve_column(
@@ -59,15 +73,9 @@ def _resolve_column(
     examples_dir: Path,
 ) -> str:
     if col == table_config.link_column:
-        display_name = row.name
-        if row.title_suffix:
-            display_name = f"{display_name} {row.title_suffix}"
-        return f"[{display_name}](./examples/{folder_name})"
+        return f"[{_display_name(row)}](./examples/{folder_name})"
     if col == "name":
-        display_name = row.name
-        if row.title_suffix:
-            display_name = f"{display_name} {row.title_suffix}"
-        return display_name
+        return _display_name(row)
     extra = row.model_extra or {}
     value = extra.get(col, "")
     if not value and col in table_config.auto_columns:
