@@ -145,5 +145,5 @@ destinations:
     default_branch: main
     # no include_groups (no regions, no project_generator, no pre-release)
     skip_sections:
-      justfile: [dev-vars-org, regions]  # Org doesn't need org vars or region extraction
+      justfile: [dev-vars-org, regions, checks]  # Org doesn't need org vars or region extraction
       .github/workflows/code-health.yml: [job-check, job-snapshot-tests, job-slack]  # Enable when workspace tests exist
