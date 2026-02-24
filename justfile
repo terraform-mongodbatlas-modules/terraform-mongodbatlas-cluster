@@ -72,6 +72,8 @@ unit-plan-tests:
 docs: fmt
     terraform-docs -c .terraform-docs.yml .
     @echo "Documentation generated successfully"
+    {{py}} docs.tfdocs_links
+    @echo "Self-referencing and dead links fixed"
     {{py}} docs.generate_inputs_from_readme
     @echo "Inputs documentation updated successfully"
     just gen-readme
