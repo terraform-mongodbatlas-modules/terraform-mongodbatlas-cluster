@@ -29,7 +29,7 @@ jobs:
           terraform: 'true'
 
       - name: Setup AtlasCLI
-        uses: mongodb/atlas-github-action@07d212bf80c068dfcfbf6e15b22c61ae6e66d96e # v0.2.0
+        uses: mongodb/atlas-github-action@e3c9e0204659bafbb3b65e1eb1ee745cca0e9f3b # v0.2.2
 
   # === OK_EDIT: path-sync job-validate ===
   # ADD cloud provider login and validate regions step
