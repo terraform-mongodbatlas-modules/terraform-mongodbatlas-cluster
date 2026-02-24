@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from docs import config_loader
 from docs import root_readme as mod
 
 
@@ -29,6 +32,70 @@ terraform init
 def test_extract_getting_started_no_markers() -> None:
     template = "# Example\n## Section\nContent"
     assert mod.extract_getting_started(template) == ""
+
+
+def test_generate_tables_with_extra_columns(tmp_path: Path) -> None:
+    examples_dir = tmp_path / "examples"
+    (examples_dir / "01_basic").mkdir(parents=True)
+    table = config_loader.TableConfig(
+        name="Test",
+        columns=["feature", "name", "description"],
+        link_column="name",
+        example_rows=[
+            config_loader.ExampleRow(
+                name="Basic", folder=1, feature="Setup", description="A basic example"
+            ),
+        ],
+    )
+    result = mod.generate_tables([table], examples_dir)
+    assert "[Basic](./examples/01_basic)" in result
+    assert "Setup" in result
+    assert "A basic example" in result
+
+
+def test_generate_tables_auto_columns(tmp_path: Path) -> None:
+    examples_dir = tmp_path / "examples"
+    example_dir = examples_dir / "01_basic"
+    example_dir.mkdir(parents=True)
+    (example_dir / "main.tf").write_text('cluster_type = "REPLICASET"')
+    table = config_loader.TableConfig(
+        name="Test",
+        columns=["cluster_type", "name"],
+        link_column="name",
+        auto_columns={
+            "cluster_type": config_loader.AutoColumnConfig(
+                file="main.tf",
+                pattern=r'cluster_type\s*=\s*"(?P<value>[^"]+)"',
+            ),
+        },
+        example_rows=[config_loader.ExampleRow(name="Basic", folder=1)],
+    )
+    result = mod.generate_tables([table], examples_dir)
+    assert "REPLICASET" in result
+
+
+def test_generate_tables_explicit_extra_overrides_auto(tmp_path: Path) -> None:
+    examples_dir = tmp_path / "examples"
+    example_dir = examples_dir / "01_basic"
+    example_dir.mkdir(parents=True)
+    (example_dir / "main.tf").write_text('cluster_type = "REPLICASET"')
+    table = config_loader.TableConfig(
+        name="Test",
+        columns=["cluster_type", "name"],
+        link_column="name",
+        auto_columns={
+            "cluster_type": config_loader.AutoColumnConfig(
+                file="main.tf",
+                pattern=r'cluster_type\s*=\s*"(?P<value>[^"]+)"',
+            ),
+        },
+        example_rows=[
+            config_loader.ExampleRow(name="Basic", folder=1, cluster_type="Multiple"),
+        ],
+    )
+    result = mod.generate_tables([table], examples_dir)
+    assert "Multiple" in result
+    assert "REPLICASET" not in result
 
 
 def test_downgrade_headers() -> None:

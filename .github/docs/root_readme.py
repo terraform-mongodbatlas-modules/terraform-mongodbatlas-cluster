@@ -41,15 +41,38 @@ def find_example_folder(folder_id: str | int, examples_dir: Path) -> str | None:
     return None
 
 
-def extract_cluster_type_from_example(example_folder: Path) -> str:
-    main_tf = example_folder / "main.tf"
-    if not main_tf.exists():
+def _resolve_auto_column(auto_config: config_loader.AutoColumnConfig, example_folder: Path) -> str:
+    target = example_folder / auto_config.file
+    if not target.exists():
         return ""
-    content = main_tf.read_text(encoding="utf-8")
-    match = re.search(r'cluster_type\s*=\s*"([^"]+)"', content)
-    if match:
-        return match.group(1)
+    content = target.read_text(encoding="utf-8")
+    if match := re.search(auto_config.pattern, content):
+        return match.group("value")
     return ""
+
+
+def _resolve_column(
+    col: str,
+    row: config_loader.ExampleRow,
+    table_config: config_loader.TableConfig,
+    folder_name: str,
+    examples_dir: Path,
+) -> str:
+    if col == table_config.link_column:
+        display_name = row.name
+        if row.title_suffix:
+            display_name = f"{display_name} {row.title_suffix}"
+        return f"[{display_name}](./examples/{folder_name})"
+    if col == "name":
+        display_name = row.name
+        if row.title_suffix:
+            display_name = f"{display_name} {row.title_suffix}"
+        return display_name
+    extra = row.model_extra or {}
+    value = extra.get(col, "")
+    if not value and col in table_config.auto_columns:
+        value = _resolve_auto_column(table_config.auto_columns[col], examples_dir / folder_name)
+    return value
 
 
 def generate_toc_from_headings(content: str) -> str:
@@ -84,31 +107,10 @@ def generate_tables(tables: list[config_loader.TableConfig], examples_dir: Path)
             folder_name = find_example_folder(folder_id, examples_dir)
             if not folder_name:
                 continue
-            row_data = []
-            for col in table_config.columns:
-                if col == table_config.link_column:
-                    display_name = row.name
-                    if row.title_suffix:
-                        display_name = f"{display_name} {row.title_suffix}"
-                    cell_value = f"[{display_name}](./examples/{folder_name})"
-                    row_data.append(cell_value)
-                elif col == "cluster_type":
-                    cluster_type = row.cluster_type
-                    if not cluster_type:
-                        example_folder_path = examples_dir / folder_name
-                        cluster_type = extract_cluster_type_from_example(example_folder_path)
-                    row_data.append(cluster_type)
-                elif col == "environment":
-                    row_data.append(row.environment)
-                elif col == "feature":
-                    row_data.append(row.feature)
-                elif col == "name":
-                    display_name = row.name
-                    if row.title_suffix:
-                        display_name = f"{display_name} {row.title_suffix}"
-                    row_data.append(display_name)
-                else:
-                    row_data.append("")
+            row_data = [
+                _resolve_column(col, row, table_config, folder_name, examples_dir)
+                for col in table_config.columns
+            ]
             tables_output.append(" | ".join(row_data))
         tables_output.append("")
     return "\n".join(tables_output)

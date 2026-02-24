@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel, ConfigDict
 
 
 @dataclass
@@ -44,26 +45,25 @@ class ExamplesReadmeConfig:
     versions_tf: VersionsTfConfig = field(default_factory=VersionsTfConfig)
 
 
-@dataclass
-class ExampleRow:
+class ExampleRow(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     name: str
     folder: int | None = None
     folder_name: str = ""
-    environment: str = ""
     title_suffix: str = ""
-    cluster_type: str = ""
-    feature: str = ""
 
-    def __post_init__(self):
+    def model_post_init(self, _context) -> None:
         if self.folder is None and self.folder_name == "":
             raise ValueError("Either folder or folder_name must be provided")
         if self.folder is not None and self.folder_name != "":
             raise ValueError("Either folder or folder_name must be provided, but not both")
-        if self.folder:
-            try:
-                int(self.folder)
-            except ValueError:
-                raise ValueError("Folder must be an integer")
+
+
+@dataclass
+class AutoColumnConfig:
+    file: str
+    pattern: str
 
 
 @dataclass
@@ -72,6 +72,7 @@ class TableConfig:
     columns: list[str] = field(default_factory=list)
     link_column: str = ""
     example_rows: list[ExampleRow] = field(default_factory=list)
+    auto_columns: dict[str, AutoColumnConfig] = field(default_factory=dict)
     readme_template: str = ""
 
 
@@ -111,7 +112,13 @@ def parse_tables_config(config_dict: dict) -> list[TableConfig]:
     tables = []
     for table_dict in tables_list:
         example_rows = [ExampleRow(**row_dict) for row_dict in table_dict.get("example_rows", [])]
-        table_dict_filtered = {k: v for k, v in table_dict.items() if k != "example_rows"}
-        table = TableConfig(**table_dict_filtered, example_rows=example_rows)
+        auto_columns_raw = table_dict.get("auto_columns", {})
+        auto_columns = {k: AutoColumnConfig(**v) for k, v in auto_columns_raw.items()}
+        table_dict_filtered = {
+            k: v for k, v in table_dict.items() if k not in ("example_rows", "auto_columns")
+        }
+        table = TableConfig(
+            **table_dict_filtered, example_rows=example_rows, auto_columns=auto_columns
+        )
         tables.append(table)
     return tables
