@@ -3,8 +3,10 @@
 import re
 import subprocess
 import sys
+from functools import lru_cache
 
 
+@lru_cache
 def get_git_remote_url() -> str:
     for remote in ["origin", "upstream"]:
         try:
