@@ -23,12 +23,13 @@ def generate_release_body(version: str, changelog_path: Path) -> str:
     version_without_v = version.removeprefix("v")
     github_url, _, _ = tf_registry_source.get_github_repo_info()
     registry_source = tf_registry_source.get_registry_source()
+    module_name = tf_registry_source.get_module_name()
     changelog_section = extract_version_section(changelog_path, version)
 
     parts = [
         "## Installation\n",
         "```hcl",
-        'module "cluster" {',
+        f'module "{module_name}" {{',
         f'  source  = "{registry_source}"',
         f'  version = "{version_without_v}"',
         "  # Your configuration here",

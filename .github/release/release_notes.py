@@ -3,6 +3,8 @@
 import subprocess
 import sys
 
+from release import tf_registry_source
+
 
 def get_previous_tag(current_version: str) -> str | None:
     try:
@@ -101,7 +103,8 @@ def main() -> None:
             print("", file=sys.stderr)
             print("Tip: Specify a commit/tag to compare against:", file=sys.stderr)
             print(f"     just release-notes {current_version} <previous_commit>", file=sys.stderr)
-            print("Initial release of terraform-mongodbatlas-cluster module.")
+            _, _, repo_name = tf_registry_source.get_github_repo_info()
+            print(f"Initial release of {repo_name} module.")
             return
 
     print(f"Comparing {previous_ref} -> {current_version}", file=sys.stderr)
