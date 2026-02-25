@@ -77,10 +77,11 @@ def _resolve_column(
     if col == "name":
         return _display_name(row)
     extra = row.model_extra or {}
-    value = extra.get(col, "")
-    if not value and col in table_config.auto_columns:
-        value = _resolve_auto_column(table_config.auto_columns[col], examples_dir / folder_name)
-    return value
+    if col in extra:
+        return extra[col]
+    if col in table_config.auto_columns:
+        return _resolve_auto_column(table_config.auto_columns[col], examples_dir / folder_name)
+    return ""
 
 
 def generate_toc_from_headings(content: str) -> str:
