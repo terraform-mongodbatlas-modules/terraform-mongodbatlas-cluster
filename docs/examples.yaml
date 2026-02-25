@@ -28,6 +28,10 @@ tables:
   - name: Getting Started Examples
     columns: ["cluster_type", "environment", "name"]
     link_column: name
+    auto_columns:
+      cluster_type:
+        file: main.tf
+        pattern: 'cluster_type\s*=\s*"(?P<value>[^"]+)"'
     example_rows:
       - folder: 8
         environment: Development
@@ -42,6 +46,10 @@ tables:
     readme_template: docs/example.tmpl.md
     columns: ["cluster_type", "name"]
     link_column: name
+    auto_columns:
+      cluster_type:
+        file: main.tf
+        pattern: 'cluster_type\s*=\s*"(?P<value>[^"]+)"'
     example_rows:
       - folder: 3
         name: Cluster with Analytics Nodes
