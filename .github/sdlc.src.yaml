@@ -99,6 +99,7 @@ paths:
     dest_path: .terraform-docs.yml
     sync_mode: scaffold
   - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
+    sync_mode: scaffold
 
 path_groups:
   regions:
@@ -143,7 +144,7 @@ destinations:
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
     default_branch: main
-    # no include_groups (no regions, no project_generator, no pre-release)
+    include_groups: [pre_release]
     skip_sections:
       justfile: [dev-vars-org, regions, checks]  # Org doesn't need org vars or region extraction
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # Enable when workspace tests exist
+      .github/workflows/code-health.yml: [job-slack]
