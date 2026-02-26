@@ -26,7 +26,10 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
+from release import tf_registry_source
 
 # Tag that marks the commit where the .changelog directory was first introduced.
 # This tag must be created in the repository before using the changelog generation workflow.
@@ -118,10 +121,26 @@ def get_gopath() -> str:
         sys.exit(1)
 
 
+GITHUB_REPO_URL_PLACEHOLDER = "GITHUB_REPO_URL"
+NOTE_TEMPLATE_PATH = ".github/changelog/release-note.tmpl"
+
+
+def resolve_note_template(repo_dir: Path) -> str:
+    """Replace GITHUB_REPO_URL placeholder in note template with actual repo URL."""
+    github_url, _, _ = tf_registry_source.get_github_repo_info()
+    template = (repo_dir / NOTE_TEMPLATE_PATH).read_text(encoding="utf-8")
+    return template.replace(GITHUB_REPO_URL_PLACEHOLDER, github_url)
+
+
 def build_changelog(last_release: str, repo_dir: Path) -> str:
     """Run changelog-build and return the output."""
     gopath = get_gopath()
     changelog_build = Path(gopath) / "bin" / "changelog-build"
+
+    resolved_template = resolve_note_template(repo_dir)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".tmpl", delete=False, encoding="utf-8") as f:
+        f.write(resolved_template)
+        resolved_template_path = f.name
 
     cmd = [
         str(changelog_build),
@@ -136,11 +155,10 @@ def build_changelog(last_release: str, repo_dir: Path) -> str:
         "-changelog-template",
         ".github/changelog/changelog.tmpl",
         "-note-template",
-        ".github/changelog/release-note.tmpl",
+        resolved_template_path,
     ]
 
     try:
-        # Change to repo directory before running the command
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -154,6 +172,8 @@ def build_changelog(last_release: str, repo_dir: Path) -> str:
         if e.stderr:
             print(e.stderr, file=sys.stderr)
         sys.exit(1)
+    finally:
+        Path(resolved_template_path).unlink(missing_ok=True)
 
 
 def build_changelog_content(

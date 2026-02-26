@@ -4,6 +4,7 @@ import textwrap
 from pathlib import Path
 
 from changelog import build_changelog as mod
+from release import tf_registry_source
 
 
 def _dedent(s: str) -> str:
@@ -157,3 +158,24 @@ def test_update_unreleased_section_strips_content(tmp_path: Path) -> None:
 
     content = changelog_file.read_text(encoding="utf-8")
     assert content == "## (Unreleased)\n\n* Feature with extra whitespace\n"
+
+
+def test_resolve_note_template(tmp_path: Path, monkeypatch) -> None:
+    tmpl_dir = tmp_path / ".github" / "changelog"
+    tmpl_dir.mkdir(parents=True)
+    (tmpl_dir / "release-note.tmpl").write_text(
+        "* {{.Body}} ([#{{- .Issue -}}](GITHUB_REPO_URL/pull/{{- .Issue -}}))",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        tf_registry_source,
+        "get_github_repo_info",
+        lambda: (
+            "https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp",
+            "terraform-mongodbatlas-modules",
+            "terraform-mongodbatlas-atlas-gcp",
+        ),
+    )
+    result = mod.resolve_note_template(tmp_path)
+    assert "terraform-mongodbatlas-atlas-gcp/pull/" in result
+    assert mod.GITHUB_REPO_URL_PLACEHOLDER not in result

@@ -3,8 +3,10 @@
 import re
 import subprocess
 import sys
+from functools import lru_cache
 
 
+@lru_cache
 def get_git_remote_url() -> str:
     for remote in ["origin", "upstream"]:
         try:
@@ -36,15 +38,19 @@ def parse_github_repo(remote_url: str) -> tuple[str, str]:
     return parts[0], parts[1]
 
 
-def compute_registry_source(owner: str, repo_name: str) -> str:
-    match = re.match(r"^terraform-([^-]+)-(.+)$", repo_name)
-    if not match:
+REPO_NAME_PATTERN = re.compile(r"^terraform-(?P<provider>[^-]+)-(?P<module>.+)$")
+
+
+def parse_repo_name(repo_name: str) -> tuple[str, str]:
+    if not (match := REPO_NAME_PATTERN.match(repo_name)):
         msg = f"Repository '{repo_name}' doesn't match pattern: terraform-{{provider}}-{{module}}"
         raise ValueError(msg)
-    provider = match.group(1)
-    module_name = match.group(2)
-    registry_source = f"{owner}/{module_name}/{provider}"
-    return registry_source
+    return match.group("provider"), match.group("module")
+
+
+def compute_registry_source(owner: str, repo_name: str) -> str:
+    provider, module_name = parse_repo_name(repo_name)
+    return f"{owner}/{module_name}/{provider}"
 
 
 def get_github_repo_info() -> tuple[str, str, str]:
@@ -57,6 +63,13 @@ def get_registry_source() -> str:
     remote_url = get_git_remote_url()
     owner, repo_name = parse_github_repo(remote_url)
     return compute_registry_source(owner, repo_name)
+
+
+def get_module_name() -> str:
+    """HCL-safe module name derived from git remote (hyphens replaced with underscores)."""
+    _, _, repo_name = get_github_repo_info()
+    _, module = parse_repo_name(repo_name)
+    return module.replace("-", "_")
 
 
 def main() -> None:

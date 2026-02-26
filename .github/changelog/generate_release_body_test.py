@@ -51,7 +51,24 @@ def test_extract_version_section_not_found(tmp_path: Path) -> None:
         mod.extract_version_section(changelog, "v0.9.0")
 
 
-def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    ("repo_name", "registry_source", "expected_module_name"),
+    [
+        (
+            "terraform-mongodbatlas-cluster",
+            "terraform-mongodbatlas-modules/cluster/mongodbatlas",
+            "cluster",
+        ),
+        (
+            "terraform-mongodbatlas-atlas-gcp",
+            "terraform-mongodbatlas-modules/atlas-gcp/mongodbatlas",
+            "atlas_gcp",
+        ),
+    ],
+)
+def test_generate_release_body(
+    tmp_path: Path, monkeypatch, repo_name: str, registry_source: str, expected_module_name: str
+) -> None:
     changelog = tmp_path / "CHANGELOG.md"
     changelog.write_text(
         _dedent("""
@@ -63,22 +80,17 @@ def test_generate_release_body(tmp_path: Path, monkeypatch) -> None:
     """),
         encoding="utf-8",
     )
+    owner = "terraform-mongodbatlas-modules"
     monkeypatch.setattr(
         tf_registry_source,
         "get_github_repo_info",
-        lambda: (
-            "https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster",
-            "terraform-mongodbatlas-modules",
-            "terraform-mongodbatlas-cluster",
-        ),
+        lambda: (f"https://github.com/{owner}/{repo_name}", owner, repo_name),
     )
-    monkeypatch.setattr(
-        tf_registry_source,
-        "get_registry_source",
-        lambda: "terraform-mongodbatlas-modules/cluster/mongodbatlas",
-    )
+    monkeypatch.setattr(tf_registry_source, "get_registry_source", lambda: registry_source)
+    monkeypatch.setattr(tf_registry_source, "get_module_name", lambda: expected_module_name)
     body = mod.generate_release_body("v0.2.0", changelog)
-    assert 'source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"' in body
+    assert f'source  = "{registry_source}"' in body
+    assert f'module "{expected_module_name}" {{' in body
     assert 'version = "0.2.0"' in body
     assert "## What's Changed" in body
     assert "* New feature" in body
