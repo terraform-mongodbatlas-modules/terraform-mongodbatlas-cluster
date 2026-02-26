@@ -54,6 +54,7 @@ paths:
   - src_path: .github/workflows/code-health.yml
   - src_path: .github/workflows/generate-changelog.yml
   - src_path: .github/workflows/notify-docs-team.yml
+  - src_path: .github/pr-labeler.yml
   - src_path: .github/workflows/pull-request-lint.yml
   - src_path: .github/workflows/release.yml
   - src_path: .github/workflows/update-terraform-versions.yml
