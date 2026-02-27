@@ -149,3 +149,4 @@ destinations:
     # no include_groups (no regions, no project_generator, no pre-release)
     skip_sections:
       justfile: [dev-vars-org, regions, checks]  # Org doesn't need org vars or region extraction
+      .github/workflows/pre-release-tests.yml: [env]  # Uses a separate org ID and credentials for pre-release tests
