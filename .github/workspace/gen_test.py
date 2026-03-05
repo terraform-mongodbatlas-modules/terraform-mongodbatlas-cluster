@@ -43,6 +43,28 @@ def test_generate_modules_tf_output_per_example(fake_repo: Path, tmp_path: Path)
     assert "value = module.ex_02" in result
 
 
+def test_generate_modules_tf_sensitive_output(fake_repo: Path, tmp_path: Path):
+    (fake_repo / "secret_example").mkdir()
+    config = models.WsConfig(
+        examples=[models.Example(name="secret_example", sensitive_output=True)],
+        var_groups={},
+    )
+    result = gen.generate_modules_tf(config, config.examples, tmp_path)
+    assert result is not None
+    assert "sensitive = true" in result
+
+
+def test_generate_modules_tf_non_sensitive_output(fake_repo: Path, tmp_path: Path):
+    (fake_repo / "plain_example").mkdir()
+    config = models.WsConfig(
+        examples=[models.Example(name="plain_example")],
+        var_groups={},
+    )
+    result = gen.generate_modules_tf(config, config.examples, tmp_path)
+    assert result is not None
+    assert "sensitive" not in result
+
+
 def test_generate_modules_tf_empty_examples(tmp_path: Path):
     config = models.WsConfig(examples=[], var_groups={})
     assert gen.generate_modules_tf(config, [], tmp_path) is None
