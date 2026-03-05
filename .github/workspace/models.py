@@ -91,6 +91,7 @@ class Example:
     var_groups: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
     output_assertions: list[OutputAssertion] = field(default_factory=list)
+    sensitive_output: bool = False
 
     def should_use_nested_snapshots(self) -> bool:
         """Determine if snapshots for this example should use nested directory structure.
@@ -198,6 +199,7 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
                 var_groups=ex.get("var_groups", []),
                 plan_regressions=regressions,
                 output_assertions=assertions,
+                sensitive_output=ex.get("sensitive_output", False),
             )
         )
     return WsConfig(examples=examples, var_groups=var_groups)
