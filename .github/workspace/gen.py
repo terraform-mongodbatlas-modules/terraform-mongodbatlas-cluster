@@ -67,6 +67,8 @@ def generate_modules_tf(
         lines.extend(["}", ""])
         lines.append(f'output "ex_{ex.identifier}" {{')
         lines.append(f"  value = module.ex_{ex.identifier}")
+        if ex.sensitive_output:
+            lines.append("  sensitive = true")
         lines.extend(["}", ""])
     return "\n".join(lines)
 
