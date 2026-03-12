@@ -17,7 +17,7 @@ locals {
   # ---- SHARDED  ----
   sharded_uniform          = local.is_sharded && var.shard_count != null
   sharded_explicit         = local.is_sharded && var.shard_count == null
-  has_any_zone_in_shard    = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && trimspace(r.zone_name) != ""])
+  has_any_zone_in_shard    = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && try(trimspace(r.zone_name), "") != ""])
   has_any_number_in_shard  = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
   all_have_number_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([for r in var.regions : r.shard_number != null])
   sharded_validation_errors = local.is_sharded && !local.replication_specs_resource_var_used ? compact(concat(
