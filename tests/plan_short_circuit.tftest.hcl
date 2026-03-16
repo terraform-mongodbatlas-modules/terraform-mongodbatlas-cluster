@@ -1,4 +1,4 @@
-# Verify that trimspace(null) does not crash on TF 1.9-1.11 where && / || inside for expressions do not short-circuit. */
+# Verify that trimspace(null) does not crash on TF 1.9-1.11 where && / || inside for expressions do not short-circuit.
 mock_provider "mongodbatlas" {}
 
 variables {
