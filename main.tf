@@ -51,7 +51,7 @@ locals {
   # ---- GEOSHARDED  ----
   geo_rows = local.is_geosharded ? [
     for r in local.regions : r
-    if r.zone_name != null && trimspace(r.zone_name) != ""
+    if r.zone_name != null && try(trimspace(r.zone_name), "") != ""
   ] : []
 
   unique_zone_names = local.is_geosharded ? distinct([
@@ -235,7 +235,7 @@ locals {
     local.auto_scaling_compute_enabled_analytics ? [for idx, r in local.regions : r.instance_size_analytics != null ? "Cannot use regions[*].instance_size_analytics when auto_scaling_analytics is used: index ${idx} instance_size_analytics=${r.instance_size_analytics}" : ""] : [],
     # Cluster type vs region fields
     local.is_geosharded ? concat(
-      [for idx, r in local.regions : (r.zone_name == null || trimspace(r.zone_name) == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
+      [for idx, r in local.regions : (r.zone_name == null || try(trimspace(r.zone_name), "") == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
       length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
     ) : [],
     local.is_replicaset ? concat(
