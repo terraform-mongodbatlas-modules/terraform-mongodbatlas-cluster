@@ -131,8 +131,8 @@ def test_nonexistent_file() -> None:
         cwd=CHECKER_DIR,
     )
 
-    assert result.returncode == 0
-    assert "No changelog entry file found" in result.stdout
+    assert result.returncode != 0
+    assert "not found or unreadable" in result.stderr
 
 
 def test_missing_colon() -> None:

@@ -21,12 +21,8 @@ func main() {
 		log.Fatal("Usage: go run main.go <path-to-changelog-file>")
 	}
 	content, err := os.ReadFile(os.Args[1])
-	if os.IsNotExist(err) {
-		fmt.Printf("No changelog entry file found at: %s (this may be expected)\n", os.Args[1])
-		return
-	}
 	if err != nil {
-		log.Fatalf("Error reading changelog file: %v", err)
+		log.Fatalf("Changelog entry file %s not found or unreadable: %v\nIf this PR doesn't need a changelog entry, use a skip title prefix (chore, test, doc, ci, refactor) or add the 'skip-changelog-check' label.", os.Args[1], err)
 	}
 	notes := changelog.NotesFromEntry(changelog.Entry{Body: string(content)})
 	if len(notes) == 0 {

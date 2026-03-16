@@ -82,6 +82,8 @@ paths:
   # Terraform docs & config
   - src_path: .terraform-versions.yaml
   # Scaffolded files (only synced if not existing)
+  - src_path: CODE_OF_CONDUCT.md
+    sync_mode: scaffold
   - src_path: CONTRIBUTING.md
     sync_mode: scaffold
   - src_path: .changelog/.gitkeep

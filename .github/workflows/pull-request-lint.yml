@@ -12,6 +12,7 @@ on:
       - edited
 jobs:
   validate:
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     name: Validate PR title
     runs-on: ubuntu-latest
     permissions:
@@ -69,6 +70,7 @@ jobs:
           delete: true
   labeler:
     name: Add Label
+    if: always()
     needs: [ validate ]
     runs-on: ubuntu-latest
     permissions:
