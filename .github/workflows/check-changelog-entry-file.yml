@@ -4,20 +4,34 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
+env:
+  SKIP_PREFIXES: chore test doc ci refactor
+
 jobs:
+  should-skip:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.eval.outputs.skip }}
+    steps:
+      - id: eval
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-changelog-check') }}
+        run: |
+          if [ "$HAS_SKIP_LABEL" = "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for prefix in $SKIP_PREFIXES; do
+            if [[ "$PR_TITLE" == "$prefix:"* ]] || [[ "$PR_TITLE" == "$prefix("* ]]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
   check:
-    if: >-
-      !contains(github.event.pull_request.labels.*.name, 'skip-changelog-check') &&
-      !startsWith(github.event.pull_request.title, 'chore:') &&
-      !startsWith(github.event.pull_request.title, 'chore(') &&
-      !startsWith(github.event.pull_request.title, 'test:') &&
-      !startsWith(github.event.pull_request.title, 'test(') &&
-      !startsWith(github.event.pull_request.title, 'doc:') &&
-      !startsWith(github.event.pull_request.title, 'doc(') &&
-      !startsWith(github.event.pull_request.title, 'ci:') &&
-      !startsWith(github.event.pull_request.title, 'ci(') &&
-      !startsWith(github.event.pull_request.title, 'refactor:') &&
-      !startsWith(github.event.pull_request.title, 'refactor(')
+    needs: should-skip
+    if: needs.should-skip.outputs.skip != 'true'
     runs-on: ubuntu-latest
     env:
       CHANGELOG_FILE: ".changelog/${{ github.event.pull_request.number }}.txt"
