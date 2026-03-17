@@ -11,6 +11,17 @@ from workspace import gen, models, output_assertions, plan, reg
 
 app = typer.Typer()
 
+EXAMPLES_DIR = models.REPO_ROOT / "examples"
+
+
+def _resolve_example_dirs(ws_dir: Path, include_examples: str) -> list[Path]:
+    ws_config_path = ws_dir / models.WORKSPACE_CONFIG_FILE
+    if not ws_config_path.exists():
+        return []
+    config = models.parse_ws_config(ws_config_path)
+    examples_list = gen.parse_include_examples(include_examples, config)
+    return [ex.example_path(EXAMPLES_DIR) for ex in examples_list]
+
 
 class RunMode(enum.StrEnum):
     SETUP_ONLY = "setup-only"
@@ -49,28 +60,30 @@ def main(
     for ws_dir in ws_dirs:
         typer.echo(f"=== {ws_dir.name} ({mode}) ===")
         gen.process_workspace(ws_dir, include_examples=examples)
+        example_dirs = _resolve_example_dirs(ws_dir, examples)
 
-        if not skip_init:
-            plan.run_terraform_init(ws_dir)
+        with plan.strip_provider_blocks(example_dirs):
+            if not skip_init:
+                plan.run_terraform_init(ws_dir)
 
-        if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
-            plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
+            if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
+                plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
 
-        if mode == RunMode.PLAN_SNAPSHOT_TEST:
-            reg.process_workspace(
-                ws_dir,
-                force_regen=force_regen,
-                show_uncovered=show_uncovered,
-            )
+            if mode == RunMode.PLAN_SNAPSHOT_TEST:
+                reg.process_workspace(
+                    ws_dir,
+                    force_regen=force_regen,
+                    show_uncovered=show_uncovered,
+                )
 
-        if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
-            plan.run_terraform_apply(ws_dir, var_file, auto_approve)
+            if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
+                plan.run_terraform_apply(ws_dir, var_file, auto_approve)
 
-        if mode == RunMode.CHECK_OUTPUTS:
-            output_assertions.process_workspace(ws_dir, include_examples)
+            if mode == RunMode.CHECK_OUTPUTS:
+                output_assertions.process_workspace(ws_dir, include_examples)
 
-        if mode == RunMode.DESTROY:
-            plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
+            if mode == RunMode.DESTROY:
+                plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
 
     typer.echo("Done.")
 

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import re
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -90,6 +93,28 @@ def run_terraform_destroy(ws_dir: Path, var_files: list[Path], auto_approve: boo
     typer.echo("Running terraform destroy...")
     if run_cmd(destroy_cmd, ws_dir) != 0:
         raise typer.Exit(1)
+
+
+PROVIDER_BLOCK_PATTERN = re.compile(r"\n*provider\s+\"[^\"]+\"\s*\{[^}]*\}\s*")
+
+
+@contextlib.contextmanager
+def strip_provider_blocks(example_dirs: list[Path]) -> Generator[None]:
+    originals: dict[Path, str] = {}
+    try:
+        for example_dir in example_dirs:
+            versions_tf = example_dir / "versions.tf"
+            if not versions_tf.exists():
+                continue
+            content = versions_tf.read_text()
+            stripped = PROVIDER_BLOCK_PATTERN.sub("\n", content).strip() + "\n"
+            if stripped != content:
+                originals[versions_tf] = content
+                versions_tf.write_text(stripped)
+        yield
+    finally:
+        for path, content in originals.items():
+            path.write_text(content)
 
 
 @app.command()
