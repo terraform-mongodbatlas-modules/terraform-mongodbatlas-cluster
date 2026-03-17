@@ -1,0 +1,3 @@
+```release-note:bug
+module: Wraps trimspace calls with try() to prevent crash on TF 1.9-1.11 when zone_name is null
+```
