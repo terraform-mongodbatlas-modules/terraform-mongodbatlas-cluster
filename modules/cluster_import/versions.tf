@@ -13,6 +13,6 @@ terraform {
 
   provider_meta "mongodbatlas" {
     module_name    = "cluster/cluster_import"
-    module_version = "0.3.1"
+    module_version = "local"
   }
 }
