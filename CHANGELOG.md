@@ -1,5 +1,7 @@
 ## (Unreleased)
 
+## 0.3.1 (March 17, 2026)
+
 BUG FIXES:
 
 * module: Wraps trimspace calls with try() to prevent crash on TF 1.9-1.11 when zone_name is null ([#128](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/128))
