@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import re
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -90,6 +93,36 @@ def run_terraform_destroy(ws_dir: Path, var_files: list[Path], auto_approve: boo
     typer.echo("Running terraform destroy...")
     if run_cmd(destroy_cmd, ws_dir) != 0:
         raise typer.Exit(1)
+
+
+# Matches single-line `provider "x" {}` and multi-line blocks where `}` is at
+# line start. `\s+` after `provider` prevents matching `provider_meta` blocks.
+PROVIDER_BLOCK_PATTERN = re.compile(
+    r"\n*provider\s+\"[^\"]+\"\s*\{[^\n}]*\}\s*"  # single-line: provider "x" {}
+    r"|"
+    r"\n*provider\s+\"[^\"]+\"\s*\{.*?^\}\s*",  # multi-line: } at line start
+    re.MULTILINE | re.DOTALL,
+)
+
+
+@contextlib.contextmanager
+def strip_provider_blocks(example_dirs: list[Path]) -> Generator[None]:
+    originals: dict[Path, str] = {}
+    try:
+        for example_dir in example_dirs:
+            versions_tf = example_dir / "versions.tf"
+            if not versions_tf.exists():
+                continue
+            content = versions_tf.read_text()
+            if not PROVIDER_BLOCK_PATTERN.search(content):
+                continue
+            stripped = PROVIDER_BLOCK_PATTERN.sub("", content).rstrip() + "\n"
+            originals[versions_tf] = content
+            versions_tf.write_text(stripped)
+        yield
+    finally:
+        for path, content in originals.items():
+            path.write_text(content)
 
 
 @app.command()
