@@ -25,6 +25,31 @@ terraform {
 provider "mongodbatlas" {}
 """
 
+VERSIONS_TF_WITH_MULTILINE_PROVIDER = """\
+terraform {
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "~> 2.0"
+    }
+  }
+  required_version = ">= 1.9"
+
+  provider_meta "mongodbatlas" {
+    module_name    = "cluster"
+    module_version = "local"
+  }
+}
+
+provider "mongodbatlas" {
+  default_tags {
+    tags = {
+      environment = "dev"
+    }
+  }
+}
+"""
+
 VERSIONS_TF_WITHOUT_PROVIDER = """\
 terraform {
   required_providers {
@@ -52,6 +77,7 @@ def test_strip_and_restore(tmp_path: Path):
     with strip_provider_blocks([ex_dir]):
         content = vf.read_text()
         assert 'provider "mongodbatlas"' not in content
+        assert 'provider_meta "mongodbatlas"' in content
         assert "terraform {" in content
 
     assert vf.read_text() == VERSIONS_TF_WITH_PROVIDER
@@ -78,6 +104,22 @@ def test_no_provider_block_unchanged(tmp_path: Path):
 
     with strip_provider_blocks([ex_dir]):
         assert vf.read_text() == VERSIONS_TF_WITHOUT_PROVIDER
+
+
+def test_strip_multiline_provider(tmp_path: Path):
+    ex_dir = tmp_path / "01_basic"
+    ex_dir.mkdir()
+    vf = ex_dir / "versions.tf"
+    vf.write_text(VERSIONS_TF_WITH_MULTILINE_PROVIDER)
+
+    with strip_provider_blocks([ex_dir]):
+        content = vf.read_text()
+        assert 'provider "mongodbatlas"' not in content
+        assert "default_tags" not in content
+        assert 'provider_meta "mongodbatlas"' in content
+        assert "terraform {" in content
+
+    assert vf.read_text() == VERSIONS_TF_WITH_MULTILINE_PROVIDER
 
 
 def test_missing_versions_tf(tmp_path: Path):

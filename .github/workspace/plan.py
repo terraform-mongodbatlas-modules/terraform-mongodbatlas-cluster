@@ -95,7 +95,14 @@ def run_terraform_destroy(ws_dir: Path, var_files: list[Path], auto_approve: boo
         raise typer.Exit(1)
 
 
-PROVIDER_BLOCK_PATTERN = re.compile(r"\n*provider\s+\"[^\"]+\"\s*\{[^}]*\}\s*")
+# Matches single-line `provider "x" {}` and multi-line blocks where `}` is at
+# line start. `\s+` after `provider` prevents matching `provider_meta` blocks.
+PROVIDER_BLOCK_PATTERN = re.compile(
+    r"\n*provider\s+\"[^\"]+\"\s*\{[^\n}]*\}\s*"  # single-line: provider "x" {}
+    r"|"
+    r"\n*provider\s+\"[^\"]+\"\s*\{.*?^\}\s*",  # multi-line: } at line start
+    re.MULTILINE | re.DOTALL,
+)
 
 
 @contextlib.contextmanager
@@ -107,10 +114,11 @@ def strip_provider_blocks(example_dirs: list[Path]) -> Generator[None]:
             if not versions_tf.exists():
                 continue
             content = versions_tf.read_text()
-            stripped = PROVIDER_BLOCK_PATTERN.sub("\n", content).strip() + "\n"
-            if stripped != content:
-                originals[versions_tf] = content
-                versions_tf.write_text(stripped)
+            if not PROVIDER_BLOCK_PATTERN.search(content):
+                continue
+            stripped = PROVIDER_BLOCK_PATTERN.sub("", content).rstrip() + "\n"
+            originals[versions_tf] = content
+            versions_tf.write_text(stripped)
         yield
     finally:
         for path, content in originals.items():
