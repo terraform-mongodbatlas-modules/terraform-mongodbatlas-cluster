@@ -95,7 +95,7 @@ def generate_toc_from_headings(content: str) -> str:
                 continue
             anchor = heading_text.lower()
             anchor = re.sub(r"[^\w\s-]", "", anchor)
-            anchor = re.sub(r"[\s]+", "-", anchor)
+            anchor = re.sub(r"\s", "-", anchor)
             anchor = anchor.strip("-")
             toc_lines.append(f"- [{heading_text}](#{anchor})")
     return "\n".join(toc_lines)

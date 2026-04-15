@@ -115,6 +115,13 @@ def test_resolve_auto_column_pattern_no_match(tmp_path: Path) -> None:
     assert mod._resolve_auto_column(auto_config, tmp_path) == ""
 
 
+def test_generate_toc_ampersand_produces_double_hyphen() -> None:
+    content = "## AWS Cloud Provider Access & IAM Policy\n## Simple Heading\n"
+    result = mod.generate_toc_from_headings(content)
+    assert "(#aws-cloud-provider-access--iam-policy)" in result
+    assert "(#simple-heading)" in result
+
+
 def test_downgrade_headers() -> None:
     content = """\
 # H1 stays the same
