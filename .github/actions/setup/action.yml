@@ -54,6 +54,7 @@ runs:
       if: inputs.terraform == 'true'
       uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
       with:
+        terraform_version: '1.14.9' # Regression in 1.15.0. See https://github.com/hashicorp/terraform/issues/38463
         terraform_wrapper: false
 
     - name: Install tflint
