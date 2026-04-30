@@ -4,10 +4,12 @@ import re
 import sys
 from pathlib import Path
 
-MONGODBATLAS_PROVIDER_PATTERN = r'source\s*=\s*"mongodb/mongodbatlas"'
-PROVIDER_META_PATTERN = r'provider_meta\s+"mongodbatlas"'
-MODULE_NAME_PATTERN = r'module_name\s*=\s*"([^"]*)"'
-MODULE_VERSION_PATTERN = r'module_version\s*=\s*"[^"]*"'
+from tf_utils.versions_tf_common import (
+    MODULE_VERSION_PATTERN,
+    has_mongodbatlas_provider,
+    has_provider_meta,
+    mongodbatlas_module_name_from_content,
+)
 
 
 def extract_version_number(version: str) -> str:
@@ -21,19 +23,7 @@ def get_module_name_from_root(repo_root: Path) -> str | None:
     root_versions = repo_root / "versions.tf"
     if not root_versions.exists():
         return None
-    content = root_versions.read_text(encoding="utf-8")
-    match = re.search(MODULE_NAME_PATTERN, content)
-    return match.group(1) if match else None
-
-
-def has_mongodbatlas_provider(content: str) -> bool:
-    """Check if file uses mongodbatlas provider."""
-    return bool(re.search(MONGODBATLAS_PROVIDER_PATTERN, content))
-
-
-def has_provider_meta(content: str) -> bool:
-    """Check if file already has provider_meta block."""
-    return bool(re.search(PROVIDER_META_PATTERN, content))
+    return mongodbatlas_module_name_from_content(root_versions.read_text(encoding="utf-8"))
 
 
 def inject_provider_meta(content: str, module_name: str, version: str) -> str | None:

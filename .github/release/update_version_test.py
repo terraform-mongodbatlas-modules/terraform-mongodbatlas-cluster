@@ -156,16 +156,13 @@ def test_inject_provider_meta_malformed_no_closing_brace() -> None:
     assert result is None
 
 
-def test_update_versions_tf_warns_on_malformed_file(tmp_path: Path, capsys) -> None:
-    """Test that a warning is printed when terraform block is malformed."""
+def test_update_versions_tf_skips_unstructured_mongodbatlas(tmp_path: Path, capsys) -> None:
+    """Without a terraform/required_providers structure, HCL2 sees no mongodbatlas provider."""
     versions_tf = tmp_path / "versions.tf"
-    original = 'mongodbatlas = { source = "mongodb/mongodbatlas" }'  # No terraform block
+    original = 'mongodbatlas = { source = "mongodb/mongodbatlas" }'
     versions_tf.write_text(original, encoding="utf-8")
 
     mod.update_versions_tf(versions_tf, "1.0.0", "versions.tf", "cluster")
 
-    # File should be unchanged
     assert versions_tf.read_text(encoding="utf-8") == original
-    # Warning should be printed
-    stderr = capsys.readouterr().err
-    assert "Could not find terraform block" in stderr
+    assert "Skipped" in capsys.readouterr().out

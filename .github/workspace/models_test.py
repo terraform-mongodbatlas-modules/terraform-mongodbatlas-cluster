@@ -165,6 +165,27 @@ var_groups:
     assert config.var_groups["shared"][0].name == "tags"
 
 
+def test_parse_ws_config_module_depends_on(tmp_path: Path):
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
+examples:
+  - name: with_dep
+    var_groups: [shared]
+    module_depends_on:
+      - time_sleep.x
+      - null_resource.y
+    plan_regressions: []
+
+var_groups:
+  shared:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id
+""")
+    config = models.parse_ws_config(ws_config)
+    assert config.examples[0].module_depends_on == ["time_sleep.x", "null_resource.y"]
+
+
 def test_parse_ws_config_named_example(tmp_path: Path):
     ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
     ws_config.write_text("""

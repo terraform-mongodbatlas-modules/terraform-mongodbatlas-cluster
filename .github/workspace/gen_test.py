@@ -68,3 +68,22 @@ def test_generate_modules_tf_non_sensitive_output(fake_repo: Path, tmp_path: Pat
 def test_generate_modules_tf_empty_examples(tmp_path: Path):
     config = models.WsConfig(examples=[], var_groups={})
     assert gen.generate_modules_tf(config, [], tmp_path) is None
+
+
+def test_generate_modules_tf_module_depends_on(fake_repo: Path, tmp_path: Path):
+    (fake_repo / "with_dep").mkdir()
+    config = models.WsConfig(
+        examples=[
+            models.Example(
+                name="with_dep",
+                module_depends_on=["time_sleep.x", "null_resource.y"],
+            )
+        ],
+        var_groups={},
+    )
+    result = gen.generate_modules_tf(config, config.examples, tmp_path)
+    assert result is not None
+    assert "  depends_on = [" in result
+    assert "    time_sleep.x," in result
+    assert "    null_resource.y," in result
+    assert 'module "ex_with_dep" {' in result

@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.6"
+  required_version = ">= 1.9"
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
@@ -7,7 +7,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "2.4.1"
+      version = "~> 2.4"
     }
   }
 
