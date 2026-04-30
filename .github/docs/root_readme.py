@@ -76,11 +76,14 @@ def _resolve_column(
         return f"[{_display_name(row)}](./examples/{folder_name})"
     if col == "name":
         return _display_name(row)
-    extra = row.model_extra or {}
-    if col in extra:
-        return extra[col]
+    data = row.model_dump()
+    if col in data and data[col] is not None:
+        return str(data[col])
     if col in table_config.auto_columns:
         return _resolve_auto_column(table_config.auto_columns[col], examples_dir / folder_name)
+    extra = row.model_extra or {}
+    if col in extra:
+        return str(extra[col])
     return ""
 
 
@@ -105,6 +108,8 @@ def generate_tables(tables: list[config_loader.TableConfig], examples_dir: Path)
     tables_output = []
     for table_config in tables:
         tables_output.append(f"## {table_config.name}\n")
+        if table_config.intro:
+            tables_output.append(f"{table_config.intro.strip()}\n\n")
         header = " | ".join(col.replace("_", " ").title() for col in table_config.columns)
         separator = " | ".join("---" for _ in table_config.columns)
         tables_output.append(header)

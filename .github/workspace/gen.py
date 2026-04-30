@@ -64,6 +64,11 @@ def generate_modules_tf(
         for var in config.vars_for_example(ex):
             val = f"var.{var.name}" if var.expose_in_workspace else var.module_value
             lines.append(f"  {var.name} = {val}")
+        if ex.module_depends_on:
+            lines.append("  depends_on = [")
+            for ref in ex.module_depends_on:
+                lines.append(f"    {ref},")
+            lines.append("  ]")
         lines.extend(["}", ""])
         lines.append(f'output "ex_{ex.identifier}" {{')
         lines.append(f"  value = module.ex_{ex.identifier}")

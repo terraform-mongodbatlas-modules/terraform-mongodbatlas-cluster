@@ -42,6 +42,21 @@ def get_example_name(folder_name: str, config: dict) -> str:
     return name_without_number.replace("_", " ").title()
 
 
+def get_example_description(folder_name: str, config: dict) -> str:
+    match = re.match(r"^(\d+)_", folder_name)
+    folder_number = int(match.group(1)) if match else None
+    folder_name_lower = folder_name.lower()
+    for table in config.get("tables", []):
+        for example_row in table.get("example_rows", []):
+            config_folder_name = example_row.get("folder_name", "")
+            if config_folder_name.lower() == folder_name_lower or (
+                folder_number is not None and example_row.get("folder") == folder_number
+            ):
+                desc = example_row.get("description", "")
+                return desc if isinstance(desc, str) else ""
+    return ""
+
+
 def get_registry_source() -> str:
     result = subprocess.run(
         ["just", "tf-registry-source"],
@@ -129,6 +144,7 @@ def generate_readme(
     version: str | None = None,
     additional_files: list[str] | None = None,
     skip_rules: list[config_loader.SkipRule] | None = None,
+    description: str = "",
 ) -> str:
     header_comment = (
         doc_utils.generate_header_comment(
@@ -138,6 +154,7 @@ def generate_readme(
         + "\n"
     )
     content = template.replace("{{ .NAME }}", example_name)
+    content = content.replace("{{ .DESCRIPTION }}", description)
     code_snippet = generate_code_snippet(example_dir, registry_source, version, additional_files)
     content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
     content = doc_utils.apply_template_vars(
@@ -251,6 +268,7 @@ def process_example(
             version,
             examples_readme_config.code_snippet_files.additional,
             examples_readme_config.template_vars.skip_rules,
+            description=get_example_description(example_dir.name, config),
         )
         if check and readme_path.exists():
             existing_content = readme_path.read_text(encoding="utf-8")

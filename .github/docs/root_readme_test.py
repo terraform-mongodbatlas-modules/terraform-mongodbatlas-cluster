@@ -34,6 +34,22 @@ def test_extract_getting_started_no_markers() -> None:
     assert mod.extract_getting_started(template) == ""
 
 
+def test_generate_tables_includes_intro(tmp_path: Path) -> None:
+    examples_dir = tmp_path / "examples"
+    (examples_dir / "01_basic").mkdir(parents=True)
+    intro_text = "Lead paragraph before table."
+    table = config_loader.TableConfig(
+        name="Examples",
+        intro=intro_text,
+        columns=["name"],
+        link_column="name",
+        example_rows=[config_loader.ExampleRow(name="Basic", folder=1)],
+    )
+    result = mod.generate_tables([table], examples_dir)
+    assert intro_text in result
+    assert result.index(intro_text) < result.index("Name")
+
+
 def test_generate_tables_with_extra_columns(tmp_path: Path) -> None:
     examples_dir = tmp_path / "examples"
     (examples_dir / "01_basic").mkdir(parents=True)
