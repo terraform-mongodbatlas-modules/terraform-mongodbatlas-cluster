@@ -46,7 +46,9 @@ def filter_values(
     for key, val in values.items():
         if key in skip_attrs:
             continue
-        if key in redact_attrs:
+        # Redact sensitive attribute names only when a value is present; keep nulls
+        # consistent with skip_values (typically omitted) instead of "<secret>".
+        if key in redact_attrs and val is not None:
             filtered[key] = f"<{key}>"
             continue
         if val is None and "null" in skip_values:
