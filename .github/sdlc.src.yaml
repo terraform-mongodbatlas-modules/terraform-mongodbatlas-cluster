@@ -41,6 +41,7 @@ paths:
   - src_path: .github/changelog/check-changelog-entry-file/go.sum
     sync_mode: replace
   - src_path: .github/docs/
+  - src_path: .github/tf_utils/
   - src_path: .github/release/
   - src_path: .github/pyproject.toml
   - src_path: .github/shared/

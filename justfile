@@ -17,7 +17,7 @@ default:
 
 # === DO_NOT_EDIT: path-sync checks ===
 # CHECKS
-pre-commit: fmt py-check validate lint check-docs
+pre-commit: fmt py-check validate-versions-tf validate lint check-docs
     @echo "Pre-commit checks passed"
 
 pre-push: pre-commit unit-plan-tests py-test
@@ -52,6 +52,9 @@ lint:
 py-check:
     {{uv_gh}} ruff format --exit-non-zero-on-format .github # avoids having to manually run `just py-fmt` after pre-commit check
     {{uv_gh}} ruff check .github
+
+validate-versions-tf:
+    {{py}} tf_utils.validate_versions_tf --repo-root {{justfile_directory()}}
 
 py-fix:
     {{uv_gh}} ruff check --fix .github

@@ -9,6 +9,7 @@ dependencies = [
     "typer~=0.20",
     "pytest~=9.0",
     "pytest-regressions~=2.8",
+    "python-hcl2~=8.1",
 ]
 
 [dependency-groups]
