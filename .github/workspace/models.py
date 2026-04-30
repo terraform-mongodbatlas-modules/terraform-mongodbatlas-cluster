@@ -89,6 +89,7 @@ class Example:
     number: int | None = None
     name: str | None = None
     var_groups: list[str] = field(default_factory=list)
+    module_depends_on: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
     output_assertions: list[OutputAssertion] = field(default_factory=list)
     sensitive_output: bool = False
@@ -197,6 +198,7 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
                 number=ex.get("number"),
                 name=ex.get("name"),
                 var_groups=ex.get("var_groups", []),
+                module_depends_on=ex.get("module_depends_on") or [],
                 plan_regressions=regressions,
                 output_assertions=assertions,
                 sensitive_output=ex.get("sensitive_output", False),
