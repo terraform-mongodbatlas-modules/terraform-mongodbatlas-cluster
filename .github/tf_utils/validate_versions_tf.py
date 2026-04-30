@@ -11,7 +11,11 @@ from pathlib import Path
 import typer
 from hcl2.api import loads
 
-from tf_utils.versions_tf_common import all_provider_entries, terraform_required_version
+from tf_utils.versions_tf_common import (
+    all_provider_entries,
+    providers_referenced_in_module_dir,
+    terraform_required_version,
+)
 
 
 @dataclass(frozen=True)
@@ -48,13 +52,18 @@ def parse_root_versions_reference(repo_root: Path) -> RootVersionsRef:
 
 def _errors_for_file(path: Path, content: str, root: RootVersionsRef) -> list[str]:
     errs: list[str] = []
+    root_names = frozenset(root.providers.keys())
+    used, scan_errs = providers_referenced_in_module_dir(
+        path.parent, root_names, for_versions_tf=path
+    )
+    errs.extend(scan_errs)
     try:
         data = loads(content)
     except Exception as exc:
-        return [f"{path}: HCL parse error: {exc}"]
+        return errs + [f"{path}: HCL parse error: {exc}"]
 
     if not isinstance(data, dict):
-        return [f"{path}: unexpected parse result"]
+        return errs + [f"{path}: unexpected parse result"]
 
     terraform_blocks = data.get("terraform") or []
     providers = all_provider_entries(data)
@@ -73,7 +82,10 @@ def _errors_for_file(path: Path, content: str, root: RootVersionsRef) -> list[st
 
     for name, (root_ver, root_src) in root.providers.items():
         if name not in child_map:
-            errs.append(f"{path}: missing required_providers.{name} (must match root versions.tf)")
+            if name in used:
+                errs.append(
+                    f"{path}: missing required_providers.{name} (must match root versions.tf)"
+                )
             continue
         child_ver, child_src = child_map[name]
         if child_ver != root_ver:

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+from pathlib import Path
+from typing import Any, Iterable, NamedTuple
 
 from hcl2.api import loads
 
@@ -123,3 +124,60 @@ def has_provider_meta(content: str) -> bool:
     if data is None:
         return False
     return find_mongodbatlas_provider_meta(data.get("terraform") or []) is not None
+
+
+def provider_from_resource_type(type_str: str, root_provider_names: Iterable[str]) -> str | None:
+    """Map a Terraform resource/data type string to a root provider name if it matches."""
+    names = frozenset(root_provider_names)
+    for p in sorted(names, key=len, reverse=True):
+        if type_str == p or type_str.startswith(f"{p}_"):
+            return p
+    return None
+
+
+def _resource_types_from_section(data: dict[str, Any], section: str) -> list[str]:
+    out: list[str] = []
+    for block in data.get(section) or []:
+        if not isinstance(block, dict):
+            continue
+        for k in block:
+            if k in ("__is_block__", "__comments__", "__inline_comments__"):
+                continue
+            out.append(unwrap_hcl2_string(k))
+    return out
+
+
+def providers_referenced_in_module_dir(
+    module_dir: Path,
+    root_provider_names: frozenset[str],
+    *,
+    for_versions_tf: Path | None = None,
+) -> tuple[frozenset[str], list[str]]:
+    """Collect root provider names referenced by resource/data blocks in ``*.tf`` (non-recursive).
+
+    If ``for_versions_tf`` is set, that path is skipped so sibling usage is detected without
+    re-parsing the file being validated (and without requiring resources in ``versions.tf``).
+
+    Returns ``(used_root_providers, parse_errors)``. Parse errors are one line per failed file.
+    """
+    used: set[str] = set()
+    errs: list[str] = []
+    root_names = root_provider_names
+    for tf_path in sorted(module_dir.glob("*.tf")):
+        if for_versions_tf is not None and tf_path.resolve() == for_versions_tf.resolve():
+            continue
+        try:
+            text = tf_path.read_text(encoding="utf-8")
+            data = loads(text)
+        except Exception as exc:
+            errs.append(f"{tf_path}: HCL parse error: {exc}")
+            continue
+        if not isinstance(data, dict):
+            errs.append(f"{tf_path}: unexpected parse result")
+            continue
+        for section in ("resource", "data"):
+            for type_str in _resource_types_from_section(data, section):
+                p = provider_from_resource_type(type_str, root_names)
+                if p is not None:
+                    used.add(p)
+    return frozenset(used), errs

@@ -13,6 +13,14 @@ _CLUSTER_ROOT = RootVersionsRef(
     required_version=">= 1.9",
 )
 
+_AWS_REPO_STYLE_ROOT = RootVersionsRef(
+    providers={
+        "mongodbatlas": ("~> 2.11", "mongodb/mongodbatlas"),
+        "aws": (">= 6.0", "hashicorp/aws"),
+    },
+    required_version=">= 1.9",
+)
+
 
 def test_parse_root_versions_reference_matches_real_cluster_root() -> None:
     root = Path(__file__).resolve().parents[2]
@@ -83,6 +91,10 @@ terraform {
 
 
 def test_errors_for_file_missing_root_provider(tmp_path: Path) -> None:
+    (tmp_path / "main.tf").write_text(
+        'resource "mongodbatlas_project" "x" { org_id = "o" name = "n" }\n',
+        encoding="utf-8",
+    )
     vf = tmp_path / "versions.tf"
     vf.write_text(
         """\
@@ -129,3 +141,56 @@ terraform {
 """,
     )
     assert _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT) == []
+
+
+def test_errors_for_file_allows_omitting_unused_root_provider_aws(tmp_path: Path) -> None:
+    (tmp_path / "main.tf").write_text(
+        """\
+resource "mongodbatlas_encryption_at_rest_private_endpoint" "this" {
+  project_id     = "p"
+  cloud_provider = "AWS"
+  region_name    = "US_EAST_1"
+}
+""",
+        encoding="utf-8",
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.9"
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "~> 2.11"
+    }
+  }
+}
+""",
+        encoding="utf-8",
+    )
+    assert _errors_for_file(vf, vf.read_text(), _AWS_REPO_STYLE_ROOT) == []
+
+
+def test_errors_for_file_requires_root_provider_when_used(tmp_path: Path) -> None:
+    (tmp_path / "main.tf").write_text(
+        'resource "aws_instance" "x" { ami = "a" instance_type = "t3.micro" }\n',
+        encoding="utf-8",
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.9"
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "~> 2.11"
+    }
+  }
+}
+""",
+        encoding="utf-8",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _AWS_REPO_STYLE_ROOT)
+    assert any("missing required_providers.aws" in e for e in errs)
