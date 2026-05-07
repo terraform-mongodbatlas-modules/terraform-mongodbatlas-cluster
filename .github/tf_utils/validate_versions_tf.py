@@ -11,6 +11,7 @@ from pathlib import Path
 import typer
 from hcl2.api import loads
 
+from docs import config_loader
 from tf_utils.versions_tf_common import (
     all_provider_entries,
     providers_referenced_in_module_dir,
@@ -50,7 +51,35 @@ def parse_root_versions_reference(repo_root: Path) -> RootVersionsRef:
     return RootVersionsRef(providers=providers, required_version=rv)
 
 
-def _errors_for_file(path: Path, content: str, root: RootVersionsRef) -> list[str]:
+def _load_provider_version_exceptions(repo_root: Path) -> frozenset[Path]:
+    """Derive provider-version exception paths from docs/examples.yaml.
+
+    Any example whose name matches ``versions_tf.skip_if_name_contains`` is exempt
+    from the provider-version pin check — those examples intentionally pin a newer
+    provider version and are excluded from auto-generation for the same reason.
+    """
+    try:
+        raw = config_loader.load_examples_config(repo_root=repo_root)
+        versions_tf_config = config_loader.parse_examples_readme_config(raw).versions_tf
+        tables = config_loader.parse_tables_config(raw)
+    except Exception:
+        return frozenset()
+
+    exceptions: set[Path] = set()
+    for table in tables:
+        for row in table.example_rows:
+            if versions_tf_config.is_name_skipped(row.name):
+                exceptions.add((repo_root / "examples" / row.folder_name / "versions.tf").resolve())
+    return frozenset(exceptions)
+
+
+def _errors_for_file(
+    path: Path,
+    content: str,
+    root: RootVersionsRef,
+    *,
+    provider_version_exceptions: frozenset[Path] = frozenset(),
+) -> list[str]:
     errs: list[str] = []
     root_names = frozenset(root.providers.keys())
     used, scan_errs = providers_referenced_in_module_dir(
@@ -80,6 +109,8 @@ def _errors_for_file(path: Path, content: str, root: RootVersionsRef) -> list[st
             f"got {child_rv!r}"
         )
 
+    skip_version_check = path.resolve() in provider_version_exceptions
+
     for name, (root_ver, root_src) in root.providers.items():
         if name not in child_map:
             if name in used:
@@ -88,7 +119,7 @@ def _errors_for_file(path: Path, content: str, root: RootVersionsRef) -> list[st
                 )
             continue
         child_ver, child_src = child_map[name]
-        if child_ver != root_ver:
+        if not skip_version_check and child_ver != root_ver:
             errs.append(
                 f"{path}: required_providers.{name} version must match root ({root_ver!r}), "
                 f"got {child_ver!r}"
@@ -119,9 +150,18 @@ def validate_repo(repo_root: Path) -> list[str]:
     except Exception as exc:
         return [f"{repo_root / 'versions.tf'}: failed to parse root versions.tf: {exc}"]
 
+    provider_version_exceptions = _load_provider_version_exceptions(repo_root)
+
     all_errs: list[str] = []
     for vf in collect_versions_tf_paths(repo_root):
-        all_errs.extend(_errors_for_file(vf, vf.read_text(encoding="utf-8"), root))
+        all_errs.extend(
+            _errors_for_file(
+                vf,
+                vf.read_text(encoding="utf-8"),
+                root,
+                provider_version_exceptions=provider_version_exceptions,
+            )
+        )
     return all_errs
 
 

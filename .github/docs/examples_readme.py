@@ -232,11 +232,8 @@ def should_generate_versions_tf(
     versions_path = example_dir / "versions.tf"
     if not versions_path.exists():
         return True
-    if versions_tf_config.skip_if_name_contains:
-        example_name_lower = example_name.lower()
-        for pattern in versions_tf_config.skip_if_name_contains:
-            if pattern.lower() in example_name_lower:
-                return False
+    if versions_tf_config.is_name_skipped(example_name):
+        return False
     return not versions_tf_config.generate_when_missing_only
 
 
