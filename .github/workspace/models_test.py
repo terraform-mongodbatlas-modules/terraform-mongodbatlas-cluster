@@ -84,6 +84,14 @@ def test_validate_example_identifiers_duplicate():
         models.validate_example_identifiers(examples)
 
 
+def test_validate_example_identifiers_two_names_same_source():
+    examples = [
+        models.Example(name="privatelink_global_access", source="privatelink"),
+        models.Example(name="privatelink_regional_access", source="privatelink"),
+    ]
+    models.validate_example_identifiers(examples)  # should not raise
+
+
 def test_parse_ws_config_source_override(tmp_path: Path):
     ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
     ws_config.write_text("""
