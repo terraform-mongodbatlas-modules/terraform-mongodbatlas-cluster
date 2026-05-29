@@ -113,6 +113,11 @@ var_groups:
     assert ex.source == "privatelink"
 
 
+def test_example_number_and_name_raises():
+    with pytest.raises(ValueError, match="cannot set both number"):
+        models.Example(number=1, name="backup_export")
+
+
 def test_example_identifier_number():
     ex = models.Example(number=5)
     assert ex.identifier == "05"

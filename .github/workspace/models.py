@@ -95,6 +95,13 @@ class Example:
     output_assertions: list[OutputAssertion] = field(default_factory=list)
     sensitive_output: bool = False
 
+    def __post_init__(self) -> None:
+        if self.number is not None and self.name is not None:
+            raise ValueError(
+                f"Example cannot set both number ({self.number}) and name ({self.name!r}): "
+                "use number for NN_*-prefix examples, name (+ optional source) for named."
+            )
+
     def should_use_nested_snapshots(self) -> bool:
         """Determine if snapshots for this example should use nested directory structure.
 
