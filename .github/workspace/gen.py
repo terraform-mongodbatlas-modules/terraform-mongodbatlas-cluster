@@ -58,7 +58,10 @@ def generate_modules_tf(
     for ex in examples:
         example_path = ex.example_path(examples_dir)
         title = ex.title_from_dir(examples_dir)
-        lines.append(f"# Example {ex.identifier}: {title}")
+        if ex.source and ex.name and ex.source != ex.name:
+            lines.append(f"# Example {ex.identifier} (source {example_path.name}): {title}")
+        else:
+            lines.append(f"# Example {ex.identifier}: {title}")
         lines.append(f'module "ex_{ex.identifier}" {{')
         lines.append(f'  source = "{rel_examples}/{example_path.name}"')
         for var in config.vars_for_example(ex):

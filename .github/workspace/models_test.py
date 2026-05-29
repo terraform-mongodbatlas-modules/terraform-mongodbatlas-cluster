@@ -61,8 +61,71 @@ def test_example_name_path_not_found(tmp_path: Path):
     examples_dir = tmp_path / "examples"
     examples_dir.mkdir()
     ex = models.Example(name="missing")
-    with pytest.raises(ValueError, match="Example 'missing' not found"):
+    with pytest.raises(ValueError, match="Example source 'missing' not found"):
         ex.example_path(examples_dir)
+
+
+def test_example_source_override_path(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "privatelink").mkdir()
+    ex = models.Example(name="privatelink_global_access", source="privatelink")
+    assert ex.example_path(examples_dir).name == "privatelink"
+    assert ex.identifier == "privatelink_global_access"
+    assert ex.example_dir_name == "privatelink"
+
+
+def test_example_number_source_override_path(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "privatelink").mkdir()
+    ex = models.Example(number=1, source="privatelink")
+    assert ex.example_path(examples_dir).name == "privatelink"
+    assert ex.identifier == "01"
+    assert ex.title_from_dir(examples_dir) == "Privatelink"
+
+
+def test_validate_example_identifiers_duplicate():
+    examples = [
+        models.Example(name="privatelink"),
+        models.Example(name="privatelink", source="privatelink"),
+    ]
+    with pytest.raises(ValueError, match="Duplicate workspace example identifier"):
+        models.validate_example_identifiers(examples)
+
+
+def test_validate_example_identifiers_two_names_same_source():
+    examples = [
+        models.Example(name="privatelink_global_access", source="privatelink"),
+        models.Example(name="privatelink_regional_access", source="privatelink"),
+    ]
+    models.validate_example_identifiers(examples)  # should not raise
+
+
+def test_parse_ws_config_source_override(tmp_path: Path):
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
+examples:
+  - name: privatelink_global_access
+    source: privatelink
+    var_groups: [shared]
+    plan_regressions: []
+
+var_groups:
+  shared:
+    - name: project_id
+      expose_in_workspace: false
+      module_value: local.project_id
+""")
+    config = models.parse_ws_config(ws_config)
+    ex = config.examples[0]
+    assert ex.name == "privatelink_global_access"
+    assert ex.source == "privatelink"
+
+
+def test_example_number_and_name_raises():
+    with pytest.raises(ValueError, match="cannot set both number"):
+        models.Example(number=1, name="backup_export")
 
 
 def test_example_identifier_number():
