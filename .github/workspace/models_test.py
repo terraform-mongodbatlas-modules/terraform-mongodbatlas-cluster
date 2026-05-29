@@ -75,6 +75,16 @@ def test_example_source_override_path(tmp_path: Path):
     assert ex.example_dir_name == "privatelink"
 
 
+def test_example_number_source_override_path(tmp_path: Path):
+    examples_dir = tmp_path / "examples"
+    examples_dir.mkdir()
+    (examples_dir / "privatelink").mkdir()
+    ex = models.Example(number=1, source="privatelink")
+    assert ex.example_path(examples_dir).name == "privatelink"
+    assert ex.identifier == "01"
+    assert ex.title_from_dir(examples_dir) == "Privatelink"
+
+
 def test_validate_example_identifiers_duplicate():
     examples = [
         models.Example(name="privatelink"),
