@@ -34,6 +34,20 @@ jobs:
         run: just pre-commit
   # === OK_EDIT: path-sync job-check ===
 
+  py-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ./.github/actions/setup
+        with:
+          just: 'true'
+          uv: 'true'
+          go: 'true'
+          go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
+      - name: Run Python tests
+        run: just py-test
+
   # === DO_NOT_EDIT: path-sync job-plan-tests ===
   plan-tests:
     name: Terraform Unit Plan Tests
