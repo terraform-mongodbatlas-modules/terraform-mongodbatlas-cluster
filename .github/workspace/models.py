@@ -88,6 +88,7 @@ class OutputAssertion:
 class Example:
     number: int | None = None
     name: str | None = None
+    source: str | None = None
     var_groups: list[str] = field(default_factory=list)
     module_depends_on: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
@@ -111,22 +112,43 @@ class Example:
             return f"{self.number:02d}"
         raise ValueError("Example must have either name or number")
 
-    def example_path(self, examples_dir: Path) -> Path:
+    @property
+    def example_dir_name(self) -> str:
+        if self.source:
+            return self.source
         if self.name:
-            path = examples_dir / self.name
-            if not path.exists():
-                raise ValueError(f"Example '{self.name}' not found in {examples_dir}")
-            return path
-        for p in examples_dir.iterdir():
-            if p.is_dir() and p.name.startswith(f"{self.number:02d}_"):
-                return p
-        raise ValueError(f"Example {self.number:02d}_* not found in {examples_dir}")
+            return self.name
+        raise ValueError(
+            f"Example {self.identifier} must set source when using number without a matching examples directory name"  # noqa: E501
+        )
+
+    def example_path(self, examples_dir: Path) -> Path:
+        if self.number is not None:
+            if self.source:
+                path = examples_dir / self.source
+                if not path.exists():
+                    raise ValueError(
+                        f"Example source '{self.source}' not found in {examples_dir} "
+                        f"(workspace id {self.identifier})"
+                    )
+                return path
+            for p in examples_dir.iterdir():
+                if p.is_dir() and p.name.startswith(f"{self.number:02d}_"):
+                    return p
+            raise ValueError(f"Example {self.number:02d}_* not found in {examples_dir}")
+        path = examples_dir / self.example_dir_name
+        if not path.exists():
+            raise ValueError(
+                f"Example source '{self.example_dir_name}' not found in {examples_dir} "
+                f"(workspace id {self.identifier})"
+            )
+        return path
 
     def title_from_dir(self, examples_dir: Path) -> str:
         dir_name = self.example_path(examples_dir).name
-        if self.name:
-            return dir_name.replace("_", " ").title()
-        return dir_name.split("_", 1)[1].replace("_", " ").title()
+        if self.number is not None and not self.source:
+            return dir_name.split("_", 1)[1].replace("_", " ").title()
+        return dir_name.replace("_", " ").title()
 
 
 @dataclass
@@ -197,6 +219,7 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
             Example(
                 number=ex.get("number"),
                 name=ex.get("name"),
+                source=ex.get("source"),
                 var_groups=ex.get("var_groups", []),
                 module_depends_on=ex.get("module_depends_on") or [],
                 plan_regressions=regressions,
@@ -204,7 +227,17 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
                 sensitive_output=ex.get("sensitive_output", False),
             )
         )
+    validate_example_identifiers(examples)
     return WsConfig(examples=examples, var_groups=var_groups)
+
+
+def validate_example_identifiers(examples: list[Example]) -> None:
+    seen: set[str] = set()
+    for ex in examples:
+        ex_id = ex.identifier
+        if ex_id in seen:
+            raise ValueError(f"Duplicate workspace example identifier '{ex_id}'")
+        seen.add(ex_id)
 
 
 def _parse_dump_config(data: dict[str, Any]) -> DumpConfig:
