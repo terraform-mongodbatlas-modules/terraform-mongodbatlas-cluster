@@ -11,6 +11,8 @@ require (
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg/v2 v2.0.2 // indirect
+	// Pinned: hashicorp/go-changelog needs go-billy/v6 where Filesystem is a field, not a method.
+	// Dependabot #155 bumped go-git/v6 to alpha.4 while go-billy stayed on alpha.1, which does not compile.
 	github.com/go-git/go-billy/v6 v6.0.0-20260328065524-593ae452e14d // indirect
 	github.com/go-git/go-git/v6 v6.0.0-alpha.2 // indirect
 	github.com/kevinburke/ssh_config v1.6.0 // indirect
