@@ -68,6 +68,8 @@ paths:
   - src_path: contributing/documentation-guide.md
   - src_path: contributing/README.md
   # GitHub config (replaced to force updates from initial template)
+  - src_path: SECURITY.md
+    sync_mode: replace
   - src_path: .github/CODEOWNERS
     sync_mode: replace
   - src_path: .github/pull_request_template.md
