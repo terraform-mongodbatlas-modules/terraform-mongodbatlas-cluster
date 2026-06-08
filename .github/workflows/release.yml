@@ -45,7 +45,7 @@ jobs:
     if: ${{ !inputs.skip-pre-release-checks }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
           ref: main
@@ -66,7 +66,7 @@ jobs:
     outputs:
       release_commit_sha: ${{ steps.create_commits.outputs.release_commit_sha }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
           ref: main
@@ -102,7 +102,7 @@ jobs:
     if: ${{ !cancelled() && !inputs.skip-release-github && (needs.release-tag.result == 'success' || needs.release-tag.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
           ref: ${{ inputs.version }}
@@ -138,7 +138,7 @@ jobs:
     if: ${{ !cancelled() && !inputs.skip-post-release-revert && needs.release-tag.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
           ref: main
