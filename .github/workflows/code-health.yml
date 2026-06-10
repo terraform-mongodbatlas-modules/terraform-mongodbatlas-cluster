@@ -18,6 +18,9 @@ on:
         type: string
 # === OK_EDIT: path-sync triggers ===
 
+permissions:
+  contents: read
+
 jobs:
   # === DO_NOT_EDIT: path-sync job-check ===
   check:
