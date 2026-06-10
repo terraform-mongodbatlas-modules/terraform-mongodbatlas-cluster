@@ -5,7 +5,10 @@ on:
   schedule:
     - cron: "0 3 * * *" # workflow runs every day at 03:00 AM
 
-jobs:  
+permissions:
+  contents: read
+
+jobs:
   cleanup-terraform-modules-org:
     runs-on: ubuntu-latest
     steps:

@@ -14,6 +14,9 @@ env:
 # === OK_EDIT: path-sync header ===
 # Add module specific env-vars here
 
+permissions:
+  contents: read
+
 jobs:
   # === DO_NOT_EDIT: path-sync job-validate ===
   validate-regions:
