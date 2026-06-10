@@ -6,6 +6,9 @@ on:
   push:
     branches-ignore: [main, sync/**]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
