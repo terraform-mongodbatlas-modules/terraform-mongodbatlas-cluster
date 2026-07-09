@@ -318,13 +318,13 @@ Your cluster is now using the `replication_specs` approach and you can modify th
 Auto-scaling is only available when using the simplified `regions` configuration approach.
 
 **Current limitations:**
-- Cannot use `auto_scaling` with `replication_specs` in the current module version
-- When using `replication_specs`, you must manage instance sizes manually within the specs
-- On clusters with more than one `replication_specs` entry (multi-shard sharded or geosharded clusters), the module's data-source-based persistence approach uses list-index matching to correlate shards between the resource and the data source. This has the same limitation as the provider's `use_effective_fields` and `lifecycle.ignore_changes`: Terraform cannot reliably prove that each configured `replication_specs` entry still maps to the same Atlas shard after topology changes. This limitation does not apply to dedicated clusters with exactly one `replication_specs` entry, including replica set clusters and sharded or geosharded clusters with one shard. See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation. For significant production topology changes on multi-shard clusters, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support) to review the safest path before applying the change.
+- Cannot use `auto_scaling` with `replication_specs` in the current module version.
+- When using `replication_specs`, you must manage instance sizes manually within the specs.
+- Direct `replication_specs` configurations are passed through to the provider. On clusters with more than one `replication_specs` entry (multi-shard sharded or geosharded clusters), Terraform cannot reliably prove that each configured `replication_specs` entry still maps to the same Atlas shard after topology changes. Tail append is the only shard topology change this documentation presents as safe today. See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation. For significant production topology changes on multi-shard clusters, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support) to review the safest path before applying the change.
 
 **Future support:**
-- Auto-scaling with `replication_specs` is planned for a future module version
-- This will provide auto-scaling capabilities regardless of configuration approach
+- Auto-scaling with `replication_specs` is planned for a future module version.
+- This will provide auto-scaling capabilities regardless of configuration approach.
 
 **Workaround:**
 If you need auto-scaling, use the `regions` approach. If you need direct `replication_specs` control, use manual scaling.
@@ -402,7 +402,7 @@ When using the simplified `regions` approach with auto-scaling enabled, the modu
 **Limitation for clusters with more than one `replication_specs` entry:**
 The data-source-based persistence uses list-index matching (`replication_specs[gi]`) to correlate each shard between the resource and the data source. For clusters with more than one `replication_specs` entry (multi-shard sharded or geosharded clusters), Terraform cannot reliably prove that each configured `replication_specs` entry still maps to the same Atlas shard after topology changes. This is the same limitation that applies to the provider's `use_effective_fields` and `lifecycle.ignore_changes` features. This limitation does not apply to dedicated clusters with exactly one `replication_specs` entry, including replica set clusters and sharded or geosharded clusters with one shard. See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation for details.
 
-This automatic persistence is one of the key benefits of using the simplified configuration approach for dedicated clusters with exactly one `replication_specs` entry, including replica set clusters and sharded or geosharded clusters with one shard.
+This automatic persistence is one of the key benefits of using the simplified configuration approach when the `replication_specs` shape and order stay unchanged. Tail append is the only shard topology change this documentation presents as safe today. For significant production topology changes on multi-shard clusters, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support) to review the safest path before applying the change.
 
 ### Validation & Error Messages
 
