@@ -200,6 +200,8 @@ Type: `string`
 This option is mutually exclusive with the `replication_specs` variable options and requires setting `replication_specs = []`.
 See also [why two options?](#why-two-options-for-cluster-topology).
 
+**Multi-shard note:** On clusters with more than one `replication_specs` entry (multi-shard sharded or geosharded clusters), the module's auto-scaling persistence uses list-index matching to correlate shards. This limitation does not apply to dedicated clusters with exactly one `replication_specs` entry, including replica set clusters and sharded or geosharded clusters with one shard. See the [FAQ](#does-the-module-have-cluster-topology-change-limitations) for details.
+
 ### regions
 
 The simplest way to define your cluster topology:
@@ -771,6 +773,12 @@ The module provides two approaches to accommodate different user needs and migra
 This module requires Terraform 1.9+ due to the use of cross-variable validation references, which are only supported in Terraform 1.9 and later. While the [MongoDB Atlas Provider](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix) supports Terraform 1.7.x+, this module's validation patterns require 1.9+.
 
 See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
+
+### Does the module have cluster topology change limitations?
+
+Yes. On clusters with more than one `replication_specs` entry (multi-shard sharded or geosharded clusters), the module's approach to persisting auto-scaled instance sizes uses list-index matching to correlate shards between the module resource and the internal data source. Terraform cannot reliably prove that each configured `replication_specs` entry still maps to the same Atlas shard after topology changes. This is the same limitation that applies to the provider's `use_effective_fields` and `lifecycle.ignore_changes` features. This limitation does not apply to dedicated clusters with exactly one `replication_specs` entry, including replica set clusters and sharded or geosharded clusters with one shard.
+
+See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation for full details. For significant production topology changes on multi-shard clusters, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support).
 
 ### What is the `provider_meta "mongodbatlas"` doing?
 
