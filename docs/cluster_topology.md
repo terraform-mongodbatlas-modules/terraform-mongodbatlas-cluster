@@ -91,7 +91,6 @@ module "cluster" {
   
   replication_specs = [
     {
-      num_shards = 1
       region_configs = [
         {
           electable_specs = {
