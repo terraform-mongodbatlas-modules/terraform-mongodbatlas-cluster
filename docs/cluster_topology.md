@@ -318,13 +318,13 @@ Your cluster is now using the `replication_specs` approach and you can modify th
 Auto-scaling is only available when using the simplified `regions` configuration approach.
 
 **Current limitations:**
-- Cannot use `auto_scaling` with `replication_specs` in the current module version.
-- When using `replication_specs`, you must manage instance sizes manually within the specs.
+- Cannot use `auto_scaling` with `replication_specs` in the current module version
+- When using `replication_specs`, you must manage instance sizes manually within the specs
 - Direct `replication_specs` configurations are passed through to the provider. For multi-shard topology changes, see [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation. For significant production topology changes, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support).
 
 **Future support:**
-- Auto-scaling with `replication_specs` is planned for a future module version.
-- This will provide auto-scaling capabilities regardless of configuration approach.
+- Auto-scaling with `replication_specs` is planned for a future module version
+- This will provide auto-scaling capabilities regardless of configuration approach
 
 **Workaround:**
 If you need auto-scaling, use the `regions` approach. If you need direct `replication_specs` control, use manual scaling.
