@@ -76,3 +76,6 @@ tables:
         cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
       - folder: 12
         name: Cluster with uniform SHARDED topology using `shard_count`
+      - folder: 14
+        name: Cluster with Scheduled Backups
+        title_suffix: (retention override, cross-region copy, KEEP deletion policy)

@@ -105,6 +105,38 @@ locals {
 
   grouped_regions = local.cluster_type_regions[var.cluster_type]
 
+  # ---- Backup schedule ----
+  create_backup_schedule = var.backup_enabled && var.backup_mode != "UNMANAGED"
+
+  # Candidate topology for backup_copy_region auto-derivation: the first shard/zone group.
+  # GEOSHARDED clusters get one cluster-wide target derived from the first zone only (see var.backup_copy_region).
+  backup_copy_candidate_regions = length(local.grouped_regions) > 0 ? local.grouped_regions[0] : []
+
+  backup_copy_region_validation_errors = var.backup_copy_region != null && var.backup_copy_region.region == null && length(local.backup_copy_candidate_regions) < 2 ? [
+    "backup_copy_region: cluster has fewer than 2 regions to auto-derive a secondary from; set backup_copy_region.region explicitly."
+  ] : []
+
+  # Note: deliberately not using coalesce() here -- it errors when every argument is null, but that's a
+  # legitimate (if invalid) intermediate state on the "fewer than 2 regions" path. The friendly error comes
+  # from backup_copy_region_validation_errors' precondition instead; these locals just resolve to null.
+  backup_copy_region_derived_name = var.backup_copy_region == null ? null : (
+    var.backup_copy_region.region != null ? var.backup_copy_region.region : try(local.backup_copy_candidate_regions[1].name, null)
+  )
+
+  backup_copy_region_derived_provider_name = var.backup_copy_region == null ? null : (
+    var.backup_copy_region.cloud_provider != null ? var.backup_copy_region.cloud_provider : (
+      try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == local.backup_copy_region_derived_name][0], null) != null
+      ? try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == local.backup_copy_region_derived_name][0], null)
+      : var.provider_name
+    )
+  )
+
+  backup_copy_settings = var.backup_copy_region == null ? null : {
+    cloud_provider     = local.backup_copy_region_derived_provider_name
+    region_name        = local.backup_copy_region_derived_name
+    should_copy_oplogs = coalesce(var.backup_copy_region.should_copy_oplogs, local.effective_pit_enabled)
+  }
+
   # auto scaling for electable nodes
   auto_scaling_compute_enabled = var.auto_scaling.compute_enabled
   auto_scaling_disk_enabled    = var.auto_scaling.disk_gb_enabled
@@ -254,6 +286,7 @@ locals {
     # Mutual exclusivity: regions vs replication_specs
     length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
     local.validation_errors_regions_usage,
+    local.backup_copy_region_validation_errors,
   ))
 }
 
@@ -290,4 +323,29 @@ resource "mongodbatlas_advanced_cluster" "this" {
   termination_protection_enabled                   = var.termination_protection_enabled
   timeouts                                         = var.timeouts
   version_release_system                           = var.version_release_system
+}
+
+module "backup_schedule" {
+  count  = local.create_backup_schedule ? 1 : 0
+  source = "./modules/cloud_backup_schedule"
+
+  project_id   = var.project_id
+  cluster_name = mongodbatlas_advanced_cluster.this.name
+  backup_mode  = var.backup_mode
+
+  retention = var.backup_retention != null ? var.backup_retention : {
+    skip_default_retentions  = false
+    restore_window_days      = null
+    reference_hour_of_day    = null
+    reference_minute_of_hour = null
+    ondemand                 = null
+    hourly                   = null
+    daily                    = null
+    weekly                   = null
+    monthly                  = null
+    yearly                   = null
+  }
+  copy_settings = local.backup_copy_settings
+  export        = var.backup_export
+  skip_destroy  = var.backup_schedule_deletion_policy == "KEEP"
 }

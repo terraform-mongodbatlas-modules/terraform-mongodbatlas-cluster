@@ -21,6 +21,7 @@ Run 'just gen-readme' to regenerate. -->
 - [Cluster Topology Option 2 - `replication_specs` Variables](#cluster-topology-option-2---replication_specs-variables)
 - [Production Recommendations (Enabled By Default)](#production-recommendations-enabled-by-default)
 - [Production Recommendations (Manually Configured)](#production-recommendations-manually-configured)
+- [Backup Schedule](#backup-schedule)
 - [Optional Variables](#optional-variables)
 - [Outputs](#outputs)
 - [FAQ](#faq)
@@ -125,6 +126,7 @@ SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./e
 GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
 Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
 SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
+REPLICASET | [Cluster with Scheduled Backups (retention override, cross-region copy, KEEP deletion policy)](./examples/14_cluster_with_backup_schedule)
 
 <!-- END_TABLES -->
 
@@ -565,6 +567,146 @@ Default: `{}`
 Recommended for production clusters. Flag that indicates whether termination protection is enabled on the cluster. If set to `true`, MongoDB Cloud does not delete the cluster; if set to `false`, MongoDB Cloud deletes the cluster.
 
 Type: `bool`
+
+Default: `null`
+
+
+## Backup Schedule
+
+Configures the `cloud_backup_schedule` resource managed internally by this module. Ignored
+(validation error if set) when `backup_enabled = false`.
+
+### backup_mode
+
+Schedule mode for backup. Controls whether and how the module manages the cloud_backup_schedule resource.
+backup_enabled is a separate cluster-level flag; backup_mode is ignored when backup_enabled = false.
+- ON_DEMAND: schedule resource created but all frequency policies removed (PIT + manual snapshots only)
+- SCHEDULED: module-managed frequency policies (hourly/daily/weekly/monthly/yearly)
+- UNMANAGED: module does not create the schedule resource. Consumer manages cloud_backup_schedule
+  externally using a standalone resource. backup_copy_region, backup_retention, and backup_export must
+  be left at their defaults; backup_schedule_deletion_policy is still allowed.
+
+Migrating an existing schedule to backup_mode = "UNMANAGED" with backup_schedule_deletion_policy = "KEEP"
+requires two applies: first set backup_schedule_deletion_policy = "KEEP" while backup_mode stays
+SCHEDULED/ON_DEMAND (persists skip_destroy=true to state), then in a second apply set
+backup_mode = "UNMANAGED" (destroy reads skip_destroy from state and skips the Atlas API call). Setting
+both in the same apply does not skip the delete: the provider's Delete only has access to prior state
+for a resource being removed from configuration, not the new config being applied.
+
+Type: `string`
+
+Default: `"SCHEDULED"`
+
+### backup_copy_region
+
+Cross-region snapshot copy settings (multi-region snapshot distribution). When set, the module creates
+copy_settings to replicate snapshots (scheduled and on-demand) to the target region.
+- region: Atlas region name. When omitted (backup_copy_region = {}), the module auto-derives a secondary
+  region from var.regions (the highest-priority region after the primary), so the copy target stays
+  valid across regional failovers without a config change. Requires at least 2 regions in var.regions;
+  fails validation otherwise. Not derived from var.replication_specs -- set region explicitly when using
+  that variable. GEOSHARDED clusters get one cluster-wide copy target derived from the first zone's
+  regions; per-zone copy targets are not supported.
+- cloud_provider: override for multi-cloud clusters (default: derived from the target region, or left
+  for the provider to infer if it can't be resolved)
+- should_copy_oplogs: copy oplogs for point-in-time restore from the copy region (default: true if PIT enabled)
+
+Type:
+
+```hcl
+object({
+  region             = optional(string)
+  cloud_provider     = optional(string)
+  should_copy_oplogs = optional(bool)
+})
+```
+
+Default: `null`
+
+### backup_schedule_deletion_policy
+
+Deletion behavior for the cloud_backup_schedule resource on destroy (maps to the provider's skip_destroy).
+- DELETE (default): removes all backup schedule policies on destroy
+- KEEP: skip_destroy = true. No-op on destroy, resource removed from Terraform state only. Use when a
+  Backup Compliance Policy is enabled. See backup_mode's description for the two-apply migration sequence
+  required to move an existing schedule to backup_mode = "UNMANAGED" with KEEP.
+
+Type: `string`
+
+Default: `"DELETE"`
+
+### backup_retention
+
+Retention overrides for the backup schedule. Each frequency (hourly/daily/weekly/monthly/yearly) is
+optional -- when skip_default_retentions=false (the default), an omitted frequency is created using the
+Atlas UI default; when provided, retention_value is required and frequency_interval/retention_unit fall
+back to the Atlas UI default for that frequency if omitted. Set skip_default_retentions=true to only
+create the frequencies you explicitly declare.
+
+reference_hour_of_day/reference_minute_of_hour control the UTC snapshot window (default: cluster creation
+time). restore_window_days controls the PIT restore window.
+
+ondemand is accepted for shape-compatibility with the project module's future backup_compliance_policy.retention
+but has no corresponding field on cloud_backup_schedule -- it is ignored by this module.
+
+Ignored (validation error if set) when backup_mode = "ON_DEMAND"/"UNMANAGED" or backup_enabled = false.
+
+Type:
+
+```hcl
+object({
+  skip_default_retentions  = optional(bool, false)
+  restore_window_days      = optional(number)
+  reference_hour_of_day    = optional(number)
+  reference_minute_of_hour = optional(number)
+  ondemand = optional(object({
+    retention_unit  = optional(string, "days")
+    retention_value = number
+  }))
+  hourly = optional(object({
+    frequency_interval = optional(number)
+    retention_unit     = optional(string, "days")
+    retention_value    = number
+  }))
+  daily = optional(object({
+    retention_unit  = optional(string, "days")
+    retention_value = number
+  }))
+  weekly = optional(object({
+    frequency_interval = optional(number)
+    retention_unit     = optional(string, "weeks")
+    retention_value    = number
+  }))
+  monthly = optional(object({
+    frequency_interval = optional(number)
+    retention_unit     = optional(string, "months")
+    retention_value    = number
+  }))
+  yearly = optional(object({
+    frequency_interval = optional(number)
+    retention_unit     = optional(string, "years")
+    retention_value    = number
+  }))
+})
+```
+
+Default: `null`
+
+### backup_export
+
+Export snapshots to a cloud storage bucket. The bucket resource is managed by the CSP module
+(aws/azure/gcp backup_export submodules). Setting this hardcodes auto_export_enabled = true on the
+schedule; there is no independent toggle. Ignored (validation error if set) when backup_mode =
+"ON_DEMAND"/"UNMANAGED" or backup_enabled = false.
+
+Type:
+
+```hcl
+object({
+  export_bucket_id = string
+  frequency_type   = string
+})
+```
 
 Default: `null`
 
