@@ -35,3 +35,8 @@ output "state_name" {
   description = "Human-readable label that indicates the current operating condition of this cluster."
   value       = mongodbatlas_advanced_cluster.this.state_name
 }
+
+output "replication_specs_effective" {
+  description = "Constructed replication_specs payload sent to the provider, built from var.regions (or passed through from var.replication_specs). Exposed for testing/tooling only — not a stable API and may change without notice."
+  value       = jsondecode(local.replication_specs_json)
+}
