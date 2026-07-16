@@ -102,12 +102,18 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ### Required Secrets
 
+Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when manually dispatching the workflow to use the unsuffixed cloud-dev secrets.
+
 | Secret | Description |
 |--------|-------------|
-| `MONGODB_ATLAS_ORG_ID` | Atlas organization ID for tests |
-| `MONGODB_ATLAS_CLIENT_ID` | Service account client ID |
-| `MONGODB_ATLAS_CLIENT_SECRET` | Service account client secret |
-| `MONGODB_ATLAS_BASE_URL` | Atlas API base URL (cloud-dev) |
+| `MONGODB_ATLAS_ORG_ID` | Cloud-dev Atlas organization ID |
+| `MONGODB_ATLAS_CLIENT_ID` | Cloud-dev service account client ID |
+| `MONGODB_ATLAS_CLIENT_SECRET` | Cloud-dev service account client secret |
+| `MONGODB_ATLAS_BASE_URL` | Cloud-dev Atlas API base URL |
+| `MONGODB_ATLAS_ORG_ID_QA` | QA Atlas organization ID |
+| `MONGODB_ATLAS_CLIENT_ID_QA` | QA service account client ID |
+| `MONGODB_ATLAS_CLIENT_SECRET_QA` | QA service account client secret |
+| `MONGODB_ATLAS_BASE_URL_QA` | QA Atlas API base URL |
 
 ### Required Variables
 
