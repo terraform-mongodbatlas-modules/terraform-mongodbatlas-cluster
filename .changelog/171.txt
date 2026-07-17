@@ -1,3 +1,6 @@
 ```release-note:note
-terraform: Updates minimum version to 1.10
+provider/mongodbatlas: Requires minimum version 2.1
+```
+```release-note:note
+terraform: Requires minimum version 1.10
 ```
