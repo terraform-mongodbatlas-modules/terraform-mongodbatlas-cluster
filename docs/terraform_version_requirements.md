@@ -30,8 +30,7 @@ If you're currently using Terraform 1.9 or earlier, you need to upgrade Terrafor
 ### Benefits of Upgrading
 
 - **Supported Terraform release**: Receive current security and maintenance updates.
-- **Better validation**: Get immediate feedback on configuration errors.
-- **Improved user experience**: Get clear error messages when variables are misconfigured.
+- **Better validation**: Get immediate feedback and clear error messages when variables are misconfigured.
 
 ## Version Compatibility Testing
 
