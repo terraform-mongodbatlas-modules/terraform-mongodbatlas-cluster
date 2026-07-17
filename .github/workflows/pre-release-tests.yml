@@ -1,11 +1,19 @@
 # path-sync copy -n sdlc
 # === DO_NOT_EDIT: path-sync header ===
 name: Pre-Release Tests
-run-name: "Pre-Release: examples=${{ inputs.include_examples }}, provider=${{ inputs.provider_ref }}${{ inputs.skip_tftest && ', skip_tftest' || '' }}"
+run-name: "Pre-Release: env=${{ inputs.atlas_cloud_env == 'dev' && 'dev' || 'qa' }}, examples=${{ inputs.include_examples }}, provider=${{ inputs.provider_ref }}${{ inputs.skip_tftest && ', skip_tftest' || '' }}"
 
 on:
   workflow_dispatch:
     inputs:
+      atlas_cloud_env:
+        description: 'Atlas cloud environment used'
+        required: true
+        type: choice
+        default: 'qa'
+        options:
+          - 'qa'
+          - 'dev'
       include_examples:
         description: 'Examples to test (all or comma-separated list)'
         required: false
@@ -28,10 +36,10 @@ permissions:
 
 # === DO_NOT_EDIT: path-sync env ===
 env:
-  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-  MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
-  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
-  MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
+  MONGODB_ATLAS_ORG_ID: ${{ secrets[inputs.atlas_cloud_env == 'dev' && 'MONGODB_ATLAS_ORG_ID' || 'MONGODB_ATLAS_ORG_ID_QA'] }}
+  MONGODB_ATLAS_CLIENT_ID: ${{ secrets[inputs.atlas_cloud_env == 'dev' && 'MONGODB_ATLAS_CLIENT_ID' || 'MONGODB_ATLAS_CLIENT_ID_QA'] }}
+  MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets[inputs.atlas_cloud_env == 'dev' && 'MONGODB_ATLAS_CLIENT_SECRET' || 'MONGODB_ATLAS_CLIENT_SECRET_QA'] }}
+  MONGODB_ATLAS_BASE_URL: ${{ secrets[inputs.atlas_cloud_env == 'dev' && 'MONGODB_ATLAS_BASE_URL' || 'MONGODB_ATLAS_BASE_URL_QA'] }}
 # === OK_EDIT: path-sync env ===
 
 jobs:
@@ -82,9 +90,9 @@ jobs:
       - name: Apply examples
         env:
           INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
-        run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES" --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+        run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES" --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
       - name: Destroy examples
         if: always()
         env:
           INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
-        run: just destroy-examples --auto-approve -e "$INCLUDE_EXAMPLES" --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+        run: just destroy-examples --auto-approve -e "$INCLUDE_EXAMPLES" --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
