@@ -2,7 +2,7 @@
 
 ## Minimum Version: 1.10
 
-This module requires **Terraform >= 1.10** to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix). Terraform 1.9 reached the end of its supported lifecycle on June 30, 2026.
+This module requires **Terraform >= 1.10** to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix).
 
 ## Why 1.10+ is Required
 
