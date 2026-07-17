@@ -1,4 +1,5 @@
 variable "backup_mode" {
+  # TODO(CLOUDP-425282): link to the backup guide once published for the full deletion-workflow writeup.
   description = <<-EOT
     Schedule mode for backup. Controls whether and how the module manages the cloud_backup_schedule resource.
     backup_enabled is a separate cluster-level flag; backup_mode is ignored when backup_enabled = false.
@@ -8,12 +9,9 @@ variable "backup_mode" {
       externally using a standalone resource. backup_copy_region, backup_retention, and backup_export must
       be left at their defaults; backup_schedule_deletion_policy is still allowed.
 
-    Migrating an existing schedule to backup_mode = "UNMANAGED" with backup_schedule_deletion_policy = "KEEP"
-    requires two applies: first set backup_schedule_deletion_policy = "KEEP" while backup_mode stays
-    SCHEDULED/ON_DEMAND (persists skip_destroy=true to state), then in a second apply set
-    backup_mode = "UNMANAGED" (destroy reads skip_destroy from state and skips the Atlas API call). Setting
-    both in the same apply does not skip the delete: the provider's Delete only has access to prior state
-    for a resource being removed from configuration, not the new config being applied.
+    Migrating to UNMANAGED with backup_schedule_deletion_policy = "KEEP" requires two applies: set KEEP
+    first while backup_mode is still SCHEDULED/ON_DEMAND, then switch to UNMANAGED in a second apply.
+    Setting both in the same apply does not skip the delete.
   EOT
   type        = string
   default     = "SCHEDULED"
@@ -57,8 +55,7 @@ variable "backup_schedule_deletion_policy" {
     Deletion behavior for the cloud_backup_schedule resource on destroy (maps to the provider's skip_destroy).
     - DELETE (default): removes all backup schedule policies on destroy
     - KEEP: skip_destroy = true. No-op on destroy, resource removed from Terraform state only. Use when a
-      Backup Compliance Policy is enabled. See backup_mode's description for the two-apply migration sequence
-      required to move an existing schedule to backup_mode = "UNMANAGED" with KEEP.
+      Backup Compliance Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
   EOT
   type        = string
   default     = "DELETE"
