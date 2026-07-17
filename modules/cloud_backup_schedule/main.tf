@@ -37,7 +37,7 @@ locals {
     retention_value    = coalesce(try(var.retention.yearly.retention_value, null), 1)
   } : null
 
-  # Copy every active scheduled frequency, plus ON_DEMAND unconditionally so manual snapshots are always covered too.
+  # Copy every active frequency, plus ON_DEMAND (manual snapshots are always covered).
   copy_frequencies = concat(
     local.hourly_active ? ["HOURLY"] : [],
     local.daily_active ? ["DAILY"] : [],

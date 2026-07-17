@@ -108,17 +108,19 @@ locals {
   # ---- Backup schedule ----
   create_backup_schedule = var.backup_enabled && var.backup_mode != "UNMANAGED"
 
-  # Candidate topology for backup_copy_region auto-derivation: the first shard/zone group.
-  # GEOSHARDED clusters get one cluster-wide target derived from the first zone only (see var.backup_copy_region).
+  # Topology candidates for backup_copy_region auto-derivation (first shard/zone group).
   backup_copy_candidate_regions = length(local.grouped_regions) > 0 ? local.grouped_regions[0] : []
 
-  backup_copy_region_validation_errors = var.backup_copy_region != null && var.backup_copy_region.region == null && length(local.backup_copy_candidate_regions) < 2 ? [
-    "backup_copy_region: cluster has fewer than 2 regions to auto-derive a secondary from; set backup_copy_region.region explicitly."
-  ] : []
+  # Ternaries, not && -- see tests/plan_short_circuit.tftest.hcl.
+  backup_copy_region_validation_errors = var.backup_copy_region == null ? [] : (
+    var.backup_copy_region.region != null ? [] : (
+      length(local.backup_copy_candidate_regions) < 2 ? [
+        "backup_copy_region: cluster has fewer than 2 regions to auto-derive a secondary from; set backup_copy_region.region explicitly."
+      ] : []
+    )
+  )
 
-  # Note: deliberately not using coalesce() here -- it errors when every argument is null, but that's a
-  # legitimate (if invalid) intermediate state on the "fewer than 2 regions" path. The friendly error comes
-  # from backup_copy_region_validation_errors' precondition instead; these locals just resolve to null.
+  # Not coalesce() -- it errors when all args are null, which is valid here (caught by the precondition instead).
   backup_copy_region_derived_name = var.backup_copy_region == null ? null : (
     var.backup_copy_region.region != null ? var.backup_copy_region.region : try(local.backup_copy_candidate_regions[1].name, null)
   )

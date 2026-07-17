@@ -128,12 +128,13 @@ variable "backup_retention" {
   }
 
   validation {
-    condition = var.backup_mode != "ON_DEMAND" || var.backup_retention == null || alltrue([
-      var.backup_retention.hourly == null,
-      var.backup_retention.daily == null,
-      var.backup_retention.weekly == null,
-      var.backup_retention.monthly == null,
-      var.backup_retention.yearly == null,
+    # try() per field -- a leading null-guard doesn't short-circuit here, see tests/plan_short_circuit.tftest.hcl.
+    condition = var.backup_mode != "ON_DEMAND" || alltrue([
+      try(var.backup_retention.hourly, null) == null,
+      try(var.backup_retention.daily, null) == null,
+      try(var.backup_retention.weekly, null) == null,
+      try(var.backup_retention.monthly, null) == null,
+      try(var.backup_retention.yearly, null) == null,
     ])
     error_message = "Cannot set frequency-based backup_retention fields (hourly/daily/weekly/monthly/yearly) when backup_mode = \"ON_DEMAND\" (it removes all frequency policies). restore_window_days and ondemand remain valid."
   }
@@ -154,7 +155,8 @@ variable "backup_export" {
   default  = null
 
   validation {
-    condition     = var.backup_export == null || contains(["daily", "weekly", "monthly", "yearly"], var.backup_export.frequency_type)
+    # Same short-circuit caveat as backup_retention's validation above.
+    condition     = try(contains(["daily", "weekly", "monthly", "yearly"], var.backup_export.frequency_type), true)
     error_message = "backup_export.frequency_type must be one of: daily, weekly, monthly, yearly."
   }
 

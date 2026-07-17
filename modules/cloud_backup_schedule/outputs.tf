@@ -1,4 +1,4 @@
 output "schedule" {
-  description = "Internal: the managed cloud_backup_schedule resource. Not re-exported by the root cluster module (see Decision 13) -- exists here only so tests can introspect the resource."
+  description = "Internal-only: exposes the managed schedule resource so terraform test can assert on its attributes. This submodule is not invoked directly by consumers, and the root cluster module does not re-export this output."
   value       = mongodbatlas_cloud_backup_schedule.this
 }

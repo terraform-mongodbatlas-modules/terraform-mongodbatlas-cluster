@@ -11,30 +11,25 @@ module "cluster" {
       provider_name = "AWS"
     },
     {
-      # Cross-region copy target auto-derives to this (lower-priority) region -- see backup_copy_region below.
+      # Auto-derived copy target (see backup_copy_region below).
       name          = "US_WEST_2"
       node_count    = 2
       provider_name = "AWS"
     }
   ]
 
-  # backup_enabled=true and backup_mode="SCHEDULED" are both defaults -- nothing to set for a
-  # standard scheduled backup with Atlas UI default frequencies/retention.
+  # backup_enabled and backup_mode default to true/SCHEDULED -- nothing to set here.
 
-  # Keep daily snapshots for 30 days instead of the 7-day default; every other frequency keeps its default.
+  # Keep daily snapshots for 30 days instead of the 7-day default.
   backup_retention = {
     daily = { retention_value = 30 }
   }
 
-  # Replicate snapshots to a second region. Omitting `region` auto-derives the highest-priority
-  # secondary from `regions` above (US_WEST_2 here) -- if you'd rather pin an explicit target instead
-  # (e.g. a region with no cluster nodes at all, for regulatory reasons), use:
-  #   backup_copy_region = { region = "EU_WEST_1" }
+  # Omitting `region` auto-derives the secondary from `regions` above (US_WEST_2). To pin an explicit
+  # target instead: backup_copy_region = { region = "EU_WEST_1" }
   backup_copy_region = {}
 
-  # Retain the backup schedule in Atlas on `terraform destroy` instead of deleting it -- use this when
-  # a Backup Compliance Policy is enabled on the project. See the backup_mode variable description for
-  # the two-apply sequence required when later migrating to backup_mode = "UNMANAGED".
+  # Use KEEP when a Backup Compliance Policy is enabled on the project.
   backup_schedule_deletion_policy = "KEEP"
 
   tags = var.tags

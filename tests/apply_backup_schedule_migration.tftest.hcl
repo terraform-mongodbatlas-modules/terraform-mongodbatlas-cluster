@@ -1,10 +1,5 @@
-# Verifies the two-apply migration from a module-managed schedule to backup_mode = "UNMANAGED" with
-# backup_schedule_deletion_policy = "KEEP": the schedule must be removed from Terraform state without
-# Atlas actually deleting it (skip_destroy only takes effect once it's already true in prior state --
-# see the two-apply note on var.backup_mode).
-#
-# Requires real Atlas credentials (MONGODB_ATLAS_CLIENT_ID/SECRET, MONGODB_ATLAS_ORG_ID) -- run via
-# `just dev-integration-test` equivalent, not part of unit-plan-tests. Creates a real M10 cluster.
+# Verifies the two-apply SCHEDULED -> UNMANAGED+KEEP migration actually skips the Atlas delete call.
+# Requires real Atlas credentials -- creates a real M10 cluster, not part of unit-plan-tests.
 
 run "generate_name" {
   module { source = "./tests/random_name_generator" }
