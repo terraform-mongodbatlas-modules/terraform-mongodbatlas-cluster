@@ -12,7 +12,7 @@ from tf_utils.validate_versions_tf import (
 )
 
 _CLUSTER_ROOT = RootVersionsRef(
-    providers={"mongodbatlas": ("~> 2.0", "mongodb/mongodbatlas")},
+    providers={"mongodbatlas": ("~> 2.1", "mongodb/mongodbatlas")},
     required_version=">= 1.9",
 )
 
@@ -46,7 +46,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
   required_version = ">= 1.9"
@@ -66,7 +66,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = ">= 2.0"
+      version = ">= 2.1"
     }
   }
   required_version = ">= 1.9"
@@ -87,7 +87,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
   required_version = ">= 1.6"
@@ -138,7 +138,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -304,7 +304,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
   required_version = ">= 1.9"
