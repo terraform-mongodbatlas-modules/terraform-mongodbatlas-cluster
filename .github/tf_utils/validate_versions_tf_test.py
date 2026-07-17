@@ -12,8 +12,8 @@ from tf_utils.validate_versions_tf import (
 )
 
 _CLUSTER_ROOT = RootVersionsRef(
-    providers={"mongodbatlas": ("~> 2.0", "mongodb/mongodbatlas")},
-    required_version=">= 1.9",
+    providers={"mongodbatlas": ("~> 2.1", "mongodb/mongodbatlas")},
+    required_version=">= 1.10",
 )
 
 _AWS_REPO_STYLE_ROOT = RootVersionsRef(
@@ -21,7 +21,7 @@ _AWS_REPO_STYLE_ROOT = RootVersionsRef(
         "mongodbatlas": ("~> 2.11", "mongodb/mongodbatlas"),
         "aws": (">= 6.0", "hashicorp/aws"),
     },
-    required_version=">= 1.9",
+    required_version=">= 1.10",
 )
 
 
@@ -31,7 +31,7 @@ _REAL_REPO_ROOT = Path(__file__).resolve().parents[2]
 def test_parse_root_versions_reference_matches_real_cluster_root() -> None:
     ref = parse_root_versions_reference(_REAL_REPO_ROOT)
     assert "mongodbatlas" in ref.providers
-    assert ref.required_version == ">= 1.9"
+    assert ref.required_version == ">= 1.10"
 
 
 def test_validate_repo_passes_on_real_repo() -> None:
@@ -46,10 +46,10 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 }
 
 provider "mongodbatlas" {}
@@ -66,10 +66,10 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = ">= 2.0"
+      version = ">= 2.1"
     }
   }
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 }
 """,
     )
@@ -87,7 +87,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
   required_version = ">= 1.6"
@@ -108,7 +108,7 @@ def test_errors_for_file_missing_root_provider(tmp_path: Path) -> None:
     vf.write_text(
         """\
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
   required_providers {
     random = {
       source  = "hashicorp/random"
@@ -138,14 +138,14 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
     random = {
       source  = "hashicorp/random"
       version = "~> 2.0"
     }
   }
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 }
 """,
     )
@@ -167,7 +167,7 @@ resource "mongodbatlas_encryption_at_rest_private_endpoint" "this" {
     vf.write_text(
         """\
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
@@ -190,7 +190,7 @@ def test_errors_for_file_requires_root_provider_when_used(tmp_path: Path) -> Non
     vf.write_text(
         """\
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
@@ -213,7 +213,7 @@ terraform {
       version = "~> 2.12"
     }
   }
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 }
 """
 
@@ -304,10 +304,10 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.0"
+      version = "~> 2.1"
     }
   }
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 }
 """,
         encoding="utf-8",

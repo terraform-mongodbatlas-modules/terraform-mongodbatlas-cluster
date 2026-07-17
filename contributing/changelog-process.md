@@ -40,7 +40,7 @@ A single PR can include multiple changelog entries for distinct changes or when 
 | --- | --- | --- |
 | `module` | `module: <sentence>` | `module: Adds support for auto-scaling configuration` |
 | `provider/` | `provider/<word>: <sentence>` | `provider/mongodbatlas: Requires minimum version 2.3.0` |
-| `terraform` | `terraform: <sentence>` | `terraform: Updates minimum version to 1.9` |
+| `terraform` | `terraform: <sentence>` | `terraform: Updates minimum version to 1.10` |
 | `variable/` | `variable/<word>: <sentence>` | `variable/instance_size: Adds validation for M0 tier` |
 | `output/` | `output/<word>: <sentence>` | `output/connection_strings: Adds private endpoint strings` |
 | `example` | `example: <sentence>` | `example: Adds configuration example` |

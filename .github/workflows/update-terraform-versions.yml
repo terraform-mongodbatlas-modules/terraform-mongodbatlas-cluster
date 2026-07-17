@@ -10,7 +10,7 @@ on:
         required: false
 
 env:
-  MIN_VERSION: ${{ inputs.min_version || '1.9' }}
+  MIN_VERSION: ${{ inputs.min_version || '1.10' }}
 
 jobs:
   update-terraform-versions:

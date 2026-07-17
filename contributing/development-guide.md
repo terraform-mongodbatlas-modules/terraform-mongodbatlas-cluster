@@ -144,11 +144,11 @@ validation {
 }
 ```
 
-**Why?** In Terraform 1.9-1.11, short-circuit evaluation behavior changed. The `try()` function ensures that if `floor()` receives a `null` value, it returns `false` instead of causing an error, allowing the validation to pass when the value is `null` (first clause will be `true`).
+**Why?** Terraform 1.10 and 1.11 do not reliably short-circuit these expressions. The `try()` function keeps nullable operands safe across the supported range by returning `false` when `floor()` receives a `null` value.
 
 ### Cross-Variable Validation References
 
-This module uses cross-variable validation references (requires Terraform 1.9+):
+This module uses cross-variable validation references (available in Terraform 1.9+):
 
 ```hcl
 variable "shard_count" {
@@ -159,7 +159,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
+**Note**: While cross-variable validation references establish a technical minimum of Terraform 1.9, the module requires Terraform 1.10 or later to remain aligned with the MongoDB Atlas Provider support policy. See [Terraform Version Requirements](../docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 

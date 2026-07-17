@@ -6,7 +6,7 @@ and updates the versions list while preserving the header.
 Requires MIN_VERSION environment variable to be set.
 
 Usage:
-    MIN_VERSION=1.9 just update-terraform-versions
+    MIN_VERSION=1.10 just update-terraform-versions
 """
 
 from __future__ import annotations

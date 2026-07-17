@@ -8,14 +8,14 @@ import pytest
 TESTDATA_DIR = Path(__file__).parent / "testdata"
 SCHEMAS_DIR = TESTDATA_DIR / "schemas"
 
-# Default provider configurations for tests
-# Test configs can reference these by provider_name without repeating source/version
-# Version constraints use ~> X.0 to allow any minor version within major X (equivalent to "X.x")
+# Default provider configurations for tests.
+# Test configs can reference these by provider_name without repeating source/version.
+# Two-component ~> constraints allow later minor releases within the same major version.
 DEFAULT_PROVIDERS = {
     "mongodbatlas": {
         "provider_name": "mongodbatlas",
         "provider_source": "mongodb/mongodbatlas",
-        "provider_version": "~> 2.0",  # 2.x
+        "provider_version": "~> 2.1",  # Provider 2.1 and later 2.x releases.
     },
     "aws": {
         "provider_name": "aws",
