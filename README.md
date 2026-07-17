@@ -634,11 +634,10 @@ Default: `"DELETE"`
 ### backup_retention
 
 Retention overrides for the backup schedule. Each frequency (hourly/daily/weekly/monthly/yearly) is
-optional -- when skip_default_retentions=false (the default), an omitted frequency is created using the
+optional. When skip_default_retentions=false (the default), an omitted frequency is created using the
 Atlas UI default; when provided, retention_value is required and frequency_interval/retention_unit fall
 back to the Atlas UI default for that frequency if omitted. Set skip_default_retentions=true to only
-create the frequencies you explicitly declare. hourly's default frequency_interval (6h) is uniform
-across instance sizes; the Atlas UI defaults NVMe tiers to 12h -- override explicitly if needed.
+create the frequencies you explicitly declare.
 
 reference_hour_of_day/reference_minute_of_hour control the UTC snapshot window (default: cluster creation
 time). restore_window_days controls the PIT restore window.
