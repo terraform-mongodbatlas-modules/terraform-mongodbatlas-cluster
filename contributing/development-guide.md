@@ -159,7 +159,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
+**Note**: Cross-variable validation references establish a technical minimum of Terraform 1.9. The module requires Terraform 1.10 or later to remain aligned with the MongoDB Atlas Provider support policy. See [Terraform Version Requirements](../docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 

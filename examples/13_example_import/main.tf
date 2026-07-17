@@ -2,7 +2,7 @@
 # The module will fetch the cluster data and generate one .tf file per cluster
 
 terraform {
-  required_version = ">= 1.6"
+  required_version = ">= 1.10"
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
