@@ -637,7 +637,8 @@ Retention overrides for the backup schedule. Each frequency (hourly/daily/weekly
 optional -- when skip_default_retentions=false (the default), an omitted frequency is created using the
 Atlas UI default; when provided, retention_value is required and frequency_interval/retention_unit fall
 back to the Atlas UI default for that frequency if omitted. Set skip_default_retentions=true to only
-create the frequencies you explicitly declare.
+create the frequencies you explicitly declare. hourly's default frequency_interval (6h) is uniform
+across instance sizes; the Atlas UI defaults NVMe tiers to 12h -- override explicitly if needed.
 
 reference_hour_of_day/reference_minute_of_hour control the UTC snapshot window (default: cluster creation
 time). restore_window_days controls the PIT restore window.
@@ -645,7 +646,9 @@ time). restore_window_days controls the PIT restore window.
 ondemand is accepted for shape-compatibility with the project module's future backup_compliance_policy.retention
 but has no corresponding field on cloud_backup_schedule -- it is ignored by this module.
 
-Ignored (validation error if set) when backup_mode = "ON_DEMAND"/"UNMANAGED" or backup_enabled = false.
+Frequency fields (hourly/daily/weekly/monthly/yearly) are rejected (validation error) when backup_mode =
+"ON_DEMAND"; restore_window_days and ondemand remain valid there. The whole variable is rejected when
+backup_mode = "UNMANAGED" or backup_enabled = false.
 
 Type:
 
@@ -692,8 +695,8 @@ Default: `null`
 
 Export snapshots to a cloud storage bucket. The bucket resource is managed by the CSP module
 (aws/azure/gcp backup_export submodules). Setting this hardcodes auto_export_enabled = true on the
-schedule; there is no independent toggle. Ignored (validation error if set) when backup_mode =
-"ON_DEMAND"/"UNMANAGED" or backup_enabled = false.
+schedule; there is no independent toggle. Valid with backup_mode = "ON_DEMAND" (exports whatever
+snapshots exist). Ignored (validation error if set) when backup_mode = "UNMANAGED" or backup_enabled = false.
 
 Type:
 

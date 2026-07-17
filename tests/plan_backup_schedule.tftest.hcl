@@ -134,6 +134,54 @@ run "on_demand_mode_with_frequency_retention_fails" {
   }
 }
 
+run "on_demand_mode_with_copy_region_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-ondemand-copy"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    backup_mode        = "ON_DEMAND"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_WEST_2"
+    error_message = "ON_DEMAND mode should still allow cross-region copy of on-demand snapshots"
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].frequencies) == 1 && contains(module.backup_schedule[0].schedule.copy_settings[0].frequencies, "ON_DEMAND")
+    error_message = "ON_DEMAND mode should only copy the ON_DEMAND frequency (no scheduled frequencies exist)"
+  }
+}
+
+run "on_demand_mode_with_export_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name          = "tf-test-backup-ondemand-export"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    backup_mode   = "ON_DEMAND"
+    regions       = [{ name = "US_EAST_1", node_count = 3 }]
+    backup_export = {
+      export_bucket_id = "000000000000000000000000"
+      frequency_type   = "monthly"
+    }
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.auto_export_enabled == true
+    error_message = "ON_DEMAND mode should still allow exporting whatever snapshots exist"
+  }
+}
+
 run "unmanaged_mode_with_copy_region_fails" {
   command         = plan
   expect_failures = [var.backup_copy_region]
@@ -252,6 +300,26 @@ run "copy_region_auto_derives_secondary" {
   }
 }
 
+run "copy_region_should_copy_oplogs_defaults_false_when_pit_disabled" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-no-pit"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    pit_enabled        = false
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].should_copy_oplogs == false
+    error_message = "should_copy_oplogs should default to false when PIT is disabled"
+  }
+}
+
 run "copy_region_pinned_explicit_region" {
   command = plan
   module { source = "./" }
@@ -270,6 +338,28 @@ run "copy_region_pinned_explicit_region" {
   assert {
     condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "EU_WEST_1"
     error_message = "explicit region should be respected over auto-derivation"
+  }
+}
+
+run "copy_region_pinned_region_outside_topology_without_root_provider_name" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-pinned-no-root-provider"
+    project_id   = var.project_id
+    cluster_type = "REPLICASET"
+    regions      = [{ name = "US_EAST_1", node_count = 3, provider_name = "AWS" }]
+    backup_copy_region = {
+      region = "EU_WEST_1"
+    }
+  }
+
+  # cloud_provider can't be asserted here: with no root provider_name and no match in var.regions, it's left
+  # optional+computed (unknown until apply) -- that's correct behavior, not something a plan-only test can check.
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "EU_WEST_1"
+    error_message = "explicit region outside the cluster topology should still be respected"
   }
 }
 
@@ -330,6 +420,25 @@ run "copy_region_geosharded_derives_from_first_zone" {
   assert {
     condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_WEST_2"
     error_message = "GEOSHARDED copy region should auto-derive from the first zone's regions"
+  }
+}
+
+run "copy_region_geosharded_insufficient_regions_in_first_zone_fails" {
+  command         = plan
+  expect_failures = [mongodbatlas_advanced_cluster.this]
+  module { source = "./" }
+
+  variables {
+    name          = "tf-test-backup-copy-geo-insufficient"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+      { name = "EU_WEST_2", node_count = 2, zone_name = "EU" },
+    ]
+    backup_copy_region = {}
   }
 }
 
