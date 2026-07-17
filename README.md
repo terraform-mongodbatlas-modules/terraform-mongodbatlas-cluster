@@ -768,7 +768,7 @@ The module provides two approaches to accommodate different user needs and migra
 
 ### Why does this module require Terraform 1.10+?
 
-This module requires Terraform 1.10+ to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix). Cross-variable validation references establish a technical minimum of Terraform 1.9, while the provider support policy determines the higher supported minimum.
+This module requires Terraform 1.10+ to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix). While cross-variable validation references establish a technical minimum of Terraform 1.9, the provider support policy raises the module's supported minimum to Terraform 1.10.
 
 See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
 

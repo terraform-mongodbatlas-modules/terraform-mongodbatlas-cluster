@@ -15,7 +15,7 @@ The MongoDB Atlas Provider supports Terraform versions that continue to receive 
 This module uses **cross-variable validation references** to provide a simpler and more intuitive user experience. These validations allow us to:
 
 - Provide clear error messages when variables are misconfigured.
-- Maintain validation logic that references multiple variables simultaneously, for example, validate `shard_count` against `cluster_type` to ensure they are compatible.
+- Maintain validation logic that references multiple variables simultaneously. For example, validate `shard_count` against `cluster_type` to ensure they are compatible.
 
 Cross-variable validation references establish a technical minimum of Terraform 1.9. The provider support policy raises the module's supported minimum to Terraform 1.10.
 
