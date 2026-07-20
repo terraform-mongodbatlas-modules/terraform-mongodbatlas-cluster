@@ -4,7 +4,6 @@ advanced_configuration:
   minimum_enabled_tls_protocol: TLS1_2
 backup_enabled: true
 cluster_type: REPLICASET
-delete_on_create_timeout: true
 name: multi-region-single-geo
 pit_enabled: true
 project_id: <project_id>

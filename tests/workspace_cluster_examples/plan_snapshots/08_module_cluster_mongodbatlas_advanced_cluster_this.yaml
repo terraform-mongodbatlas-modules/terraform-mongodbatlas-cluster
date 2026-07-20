@@ -4,7 +4,6 @@ advanced_configuration:
   minimum_enabled_tls_protocol: TLS1_2
 backup_enabled: false
 cluster_type: REPLICASET
-delete_on_create_timeout: true
 pit_enabled: false
 project_id: <project_id>
 redact_client_log_data: true
