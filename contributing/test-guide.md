@@ -49,11 +49,25 @@ To update the version matrix when new Terraform versions are released, edit `.te
 
 Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/workspace_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
+Code Health runs three snapshot lanes: the minimum Terraform version with the configured minimum
+provider release, the maximum Terraform version with the maximum compatible released provider, and
+the maximum Terraform version with the provider default branch. A manually dispatched `provider_ref`
+replaces those lanes with the minimum and maximum Terraform versions for that source ref. For normal
+runs, the maximum stable provider version allowed by the workspace constraints is resolved by
+`terraform init -upgrade`. These tests do not apply changes or create Atlas resources.
+
+All lanes use the same checked-in snapshots. Investigate a difference before accepting it, and do
+not regenerate snapshots only to make a version lane pass. Use version-specific snapshots only when
+both results are intentionally supported and the reason is documented.
+
 ### Workspace Commands
 
 ```bash
 # Plan and compare against baselines (requires dev.tfvars with project_ids)
 just ws-run -m plan-snapshot-test -v dev.tfvars
+
+# Plan with an exact released provider version
+MONGODB_ATLAS_PROVIDER_VERSION=2.1.0 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # First run or after intentional changes: create/update baselines
 just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen
@@ -156,4 +170,6 @@ export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
 just unit-plan-tests
 ```
 
-CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use the provider default branch via the `setup-provider-dev` action.
+Code Health tests both configured registry boundaries and the provider default branch. The live
+development integration workflow continues to use the provider default branch through the
+`setup-provider-dev` action.

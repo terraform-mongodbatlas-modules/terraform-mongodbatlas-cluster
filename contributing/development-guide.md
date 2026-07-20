@@ -90,14 +90,18 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 | Workflow | Triggers | Just Targets | Provider |
 |----------|----------|--------------|----------|
-| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
+| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | registry boundaries and default branch |
 | `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
 
 ### Provider Testing Policy
 
-- **PR/push/nightly**: Uses provider `master` branch via `TF_CLI_CONFIG` dev_overrides
+- **Code Health plan snapshots**: Test the minimum Terraform version with the configured minimum
+  provider release, the maximum Terraform version with the maximum compatible released provider,
+  and the maximum Terraform version with the provider default branch. A manual `provider_ref` tests
+  that ref at both Terraform boundaries instead.
+- **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
 - **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
 
 ### Required Secrets
@@ -120,6 +124,15 @@ Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when
 | Variable | Description |
 |----------|-------------|
 | `MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST` | Project ID for plan snapshot tests |
+
+### Code Health Configuration
+
+Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` in the module-specific environment block of the
+`plan-snapshot-tests` job. It must be an exact provider release supported by the snapshot workspace
+and its included examples.
+
+For this module, `2.1.0` is the first provider release that supports the service-account client
+credentials used by CI.
 
 ## Testing
 

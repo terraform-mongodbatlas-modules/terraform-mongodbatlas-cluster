@@ -17,16 +17,20 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 
 | Category | Paths | Notes |
 |----------|-------|-------|
-| Python tooling | `.github/{changelog,docs,release,workspace}/` | Excludes `dev_vars.py` |
+| Python tooling | `.github/{changelog,docs,release,workspace}/` and selected `.github/dev/` files | `dev_vars.py` is scaffolded once, then destination-owned |
 | Workflows | `.github/workflows/` | `code-health.yml` has per-job section markers |
 | Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | `justfile` has section markers |
 | GitHub | `.github/CODEOWNERS`, `pull_request_template.md`, `ISSUE_TEMPLATE/` | |
 
-**Not synced** (module-specific):
-- `.github/dev/dev_vars.py` - workspace paths and test file patterns
-- `docs/examples.yaml` - example configuration
-- `docs/inputs_groups.yaml` - README input grouping
-- `cleanup-test-env.yml`, `dev-integration-test.yml`, `pre-release-tests.yml`
+**Scaffolded once, then destination-owned:**
+
+- `.github/dev/dev_vars.py` - workspace paths and test file patterns.
+- `docs/examples.yaml` - example configuration.
+- `docs/inputs_groups.yaml` - README input grouping.
+
+**Not synced:**
+
+- `cleanup-test-env.yml` and `dev-integration-test.yml`.
 
 ## Sync Modes
 
@@ -34,6 +38,7 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 |------|----------|
 | `sync` (default) | Copy if destination missing or source newer |
 | `replace` | Always overwrite destination |
+| `scaffold` | Copy only when the destination path is missing; the destination owns later changes |
 
 ## Section Markers
 
@@ -92,9 +97,10 @@ The `code-health.yml` workflow uses per-job section markers:
 |------------|-----|-------|
 | `triggers` | - | Workflow triggers (on: push, PR, etc.) |
 | `job-check` | `check` | Code quality validation |
+| `job-py-tests` | `py-tests` | Python tooling tests |
 | `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
 | `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
-| `job-snapshot-tests` | `plan-snapshot-tests` | Plan snapshot tests with resumable gaps for env vars and commands |
+| `job-snapshot-tests` | `plan-snapshot-tests` | Version selection and plan snapshots with resumable gaps for env vars and commands |
 | `job-slack` | `slack-notification` | Slack notification on failure |
 
 **Gradual enablement**: New repos can use `skip_sections` to exclude jobs not yet ready:
@@ -107,7 +113,19 @@ destinations:
       .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
 ```
 
-When workspace tests are ready, remove from `skip_sections` and re-sync to enable the jobs.
+Skipping `job-snapshot-tests` prevents path-sync from adding or updating that section; it does not
+disable an existing destination job. When a destination is ready, remove the section from
+`skip_sections` and re-sync.
+
+Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact release in the
+destination-owned job environment gap. The version must satisfy the snapshot workspace and its
+included examples. Ensure the root and snapshot workspace support the minimum Terraform version in
+the shared `.terraform-versions.yaml` file and preserve the destination's credentials, permissions,
+setup steps, and snapshot commands in the `OK_EDIT` gaps.
+
+Normal runs test minimum Terraform with the minimum provider, maximum Terraform with the maximum
+compatible released provider, and maximum Terraform with the provider default branch. A manual
+`provider_ref` replaces those lanes and tests that ref at both Terraform boundaries.
 
 ## For Destination Module Developers
 
@@ -153,6 +171,10 @@ From the cluster repository:
 just sdlc-sync-dry  # Preview changes
 just sdlc-sync      # Apply sync
 ```
+
+Each destination runs `just uv-sync`, `just py-test`, and `just docs` before a sync pull request is
+created. A verification failure skips that destination while allowing other destinations to
+continue.
 
 ## Testing Changes (Source Developers)
 

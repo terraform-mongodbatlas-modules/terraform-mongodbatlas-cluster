@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       provider_ref:
-        description: 'Provider git ref (empty = default branch)'
+        description: 'Provider git ref (when set, replaces the default provider matrix)'
         required: false
         type: string
 # === OK_EDIT: path-sync triggers ===
@@ -37,6 +37,7 @@ jobs:
         run: just pre-commit
   # === OK_EDIT: path-sync job-check ===
 
+  # === DO_NOT_EDIT: path-sync job-py-tests ===
   py-tests:
     name: Python Tests
     runs-on: ubuntu-latest
@@ -51,6 +52,7 @@ jobs:
           go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
       - name: Run Python tests
         run: just py-test
+  # === OK_EDIT: path-sync job-py-tests ===
 
   # === DO_NOT_EDIT: path-sync job-plan-tests ===
   plan-tests:
@@ -82,10 +84,15 @@ jobs:
 
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   plan-snapshot-tests:
-    name: Terraform Examples Plan Snapshot Tests
+    name: Plan Snapshots (${{ matrix.lane }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: ${{ fromJSON(inputs.provider_ref && '["minimum","maximum"]' || '["minimum","maximum","provider-head"]') }}
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
+      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.1.0'
       # Module-specific: Add required cloud provider credentials
       MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
       MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
@@ -97,14 +104,35 @@ jobs:
         with:
           just: 'true'
           uv: 'true'
-          terraform: 'true'
+      - name: Select Terraform version
+        id: version-selection
+        run: >-
+          uv run --directory .github python -m workspace.version_config
+          --lane "${{ matrix.lane }}"
+          --github-output "${GITHUB_OUTPUT}"
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: ${{ steps.version-selection.outputs.terraform_version }}
+          terraform_wrapper: false
+      - name: Pin minimum provider version
+        if: matrix.lane == 'minimum' && inputs.provider_ref == ''
+        shell: bash
+        env:
+          PROVIDER_VERSION: ${{ env.MONGODB_ATLAS_PROVIDER_MIN_VERSION }}
+        run: |
+          if [[ ! "${PROVIDER_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "MONGODB_ATLAS_PROVIDER_MIN_VERSION must be an exact X.Y.Z version" >&2
+            exit 1
+          fi
+          echo "MONGODB_ATLAS_PROVIDER_VERSION=${PROVIDER_VERSION}" >> "${GITHUB_ENV}"
       - uses: ./.github/actions/setup-provider-dev
+        if: matrix.lane == 'provider-head' || inputs.provider_ref != ''
         with:
           provider-ref: ${{ inputs.provider_ref }}
   # === OK_EDIT: path-sync job-snapshot-tests ===
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
-      - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+      - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 

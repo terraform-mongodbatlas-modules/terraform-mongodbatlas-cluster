@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import os
 from pathlib import Path
 
 import typer
@@ -12,6 +13,7 @@ from workspace import gen, models, output_assertions, plan, reg
 app = typer.Typer()
 
 EXAMPLES_DIR = models.REPO_ROOT / "examples"
+PROVIDER_VERSION_ENV = "MONGODB_ATLAS_PROVIDER_VERSION"
 
 
 def _resolve_example_dirs(ws_dir: Path, include_examples: str) -> list[Path]:
@@ -56,13 +58,20 @@ def main(
         raise typer.Exit(1)
 
     examples = "none" if mode == RunMode.SETUP_ONLY else include_examples
+    provider_version = os.getenv(PROVIDER_VERSION_ENV, "").strip() or None
 
     for ws_dir in ws_dirs:
         typer.echo(f"=== {ws_dir.name} ({mode}) ===")
         gen.process_workspace(ws_dir, include_examples=examples)
         example_dirs = _resolve_example_dirs(ws_dir, examples)
 
-        with plan.strip_provider_blocks(example_dirs):
+        with (
+            plan.strip_provider_blocks(example_dirs),
+            plan.provider_version_override(
+                ws_dir,
+                provider_version,
+            ),
+        ):
             if not skip_init:
                 plan.run_terraform_init(ws_dir)
 

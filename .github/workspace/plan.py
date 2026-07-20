@@ -23,6 +23,10 @@ app = typer.Typer()
 PLAN_BIN = "plan.bin"
 PLAN_JSON = "plan.json"
 OUTPUTS_ACTUAL_JSON = "outputs_actual.json"
+# The `_override.tf` suffix activates Terraform's override merge behavior.
+PROVIDER_VERSION_OVERRIDE_FILE = "provider_version_override.tf"
+MONGODB_ATLAS_PROVIDER_NAME = "mongodbatlas"
+MONGODB_ATLAS_PROVIDER_SOURCE = "mongodb/mongodbatlas"
 
 
 def run_cmd(cmd: list[str], cwd: Path) -> int:
@@ -33,10 +37,16 @@ def run_cmd(cmd: list[str], cwd: Path) -> int:
 def run_terraform_init(ws_dir: Path) -> None:
     logger.info(f"Running terraform init in {ws_dir.name}...")
     try:
-        tf_retry.run_terraform_init(["terraform", "init", "-upgrade", "-input=false"], ws_dir)
+        result = tf_retry.run_terraform_init(
+            ["terraform", "init", "-upgrade", "-input=false"], ws_dir
+        )
     except tf_retry.TerraformInitError as e:
         logger.error(f"terraform init failed: {e.stderr[:200]}")
         raise typer.Exit(1) from e
+    if result.stdout:
+        typer.echo(result.stdout.rstrip())
+    if result.stderr:
+        typer.echo(result.stderr.rstrip(), err=True)
 
 
 def run_terraform_plan(ws_dir: Path, var_files: list[Path], skip_init: bool = False) -> None:
@@ -123,6 +133,37 @@ def strip_provider_blocks(example_dirs: list[Path]) -> Generator[None]:
     finally:
         for path, content in originals.items():
             path.write_text(content)
+
+
+@contextlib.contextmanager
+def provider_version_override(
+    ws_dir: Path,
+    provider_version: str | None,
+) -> Generator[None]:
+    """Temporarily constrain the MongoDB Atlas provider to an exact registry version."""
+    if not provider_version:
+        yield
+        return
+    if not re.fullmatch(r"\d+\.\d+\.\d+", provider_version):
+        raise ValueError(f"Invalid exact provider version {provider_version!r}")
+
+    override_path = ws_dir / PROVIDER_VERSION_OVERRIDE_FILE
+    if override_path.exists():
+        raise FileExistsError(f"Refusing to overwrite existing {override_path}")
+    override_path.write_text(
+        "terraform {\n"
+        "  required_providers {\n"
+        f"    {MONGODB_ATLAS_PROVIDER_NAME} = {{\n"
+        f'      source  = "{MONGODB_ATLAS_PROVIDER_SOURCE}"\n'
+        f'      version = "= {provider_version}"\n'
+        "    }\n"
+        "  }\n"
+        "}\n"
+    )
+    try:
+        yield
+    finally:
+        override_path.unlink(missing_ok=True)
 
 
 @app.command()
