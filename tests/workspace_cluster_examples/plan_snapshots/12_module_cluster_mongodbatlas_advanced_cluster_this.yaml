@@ -4,6 +4,7 @@ advanced_configuration:
   minimum_enabled_tls_protocol: TLS1_2
 backup_enabled: true
 cluster_type: SHARDED
+delete_on_create_timeout: true
 name: multi-shard-uniform-topology
 pit_enabled: true
 project_id: <project_id>

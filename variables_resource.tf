@@ -75,7 +75,7 @@ EOT
 }
 
 variable "delete_on_create_timeout" {
-  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false."
+  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true."
   type        = bool
   nullable    = true
   default     = null

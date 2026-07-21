@@ -97,7 +97,6 @@ The `code-health.yml` workflow uses per-job section markers:
 |------------|-----|-------|
 | `triggers` | - | Workflow triggers (on: push, PR, etc.) |
 | `job-check` | `check` | Code quality validation |
-| `job-py-tests` | `py-tests` | Python tooling tests |
 | `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
 | `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
 | `job-snapshot-tests` | `plan-snapshot-tests` | Version selection and plan snapshots with resumable gaps for env vars and commands |

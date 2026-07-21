@@ -37,7 +37,6 @@ jobs:
         run: just pre-commit
   # === OK_EDIT: path-sync job-check ===
 
-  # === DO_NOT_EDIT: path-sync job-py-tests ===
   py-tests:
     name: Python Tests
     runs-on: ubuntu-latest
@@ -52,7 +51,6 @@ jobs:
           go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
       - name: Run Python tests
         run: just py-test
-  # === OK_EDIT: path-sync job-py-tests ===
 
   # === DO_NOT_EDIT: path-sync job-plan-tests ===
   plan-tests:
@@ -93,7 +91,7 @@ jobs:
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
       # Module-specific: Set the minimum provider release and required cloud provider credentials.
-      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.1.0'
+      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.2.0'
       MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
       MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
       MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}

@@ -5,7 +5,7 @@ import pytest
 from workspace import gen, models, plan, run
 
 
-@pytest.mark.parametrize("provider_version", ["2.1.0", None])
+@pytest.mark.parametrize("provider_version", ["2.2.0", None])
 def test_provider_version_environment_controls_override_during_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

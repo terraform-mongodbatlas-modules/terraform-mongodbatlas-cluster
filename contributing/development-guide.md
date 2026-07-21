@@ -131,8 +131,8 @@ Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` in the module-specific environment bloc
 `plan-snapshot-tests` job. It must be an exact provider release supported by the snapshot workspace
 and its included examples.
 
-For this module, `2.1.0` is the first provider release that supports the service-account client
-credentials used by CI.
+For this module, `2.2.0` is the first provider release that consistently includes the
+`delete_on_create_timeout` default in planned values.
 
 ## Testing
 

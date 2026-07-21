@@ -12,15 +12,12 @@ from tf_gen.schema.parser import (
     list_resource_types,
 )
 from tf_gen.schema_config import (
-    MONGODB_ATLAS_PROVIDER_SOURCE,
     PROVIDER_VERSIONS,
     resources_by_provider,
 )
 
-MONGODBATLAS_SOURCE = os.getenv("MONGODBATLAS_SOURCE", MONGODB_ATLAS_PROVIDER_SOURCE)
-MONGODBATLAS_VERSION = os.getenv(
-    "MONGODBATLAS_VERSION", PROVIDER_VERSIONS[MONGODB_ATLAS_PROVIDER_SOURCE]
-)
+MONGODBATLAS_SOURCE = os.getenv("MONGODBATLAS_SOURCE", "mongodb/mongodbatlas")
+MONGODBATLAS_VERSION = os.getenv("MONGODBATLAS_VERSION", "~> 2.2")
 TESTDATA_DIR = Path(__file__).parent / "testdata"
 SCHEMAS_DIR = TESTDATA_DIR / "schemas"
 

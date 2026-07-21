@@ -14,73 +14,56 @@ examples:
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        # Provider 2.1.0 omits this field from planned values, so normalize it across lanes.
-        dump: &advanced_cluster_snapshot_dump
-          skip_lines:
-            substring_attributes: [delete_on_create_timeout]
   - number: 2
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 3
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 4
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 5
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 6
     var_groups: [shared, project1]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   # Project 2: Examples 07-09 (20 nodes)
   - number: 7
     var_groups: [shared, project2]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 8
     var_groups: [shared, project2]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   - number: 9
     var_groups: [shared, project2]
     plan_regressions:
       - address: module.replication_var.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   # Project 3: Example 10 (24 nodes)
   - number: 10
     var_groups: [shared, project3]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   # Project 4: Example 11 (25 nodes - 3 clusters)
   - number: 11
     var_groups: [shared, project4]
     plan_regressions:
       - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
       - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
       - address: module.cluster_geosharded.module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
   # Project 5: Example 12 (15 nodes)
   - number: 12
     var_groups: [shared, project5]
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
-        dump: *advanced_cluster_snapshot_dump
 
 var_groups:
   shared:

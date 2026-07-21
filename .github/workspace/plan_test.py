@@ -18,7 +18,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.2"
     }
   }
   required_version = ">= 1.9"
@@ -37,7 +37,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.2"
     }
   }
   required_version = ">= 1.9"
@@ -62,7 +62,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.2"
     }
   }
   required_version = ">= 1.9"
@@ -79,7 +79,7 @@ def test_run_terraform_init_prints_success_output(tmp_path: Path, monkeypatch, c
     result = subprocess.CompletedProcess(
         args=["terraform", "init"],
         returncode=0,
-        stdout="Installing mongodb/mongodbatlas v2.1.0\n",
+        stdout="Installing mongodb/mongodbatlas v2.2.0\n",
         stderr="Terraform initialized with warnings\n",
     )
     monkeypatch.setattr(tf_retry, "run_terraform_init", lambda *_: result)
@@ -87,7 +87,7 @@ def test_run_terraform_init_prints_success_output(tmp_path: Path, monkeypatch, c
     run_terraform_init(tmp_path)
 
     captured = capsys.readouterr()
-    assert captured.out == "Installing mongodb/mongodbatlas v2.1.0\n"
+    assert captured.out == "Installing mongodb/mongodbatlas v2.2.0\n"
     assert captured.err == "Terraform initialized with warnings\n"
 
 
@@ -157,7 +157,7 @@ def test_provider_version_override_is_temporary(tmp_path: Path):
     override_path = tmp_path / PROVIDER_VERSION_OVERRIDE_FILE
     assert override_path.name.endswith("_override.tf")
 
-    with provider_version_override(tmp_path, "2.1.0"):
+    with provider_version_override(tmp_path, "2.2.0"):
         assert (
             override_path.read_text()
             == """\
@@ -165,7 +165,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "= 2.1.0"
+      version = "= 2.2.0"
     }
   }
 }
@@ -179,7 +179,7 @@ def test_provider_version_override_is_removed_on_exception(tmp_path: Path):
     override_path = tmp_path / PROVIDER_VERSION_OVERRIDE_FILE
 
     with pytest.raises(RuntimeError, match="boom"):
-        with provider_version_override(tmp_path, "2.1.0"):
+        with provider_version_override(tmp_path, "2.2.0"):
             raise RuntimeError("boom")
 
     assert not override_path.exists()
@@ -190,7 +190,7 @@ def test_provider_version_override_refuses_existing_file(tmp_path: Path):
     override_path.write_text("user content")
 
     with pytest.raises(FileExistsError, match="Refusing to overwrite"):
-        with provider_version_override(tmp_path, "2.1.0"):
+        with provider_version_override(tmp_path, "2.2.0"):
             pass
 
     assert override_path.read_text() == "user content"
@@ -198,7 +198,7 @@ def test_provider_version_override_refuses_existing_file(tmp_path: Path):
 
 def test_provider_version_override_rejects_non_exact_version(tmp_path: Path):
     with pytest.raises(ValueError, match="Invalid exact provider version"):
-        with provider_version_override(tmp_path, "~> 2.1"):
+        with provider_version_override(tmp_path, "~> 2.2"):
             pass
 
 

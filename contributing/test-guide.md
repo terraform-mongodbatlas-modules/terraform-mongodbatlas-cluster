@@ -67,7 +67,7 @@ both results are intentionally supported and the reason is documented.
 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # Plan with an exact released provider version
-MONGODB_ATLAS_PROVIDER_VERSION=2.1.0 just ws-run -m plan-snapshot-test -v dev.tfvars
+MONGODB_ATLAS_PROVIDER_VERSION=2.2.0 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # First run or after intentional changes: create/update baselines
 just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen
