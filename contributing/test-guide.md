@@ -56,9 +56,9 @@ replaces those lanes with the minimum and maximum Terraform versions for that so
 runs, the maximum stable provider version allowed by the workspace constraints is resolved by
 `terraform init -upgrade`. These tests do not apply changes or create Atlas resources.
 
-All lanes use the same checked-in snapshots. Investigate a difference before accepting it, and do
-not regenerate snapshots only to make a version lane pass. Use version-specific snapshots only when
-both results are intentionally supported and the reason is documented.
+All lanes compare against the same checked-in snapshots. If a lane differs, investigate the cause
+and normalize intentional version-only differences in the workspace snapshot configuration instead
+of regenerating the shared baseline.
 
 ### Workspace Commands
 
