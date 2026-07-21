@@ -81,7 +81,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lane: [minimum, maximum, provider-head]
+        include:
+          - lane: minimum
+            terraform_version: '1.10'
+            provider_mode: minimum
+          - lane: maximum
+            terraform_version: latest
+            provider_mode: registry
+          - lane: provider-head
+            terraform_version: latest
+            provider_mode: head
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
       # Module-specific: Set the minimum provider release and required cloud provider credentials.
@@ -97,7 +106,7 @@ jobs:
           just: 'true'
           uv: 'true'
       - name: Configure minimum provider
-        if: matrix.lane == 'minimum'
+        if: matrix.provider_mode == 'minimum'
         shell: bash
         run: |
           if [[ -z "${MONGODB_ATLAS_PROVIDER_MIN_VERSION:-}" ]]; then
@@ -105,18 +114,12 @@ jobs:
             exit 1
           fi
           echo "MONGODB_ATLAS_PROVIDER_VERSION=${MONGODB_ATLAS_PROVIDER_MIN_VERSION}" >> "$GITHUB_ENV"
-      - name: Select Terraform version
-        id: version-selection
-        run: >-
-          uv run --directory tools python -m workspace.version_config
-          --lane "${{ matrix.lane }}"
-          --github-output "${GITHUB_OUTPUT}"
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         with:
-          terraform_version: ${{ steps.version-selection.outputs.terraform_version }}
+          terraform_version: ${{ matrix.terraform_version }}
           terraform_wrapper: false
       - uses: ./.github/actions/setup-provider-dev
-        if: matrix.lane == 'provider-head'
+        if: matrix.provider_mode == 'head'
   # === OK_EDIT: path-sync job-snapshot-tests ===
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
