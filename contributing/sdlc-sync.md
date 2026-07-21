@@ -109,6 +109,8 @@ destinations:
 
 When workspace tests are ready, remove from `skip_sections` and re-sync to enable the jobs.
 
+Import validation (`justfile` section `import-validate`, workflow section `job-import-validate`) is enabled for cluster (source) and project by default. Other destinations skip those sections until they opt in.
+
 ## For Destination Module Developers
 
 **Do not modify synced files directly.** Changes will be overwritten on next sync.

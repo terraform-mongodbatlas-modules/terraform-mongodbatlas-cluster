@@ -67,12 +67,20 @@ just ws-run -m setup-only --auto-approve
 # Apply examples (creates real resources)
 just ws-run -m apply -v dev.tfvars --auto-approve
 
+# Validate that applied Atlas resources can be imported cleanly (requires prior apply)
+just import-validate --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
+# Run import validation for specific examples only
+just import-validate -e 1,8 --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
 # Destroy resources after testing
 just ws-run -m destroy --auto-approve
 
 # Find resources without plan_regressions entries (shows [data], [example], [module] hints)
 just ws-run -m reg -u
 ```
+
+The typical end-to-end workflow is: `plan-snapshot-test` -> `apply-examples` -> `import-validate` -> `destroy-examples`.
 
 ### Snapshot Configuration
 

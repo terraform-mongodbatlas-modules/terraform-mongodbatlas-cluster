@@ -125,14 +125,16 @@ destinations:
     default_branch: main
     include_groups: [project_generator, pre_release]
     skip_sections:
-      justfile: [dev-vars-org, regions]  # AWS doesn't need org vars or region extraction
+      justfile: [dev-vars-org, regions, import-validate]
+      .github/workflows/pre-release-tests.yml: [job-import-validate]
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
     default_branch: main
     include_groups: [regions, project_generator, pre_release]
     skip_sections:
-      justfile: [dev-vars-org]  # Azure needs regions but not org vars
+      justfile: [dev-vars-org, import-validate]
+      .github/workflows/pre-release-tests.yml: [job-import-validate]
   - name: project
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
@@ -146,7 +148,8 @@ destinations:
     default_branch: main
     include_groups: [regions, project_generator, pre_release]
     skip_sections:
-      justfile: [dev-vars-org]  # GCP needs regions but not org vars
+      justfile: [dev-vars-org, import-validate]
+      .github/workflows/pre-release-tests.yml: [job-import-validate]
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
@@ -155,4 +158,4 @@ destinations:
     # no include_groups (no regions, no project_generator, no pre-release)
     skip_sections:
       justfile: [dev-vars-org, regions, checks]  # Org doesn't need org vars or region extraction
-      .github/workflows/pre-release-tests.yml: [env]  # Uses a separate org ID and credentials for pre-release tests
+      .github/workflows/pre-release-tests.yml: [env, job-import-validate]  # Uses a separate org ID and credentials for pre-release tests
