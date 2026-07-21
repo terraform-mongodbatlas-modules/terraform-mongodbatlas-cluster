@@ -7,9 +7,9 @@ variable "backup_mode" {
     - SCHEDULED: module-managed frequency policies (hourly/daily/weekly/monthly/yearly)
     - UNMANAGED: module does not create the schedule resource. Consumer manages cloud_backup_schedule
       externally using a standalone resource. backup_copy_region, backup_retention, and backup_export must
-      be left at their defaults; backup_schedule_deletion_policy is still allowed.
+      be left at their defaults; backup_schedule_skip_destroy is still allowed.
 
-    Migrating to UNMANAGED with backup_schedule_deletion_policy = "KEEP" requires two applies: set KEEP
+    Migrating to UNMANAGED with backup_schedule_skip_destroy = true requires two applies: set it to true
     first while backup_mode is still SCHEDULED/ON_DEMAND, then switch to UNMANAGED in a second apply.
     Setting both in the same apply does not skip the delete.
   EOT
@@ -50,20 +50,15 @@ variable "backup_copy_region" {
   }
 }
 
-variable "backup_schedule_deletion_policy" {
+variable "backup_schedule_skip_destroy" {
   description = <<-EOT
-    Deletion behavior for the cloud_backup_schedule resource on destroy (maps to the provider's skip_destroy).
-    - DELETE (default): removes all backup schedule policies on destroy
-    - KEEP: skip_destroy = true. No-op on destroy, resource removed from Terraform state only. Use when a
-      Backup Compliance Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
+    Maps directly to the provider's skip_destroy on the cloud_backup_schedule resource.
+    - false (default): removes all backup schedule policies on destroy
+    - true: no-op on destroy, resource removed from Terraform state only. Use when a Backup Compliance
+      Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
   EOT
-  type        = string
-  default     = "DELETE"
-
-  validation {
-    condition     = contains(["DELETE", "KEEP"], var.backup_schedule_deletion_policy)
-    error_message = "backup_schedule_deletion_policy must be one of: DELETE, KEEP."
-  }
+  type        = bool
+  default     = false
 }
 
 variable "backup_retention" {

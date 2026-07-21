@@ -349,5 +349,5 @@ module "backup_schedule" {
   }
   copy_settings = local.backup_copy_settings
   export        = var.backup_export
-  skip_destroy  = var.backup_schedule_deletion_policy == "KEEP"
+  skip_destroy  = var.backup_schedule_skip_destroy
 }

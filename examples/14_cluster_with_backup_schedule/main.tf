@@ -29,8 +29,8 @@ module "cluster" {
   # target instead: backup_copy_region = { region = "EU_WEST_1" }
   backup_copy_region = {}
 
-  # Use KEEP when a Backup Compliance Policy is enabled on the project.
-  backup_schedule_deletion_policy = "KEEP"
+  # Set to true when a Backup Compliance Policy is enabled on the project.
+  backup_schedule_skip_destroy = true
 
   tags = var.tags
 }

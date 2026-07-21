@@ -574,7 +574,7 @@ Default: `null`
 ## Backup Schedule
 
 Configures the `cloud_backup_schedule` resource managed internally by this module. When
-`backup_enabled = false`: `backup_mode` and `backup_schedule_deletion_policy` are ignored (no
+`backup_enabled = false`: `backup_mode` and `backup_schedule_skip_destroy` are ignored (no
 effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
 validation error if set.
 
@@ -586,9 +586,9 @@ backup_enabled is a separate cluster-level flag; backup_mode is ignored when bac
 - SCHEDULED: module-managed frequency policies (hourly/daily/weekly/monthly/yearly)
 - UNMANAGED: module does not create the schedule resource. Consumer manages cloud_backup_schedule
   externally using a standalone resource. backup_copy_region, backup_retention, and backup_export must
-  be left at their defaults; backup_schedule_deletion_policy is still allowed.
+  be left at their defaults; backup_schedule_skip_destroy is still allowed.
 
-Migrating to UNMANAGED with backup_schedule_deletion_policy = "KEEP" requires two applies: set KEEP
+Migrating to UNMANAGED with backup_schedule_skip_destroy = true requires two applies: set it to true
 first while backup_mode is still SCHEDULED/ON_DEMAND, then switch to UNMANAGED in a second apply.
 Setting both in the same apply does not skip the delete.
 
@@ -622,16 +622,16 @@ object({
 
 Default: `null`
 
-### backup_schedule_deletion_policy
+### backup_schedule_skip_destroy
 
-Deletion behavior for the cloud_backup_schedule resource on destroy (maps to the provider's skip_destroy).
-- DELETE (default): removes all backup schedule policies on destroy
-- KEEP: skip_destroy = true. No-op on destroy, resource removed from Terraform state only. Use when a
-  Backup Compliance Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
+Maps directly to the provider's skip_destroy on the cloud_backup_schedule resource.
+- false (default): removes all backup schedule policies on destroy
+- true: no-op on destroy, resource removed from Terraform state only. Use when a Backup Compliance
+  Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
 
-Type: `string`
+Type: `bool`
 
-Default: `"DELETE"`
+Default: `false`
 
 ### backup_retention
 

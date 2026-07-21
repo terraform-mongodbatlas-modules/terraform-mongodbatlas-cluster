@@ -42,11 +42,11 @@ run "create_cluster_with_scheduled_backup" {
 
   assert {
     condition     = module.backup_schedule[0].schedule.skip_destroy == false
-    error_message = "skip_destroy should be false with the default backup_schedule_deletion_policy=DELETE"
+    error_message = "skip_destroy should be false with the default backup_schedule_skip_destroy=false"
   }
 }
 
-run "set_deletion_policy_to_keep" {
+run "set_skip_destroy_to_true" {
   command = apply
   module { source = "./." }
 
@@ -66,7 +66,7 @@ run "set_deletion_policy_to_keep" {
     backup_retention = {
       daily = { retention_value = 7 }
     }
-    backup_schedule_deletion_policy = "KEEP"
+    backup_schedule_skip_destroy = true
   }
 
   assert {
@@ -97,8 +97,8 @@ run "switch_to_unmanaged" {
     auto_scaling = {
       compute_enabled = false
     }
-    backup_mode                     = "UNMANAGED"
-    backup_schedule_deletion_policy = "KEEP"
+    backup_mode                  = "UNMANAGED"
+    backup_schedule_skip_destroy = true
   }
 
   assert {

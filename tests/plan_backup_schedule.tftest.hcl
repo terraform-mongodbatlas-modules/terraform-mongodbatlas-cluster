@@ -48,7 +48,7 @@ run "scheduled_default_creates_ui_default_policy_items" {
 
   assert {
     condition     = module.backup_schedule[0].schedule.skip_destroy == false
-    error_message = "skip_destroy should default to false (backup_schedule_deletion_policy=DELETE)"
+    error_message = "skip_destroy should default to false (backup_schedule_skip_destroy=false)"
   }
 }
 
@@ -442,22 +442,22 @@ run "copy_region_geosharded_insufficient_regions_in_first_zone_fails" {
   }
 }
 
-run "deletion_policy_keep_maps_to_skip_destroy" {
+run "skip_destroy_true_maps_to_skip_destroy" {
   command = plan
   module { source = "./" }
 
   variables {
-    name                            = "tf-test-backup-keep"
-    project_id                      = var.project_id
-    provider_name                   = "AWS"
-    cluster_type                    = "REPLICASET"
-    regions                         = [{ name = "US_EAST_1", node_count = 3 }]
-    backup_schedule_deletion_policy = "KEEP"
+    name                         = "tf-test-backup-keep"
+    project_id                   = var.project_id
+    provider_name                = "AWS"
+    cluster_type                 = "REPLICASET"
+    regions                      = [{ name = "US_EAST_1", node_count = 3 }]
+    backup_schedule_skip_destroy = true
   }
 
   assert {
     condition     = module.backup_schedule[0].schedule.skip_destroy == true
-    error_message = "backup_schedule_deletion_policy=KEEP should map to skip_destroy=true"
+    error_message = "backup_schedule_skip_destroy=true should map to skip_destroy=true"
   }
 }
 
