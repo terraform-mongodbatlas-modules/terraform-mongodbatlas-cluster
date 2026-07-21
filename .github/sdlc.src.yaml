@@ -121,7 +121,6 @@ path_groups:
   pre_release:
     - src_path: .github/workflows/pre-release-tests.yml
 
-# Skip snapshot-test workflow sync until each destination is ready.
 destinations:
   - name: aws
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-aws
@@ -130,7 +129,7 @@ destinations:
     include_groups: [project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org, regions]  # AWS doesn't need org vars or region extraction
-      .github/workflows/code-health.yml: [job-snapshot-tests]
+      .github/workflows/code-health.yml: [job-snapshot-tests] # TODO: Remove after snapshot-matrix onboarding.
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
     dest_path_relative: ../azure
@@ -138,7 +137,7 @@ destinations:
     include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org]  # Azure needs regions but not org vars
-      .github/workflows/code-health.yml: [job-snapshot-tests]
+      .github/workflows/code-health.yml: [job-snapshot-tests] # TODO: Remove after snapshot-matrix onboarding.
   - name: project
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-project
     dest_path_relative: ../project
@@ -146,7 +145,7 @@ destinations:
     include_groups: [pre_release]
     skip_sections:
       justfile: [regions]  # Project needs org vars but not region extraction
-      .github/workflows/code-health.yml: [job-snapshot-tests]
+      .github/workflows/code-health.yml: [job-snapshot-tests] # TODO: Remove after snapshot-matrix onboarding.
   - name: gcp
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp
     dest_path_relative: ../gcp
@@ -154,7 +153,7 @@ destinations:
     include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org]  # GCP needs regions but not org vars
-      .github/workflows/code-health.yml: [job-snapshot-tests]
+      .github/workflows/code-health.yml: [job-snapshot-tests] # TODO: Remove after snapshot-matrix onboarding.
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
     dest_path_relative: ../org
@@ -162,5 +161,5 @@ destinations:
     default_branch: main
     skip_sections:
       justfile: [dev-vars-org, regions, checks]  # Org doesn't need org vars or region extraction
-      .github/workflows/code-health.yml: [job-snapshot-tests]
+      .github/workflows/code-health.yml: [job-snapshot-tests] # TODO: Remove after snapshot-matrix onboarding.
       .github/workflows/pre-release-tests.yml: [env]  # Uses a separate org ID and credentials for pre-release tests
