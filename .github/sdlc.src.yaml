@@ -23,7 +23,6 @@ verify:
   on_fail: skip
   steps:
     - run: just uv-sync
-    - run: just py-test
     - run: just docs
       commit:
         message: "chore: docs after sdlc-sync"

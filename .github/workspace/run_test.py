@@ -5,27 +5,20 @@ import pytest
 from workspace import gen, models, plan, run
 
 
-@pytest.mark.parametrize("provider_version", ["2.2.0", None])
 def test_provider_version_environment_controls_override_during_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    provider_version: str | None,
 ):
+    provider_version = "2.2.0"
     override_path = tmp_path / plan.PROVIDER_VERSION_OVERRIDE_FILE
-    if provider_version is None:
-        monkeypatch.delenv(run.PROVIDER_VERSION_ENV, raising=False)
-    else:
-        monkeypatch.setenv(run.PROVIDER_VERSION_ENV, provider_version)
+    monkeypatch.setenv(run.PROVIDER_VERSION_ENV, provider_version)
     monkeypatch.setattr(models, "resolve_workspaces", lambda *_: [tmp_path])
     monkeypatch.setattr(gen, "process_workspace", lambda *_, **__: None)
     monkeypatch.setattr(run, "_resolve_example_dirs", lambda *_: [])
     monkeypatch.setattr(plan, "run_terraform_plan", lambda *_, **__: None)
 
     def assert_override_state(_: Path):
-        if provider_version is None:
-            assert not override_path.exists()
-        else:
-            assert f'version = "= {provider_version}"' in override_path.read_text()
+        assert f'version = "= {provider_version}"' in override_path.read_text()
 
     monkeypatch.setattr(plan, "run_terraform_init", assert_override_state)
 

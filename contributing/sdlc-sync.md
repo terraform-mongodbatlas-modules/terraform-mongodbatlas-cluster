@@ -116,15 +116,9 @@ Skipping `job-snapshot-tests` prevents path-sync from adding or updating that se
 disable an existing destination job. When a destination is ready, remove the section from
 `skip_sections` and re-sync.
 
-Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact release in the
-destination-owned job environment gap. The version must satisfy the snapshot workspace and its
-included examples. Ensure the root and snapshot workspace support the minimum Terraform version in
-the shared `.terraform-versions.yaml` file and preserve the destination's credentials, permissions,
-setup steps, and snapshot commands in the `OK_EDIT` gaps.
-
-Normal runs test minimum Terraform with the minimum provider, maximum Terraform with the maximum
-compatible released provider, and maximum Terraform with the provider default branch. A manual
-`provider_ref` replaces those lanes and tests that ref at both Terraform boundaries.
+Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact supported release
+in the destination-owned environment gap. Preserve the destination's credentials, setup, and
+snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](./test-guide.md) for lane behavior.
 
 ## For Destination Module Developers
 
@@ -171,7 +165,7 @@ just sdlc-sync-dry  # Preview changes
 just sdlc-sync      # Apply sync
 ```
 
-Each destination runs `just uv-sync`, `just py-test`, and `just docs` before a sync pull request is
+Each destination runs `just uv-sync` and `just docs` before a sync pull request is
 created. A verification failure skips that destination while allowing other destinations to
 continue.
 

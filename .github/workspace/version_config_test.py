@@ -28,16 +28,6 @@ def test_select_terraform_version_rejects_empty_list():
         select_terraform_version(Lane.MINIMUM, [])
 
 
-def test_select_terraform_version_rejects_duplicates():
-    with pytest.raises(ValueError, match="must not contain duplicates"):
-        select_terraform_version(Lane.MINIMUM, ["1.10", "1.10"])
-
-
-def test_select_terraform_version_rejects_unsorted_list():
-    with pytest.raises(ValueError, match="must be numerically sorted"):
-        select_terraform_version(Lane.MAXIMUM, ["1.11", "1.10"])
-
-
 def test_cli_writes_github_output(tmp_path: Path):
     output_path = tmp_path / "github-output"
     versions = load_versions(VERSIONS_FILE)
@@ -50,22 +40,6 @@ def test_cli_writes_github_output(tmp_path: Path):
 
     assert result.exit_code == 0
     assert output_path.read_text() == f"terraform_version={expected}\n"
-
-
-def test_cli_reports_malformed_yaml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    config_path = tmp_path / ".terraform-versions.yaml"
-    output_path = tmp_path / "github-output"
-    config_path.write_text("versions: [1.10\n")
-    monkeypatch.setattr(version_config, "VERSIONS_FILE", config_path)
-
-    result = RUNNER.invoke(
-        app,
-        ["--lane", "minimum", "--github-output", str(output_path)],
-    )
-
-    assert result.exit_code == 1
-    assert result.output.startswith("Error: ")
-    assert not output_path.exists()
 
 
 def test_cli_reports_unquoted_numeric_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

@@ -97,10 +97,8 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ### Provider Testing Policy
 
-- **Code Health plan snapshots**: Test the minimum Terraform version with the configured minimum
-  provider release, the maximum Terraform version with the maximum compatible released provider,
-  and the maximum Terraform version with the provider default branch. A manual `provider_ref` tests
-  that ref at both Terraform boundaries instead.
+- **Code Health plan snapshots**: Tests configured registry boundaries and the provider default
+  branch. A manual `provider_ref` tests that ref at both Terraform boundaries.
 - **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
 - **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
 

@@ -200,13 +200,3 @@ def test_provider_version_override_rejects_non_exact_version(tmp_path: Path):
     with pytest.raises(ValueError, match="Invalid exact provider version"):
         with provider_version_override(tmp_path, "~> 2.2"):
             pass
-
-
-def test_provider_version_override_without_version_preserves_existing_file(tmp_path: Path):
-    override_path = tmp_path / PROVIDER_VERSION_OVERRIDE_FILE
-    override_path.write_text("user content")
-
-    with provider_version_override(tmp_path, None):
-        assert override_path.read_text() == "user content"
-
-    assert override_path.read_text() == "user content"

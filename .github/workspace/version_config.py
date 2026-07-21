@@ -31,11 +31,8 @@ def select_terraform_version(lane: Lane, versions: list[str]) -> str:
         raise ValueError(f"{VERSIONS_FILE}: versions must not be empty")
     if any(not isinstance(version, str) for version in versions):
         raise TypeError(f"{VERSIONS_FILE}: versions must be strings")
-    if len(set(versions)) != len(versions):
-        raise ValueError(f"{VERSIONS_FILE}: versions must not contain duplicates")
-    if versions != sorted(versions, key=version_key):
-        raise ValueError(f"{VERSIONS_FILE}: versions must be numerically sorted")
-    return versions[0] if lane == Lane.MINIMUM else versions[-1]
+    selector = min if lane == Lane.MINIMUM else max
+    return selector(versions, key=version_key)
 
 
 @app.command()
