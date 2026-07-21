@@ -3,7 +3,7 @@ WARNING: This file is auto-generated. Do not edit directly.
 Changes will be overwritten when documentation is regenerated.
 Run 'just gen-examples' to regenerate.
 -->
-# Cluster with Scheduled Backups (retention override, cross-region copy, KEEP deletion policy)
+# Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)
 
 ## Pre Requirements
 

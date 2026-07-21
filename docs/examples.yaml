@@ -78,4 +78,4 @@ tables:
         name: Cluster with uniform SHARDED topology using `shard_count`
       - folder: 14
         name: Cluster with Scheduled Backups
-        title_suffix: (retention override, cross-region copy, KEEP deletion policy)
+        title_suffix: (retention override, cross-region copy, skip destroy on delete)
