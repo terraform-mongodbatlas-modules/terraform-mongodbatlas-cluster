@@ -20,7 +20,6 @@ pr_defaults:
     1. Look at the 1st line of the file, if it has `# path-sync copy -n sdlc` it means it is managed by path-sync
     2. Or look in the src repo for the `.github/sdlc.src.yaml` file that contains the mapping of files to sync.
 verify:
-  on_fail: skip
   steps:
     - run: just uv-sync
     - run: just docs

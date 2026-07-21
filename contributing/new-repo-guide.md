@@ -87,7 +87,7 @@ just sdlc-sync -d <dest-name>
 
 The sync will:
 1. Copy all synced files to the destination repo.
-2. Run verify steps (`just uv-sync`, `just docs`). A failure skips the destination.
+2. Run verify steps (`just uv-sync`, `just docs`).
 3. Commit changes and create a PR in the destination repo.
 
 Alternatively, trigger the `SDLC Copy` workflow via `workflow_dispatch` from your branch in GitHub Actions. Use the `extra-args` input to target specific destinations (e.g., `-d gcp` or `-d gcp -d azure`), or leave it empty to sync all.

@@ -57,3 +57,20 @@ def test_cli_reports_unquoted_numeric_version(tmp_path: Path, monkeypatch: pytes
     assert result.output.startswith("Error: ")
     assert "versions must be strings" in result.output
     assert not output_path.exists()
+
+
+def test_cli_reports_non_list_versions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    config_path = tmp_path / ".terraform-versions.yaml"
+    output_path = tmp_path / "github-output"
+    config_path.write_text('versions: "1.10"\n')
+    monkeypatch.setattr(version_config, "VERSIONS_FILE", config_path)
+
+    result = RUNNER.invoke(
+        app,
+        ["--lane", "minimum", "--github-output", str(output_path)],
+    )
+
+    assert result.exit_code == 1
+    assert result.output.startswith("Error: ")
+    assert "versions must be a list" in result.output
+    assert not output_path.exists()

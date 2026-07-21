@@ -27,6 +27,8 @@ def version_key(version: str) -> tuple[int, ...]:
 
 def select_terraform_version(lane: Lane, versions: list[str]) -> str:
     """Select the minimum Terraform version or the maximum for every other lane."""
+    if not isinstance(versions, list):
+        raise TypeError(f"{VERSIONS_FILE}: versions must be a list")
     if not versions:
         raise ValueError(f"{VERSIONS_FILE}: versions must not be empty")
     if any(not isinstance(version, str) for version in versions):
