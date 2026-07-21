@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import enum
 import os
 from pathlib import Path
@@ -65,13 +66,19 @@ def main(
         gen.process_workspace(ws_dir, include_examples=examples)
         example_dirs = _resolve_example_dirs(ws_dir, examples)
 
-        with (
-            plan.strip_provider_blocks(example_dirs),
-            plan.provider_version_override(
-                ws_dir,
-                provider_version,
-            ),
-        ):
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(plan.strip_provider_blocks(example_dirs))
+            try:
+                stack.enter_context(
+                    plan.provider_version_override(
+                        ws_dir,
+                        provider_version,
+                    )
+                )
+            except (FileExistsError, ValueError) as e:
+                typer.echo(f"Error: {e}", err=True)
+                raise typer.Exit(1) from e
+
             if not skip_init:
                 plan.run_terraform_init(ws_dir)
 
