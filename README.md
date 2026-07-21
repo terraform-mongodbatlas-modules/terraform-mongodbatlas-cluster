@@ -599,16 +599,16 @@ Default: `"SCHEDULED"`
 ### backup_copy_region
 
 Cross-region snapshot copy settings (multi-region snapshot distribution). When set, the module creates
-copy_settings to replicate snapshots (scheduled and on-demand) to the target region.
-- region: Atlas region name. When omitted (backup_copy_region = {}), the module auto-derives a secondary
-  region from var.regions (the highest-priority region after the primary), so the copy target stays
-  valid across regional failovers without a config change. Requires at least 2 regions in var.regions;
-  fails validation otherwise. Not derived from var.replication_specs -- set region explicitly when using
-  that variable. GEOSHARDED clusters get one cluster-wide copy target derived from the first zone's
+`copy_settings` to replicate scheduled and on-demand snapshots to the target region.
+- `region`: Atlas region name. When omitted (`backup_copy_region = {}`), the module auto-derives a secondary
+  region from `var.regions` (the highest-priority region after the primary), so the copy target stays
+  valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`;
+  fails validation otherwise. Not derived from `var.replication_specs` -- set region explicitly when using
+  that variable. `GEOSHARDED` clusters get one cluster-wide copy target derived from the first zone's
   regions; per-zone copy targets are not supported.
-- cloud_provider: override for multi-cloud clusters (default: derived from the target region, or left
+- `cloud_provider`: override for multi-cloud clusters (default: derived from the target region, or left
   for the provider to infer if it can't be resolved)
-- should_copy_oplogs: copy oplogs for point-in-time restore from the copy region (default: true if PIT enabled)
+- `should_copy_oplogs`: copy oplogs for point-in-time restore from the copy region (default: `true` if PIT enabled)
 
 Type:
 
@@ -624,10 +624,10 @@ Default: `null`
 
 ### backup_schedule_skip_destroy
 
-Maps directly to the provider's skip_destroy on the cloud_backup_schedule resource.
-- false (default): removes all backup schedule policies on destroy
-- true: no-op on destroy, resource removed from Terraform state only. Use when a Backup Compliance
-  Policy is enabled. See backup_mode's description for the UNMANAGED migration note.
+Maps directly to the provider's `skip_destroy` on the `cloud_backup_schedule` resource.
+- `false` (default): removes all backup schedule policies on destroy
+- `true`: no-op on destroy, resource removed from Terraform state only. Use when a Backup Compliance
+  Policy is enabled. See `backup_mode`'s description for the `UNMANAGED` migration note.
 
 Type: `bool`
 
@@ -635,21 +635,21 @@ Default: `false`
 
 ### backup_retention
 
-Retention overrides for the backup schedule. Each frequency (hourly/daily/weekly/monthly/yearly) is
-optional. When skip_default_retentions=false (the default), an omitted frequency is created using the
-Atlas UI default; when provided, retention_value is required and frequency_interval/retention_unit fall
-back to the Atlas UI default for that frequency if omitted. Set skip_default_retentions=true to only
+Retention overrides for the backup schedule. Each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is
+optional. When `skip_default_retentions=false` (the default), an omitted frequency is created using the
+Atlas UI default; when provided, `retention_value` is required and `frequency_interval`/`retention_unit` fall
+back to the Atlas UI default for that frequency if omitted. Set `skip_default_retentions=true` to only
 create the frequencies you explicitly declare.
 
-reference_hour_of_day/reference_minute_of_hour control the UTC snapshot window (default: cluster creation
-time). restore_window_days controls the PIT restore window.
+`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation
+time). `restore_window_days` controls the PIT restore window.
 
-ondemand is accepted for shape-compatibility with the project module's future backup_compliance_policy.retention
-but has no corresponding field on cloud_backup_schedule -- it is ignored by this module.
+`ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
+but has no corresponding field on `cloud_backup_schedule`. It is ignored by this module.
 
-Frequency fields (hourly/daily/weekly/monthly/yearly) are rejected (validation error) when backup_mode =
-"ON_DEMAND"; restore_window_days and ondemand remain valid there. The whole variable is rejected when
-backup_mode = "UNMANAGED" or backup_enabled = false.
+Frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) are rejected (validation error) when
+`backup_mode = "ON_DEMAND"`; `restore_window_days` and `ondemand` remain valid there. The whole variable is
+rejected when `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
 
 Type:
 
@@ -695,10 +695,11 @@ Default: `null`
 ### backup_export
 
 Export snapshots to a cloud storage bucket. The bucket resource is managed by the CSP module
-(aws/azure/gcp backup_export submodules). Setting this hardcodes auto_export_enabled = true on the
-schedule; there is no independent toggle. Valid with backup_mode = "ON_DEMAND" (exports whatever
-snapshots exist). Rejected (validation error) when set together with backup_mode = "UNMANAGED" or
-backup_enabled = false.
+(aws/azure/gcp backup_export submodules). Setting this hardcodes `auto_export_enabled = true` on the
+schedule; there is no independent toggle.
+
+Valid with `backup_mode = "ON_DEMAND"` (exports whatever snapshots exist). Rejected (validation error) when
+set together with `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
 
 Type:
 
