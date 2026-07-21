@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from tf_gen.config import GenerationTarget, OutputAttributeOverride
 from tf_gen.generators.hcl_write import (
+    format_terraform,
     make_description,
     render_blocks,
     render_description,
@@ -310,7 +311,7 @@ def generate_single_outputs(
                 sensitive=True,
             )
         )
-    return "\n\n".join(outputs)
+    return format_terraform("\n\n".join(outputs))
 
 
 def generate_multi_outputs(

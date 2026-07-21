@@ -11,7 +11,7 @@ This script automates changelog generation by:
 
 2. Running changelog-build (HashiCorp tool) to generate entries from baseline to HEAD
    - Reads from .changelog/*.txt files added since the baseline
-   - Uses templates from .github/changelog/ to format the output
+   - Uses templates from tools/changelog/ to format the output
 
 3. Updating only the (Unreleased) section in CHANGELOG.md
    - Preserves all existing released version entries
@@ -122,7 +122,7 @@ def get_gopath() -> str:
 
 
 GITHUB_REPO_URL_PLACEHOLDER = "GITHUB_REPO_URL"
-NOTE_TEMPLATE_PATH = ".github/changelog/release-note.tmpl"
+NOTE_TEMPLATE_PATH = "tools/changelog/release-note.tmpl"
 
 
 def resolve_note_template(repo_dir: Path) -> str:
@@ -153,7 +153,7 @@ def build_changelog(last_release: str, repo_dir: Path) -> str:
         "-entries-dir",
         ".changelog",
         "-changelog-template",
-        ".github/changelog/changelog.tmpl",
+        "tools/changelog/changelog.tmpl",
         "-note-template",
         resolved_template_path,
     ]

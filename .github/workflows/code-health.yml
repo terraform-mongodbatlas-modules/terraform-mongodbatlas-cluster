@@ -48,7 +48,7 @@ jobs:
           uv: 'true'
           terraform: 'true'
           go: 'true'
-          go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
+          go-version-file: 'tools/changelog/check-changelog-entry-file/go.mod'
       - name: Run Python tests
         run: just py-test
 

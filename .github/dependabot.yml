@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: "uv"
-    directory: "/.github"
+    cooldown:
+      default-days: 7
+    directory: "/tools"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -14,7 +16,9 @@ updates:
       - "dependencies"
 
   - package-ecosystem: "gomod"
-    directory: "/.github/changelog/check-changelog-entry-file"
+    cooldown:
+      default-days: 7
+    directory: "/tools/changelog/check-changelog-entry-file"
     schedule:
       interval: "weekly"
       day: "monday"

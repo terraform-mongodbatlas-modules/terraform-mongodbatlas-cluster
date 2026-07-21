@@ -313,7 +313,7 @@ providers:
 
 ## Testing
 
-Tests are in `.github/tf_gen/` using [pytest](https://pytest.org/):
+Tests are in `tools/tf_gen/` using [pytest](https://pytest.org/):
 
 | Test File | Purpose |
 |-----------|---------|

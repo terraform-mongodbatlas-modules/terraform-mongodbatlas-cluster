@@ -161,7 +161,7 @@ def test_update_unreleased_section_strips_content(tmp_path: Path) -> None:
 
 
 def test_resolve_note_template(tmp_path: Path, monkeypatch) -> None:
-    tmpl_dir = tmp_path / ".github" / "changelog"
+    tmpl_dir = tmp_path / "tools" / "changelog"
     tmpl_dir.mkdir(parents=True)
     (tmpl_dir / "release-note.tmpl").write_text(
         "* {{.Body}} ([#{{- .Issue -}}](GITHUB_REPO_URL/pull/{{- .Issue -}}))",

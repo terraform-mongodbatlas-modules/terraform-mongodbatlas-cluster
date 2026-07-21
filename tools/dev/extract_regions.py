@@ -1,8 +1,8 @@
 """Extract Atlas region mappings from listClusterProviderRegions API response.
 
 Usage (from repository root):
-    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run .github/dev/extract_regions.py
-    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run .github/dev/extract_regions.py --provider aws
+    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run tools/dev/extract_regions.py
+    MONGODB_ATLAS_PROJECT_ID=<project-id> uv run tools/dev/extract_regions.py --provider aws
 
     Or use the justfile recipe:
     just extract-regions aws

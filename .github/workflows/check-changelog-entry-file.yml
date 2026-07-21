@@ -47,7 +47,7 @@ jobs:
         with:
           just: 'true'
           go: 'true'
-          go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
+          go-version-file: 'tools/changelog/check-changelog-entry-file/go.mod'
 
       - name: Validate .changelog directory changes
         env:

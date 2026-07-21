@@ -133,7 +133,7 @@ The `check-outputs` mode runs `terraform output -json`, saves to `outputs_actual
 
 ### Workspace Test Scripts
 
-Scripts in `.github/workspace/` directory:
+Scripts in `tools/workspace/` directory:
 - `run.py` - Orchestrates workspace test runs
 - `gen.py` - Generates workspace configurations and output blocks
 - `plan.py` - Runs terraform plan/apply/output operations
