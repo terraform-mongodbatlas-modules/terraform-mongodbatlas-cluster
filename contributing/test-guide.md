@@ -51,7 +51,7 @@ Plan snapshot tests verify that `terraform plan` output remains consistent acros
 
 Code Health runs plan snapshots across three lanes: minimum supported Terraform and provider
 versions, maximum Terraform with the latest compatible provider, and maximum Terraform with the
-provider default branch. A manual `provider_ref` tests that ref at both Terraform boundaries.
+provider default branch.
 
 All lanes are plan-only and share the same checked-in snapshots. Normalize intentional version-only
 differences instead of regenerating the shared baseline.

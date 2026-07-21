@@ -10,12 +10,6 @@ on:
   merge_group:
   schedule:
     - cron: '0 2 * * *'
-  workflow_dispatch:
-    inputs:
-      provider_ref:
-        description: 'Provider git ref (when set, replaces the default provider matrix)'
-        required: false
-        type: string
 # === OK_EDIT: path-sync triggers ===
 
 permissions:
@@ -87,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lane: ${{ fromJSON(inputs.provider_ref && '["minimum","maximum"]' || '["minimum","maximum","provider-head"]') }}
+        lane: [minimum, maximum, provider-head]
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
       # Module-specific: Set the minimum provider release and required cloud provider credentials.
@@ -113,17 +107,14 @@ jobs:
           terraform_version: ${{ steps.version-selection.outputs.terraform_version }}
           terraform_wrapper: false
       - uses: ./.github/actions/setup-provider-dev
-        if: matrix.lane == 'provider-head' || inputs.provider_ref != ''
-        with:
-          provider-ref: ${{ inputs.provider_ref }}
+        if: matrix.lane == 'provider-head'
   # === OK_EDIT: path-sync job-snapshot-tests ===
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
         env:
           MONGODB_ATLAS_PROVIDER_VERSION: >-
-            ${{ matrix.lane == 'minimum' && inputs.provider_ref == ''
-                && env.MONGODB_ATLAS_PROVIDER_MIN_VERSION || '' }}
+            ${{ matrix.lane == 'minimum' && env.MONGODB_ATLAS_PROVIDER_MIN_VERSION || '' }}
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 
