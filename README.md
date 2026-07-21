@@ -654,6 +654,10 @@ Frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) are rejected (va
 `backup_mode = "ON_DEMAND"`; `restore_window_days` and `ondemand` remain valid there. The whole variable is
 rejected when `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
 
+Atlas requires an `hourly` policy item for Continuous Cloud Backup: when `backup_mode = "SCHEDULED"` and
+point-in-time restore is effectively enabled (`pit_enabled` defaults to `backup_enabled`), omitting `hourly`
+via `skip_default_retentions = true` is rejected (validation error) rather than failing at apply.
+
 Type:
 
 ```hcl

@@ -134,6 +134,47 @@ run "on_demand_mode_with_frequency_retention_fails" {
   }
 }
 
+run "scheduled_mode_skips_hourly_with_pit_enabled_fails" {
+  command         = plan
+  expect_failures = [var.backup_retention]
+  module { source = "./" }
+
+  variables {
+    name          = "tf-test-backup-scheduled-no-hourly-pit"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    regions       = [{ name = "US_EAST_1", node_count = 3 }]
+    backup_retention = {
+      skip_default_retentions = true
+      daily                   = { retention_value = 14 }
+    }
+  }
+}
+
+run "scheduled_mode_skips_hourly_with_pit_disabled_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name          = "tf-test-backup-scheduled-no-hourly-no-pit"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    regions       = [{ name = "US_EAST_1", node_count = 3 }]
+    pit_enabled   = false
+    backup_retention = {
+      skip_default_retentions = true
+      daily                   = { retention_value = 14 }
+    }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.policy_item_hourly) == 0
+    error_message = "hourly policy should be omittable when PIT is explicitly disabled"
+  }
+}
+
 run "on_demand_mode_with_copy_region_succeeds" {
   command = plan
   module { source = "./" }
@@ -259,6 +300,7 @@ run "skip_default_retentions_only_creates_declared_frequencies" {
     provider_name = "AWS"
     cluster_type  = "REPLICASET"
     regions       = [{ name = "US_EAST_1", node_count = 3 }]
+    pit_enabled   = false # unrelated to PIT; avoids the hourly-required-for-PIT validation
     backup_retention = {
       skip_default_retentions = true
       daily                   = { retention_value = 30 }

@@ -81,6 +81,10 @@ variable "backup_retention" {
     Frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) are rejected (validation error) when
     `backup_mode = "ON_DEMAND"`; `restore_window_days` and `ondemand` remain valid there. The whole variable is
     rejected when `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
+
+    Atlas requires an `hourly` policy item for Continuous Cloud Backup: when `backup_mode = "SCHEDULED"` and
+    point-in-time restore is effectively enabled (`pit_enabled` defaults to `backup_enabled`), omitting `hourly`
+    via `skip_default_retentions = true` is rejected (validation error) rather than failing at apply.
   EOT
   type = object({
     skip_default_retentions  = optional(bool, false)
@@ -134,6 +138,14 @@ variable "backup_retention" {
       try(var.backup_retention.yearly, null) == null,
     ])
     error_message = "Cannot set frequency-based backup_retention fields (hourly/daily/weekly/monthly/yearly) when backup_mode = \"ON_DEMAND\" (it removes all frequency policies). restore_window_days and ondemand remain valid."
+  }
+
+  validation {
+    # try() per field -- a leading null-guard doesn't short-circuit here, see tests/plan_short_circuit.tftest.hcl.
+    condition = var.backup_mode != "SCHEDULED" || coalesce(var.pit_enabled, var.backup_enabled) != true || !(
+      try(var.backup_retention.skip_default_retentions, false) && try(var.backup_retention.hourly, null) == null
+    )
+    error_message = "Cannot omit backup_retention.hourly (skip_default_retentions = true with hourly unset) when backup_mode = \"SCHEDULED\" and point-in-time restore is effectively enabled (pit_enabled defaults to backup_enabled) -- Atlas requires an hourly policy item for Continuous Cloud Backup."
   }
 }
 
