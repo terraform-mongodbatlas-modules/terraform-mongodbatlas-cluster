@@ -15,7 +15,7 @@ DEFAULT_PROVIDERS = {
     "mongodbatlas": {
         "provider_name": "mongodbatlas",
         "provider_source": "mongodb/mongodbatlas",
-        "provider_version": "~> 2.2",  # Provider 2.2 and later 2.x releases.
+        "provider_version": "~> 2.2",
     },
     "aws": {
         "provider_name": "aws",
