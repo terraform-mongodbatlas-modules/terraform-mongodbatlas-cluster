@@ -144,7 +144,8 @@ variable "backup_export" {
     Export snapshots to a cloud storage bucket. The bucket resource is managed by the CSP module
     (aws/azure/gcp backup_export submodules). Setting this hardcodes auto_export_enabled = true on the
     schedule; there is no independent toggle. Valid with backup_mode = "ON_DEMAND" (exports whatever
-    snapshots exist). Ignored (validation error if set) when backup_mode = "UNMANAGED" or backup_enabled = false.
+    snapshots exist). Rejected (validation error) when set together with backup_mode = "UNMANAGED" or
+    backup_enabled = false.
   EOT
   type = object({
     export_bucket_id = string

@@ -573,8 +573,10 @@ Default: `null`
 
 ## Backup Schedule
 
-Configures the `cloud_backup_schedule` resource managed internally by this module. Ignored
-(validation error if set) when `backup_enabled = false`.
+Configures the `cloud_backup_schedule` resource managed internally by this module. When
+`backup_enabled = false`: `backup_mode` and `backup_schedule_deletion_policy` are ignored (no
+effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
+validation error if set.
 
 ### backup_mode
 
@@ -695,7 +697,8 @@ Default: `null`
 Export snapshots to a cloud storage bucket. The bucket resource is managed by the CSP module
 (aws/azure/gcp backup_export submodules). Setting this hardcodes auto_export_enabled = true on the
 schedule; there is no independent toggle. Valid with backup_mode = "ON_DEMAND" (exports whatever
-snapshots exist). Ignored (validation error if set) when backup_mode = "UNMANAGED" or backup_enabled = false.
+snapshots exist). Rejected (validation error) when set together with backup_mode = "UNMANAGED" or
+backup_enabled = false.
 
 Type:
 

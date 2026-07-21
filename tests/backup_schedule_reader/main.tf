@@ -15,7 +15,7 @@ variable "project_id" {
 
 variable "cluster_name" {
   type        = string
-  description = "Cluster name whose backup schedule should be read back directly from Atlas."
+  description = "Name of the cluster whose backup schedule is read back directly from Atlas."
 }
 
 data "mongodbatlas_cloud_backup_schedule" "this" {
