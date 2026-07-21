@@ -165,9 +165,8 @@ just sdlc-sync-dry  # Preview changes
 just sdlc-sync      # Apply sync
 ```
 
-Each destination runs `just uv-sync` and `just docs` before a sync pull request is created.
-Verification failures are reported without preventing the destination pull request from being
-created.
+Destination verification runs before pull request creation. Failures are reported but do not block
+pull request creation, so resolve them before merging.
 
 ## Testing Changes (Source Developers)
 

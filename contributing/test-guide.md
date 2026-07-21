@@ -49,16 +49,12 @@ To update the version matrix when new Terraform versions are released, edit `.te
 
 Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/workspace_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
-Code Health runs three snapshot lanes: the minimum Terraform version with the configured minimum
-provider release, the maximum Terraform version with the maximum compatible released provider, and
-the maximum Terraform version with the provider default branch. A manually dispatched `provider_ref`
-replaces those lanes with the minimum and maximum Terraform versions for that source ref. For normal
-runs, the maximum stable provider version allowed by the workspace constraints is resolved by
-`terraform init -upgrade`. These tests do not apply changes or create Atlas resources.
+Code Health runs plan snapshots across three lanes: minimum supported Terraform and provider
+versions, maximum Terraform with the latest compatible provider, and maximum Terraform with the
+provider default branch. A manual `provider_ref` tests that ref at both Terraform boundaries.
 
-All lanes compare against the same checked-in snapshots. If a lane differs, investigate the cause
-and normalize intentional version-only differences in the workspace snapshot configuration instead
-of regenerating the shared baseline.
+All lanes are plan-only and share the same checked-in snapshots. Normalize intentional version-only
+differences instead of regenerating the shared baseline.
 
 ### Workspace Commands
 
@@ -170,6 +166,5 @@ export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
 just unit-plan-tests
 ```
 
-Code Health tests both configured registry boundaries and the provider default branch. The live
-development integration workflow continues to use the provider default branch through the
+The development integration workflow uses the provider default branch through the
 `setup-provider-dev` action.

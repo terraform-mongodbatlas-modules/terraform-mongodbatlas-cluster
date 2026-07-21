@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import enum
 import os
 from pathlib import Path
@@ -66,40 +65,35 @@ def main(
         gen.process_workspace(ws_dir, include_examples=examples)
         example_dirs = _resolve_example_dirs(ws_dir, examples)
 
-        with contextlib.ExitStack() as stack:
-            stack.enter_context(plan.strip_provider_blocks(example_dirs))
-            try:
-                stack.enter_context(
-                    plan.provider_version_override(
+        try:
+            with (
+                plan.strip_provider_blocks(example_dirs),
+                plan.provider_version_override(ws_dir, provider_version),
+            ):
+                if not skip_init:
+                    plan.run_terraform_init(ws_dir)
+
+                if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
+                    plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
+
+                if mode == RunMode.PLAN_SNAPSHOT_TEST:
+                    reg.process_workspace(
                         ws_dir,
-                        provider_version,
+                        force_regen=force_regen,
+                        show_uncovered=show_uncovered,
                     )
-                )
-            except (FileExistsError, ValueError) as e:
-                typer.echo(f"Error: {e}", err=True)
-                raise typer.Exit(1) from e
 
-            if not skip_init:
-                plan.run_terraform_init(ws_dir)
+                if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
+                    plan.run_terraform_apply(ws_dir, var_file, auto_approve)
 
-            if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
-                plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
+                if mode == RunMode.CHECK_OUTPUTS:
+                    output_assertions.process_workspace(ws_dir, include_examples)
 
-            if mode == RunMode.PLAN_SNAPSHOT_TEST:
-                reg.process_workspace(
-                    ws_dir,
-                    force_regen=force_regen,
-                    show_uncovered=show_uncovered,
-                )
-
-            if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
-                plan.run_terraform_apply(ws_dir, var_file, auto_approve)
-
-            if mode == RunMode.CHECK_OUTPUTS:
-                output_assertions.process_workspace(ws_dir, include_examples)
-
-            if mode == RunMode.DESTROY:
-                plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
+                if mode == RunMode.DESTROY:
+                    plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
+        except (FileExistsError, ValueError) as e:
+            typer.echo(f"Error: {e}", err=True)
+            raise typer.Exit(1) from e
 
     typer.echo("Done.")
 

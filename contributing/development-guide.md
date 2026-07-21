@@ -97,8 +97,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ### Provider Testing Policy
 
-- **Code Health plan snapshots**: Tests configured registry boundaries and the provider default
-  branch. A manual `provider_ref` tests that ref at both Terraform boundaries.
+- **Code Health plan snapshots**: Tests registry boundaries and the provider default branch.
 - **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
 - **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
 
@@ -125,12 +124,8 @@ Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when
 
 ### Code Health Configuration
 
-Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` in the module-specific environment block of the
-`plan-snapshot-tests` job. It must be an exact provider release supported by the snapshot workspace
-and its included examples.
-
-For this module, `2.2.0` is the first provider release that consistently includes the
-`delete_on_create_timeout` default in planned values.
+Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to the module's exact minimum supported provider release in
+the module-specific environment block of the `plan-snapshot-tests` job.
 
 ## Testing
 

@@ -112,17 +112,6 @@ jobs:
         with:
           terraform_version: ${{ steps.version-selection.outputs.terraform_version }}
           terraform_wrapper: false
-      - name: Pin minimum provider version
-        if: matrix.lane == 'minimum' && inputs.provider_ref == ''
-        shell: bash
-        env:
-          PROVIDER_VERSION: ${{ env.MONGODB_ATLAS_PROVIDER_MIN_VERSION }}
-        run: |
-          if [[ ! "${PROVIDER_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "MONGODB_ATLAS_PROVIDER_MIN_VERSION must be an exact X.Y.Z version" >&2
-            exit 1
-          fi
-          echo "MONGODB_ATLAS_PROVIDER_VERSION=${PROVIDER_VERSION}" >> "${GITHUB_ENV}"
       - uses: ./.github/actions/setup-provider-dev
         if: matrix.lane == 'provider-head' || inputs.provider_ref != ''
         with:
@@ -131,6 +120,10 @@ jobs:
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
+        env:
+          MONGODB_ATLAS_PROVIDER_VERSION: >-
+            ${{ matrix.lane == 'minimum' && inputs.provider_ref == ''
+                && env.MONGODB_ATLAS_PROVIDER_MIN_VERSION || '' }}
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 

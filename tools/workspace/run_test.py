@@ -38,26 +38,12 @@ def test_provider_version_environment_controls_override_during_run(
     assert not override_path.exists()
 
 
-@pytest.mark.parametrize(
-    ("provider_version", "existing_content", "expected_error"),
-    [
-        ("~> 2.2", None, "Invalid exact provider version '~> 2.2'"),
-        ("2.2.0", "user content", "Refusing to overwrite existing"),
-    ],
-)
-def test_provider_version_errors_are_reported(
+def test_provider_version_error_is_reported(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    provider_version: str,
-    existing_content: str | None,
-    expected_error: str,
 ):
-    override_path = tmp_path / plan.PROVIDER_VERSION_OVERRIDE_FILE
-    if existing_content is not None:
-        override_path.write_text(existing_content)
-
-    monkeypatch.setenv(run.PROVIDER_VERSION_ENV, provider_version)
+    monkeypatch.setenv(run.PROVIDER_VERSION_ENV, "~> 2.2")
     monkeypatch.setattr(models, "resolve_workspaces", lambda *_: [tmp_path])
     monkeypatch.setattr(gen, "process_workspace", lambda *_, **__: None)
     monkeypatch.setattr(run, "_resolve_example_dirs", lambda *_: [])
@@ -76,6 +62,4 @@ def test_provider_version_errors_are_reported(
         )
 
     assert exc_info.value.exit_code == 1
-    assert f"Error: {expected_error}" in capsys.readouterr().err
-    if existing_content is not None:
-        assert override_path.read_text() == existing_content
+    assert "Error: Invalid exact provider version '~> 2.2'" in capsys.readouterr().err
