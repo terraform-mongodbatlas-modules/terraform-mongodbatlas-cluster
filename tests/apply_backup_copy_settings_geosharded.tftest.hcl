@@ -28,9 +28,9 @@ run "create_geosharded_cluster_with_copy_settings" {
     cluster_type  = "GEOSHARDED"
     provider_name = "AWS"
     regions = [
-      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
-      { name = "US_WEST_2", node_count = 2, zone_name = "US" },
-      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", instance_size = "M10" },
+      { name = "US_WEST_2", node_count = 2, zone_name = "US", instance_size = "M10" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", instance_size = "M10" },
     ]
     auto_scaling = {
       compute_enabled = false
