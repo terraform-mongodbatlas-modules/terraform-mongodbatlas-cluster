@@ -1,6 +1,6 @@
 # MongoDB Atlas Cluster Module (Public Preview)
 
-This module simplifies the MongoDB Atlas cluster resource. Obtain more granular control by replacing simplified attributes with the standard resource attributes defined in [`mongodbatlas_advanced_cluster (provider 2.0.0)`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster).
+This module simplifies the MongoDB Atlas cluster resource. Obtain more granular control by replacing simplified attributes with the standard resource attributes defined in [`mongodbatlas_advanced_cluster`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster).
 
 <!-- BEGIN_TOC -->
 <!-- @generated
@@ -149,15 +149,15 @@ Run 'just docs' to regenerate.
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](https://developer.hashicorp.com/terraform/install) (>= 1.9)
+- <a name="requirement_terraform"></a> [terraform](https://developer.hashicorp.com/terraform/install) (>= 1.10)
 
-- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.0)
+- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
 
 ## Providers
 
 The following providers are used by this module:
 
-- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.0)
+- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
 
 ## Resources
 
@@ -909,9 +909,9 @@ The module provides two approaches to accommodate different user needs and migra
 
 📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
 
-### Why does this module require Terraform 1.9+ when the provider supports 1.7.x+?
+### Why does this module require Terraform 1.10+?
 
-This module requires Terraform 1.9+ due to the use of cross-variable validation references, which are only supported in Terraform 1.9 and later. While the [MongoDB Atlas Provider](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix) supports Terraform 1.7.x+, this module's validation patterns require 1.9+.
+This module requires Terraform 1.10+ to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix). While cross-variable validation references establish a technical minimum of Terraform 1.9, the provider support policy raises the module's supported minimum to Terraform 1.10.
 
 See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
 

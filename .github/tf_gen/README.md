@@ -6,7 +6,7 @@ Generate `variables.tf`, `main.tf`, and `outputs.tf` from Terraform provider sch
 
 - [Python](https://www.python.org/) 3.14+
 - [uv](https://docs.astral.sh/uv/) for dependency management
-- [Terraform](https://www.terraform.io/) 1.9+
+- [Terraform](https://www.terraform.io/) 1.10+
 
 ## Quick Start
 

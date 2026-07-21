@@ -102,12 +102,18 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 ### Required Secrets
 
+Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when manually dispatching the workflow to use the unsuffixed cloud-dev secrets.
+
 | Secret | Description |
 |--------|-------------|
-| `MONGODB_ATLAS_ORG_ID` | Atlas organization ID for tests |
-| `MONGODB_ATLAS_CLIENT_ID` | Service account client ID |
-| `MONGODB_ATLAS_CLIENT_SECRET` | Service account client secret |
-| `MONGODB_ATLAS_BASE_URL` | Atlas API base URL (cloud-dev) |
+| `MONGODB_ATLAS_ORG_ID` | Cloud-dev Atlas organization ID |
+| `MONGODB_ATLAS_CLIENT_ID` | Cloud-dev service account client ID |
+| `MONGODB_ATLAS_CLIENT_SECRET` | Cloud-dev service account client secret |
+| `MONGODB_ATLAS_BASE_URL` | Cloud-dev Atlas API base URL |
+| `MONGODB_ATLAS_ORG_ID_QA` | QA Atlas organization ID |
+| `MONGODB_ATLAS_CLIENT_ID_QA` | QA service account client ID |
+| `MONGODB_ATLAS_CLIENT_SECRET_QA` | QA service account client secret |
+| `MONGODB_ATLAS_BASE_URL_QA` | QA Atlas API base URL |
 
 ### Required Variables
 
@@ -138,11 +144,11 @@ validation {
 }
 ```
 
-**Why?** In Terraform 1.9-1.11, short-circuit evaluation behavior changed. The `try()` function ensures that if `floor()` receives a `null` value, it returns `false` instead of causing an error, allowing the validation to pass when the value is `null` (first clause will be `true`).
+**Why?** Terraform 1.10 and 1.11 do not reliably short-circuit these expressions. The `try()` function keeps nullable operands safe across the supported range by returning `false` when `floor()` receives a `null` value.
 
 ### Cross-Variable Validation References
 
-This module uses cross-variable validation references (requires Terraform 1.9+):
+This module uses cross-variable validation references (available in Terraform 1.9+):
 
 ```hcl
 variable "shard_count" {
@@ -153,7 +159,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: Cross-variable validation references are a key reason this module requires Terraform >= 1.9. See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for details.
+**Note**: While cross-variable validation references establish a technical minimum of Terraform 1.9, the module requires Terraform 1.10 or later to remain aligned with the MongoDB Atlas Provider support policy. See [Terraform Version Requirements](../docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 

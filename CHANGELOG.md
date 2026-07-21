@@ -1,5 +1,10 @@
 ## (Unreleased)
 
+NOTES:
+
+* provider/mongodbatlas: Requires minimum version 2.1 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
+* terraform: Requires minimum version 1.10 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
+
 ## 0.3.1 (March 17, 2026)
 
 BUG FIXES:
