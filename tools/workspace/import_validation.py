@@ -233,6 +233,55 @@ def _is_after_unknown(marker: Any) -> bool:
     return False
 
 
+def resolve_import_entries(
+    enabled: list[models.Example],
+    state_resources: dict[str, StateResource],
+    mapping: dict[str, str],
+) -> list[tuple[str, str]]:
+    """Match enabled plan_regressions to state and build (address, import_id) pairs.
+
+    Raises ValueError when a plan_regressions address is missing from state, or when
+    no Atlas resources remain to import-validate after SKIP / non-Atlas filtering.
+    """
+    missing: list[str] = []
+    atlas_types: set[str] = set()
+    for ex in enabled:
+        for reg in ex.plan_regressions:
+            full_addr = f"module.ex_{ex.identifier}.{reg.address}"
+            sr = state_resources.get(full_addr)
+            if not sr:
+                missing.append(full_addr)
+                continue
+            if sr.resource_type.startswith(ATLAS_PREFIX):
+                atlas_types.add(sr.resource_type)
+
+    if missing:
+        raise ValueError(
+            "plan_regressions addresses missing from state "
+            "(run --mode apply first):\n" + "\n".join(f"  {a}" for a in missing)
+        )
+
+    validate_atlas_types(atlas_types, mapping)
+
+    import_entries: list[tuple[str, str]] = []
+    for ex in enabled:
+        for reg in ex.plan_regressions:
+            full_addr = f"module.ex_{ex.identifier}.{reg.address}"
+            sr = state_resources[full_addr]
+            import_id = extract_import_id(sr.resource_type, sr.values, mapping)
+            if import_id is None:
+                continue
+            import_entries.append((full_addr, import_id))
+
+    if not import_entries:
+        raise ValueError(
+            "No Atlas resources to import-validate. "
+            "Disable import_validation or map types in resource_type_import_ids "
+            "(use SKIP only when intentional)."
+        )
+    return import_entries
+
+
 def process_workspace(
     ws_dir: Path, include_examples: str = "all", var_files: list[Path] | None = None
 ) -> None:
@@ -249,36 +298,10 @@ def process_workspace(
 
     state_json = plan.run_terraform_show_json(ws_dir)
     state_resources = extract_state_resources(state_json)
-
-    atlas_types: set[str] = set()
-    for ex in enabled:
-        for reg in ex.plan_regressions:
-            full_addr = f"module.ex_{ex.identifier}.{reg.address}"
-            if sr := state_resources.get(full_addr):
-                if sr.resource_type.startswith(ATLAS_PREFIX):
-                    atlas_types.add(sr.resource_type)
-
-    validate_atlas_types(atlas_types, config.resource_type_import_ids)
-
-    import_entries: list[tuple[str, str]] = []
-    rm_addresses: list[str] = []
-    for ex in enabled:
-        for reg in ex.plan_regressions:
-            full_addr = f"module.ex_{ex.identifier}.{reg.address}"
-            sr = state_resources.get(full_addr)
-            if not sr:
-                continue
-            import_id = extract_import_id(
-                sr.resource_type, sr.values, config.resource_type_import_ids
-            )
-            if import_id is None:
-                continue
-            import_entries.append((full_addr, import_id))
-            rm_addresses.append(full_addr)
-
-    if not import_entries:
-        logger.info("No Atlas resources to import-validate, skipping")
-        return
+    import_entries = resolve_import_entries(
+        enabled, state_resources, config.resource_type_import_ids
+    )
+    rm_addresses = [addr for addr, _ in import_entries]
 
     logger.info(f"Import-validating {len(import_entries)} resources across {len(enabled)} examples")
 

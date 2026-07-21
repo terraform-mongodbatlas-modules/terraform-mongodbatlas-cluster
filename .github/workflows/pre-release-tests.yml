@@ -97,8 +97,6 @@ jobs:
           INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
       # === OK_EDIT: path-sync job-import-validate ===
         run: just import-validate -e "$INCLUDE_EXAMPLES" --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
-      # === DO_NOT_EDIT: path-sync job-import-validate ===
-      # === OK_EDIT: path-sync job-import-validate ===
       - name: Destroy examples
         if: always()
         env:

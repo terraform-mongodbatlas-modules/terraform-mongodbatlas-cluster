@@ -7,6 +7,7 @@ from workspace.import_validation import (
     IMPORTS_GENERATED_TF,
     SKIP_SENTINEL,
     TFSTATE_FILE,
+    StateResource,
     _diff_attributes,
     assert_clean_plan,
     assert_import_plan,
@@ -15,6 +16,7 @@ from workspace.import_validation import (
     extract_import_id,
     extract_state_resources,
     generate_import_blocks_tf,
+    resolve_import_entries,
     validate_atlas_types,
 )
 
@@ -38,6 +40,28 @@ def test_extract_import_id_non_atlas():
 
 def test_extract_import_id_skip():
     assert extract_import_id("mongodbatlas_log_integration", {}, MAPPING) is None
+
+
+def test_resolve_import_entries_missing_state_address():
+    example = models.Example(
+        name="enc",
+        plan_regressions=[
+            models.PlanRegression(address="mongodbatlas_encryption_at_rest.this"),
+        ],
+        import_validation=models.ImportValidationConfig(enabled=True),
+    )
+    with pytest.raises(ValueError, match="missing from state"):
+        resolve_import_entries(
+            [example],
+            {
+                "module.ex_other.mongodbatlas_encryption_at_rest.this": StateResource(
+                    address="module.ex_other.mongodbatlas_encryption_at_rest.this",
+                    resource_type="mongodbatlas_encryption_at_rest",
+                    values={"project_id": "p1"},
+                )
+            },
+            MAPPING,
+        )
 
 
 def test_validate_atlas_types_missing():
