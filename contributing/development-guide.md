@@ -224,7 +224,7 @@ When CI fails with "Documentation is out of date":
 
 ### Documentation Scripts
 
-Scripts are organized in `.github/` subdirectories ([Python](https://www.python.org/) 3.14+, managed via `pyproject.toml`):
+Scripts are organized in `tools/` subdirectories ([Python](https://www.python.org/) 3.14+, managed via `pyproject.toml`):
 
 **docs/** - Documentation generation:
 - `root_readme.py` - Generates root README TOC and tables
@@ -259,7 +259,7 @@ Scripts are organized in `.github/` subdirectories ([Python](https://www.python.
 - `generators/` - File generators (variables_tf.py, main_tf.py, outputs_tf.py)
 - `schema/` - Provider schema parsing
 
-See [tf-gen README](../.github/tf_gen/README.md) for configuration reference and examples.
+See [tf-gen README](../tools/tf_gen/README.md) for configuration reference and examples.
 
 See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
 

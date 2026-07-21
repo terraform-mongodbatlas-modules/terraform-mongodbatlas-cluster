@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "uv"
-    directory: "/.github"
+    directory: "/tools"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -14,7 +14,7 @@ updates:
       - "dependencies"
 
   - package-ecosystem: "gomod"
-    directory: "/.github/changelog/check-changelog-entry-file"
+    directory: "/tools/changelog/check-changelog-entry-file"
     schedule:
       interval: "weekly"
       day: "monday"

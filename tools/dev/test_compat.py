@@ -4,7 +4,7 @@ Runs `terraform init -backend=false` and `terraform validate` across all configu
 Terraform versions (defined in .terraform-versions.yaml) for the root module and all examples.
 
 Usage:
-    uv run --directory .github python -m dev.test_compat
+    uv run --directory tools python -m dev.test_compat
     # or via just:
     just test-compat
 """
