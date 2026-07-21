@@ -46,7 +46,10 @@ validate:
 # === DO_NOT_EDIT: path-sync linting ===
 # LINTING
 lint:
-    tflint -f compact --recursive --minimum-failure-severity=warning
+    tflint -f compact --minimum-failure-severity=warning
+    tflint -f compact --recursive --minimum-failure-severity=warning --chdir=examples
+    tflint -f compact --recursive --minimum-failure-severity=warning --chdir=tests
+    tflint -f compact --recursive --minimum-failure-severity=warning --chdir=modules
     terraform fmt -check -recursive
 
 py-check:
