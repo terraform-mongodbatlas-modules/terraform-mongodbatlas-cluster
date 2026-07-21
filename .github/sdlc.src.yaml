@@ -30,6 +30,7 @@ verify:
 paths:
   - src_path: .gitignore
   # Python tooling - explicit folders (avoid .venv)
+  - src_path: tools/README.md
   - src_path: tools/changelog/*.py
   - src_path: tools/changelog/*.txt
     sync_mode: replace
