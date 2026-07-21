@@ -1,0 +1,29 @@
+[project]
+name = "module-github-scripts"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic~=2.13",
+    "pyyaml~=6.0",
+    "tenacity~=9.1",
+    "typer~=0.26",
+    "pytest~=9.1",
+    "pytest-regressions~=2.11",
+    "python-hcl2~=8.1",
+    "pygments>=2.20.0",
+]
+
+[dependency-groups]
+dev = ["ruff~=0.15"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+# addopts = "--force-regen" # Uncomment to force regeneration of test data
+testpaths = ["."]
+python_files = ["*_test.py"]

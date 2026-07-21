@@ -27,7 +27,7 @@ jobs:
     name: Code Quality & Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -41,14 +41,14 @@ jobs:
     name: Python Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: ./.github/actions/setup
         with:
           just: 'true'
           uv: 'true'
           terraform: 'true'
           go: 'true'
-          go-version-file: '.github/changelog/check-changelog-entry-file/go.mod'
+          go-version-file: 'tools/changelog/check-changelog-entry-file/go.mod'
       - name: Run Python tests
         run: just py-test
 
@@ -57,7 +57,7 @@ jobs:
     name: Terraform Unit Plan Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -71,7 +71,7 @@ jobs:
     name: Terraform CLI Version Compatibility
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -97,7 +97,7 @@ jobs:
       MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -105,7 +105,7 @@ jobs:
       - name: Select Terraform version
         id: version-selection
         run: >-
-          uv run --directory .github python -m workspace.version_config
+          uv run --directory tools python -m workspace.version_config
           --lane "${{ matrix.lane }}"
           --github-output "${GITHUB_OUTPUT}"
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
@@ -142,7 +142,7 @@ jobs:
     permissions: {}
     steps:
       - name: Send Slack message
-        uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook

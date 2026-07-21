@@ -31,26 +31,27 @@ verify:
 paths:
   - src_path: .gitignore
   # Python tooling - explicit folders (avoid .venv)
-  - src_path: .github/changelog/*.py
-  - src_path: .github/changelog/*.txt
+  - src_path: tools/README.md
+  - src_path: tools/changelog/*.py
+  - src_path: tools/changelog/*.txt
     sync_mode: replace
-  - src_path: .github/changelog/*.tmpl
+  - src_path: tools/changelog/*.tmpl
     sync_mode: replace
-  - src_path: .github/changelog/check-changelog-entry-file/*.go
-  - src_path: .github/changelog/check-changelog-entry-file/go.mod
+  - src_path: tools/changelog/check-changelog-entry-file/*.go
+  - src_path: tools/changelog/check-changelog-entry-file/go.mod
     sync_mode: replace
-  - src_path: .github/changelog/check-changelog-entry-file/go.sum
+  - src_path: tools/changelog/check-changelog-entry-file/go.sum
     sync_mode: replace
-  - src_path: .github/docs/
-  - src_path: .github/tf_utils/
-  - src_path: .github/release/
-  - src_path: .github/pyproject.toml
-  - src_path: .github/shared/
-  - src_path: .github/uv.lock
-  - src_path: .github/workspace/
-  - src_path: .github/dev/__init__.py
-  - src_path: .github/dev/test_compat.py
-  - src_path: .github/dev/update_terraform_versions.py
+  - src_path: tools/docs/
+  - src_path: tools/tf_utils/
+  - src_path: tools/release/
+  - src_path: tools/pyproject.toml
+  - src_path: tools/shared/
+  - src_path: tools/uv.lock
+  - src_path: tools/workspace/
+  - src_path: tools/dev/__init__.py
+  - src_path: tools/dev/test_compat.py
+  - src_path: tools/dev/update_terraform_versions.py
   # NOTE: dev_vars.py is scaffolded only - see scaffolded files below.
   # Workflows & actions
   - src_path: .github/workflows/check-changelog-entry-file.yml
@@ -107,13 +108,13 @@ paths:
   - src_path: .github/destination_scaffold/.terraform-docs.yml
     dest_path: .terraform-docs.yml
     sync_mode: scaffold
-  - src_path: .github/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
+  - src_path: tools/dev/dev_vars.py # usually each module needs its own dev.tfvars generation
     sync_mode: scaffold
 
 path_groups:
   regions:
-    - src_path: .github/dev/extract_regions.py
-    - src_path: .github/dev/.gitignore
+    - src_path: tools/dev/extract_regions.py
+    - src_path: tools/dev/.gitignore
     - src_path: .github/workflows/validate-region-mappings.yml
   project_generator:
     - src_path: tests/project_generator/

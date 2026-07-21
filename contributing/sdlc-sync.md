@@ -17,14 +17,14 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 
 | Category | Paths | Notes |
 |----------|-------|-------|
-| Python tooling | `.github/{changelog,docs,release,workspace}/` and selected `.github/dev/` files | `dev_vars.py` is scaffolded once, then destination-owned |
+| Python tooling | `tools/{changelog,docs,release,workspace}/` and selected `tools/dev/` files | `dev_vars.py` is scaffolded once, then destination-owned |
 | Workflows | `.github/workflows/` | `code-health.yml` has per-job section markers |
 | Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | `justfile` has section markers |
 | GitHub | `.github/CODEOWNERS`, `pull_request_template.md`, `ISSUE_TEMPLATE/` | |
 
 **Scaffolded once, then destination-owned:**
 
-- `.github/dev/dev_vars.py` - workspace paths and test file patterns.
+- `tools/dev/dev_vars.py` - workspace paths and test file patterns.
 - `docs/examples.yaml` - example configuration.
 - `docs/inputs_groups.yaml` - README input grouping.
 
@@ -136,7 +136,7 @@ snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](./test-guide.md) fo
 ### Module-Specific Configuration
 
 Edit these files freely (not synced):
-- `.github/dev/dev_vars.py` - workspace paths and test file patterns
+- `tools/dev/dev_vars.py` - workspace paths and test file patterns
 - `docs/examples.yaml` - example table configuration
 - `docs/inputs_groups.yaml` - variable groupings
 
