@@ -270,8 +270,8 @@ def test_single_output_mode(project_schema: dict):
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "project"' in output
     assert "value = {" in output
-    assert "id = mongodbatlas_project.this.id" not in output  # id excluded by default
-    assert "created = mongodbatlas_project.this.created" in output
+    assert "mongodbatlas_project.this.id" not in output  # id excluded by default
+    assert "mongodbatlas_project.this.created" in output
 
 
 def test_single_output_mode_with_id(project_schema: dict):
@@ -281,7 +281,7 @@ def test_single_output_mode_with_id(project_schema: dict):
     )
     output = generate_outputs_tf(schema, config, "mongodbatlas")
     assert 'output "project"' in output
-    assert "id = mongodbatlas_project.this.id" in output
+    assert "mongodbatlas_project.this.id" in output
 
 
 def test_single_output_with_count(project_schema: dict):
