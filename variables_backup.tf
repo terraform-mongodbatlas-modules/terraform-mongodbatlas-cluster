@@ -31,7 +31,10 @@ variable "backup_copy_region" {
       valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`;
       fails validation otherwise. Not derived from `var.replication_specs` -- set region explicitly when using
       that variable. `GEOSHARDED` clusters get one cluster-wide copy target derived from the first zone's
-      regions; per-zone copy targets are not supported.
+      regions; per-zone copy targets are not supported. The module also sends the created cluster's
+      `zone_id` for that same first zone, matching the zone `region`/`cloud_provider` are derived from --
+      the underlying Atlas API disambiguates copy targets by zone, so this is required for correctness on
+      multi-zone (`GEOSHARDED`) clusters even though the provider itself marks it optional.
     - `cloud_provider`: override for multi-cloud clusters (default: derived from the target region, or left
       for the provider to infer if it can't be resolved)
     - `should_copy_oplogs`: copy oplogs for point-in-time restore from the copy region (default: `true` if PIT enabled)

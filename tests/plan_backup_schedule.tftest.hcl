@@ -421,6 +421,10 @@ run "copy_region_geosharded_derives_from_first_zone" {
     condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_WEST_2"
     error_message = "GEOSHARDED copy region should auto-derive from the first zone's regions"
   }
+
+  # copy_settings.zone_id is Computed on mongodbatlas_advanced_cluster.this and stays unknown under a
+  # mocked provider at plan time, so it can't be asserted here -- see the real apply coverage in
+  # tests/apply_backup_copy_settings_geosharded.tftest.hcl.
 }
 
 run "copy_region_geosharded_insufficient_regions_in_first_zone_fails" {

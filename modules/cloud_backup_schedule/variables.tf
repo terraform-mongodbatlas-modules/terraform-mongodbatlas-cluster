@@ -79,10 +79,11 @@ variable "retention" {
 }
 
 variable "copy_settings" {
-  description = "Fully-resolved cross-region copy target. The root module already derives `region`,`cloud_provider`, and `should_copy_oplogs`. `null` disables `copy_settings`. `cloud_provider` is left `null` to let the provider infer it when the root module cannot resolve it."
+  description = "Fully-resolved cross-region copy target. The root module already derives `region`,`cloud_provider`, `zone_id`, and `should_copy_oplogs`. `null` disables `copy_settings`. `cloud_provider` is left `null` to let the provider infer it when the root module cannot resolve it. `zone_id` disambiguates the copy target's zone on multi-zone (`GEOSHARDED`) clusters and is left `null` only when the root module could not resolve it."
   type = object({
     cloud_provider     = optional(string)
     region_name        = string
+    zone_id            = optional(string)
     should_copy_oplogs = bool
   })
   nullable = true

@@ -133,9 +133,15 @@ locals {
     )
   )
 
+  # Disambiguates which zone the copy target belongs to -- required by the underlying Atlas API even
+  # though the provider marks it optional/computed. Index 0 always matches the same first shard/zone
+  # group backup_copy_candidate_regions derives region_name/cloud_provider from (see comment above).
+  backup_copy_zone_id = var.backup_copy_region == null ? null : try(mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id, null)
+
   backup_copy_settings = var.backup_copy_region == null ? null : {
     cloud_provider     = local.backup_copy_region_derived_provider_name
     region_name        = local.backup_copy_region_derived_name
+    zone_id            = local.backup_copy_zone_id
     should_copy_oplogs = coalesce(var.backup_copy_region.should_copy_oplogs, local.effective_pit_enabled)
   }
 

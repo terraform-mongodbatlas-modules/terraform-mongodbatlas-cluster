@@ -72,6 +72,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     content {
       cloud_provider     = copy_settings.value.cloud_provider
       region_name        = copy_settings.value.region_name
+      zone_id            = copy_settings.value.zone_id
       should_copy_oplogs = copy_settings.value.should_copy_oplogs
       frequencies        = local.copy_frequencies
     }
