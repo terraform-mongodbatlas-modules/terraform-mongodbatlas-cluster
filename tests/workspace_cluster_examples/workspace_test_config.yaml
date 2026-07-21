@@ -15,7 +15,7 @@ resource_type_import_ids:
 _cluster_import_known_changes: &cluster_import_known_changes
   - address: module.cluster.mongodbatlas_advanced_cluster.this
     actions: [update]
-    changed_attributes: [retain_backups_enabled] # tags should use a `null` as a default value to avoid import
+    changed_attributes: [retain_backups_enabled]
 
 examples:
   # Project 1: Examples 01-06 (29 nodes)
@@ -83,7 +83,7 @@ examples:
       known_changes:
         - address: module.replication_var.mongodbatlas_advanced_cluster.this
           actions: [update]
-          changed_attributes: [retain_backups_enabled, tags]
+          changed_attributes: [retain_backups_enabled]
     plan_regressions:
       - address: module.replication_var.mongodbatlas_advanced_cluster.this
   # Project 3: Example 10 (24 nodes)
@@ -102,13 +102,13 @@ examples:
       known_changes:
         - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
           actions: [update]
-          changed_attributes: [retain_backups_enabled, tags]
+          changed_attributes: [retain_backups_enabled]
         - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
           actions: [update]
-          changed_attributes: [retain_backups_enabled, tags]
+          changed_attributes: [retain_backups_enabled]
         - address: module.cluster_geosharded.module.cluster.mongodbatlas_advanced_cluster.this
           actions: [update]
-          changed_attributes: [retain_backups_enabled, tags]
+          changed_attributes: [retain_backups_enabled]
     plan_regressions:
       - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
       - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
@@ -127,7 +127,7 @@ var_groups:
     - name: tags
       expose_in_workspace: true
       var_type: map(string)
-      module_value: "{}"
+      module_value: "null"
   project1:
     - name: project_id
       expose_in_workspace: false
