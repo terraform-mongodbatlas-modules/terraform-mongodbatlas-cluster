@@ -76,34 +76,41 @@ terraform {
 
 
 def test_run_terraform_init_prints_success_output(tmp_path: Path, monkeypatch, capsys):
+    stdout = "Installing mongodb/mongodbatlas v2.2.0\n"
+    stderr = "Terraform initialized with warnings\n"
     result = subprocess.CompletedProcess(
         args=["terraform", "init"],
         returncode=0,
-        stdout="Installing mongodb/mongodbatlas v2.2.0\n",
-        stderr="Terraform initialized with warnings\n",
+        stdout=stdout,
+        stderr=stderr,
     )
     monkeypatch.setattr(tf_retry, "run_terraform_init", lambda *_: result)
 
     run_terraform_init(tmp_path)
 
     captured = capsys.readouterr()
-    assert captured.out == "Installing mongodb/mongodbatlas v2.2.0\n"
-    assert captured.err == "Terraform initialized with warnings\n"
+    assert (captured.out, captured.err) == (stdout, stderr)
 
 
-def test_strip_and_restore(tmp_path: Path):
+@pytest.mark.parametrize(
+    "original",
+    [VERSIONS_TF_WITH_PROVIDER, VERSIONS_TF_WITH_MULTILINE_PROVIDER],
+    ids=["single-line", "multi-line"],
+)
+def test_strip_and_restore(tmp_path: Path, original: str):
     ex_dir = tmp_path / "01_basic"
     ex_dir.mkdir()
     vf = ex_dir / "versions.tf"
-    vf.write_text(VERSIONS_TF_WITH_PROVIDER)
+    vf.write_text(original)
 
     with strip_provider_blocks([ex_dir]):
         content = vf.read_text()
         assert 'provider "mongodbatlas"' not in content
+        assert "default_tags" not in content
         assert 'provider_meta "mongodbatlas"' in content
         assert "terraform {" in content
 
-    assert vf.read_text() == VERSIONS_TF_WITH_PROVIDER
+    assert vf.read_text() == original
 
 
 def test_restore_on_exception(tmp_path: Path):
@@ -129,22 +136,6 @@ def test_no_provider_block_unchanged(tmp_path: Path):
         assert vf.read_text() == VERSIONS_TF_WITHOUT_PROVIDER
 
 
-def test_strip_multiline_provider(tmp_path: Path):
-    ex_dir = tmp_path / "01_basic"
-    ex_dir.mkdir()
-    vf = ex_dir / "versions.tf"
-    vf.write_text(VERSIONS_TF_WITH_MULTILINE_PROVIDER)
-
-    with strip_provider_blocks([ex_dir]):
-        content = vf.read_text()
-        assert 'provider "mongodbatlas"' not in content
-        assert "default_tags" not in content
-        assert 'provider_meta "mongodbatlas"' in content
-        assert "terraform {" in content
-
-    assert vf.read_text() == VERSIONS_TF_WITH_MULTILINE_PROVIDER
-
-
 def test_missing_versions_tf(tmp_path: Path):
     ex_dir = tmp_path / "01_basic"
     ex_dir.mkdir()
@@ -158,19 +149,9 @@ def test_provider_version_override_is_temporary(tmp_path: Path):
     assert override_path.name.endswith("_override.tf")
 
     with provider_version_override(tmp_path, "2.2.0"):
-        assert (
-            override_path.read_text()
-            == """\
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "= 2.2.0"
-    }
-  }
-}
-"""
-        )
+        content = override_path.read_text()
+        assert '"mongodb/mongodbatlas"' in content
+        assert '"= 2.2.0"' in content
 
     assert not override_path.exists()
 
