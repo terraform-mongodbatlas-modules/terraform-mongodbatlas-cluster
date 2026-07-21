@@ -96,6 +96,15 @@ jobs:
         with:
           just: 'true'
           uv: 'true'
+      - name: Configure minimum provider
+        if: matrix.lane == 'minimum'
+        shell: bash
+        run: |
+          if [[ -z "${MONGODB_ATLAS_PROVIDER_MIN_VERSION:-}" ]]; then
+            echo "::error::MONGODB_ATLAS_PROVIDER_MIN_VERSION must be set for the minimum lane"
+            exit 1
+          fi
+          echo "MONGODB_ATLAS_PROVIDER_VERSION=${MONGODB_ATLAS_PROVIDER_MIN_VERSION}" >> "$GITHUB_ENV"
       - name: Select Terraform version
         id: version-selection
         run: >-
@@ -112,9 +121,6 @@ jobs:
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
       - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
-        env:
-          MONGODB_ATLAS_PROVIDER_VERSION: >-
-            ${{ matrix.lane == 'minimum' && env.MONGODB_ATLAS_PROVIDER_MIN_VERSION || '' }}
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 

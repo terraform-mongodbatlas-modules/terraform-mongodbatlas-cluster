@@ -58,7 +58,7 @@ def main(
         raise typer.Exit(1)
 
     examples = "none" if mode == RunMode.SETUP_ONLY else include_examples
-    provider_version = os.getenv(PROVIDER_VERSION_ENV, "").strip() or None
+    provider_version = os.getenv(PROVIDER_VERSION_ENV)
 
     for ws_dir in ws_dirs:
         typer.echo(f"=== {ws_dir.name} ({mode}) ===")
