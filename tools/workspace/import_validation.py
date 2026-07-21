@@ -120,7 +120,8 @@ def assert_import_plan(
         rel_addr = addr.removeprefix(prefix)
         change = rc.get("change", {})
         actions = change.get("actions", [])
-        importing = "importing" in rc
+        # TF <=1.12: importing on resource_change; TF 1.13+: under change.importing
+        importing = bool(change.get("importing") or rc.get("importing"))
 
         if actions == ["no-op"] or actions == ["read"]:
             continue
@@ -131,7 +132,10 @@ def assert_import_plan(
 
         if known := example.import_validation.find_known_change(rel_addr):
             if actions != known.actions:
-                failures.append(f"{rel_addr}: expected actions {known.actions}, got {actions}")
+                failures.append(
+                    f"{rel_addr}: expected actions {known.actions}, got {actions}"
+                    f" (changed: {sorted(_diff_attributes(change))})"
+                )
             elif known.changed_attributes:
                 changed = _diff_attributes(change)
                 if changed != set(known.changed_attributes):
@@ -141,15 +145,17 @@ def assert_import_plan(
                     )
             continue
 
+        changed = _diff_attributes(change)
         if importing:
-            changed = _diff_attributes(change)
             failures.append(
                 f"{rel_addr}: import drift (actions: {actions}, "
                 f"changed: {sorted(changed)}) not in known_changes"
             )
             continue
 
-        failures.append(f"{rel_addr}: non-import change with actions {actions}")
+        failures.append(
+            f"{rel_addr}: non-import change with actions {actions}, changed: {sorted(changed)}"
+        )
 
     return failures
 
@@ -178,7 +184,10 @@ def assert_clean_plan(plan_json: dict[str, Any], example: models.Example) -> lis
 
         if known := example.import_validation.find_known_change(rel_addr):
             if actions != known.actions:
-                failures.append(f"{rel_addr}: expected actions {known.actions}, got {actions}")
+                failures.append(
+                    f"{rel_addr}: expected actions {known.actions}, got {actions}"
+                    f" (changed: {sorted(_diff_attributes(change))})"
+                )
             elif known.changed_attributes:
                 changed = _diff_attributes(change)
                 if changed != set(known.changed_attributes):
@@ -188,7 +197,10 @@ def assert_clean_plan(plan_json: dict[str, Any], example: models.Example) -> lis
                     )
             continue
 
-        failures.append(f"{rel_addr}: expected no-op after apply, got {actions}")
+        failures.append(
+            f"{rel_addr}: expected no-op after apply, got {actions}"
+            f" (changed: {sorted(_diff_attributes(change))})"
+        )
     return failures
 
 
@@ -197,13 +209,28 @@ def _diff_attributes(change: dict[str, Any]) -> set[str]:
 
     Attributes marked as after_unknown (shown as 'known after apply' in
     terraform plan) are excluded because their concrete value is not
-    available at plan time.
+    available at plan time. Nested after_unknown (list/dict) still counts
+    as unknown for the top-level key; an empty dict ``{}`` does not —
+    Terraform uses that when the attribute itself is known.
     """
     before = change.get("before", {}) or {}
     after = change.get("after", {}) or {}
     after_unknown = change.get("after_unknown", {}) or {}
     all_keys = set(before) | set(after)
-    return {k for k in all_keys if before.get(k) != after.get(k) and not after_unknown.get(k)}
+    return {
+        k
+        for k in all_keys
+        if before.get(k) != after.get(k) and not _is_after_unknown(after_unknown.get(k))
+    }
+
+
+def _is_after_unknown(marker: Any) -> bool:
+    """True when Terraform marks the attribute (or nested parts) as known after apply."""
+    if marker is True:
+        return True
+    if isinstance(marker, list | dict) and marker:
+        return True
+    return False
 
 
 def process_workspace(

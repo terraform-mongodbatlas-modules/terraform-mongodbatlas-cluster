@@ -102,10 +102,10 @@ def _make_rc(
     change: dict = {"actions": actions, "before": before or {}, "after": after or {}}
     if after_unknown:
         change["after_unknown"] = after_unknown
-    rc: dict = {"address": address, "change": change}
     if importing:
-        rc["importing"] = {"id": "some-id"}
-    return rc
+        # TF 1.13+ stores importing under change (legacy top-level kept for coverage)
+        change["importing"] = {"id": "some-id"}
+    return {"address": address, "change": change}
 
 
 def _make_example(
@@ -211,12 +211,36 @@ def test_assert_import_plan_non_importing_update():
                 "module.ex_enc.mongodbatlas_encryption_at_rest.this",
                 ["update"],
                 importing=False,
+                before={"project_id": "old"},
+                after={"project_id": "new"},
             ),
         ]
     }
     failures = assert_import_plan(plan_json, _make_example("enc"))
     assert len(failures) == 1
     assert "non-import change" in failures[0]
+    assert "changed: ['project_id']" in failures[0]
+
+
+def test_assert_import_plan_legacy_top_level_importing():
+    """TF <=1.12 put importing on the resource_change object."""
+    plan_json = {
+        "resource_changes": [
+            {
+                "address": "module.ex_enc.mongodbatlas_encryption_at_rest.this",
+                "importing": {"id": "legacy"},
+                "change": {
+                    "actions": ["update"],
+                    "before": {"project_id": "old"},
+                    "after": {"project_id": "new"},
+                },
+            }
+        ]
+    }
+    failures = assert_import_plan(plan_json, _make_example("enc"))
+    assert len(failures) == 1
+    assert "import drift" in failures[0]
+    assert "changed: ['project_id']" in failures[0]
 
 
 def test_assert_import_plan_data_source_read_auto_skipped():
@@ -420,8 +444,22 @@ def test_diff_attributes_after_unknown_excluded():
     assert "name" in result
 
 
-def test_diff_attributes_no_changes():
-    change = {"before": {"x": 1, "y": 2}, "after": {"x": 1, "y": 2}}
+def test_diff_attributes_empty_after_unknown_dict_not_excluded():
+    """Terraform uses after_unknown: {tags: {}} when tags itself is known."""
+    change = {
+        "before": {"tags": None},
+        "after": {"tags": {}},
+        "after_unknown": {"tags": {}},
+    }
+    assert _diff_attributes(change) == {"tags"}
+
+
+def test_diff_attributes_nested_after_unknown_excludes_top_level():
+    change = {
+        "before": {"replication_specs": [{"a": 1}]},
+        "after": {"replication_specs": [{"a": 2}]},
+        "after_unknown": {"replication_specs": [{"disk_iops": True}]},
+    }
     assert _diff_attributes(change) == set()
 
 
