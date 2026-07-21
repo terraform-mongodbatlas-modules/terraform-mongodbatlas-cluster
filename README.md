@@ -126,7 +126,7 @@ SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./e
 GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
 Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
 SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
-REPLICASET | [Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)](./examples/14_cluster_with_backup_schedule)
+SHARDED | [Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)](./examples/14_cluster_with_backup_schedule)
 
 <!-- END_TABLES -->
 

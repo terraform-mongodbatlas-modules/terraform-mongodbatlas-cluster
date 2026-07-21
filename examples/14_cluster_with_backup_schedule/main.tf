@@ -3,22 +3,25 @@ module "cluster" {
 
   name         = "cluster-with-backup"
   project_id   = var.project_id
-  cluster_type = "REPLICASET"
+  cluster_type = "SHARDED"
   regions = [
     {
       name          = "US_EAST_1"
       node_count    = 3
       provider_name = "AWS"
+      shard_number  = 1
     },
     {
       # Auto-derived copy target (see backup_copy_region below).
       name          = "US_WEST_2"
       node_count    = 2
       provider_name = "AWS"
+      shard_number  = 1
     }
   ]
 
-  # backup_enabled and backup_mode default to true/SCHEDULED -- nothing to set here.
+  # backup_enabled defaults to true.
+  backup_mode = "SCHEDULED" # module-managed policies. Other options: ON_DEMAND (manual snapshots only), UNMANAGED (customer-managed schedule).
 
   # Keep daily snapshots for 30 days instead of the 7-day default.
   backup_retention = {
