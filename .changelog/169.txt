@@ -1,11 +1,11 @@
 ```release-note:breaking-change
-submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply.
+submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply
 ```
 
 ```release-note:enhancement
-module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration.
+module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration
 ```
 
 ```release-note:enhancement
-example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy`.
+example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy`
 ```
