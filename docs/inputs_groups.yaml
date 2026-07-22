@@ -77,7 +77,7 @@ sections:
     title: "Backup Schedule"
     level: 2
     description: |
-      Configures the `cloud_backup_schedule` resource managed internally by this module. When
+      Configures the `mongodbatlas_cloud_backup_schedule` resource managed internally by this module. When
       `backup_enabled = false`: `backup_mode` and `backup_schedule_skip_destroy` are ignored (no
       effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
       validation error if set.
