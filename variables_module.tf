@@ -253,7 +253,8 @@ variable "default_feature_set" {
       practices without any configuration changes. Minor version upgrades may introduce plan changes
       (for example new recommended attribute defaults).
     - **`STANDARD`**: features with module defaults are not automatically enabled. Only existing
-      module defaults and Atlas defaults apply. Minor version upgrades do not introduce plan changes.
+      module defaults and Atlas defaults apply. Minor version upgrades do not introduce plan changes
+      from new recommended defaults (provider changes or bug fixes can still affect plans).
   EOT
   type        = string
   default     = "RECOMMENDED"
