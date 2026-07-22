@@ -757,13 +757,12 @@ Default: `null`
 
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
-
-When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
+Defaults to `ATLAS_MANAGED` so Atlas may switch the cluster's config server type without Terraform plan churn.
+Set `FIXED_TO_DEDICATED` only when you need a dedicated config server escape hatch.
 
 Type: `string`
 
-Default: `null`
+Default: `"ATLAS_MANAGED"`
 
 ### delete_on_create_timeout
 
