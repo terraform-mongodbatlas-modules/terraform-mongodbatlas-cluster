@@ -330,8 +330,13 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`."
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    condition     = !(var.version_release_system == "CONTINUOUS" && var.mongo_db_major_version != null)
+    error_message = "Cannot set mongo_db_major_version when version_release_system is \"CONTINUOUS\". Omit mongo_db_major_version, or set version_release_system to \"LTS\"."
+  }
 }
