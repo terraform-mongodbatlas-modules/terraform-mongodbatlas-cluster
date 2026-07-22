@@ -30,6 +30,7 @@ _REAL_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def test_parse_root_versions_reference_matches_real_repo_root() -> None:
     ref = parse_root_versions_reference(_REAL_REPO_ROOT)
+    assert "mongodbatlas" in ref.providers
     provider_version, provider_source = ref.providers["mongodbatlas"]
     assert provider_version
     assert provider_source == "mongodb/mongodbatlas"
