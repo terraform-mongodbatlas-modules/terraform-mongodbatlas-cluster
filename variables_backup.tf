@@ -10,7 +10,7 @@ variable "backup_mode" {
 
     Migrating to `UNMANAGED` with `backup_schedule_skip_destroy = true` requires two applies: set it to `true`
     first while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`, then switch to `UNMANAGED` in a second apply.
-    Setting both in the same apply does not skip the delete. See the [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/main/docs/backup_guide.md)
+    Setting both in the same apply does not skip the delete. See the [Backup Guide](./docs/backup_guide.md)
     for the full deletion-workflow writeup.
   EOT
   type        = string
