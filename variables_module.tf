@@ -202,7 +202,7 @@ EOT
 variable "tags" {
   description = <<-EOT
 Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
-We recommend setting the following values:
+Omit or set `null` when the cluster has no tags (avoids an empty-map plan after import). We recommend setting the following values when used:
 - Department
 - Team name
 - Application name
@@ -217,7 +217,8 @@ These values can be used for:
 - Regional compliance requirements for audit and governance purposes.
 EOT
   type        = map(string)
-  default     = {}
+  nullable    = true
+  default     = null
 }
 
 variable "shard_count" {
