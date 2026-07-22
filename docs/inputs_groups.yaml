@@ -56,6 +56,7 @@ sections:
       These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
     match:
       names:
+        - "default_feature_set"
         - "advanced_configuration"
         - "backup_enabled"
         - "pit_enabled"

@@ -24,7 +24,7 @@ locals {
     advanced_configuration = {
       default_write_concern        = "majority"
       javascript_enabled           = false
-      minimum_enabled_tls_protocol = "TLS1_2"
+      minimum_enabled_tls_protocol = "TLS1_3"
     }
   }
 

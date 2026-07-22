@@ -17,7 +17,7 @@ variable "advanced_configuration" {
     default_max_time_ms                                            = optional(number)
     default_write_concern                                          = optional(string, "majority")
     javascript_enabled                                             = optional(bool, false)
-    minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
+    minimum_enabled_tls_protocol                                   = optional(string)
     no_table_scan                                                  = optional(bool)
     oplog_min_retention_hours                                      = optional(number)
     oplog_size_mb                                                  = optional(number)
@@ -28,9 +28,8 @@ variable "advanced_configuration" {
   })
   nullable = true
   default = {
-    default_write_concern        = "majority"
-    javascript_enabled           = false
-    minimum_enabled_tls_protocol = "TLS1_2"
+    default_write_concern = "majority"
+    javascript_enabled    = false
   }
 }
 
