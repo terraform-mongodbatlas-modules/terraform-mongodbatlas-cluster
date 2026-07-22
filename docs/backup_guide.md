@@ -17,7 +17,7 @@ This guide explains how to configure and manage backups in the MongoDB Atlas Ter
 
 ## Introduction
 
-The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class capability -- you no longer need a separate `mongodbatlas_cloud_backup_schedule` resource block alongside the cluster. `backup_mode` controls whether and how the module manages this resource; `backup_retention`, `backup_copy_region`, `backup_export`, and `backup_schedule_skip_destroy` configure it.
+The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class capability, you no longer need a separate `mongodbatlas_cloud_backup_schedule` resource block alongside the cluster. `backup_mode` controls whether and how the module manages this resource; `backup_retention`, `backup_copy_region`, `backup_export`, and `backup_schedule_skip_destroy` configure it.
 
 See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_backup_schedule) for a complete working example combining retention overrides, cross-region copy, and deletion behavior.
 
@@ -51,7 +51,7 @@ backup_retention = {
 }
 ```
 
-`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation time), and `restore_window_days` controls the PIT restore window. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
+`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation time), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days), this is your effective RPO (how far back you can restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
 
 **`ON_DEMAND` and frequency fields:** setting `backup_retention`'s frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is rejected (validation error at `terraform plan`) when `backup_mode = "ON_DEMAND"`, since that mode removes all frequency policies. `restore_window_days` and `ondemand` remain valid there.
 
@@ -69,13 +69,15 @@ backup_retention = {
 
 ## Cross-Region Copy
 
+Cross-region copy protects your snapshots against a regional outage: if the primary region becomes unavailable, you can still restore from the copy in the secondary region. It's also useful for data-residency requirements that call for backups to exist in a specific secondary region.
+
 `backup_copy_region` replicates scheduled and on-demand snapshots to a target region (multi-region snapshot distribution):
 
 ```hcl
 backup_copy_region = {} # auto-derive the secondary region from var.regions
 ```
 
-- **`region`**: when omitted (`backup_copy_region = {}`), the module auto-derives a secondary region from `var.regions` (the highest-priority region after the primary), so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. Not derived from `var.replication_specs` -- set `region` explicitly when using that variable.
+- **`region`**: when omitted (`backup_copy_region = {}`), the module auto-derives a secondary region from `var.regions` (the highest-priority region after the primary), so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. Not derived from `var.replication_specs`, set `region` explicitly when using that variable.
 - **`cloud_provider`**: override for multi-cloud clusters (default: derived from the target region, or left for the provider to infer if it can't be resolved).
 - **`should_copy_oplogs`**: copies oplogs for point-in-time restore from the copy region (default: `true` if PIT is enabled).
 
@@ -117,8 +119,8 @@ Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no
 
 `backup_schedule_skip_destroy` maps directly to the provider's `skip_destroy` on the `mongodbatlas_cloud_backup_schedule` resource:
 
-- **`false`** (default): removes all backup schedule policies on destroy.
-- **`true`**: no-op on destroy; the resource is removed from Terraform state only, and the actual schedule/snapshots are left intact in Atlas. Use this when a Backup Compliance Policy is enabled on the project.
+- **`false`** (default): deletes the schedule (the recurring policy that creates new snapshots and governs retention) on destroy. This does **not** delete snapshots that already exist, those remain until their own previously-assigned retention expires; no new scheduled snapshots are created afterward.
+- **`true`**: no-op on destroy; the schedule resource is removed from Terraform state only, and the schedule itself (including future snapshot creation) is left intact in Atlas. Use this when a Backup Compliance Policy is enabled on the project.
 
 **Migrating to `UNMANAGED` requires two applies** if you want to preserve the existing schedule/snapshots:
 
