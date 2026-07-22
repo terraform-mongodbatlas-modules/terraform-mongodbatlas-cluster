@@ -120,6 +120,8 @@ Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exac
 in the destination-owned environment gap. Preserve the destination's credentials, setup, and
 snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](./test-guide.md) for lane behavior.
 
+Import validation (`justfile` section `import-validate`, workflow section `job-import-validate`) is enabled for cluster (source) and project by default. Other destinations skip those sections until they opt in.
+
 ## For Destination Module Developers
 
 **Do not modify synced files directly.** Changes will be overwritten on next sync.

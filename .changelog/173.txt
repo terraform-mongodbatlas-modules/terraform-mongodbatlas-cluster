@@ -1,3 +1,0 @@
-```release-note:note
-provider/mongodbatlas: Requires minimum version 2.2
-```

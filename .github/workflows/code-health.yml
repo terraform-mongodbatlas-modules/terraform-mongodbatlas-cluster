@@ -94,7 +94,7 @@ jobs:
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
       # Module-specific: Set the minimum provider release and required cloud provider credentials.
-      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.2.0'
+      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.12.0'
       MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
       MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
       MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}

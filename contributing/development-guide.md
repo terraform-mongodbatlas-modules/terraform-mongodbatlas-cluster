@@ -57,7 +57,7 @@ just tf-gen --config gen.yaml --dry-run  # Preview without writing
 
 # Testing (see test-guide.md for full details)
 just unit-plan-tests          # Plan-only tests (no credentials)
-just dev-integration-test     # Single apply test (requires credentials)
+just dev-integration-test     # Real-Atlas apply tests (requires credentials)
 just test-compat              # Terraform version compatibility
 
 # Release (maintainers)

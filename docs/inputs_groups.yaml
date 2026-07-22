@@ -73,6 +73,22 @@ sections:
         - "tags"
         - "termination_protection_enabled"
 
+  - id: backup_schedule
+    title: "Backup Schedule"
+    level: 2
+    description: |
+      Configures the `cloud_backup_schedule` resource managed internally by this module. When
+      `backup_enabled = false`: `backup_mode` and `backup_schedule_skip_destroy` are ignored (no
+      effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
+      validation error if set.
+    match:
+      names:
+        - "backup_mode"
+        - "backup_copy_region"
+        - "backup_schedule_skip_destroy"
+        - "backup_retention"
+        - "backup_export"
+
   - id: optional
     title: "Optional Variables"
     level: 2

@@ -10,7 +10,7 @@ def test_provider_version_environment_controls_override_during_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    provider_version = "2.2.0"
+    provider_version = "2.12.0"
     override_path = tmp_path / plan.PROVIDER_VERSION_OVERRIDE_FILE
     monkeypatch.setenv(run.PROVIDER_VERSION_ENV, provider_version)
     monkeypatch.setattr(models, "resolve_workspaces", lambda *_: [tmp_path])
@@ -38,7 +38,7 @@ def test_provider_version_environment_controls_override_during_run(
     assert not override_path.exists()
 
 
-@pytest.mark.parametrize("provider_version", ["~> 2.2", "   "])
+@pytest.mark.parametrize("provider_version", ["~> 2.12", "   "])
 def test_provider_version_error_is_reported(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

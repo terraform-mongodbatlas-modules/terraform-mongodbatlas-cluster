@@ -6,7 +6,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.2"
+      version = "~> 2.12"
     }
     local = {
       source  = "hashicorp/local"

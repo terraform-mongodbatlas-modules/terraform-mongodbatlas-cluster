@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from workspace import gen, models, output_assertions, plan, reg
+from workspace import gen, import_validation, models, output_assertions, plan, reg
 
 app = typer.Typer()
 
@@ -32,6 +32,7 @@ class RunMode(enum.StrEnum):
     APPLY = "apply"
     DESTROY = "destroy"
     CHECK_OUTPUTS = "check-outputs"
+    IMPORT = "import"
 
 
 @app.command()
@@ -88,6 +89,9 @@ def main(
 
                 if mode == RunMode.CHECK_OUTPUTS:
                     output_assertions.process_workspace(ws_dir, include_examples)
+
+                if mode == RunMode.IMPORT:
+                    import_validation.process_workspace(ws_dir, include_examples, var_file)
 
                 if mode == RunMode.DESTROY:
                     plan.run_terraform_destroy(ws_dir, var_file, auto_approve)

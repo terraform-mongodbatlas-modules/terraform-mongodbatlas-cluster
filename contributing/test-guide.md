@@ -24,7 +24,7 @@ See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/provid
 # Plan-only tests (no resources created)
 just unit-plan-tests
 
-# Single dev cluster test (creates resources)
+# Real-Atlas apply tests (creates resources)
 just dev-integration-test
 
 # All terraform tests (plan + apply, no filter)
@@ -64,7 +64,7 @@ differences instead of regenerating the shared baseline.
 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # Plan with an exact released provider version
-MONGODB_ATLAS_PROVIDER_VERSION=2.2.0 just ws-run -m plan-snapshot-test -v dev.tfvars
+MONGODB_ATLAS_PROVIDER_VERSION=2.12.0 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # First run or after intentional changes: create/update baselines
 just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen
@@ -78,12 +78,20 @@ just ws-run -m setup-only --auto-approve
 # Apply examples (creates real resources)
 just ws-run -m apply -v dev.tfvars --auto-approve
 
+# Validate that applied Atlas resources can be imported cleanly (requires prior apply)
+just import-validate --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
+# Run import validation for specific examples only
+just import-validate -e 1,8 --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
 # Destroy resources after testing
 just ws-run -m destroy --auto-approve
 
 # Find resources without plan_regressions entries (shows [data], [example], [module] hints)
 just ws-run -m reg -u
 ```
+
+The typical end-to-end workflow is: `plan-snapshot-test` -> `apply-examples` -> `import-validate` -> `destroy-examples`.
 
 ### Snapshot Configuration
 

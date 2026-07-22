@@ -65,6 +65,12 @@ def run_terraform_plan(ws_dir: Path, var_files: list[Path], skip_init: bool = Fa
     typer.echo(f"Plan saved to {PLAN_JSON}")
 
 
+def run_terraform_apply_plan(ws_dir: Path) -> None:
+    typer.echo("Applying saved plan...")
+    if run_cmd(["terraform", "apply", "-input=false", PLAN_BIN], ws_dir) != 0:
+        raise typer.Exit(1)
+
+
 def run_terraform_apply(ws_dir: Path, var_files: list[Path], auto_approve: bool = False) -> None:
     apply_cmd = ["terraform", "apply", "-input=false"]
     for vf in var_files:
@@ -92,6 +98,32 @@ def run_terraform_output_json(ws_dir: Path) -> dict[str, Any]:
     output_path.write_text(json.dumps(outputs, indent=2) + "\n")
     typer.echo(f"Outputs saved to {OUTPUTS_ACTUAL_JSON}")
     return outputs
+
+
+def run_terraform_show_json(ws_dir: Path) -> dict[str, Any]:
+    logger.info(f"Running terraform show -json in {ws_dir.name}...")
+    result = subprocess.run(
+        ["terraform", "show", "-json"],
+        cwd=ws_dir,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        typer.echo(f"terraform show -json failed: {result.stderr}", err=True)
+        raise typer.Exit(1)
+    return json.loads(result.stdout)
+
+
+def run_terraform_state_rm(ws_dir: Path, addresses: list[str]) -> None:
+    if not addresses:
+        return
+    cmd = ["terraform", "state", "rm", *addresses]
+    logger.info(f"Removing {len(addresses)} resources from state...")
+    result = subprocess.run(cmd, cwd=ws_dir, capture_output=True, text=True)
+    if result.returncode != 0:
+        typer.echo(f"terraform state rm failed: {result.stderr}", err=True)
+        raise typer.Exit(1)
+    logger.info(result.stdout.strip())
 
 
 def run_terraform_destroy(ws_dir: Path, var_files: list[Path], auto_approve: bool = False) -> None:
