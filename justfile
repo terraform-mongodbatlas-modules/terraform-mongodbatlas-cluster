@@ -228,6 +228,11 @@ destroy-examples *args:
     just ws-run -m destroy {{args}}
 # === OK_EDIT: path-sync workspace ===
 
+# === DO_NOT_EDIT: path-sync import-validate ===
+import-validate *args:
+    just ws-run -m import {{args}}
+# === OK_EDIT: path-sync import-validate ===
+
 # === DO_NOT_EDIT: path-sync provider-dev ===
 # PROVIDER DEV SETUP
 setup-provider-dev provider_path:

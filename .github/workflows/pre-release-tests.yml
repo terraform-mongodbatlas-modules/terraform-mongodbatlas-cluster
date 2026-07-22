@@ -91,6 +91,12 @@ jobs:
         env:
           INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
         run: just apply-examples --auto-approve -e "$INCLUDE_EXAMPLES" --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
+      # === DO_NOT_EDIT: path-sync job-import-validate ===
+      - name: Import validate examples
+        env:
+          INCLUDE_EXAMPLES: ${{ inputs.include_examples }}
+      # === OK_EDIT: path-sync job-import-validate ===
+        run: just import-validate -e "$INCLUDE_EXAMPLES" --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
       - name: Destroy examples
         if: always()
         env:

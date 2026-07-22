@@ -85,6 +85,25 @@ class OutputAssertion:
 
 
 @dataclass
+class ImportKnownChange:
+    address: str
+    actions: list[str] = field(default_factory=lambda: ["update"])
+    changed_attributes: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ImportValidationConfig:
+    enabled: bool = False
+    known_changes: list[ImportKnownChange] = field(default_factory=list)
+
+    def find_known_change(self, address: str) -> ImportKnownChange | None:
+        for kc in self.known_changes:
+            if kc.address == address:
+                return kc
+        return None
+
+
+@dataclass
 class Example:
     number: int | None = None
     name: str | None = None
@@ -93,6 +112,7 @@ class Example:
     module_depends_on: list[str] = field(default_factory=list)
     plan_regressions: list[PlanRegression] = field(default_factory=list)
     output_assertions: list[OutputAssertion] = field(default_factory=list)
+    import_validation: ImportValidationConfig = field(default_factory=ImportValidationConfig)
     sensitive_output: bool = False
 
     def __post_init__(self) -> None:
@@ -162,6 +182,7 @@ class Example:
 class WsConfig:
     examples: list[Example]
     var_groups: dict[str, list[WsVar]]
+    resource_type_import_ids: dict[str, str] = field(default_factory=dict)
 
     def redact_var_attributes_for_example(self, example: Example) -> list[str]:
         """Variable names to redact for a specific example's var_groups."""
@@ -222,6 +243,7 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
             )
             for a in ex.get("output_assertions", [])
         ]
+        import_val = _parse_import_validation(ex.get("import_validation", {}))
         examples.append(
             Example(
                 number=ex.get("number"),
@@ -231,11 +253,31 @@ def parse_ws_config(ws_yaml_path: Path) -> WsConfig:
                 module_depends_on=ex.get("module_depends_on") or [],
                 plan_regressions=regressions,
                 output_assertions=assertions,
+                import_validation=import_val,
                 sensitive_output=ex.get("sensitive_output", False),
             )
         )
     validate_example_identifiers(examples)
-    return WsConfig(examples=examples, var_groups=var_groups)
+    resource_type_import_ids = data.get("resource_type_import_ids", {})
+    return WsConfig(
+        examples=examples,
+        var_groups=var_groups,
+        resource_type_import_ids=resource_type_import_ids,
+    )
+
+
+def _parse_import_validation(data: dict[str, Any]) -> ImportValidationConfig:
+    if not data:
+        return ImportValidationConfig()
+    known_changes = [
+        ImportKnownChange(
+            address=kc["address"],
+            actions=kc.get("actions", ["update"]),
+            changed_attributes=kc.get("changed_attributes", []),
+        )
+        for kc in data.get("known_changes", [])
+    ]
+    return ImportValidationConfig(enabled=data.get("enabled", False), known_changes=known_changes)
 
 
 def validate_example_identifiers(examples: list[Example]) -> None:
