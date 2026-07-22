@@ -10,10 +10,17 @@ variable "cluster_name" {
 
 variable "backup_mode" {
   description = <<-EOT
-    The schedule mode. Can be:
-    - `ON_DEMAND`: all frequency-based policy items removed
-    - `SCHEDULED`: uses module-managed policy items
-    - `UNMANAGED`: handled by the caller not invoking this module at all
+    Schedule mode for backup. Controls whether and how this submodule manages the `cloud_backup_schedule` resource.
+    - `ON_DEMAND`: schedule resource created but all frequency policies removed (PIT + manual snapshots only)
+    - `SCHEDULED`: module-managed frequency policies (`hourly`/`daily`/`weekly`/`monthly`/`yearly`)
+    - `UNMANAGED`: not a valid value here -- handled by the caller not invoking this submodule at all.
+      `copy_settings`, `retention`, and `export` are then irrelevant; `skip_destroy` still matters to the caller's
+      own standalone `cloud_backup_schedule` resource.
+
+    Migrating to `UNMANAGED` with `skip_destroy = true` requires two applies: set it to `true` first while
+    `backup_mode` is still `SCHEDULED`/`ON_DEMAND` (this submodule still invoked), then stop invoking this
+    submodule (switch the caller to `UNMANAGED`) in a second apply. Setting both in the same apply does not
+    skip the delete.
   EOT
   type        = string
 
@@ -38,8 +45,21 @@ variable "retention" {
       - `yearly`: `frequency_interval=12`, `retention_unit="years"`, `retention_value=1`
     - If `skip_default_retentions=true`, the frequency is not created at all.
 
+    `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation
+    time). `restore_window_days` controls the PIT restore window.
+
     `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
     but has no corresponding field on `cloud_backup_schedule`. It is ignored by this submodule.
+
+    Frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) are silently ignored (not rejected) when
+    `var.backup_mode = "ON_DEMAND"`, since this submodule has no `backup_enabled`/`pit_enabled` input to validate
+    against -- the root module rejects them (validation error) instead.
+
+    Atlas requires an `hourly` policy item for Continuous Cloud Backup: if the cluster this schedule applies to
+    has point-in-time restore enabled and `var.backup_mode = "SCHEDULED"`, omitting `hourly` (via
+    `skip_default_retentions = true`) is rejected by Atlas at apply. This submodule has no visibility into
+    whether PIT is enabled on the cluster, so it cannot validate this itself -- the root module's
+    `backup_retention` validation catches it at `terraform plan` instead.
   EOT
   type = object({
     skip_default_retentions  = optional(bool, false)

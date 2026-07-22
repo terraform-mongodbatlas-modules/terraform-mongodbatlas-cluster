@@ -580,16 +580,16 @@ validation error if set.
 
 ### backup_mode
 
-Schedule mode for backup. Controls whether and how the module manages the cloud_backup_schedule resource.
-backup_enabled is a separate cluster-level flag; backup_mode is ignored when backup_enabled = false.
-- ON_DEMAND: schedule resource created but all frequency policies removed (PIT + manual snapshots only)
-- SCHEDULED: module-managed frequency policies (hourly/daily/weekly/monthly/yearly)
-- UNMANAGED: module does not create the schedule resource. Consumer manages cloud_backup_schedule
-  externally using a standalone resource. backup_copy_region, backup_retention, and backup_export must
-  be left at their defaults; backup_schedule_skip_destroy is still allowed.
+Schedule mode for backup. Controls whether and how the module manages the `cloud_backup_schedule` resource.
+`backup_enabled` is a separate cluster-level flag; `backup_mode` is ignored when `backup_enabled = false`.
+- `ON_DEMAND`: schedule resource created but all frequency policies removed (PIT + manual snapshots only)
+- `SCHEDULED`: module-managed frequency policies (`hourly`/`daily`/`weekly`/`monthly`/`yearly`)
+- `UNMANAGED`: module does not create the schedule resource. Consumer manages `cloud_backup_schedule`
+  externally using a standalone resource. `backup_copy_region`, `backup_retention`, and `backup_export` must
+  be left at their defaults; `backup_schedule_skip_destroy` is still allowed.
 
-Migrating to UNMANAGED with backup_schedule_skip_destroy = true requires two applies: set it to true
-first while backup_mode is still SCHEDULED/ON_DEMAND, then switch to UNMANAGED in a second apply.
+Migrating to `UNMANAGED` with `backup_schedule_skip_destroy = true` requires two applies: set it to `true`
+first while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`, then switch to `UNMANAGED` in a second apply.
 Setting both in the same apply does not skip the delete.
 
 Type: `string`
@@ -639,10 +639,16 @@ Default: `false`
 ### backup_retention
 
 Retention overrides for the backup schedule. Each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is
-optional. When `skip_default_retentions=false` (the default), an omitted frequency is created using the
-Atlas UI default; when provided, `retention_value` is required and `frequency_interval`/`retention_unit` fall
-back to the Atlas UI default for that frequency if omitted. Set `skip_default_retentions=true` to only
-create the frequencies you explicitly declare.
+optional. When provided, `retention_value` is required; `frequency_interval`/`retention_unit` fall back to
+the Atlas UI default for that frequency if omitted. When omitted:
+
+- If `skip_default_retentions=false` (the default), Atlas uses the following UI defaults for that frequency:
+  - `hourly`: `frequency_interval=6`, `retention_unit="days"`, `retention_value=7`
+  - `daily`: `retention_unit="days"`, `retention_value=7`
+  - `weekly`: `frequency_interval=6`, `retention_unit="weeks"`, `retention_value=4`
+  - `monthly`: `frequency_interval=40`, `retention_unit="months"`, `retention_value=12`
+  - `yearly`: `frequency_interval=12`, `retention_unit="years"`, `retention_value=1`
+- If `skip_default_retentions=true`, the frequency is not created at all.
 
 `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation
 time). `restore_window_days` controls the PIT restore window.
