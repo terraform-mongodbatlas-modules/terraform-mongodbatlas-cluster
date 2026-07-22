@@ -7,6 +7,7 @@ BREAKING CHANGES:
 NOTES:
 
 * provider/mongodbatlas: Requires minimum version 2.1 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
+* provider/mongodbatlas: Requires minimum version 2.12 for `mongodbatlas_cloud_backup_schedule` `skip_destroy` support ([#184](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/184))
 * terraform: Requires minimum version 1.10 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
 
 ENHANCEMENTS:
