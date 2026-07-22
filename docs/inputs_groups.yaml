@@ -81,6 +81,9 @@ sections:
       `backup_enabled = false`: `backup_mode` and `backup_schedule_skip_destroy` are ignored (no
       effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
       validation error if set.
+
+      **For a comprehensive guide on backup configuration, see [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/main/docs/backup_guide.md), which
+      includes schedule defaults, PIT recommendations, deletion behavior, and cross-region/export examples.**
     match:
       names:
         - "backup_mode"

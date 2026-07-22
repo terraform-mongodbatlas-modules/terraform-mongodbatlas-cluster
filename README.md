@@ -578,6 +578,9 @@ Configures the `cloud_backup_schedule` resource managed internally by this modul
 effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
 validation error if set.
 
+**For a comprehensive guide on backup configuration, see [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/main/docs/backup_guide.md), which
+includes schedule defaults, PIT recommendations, deletion behavior, and cross-region/export examples.**
+
 ### backup_mode
 
 Schedule mode for backup. Controls whether and how the module manages the `cloud_backup_schedule` resource.
@@ -590,7 +593,8 @@ Schedule mode for backup. Controls whether and how the module manages the `cloud
 
 Migrating to `UNMANAGED` with `backup_schedule_skip_destroy = true` requires two applies: set it to `true`
 first while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`, then switch to `UNMANAGED` in a second apply.
-Setting both in the same apply does not skip the delete.
+Setting both in the same apply does not skip the delete. See the [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/main/docs/backup_guide.md)
+for the full deletion-workflow writeup.
 
 Type: `string`
 
