@@ -2,61 +2,51 @@ from __future__ import annotations
 
 from docs import submodule_readme as mod
 
+_REGISTRY = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
+_SUB = "cloud_backup_schedule"
+_REL = f"../../modules/{_SUB}"
+_ABS = f"{_REGISTRY}//modules/{_SUB}"
+
 
 def test_transform_submodule_source_without_version() -> None:
-    content = """```hcl
-module "cluster_import" {
-  source = "../../modules/cluster_import"
-  cluster_name = "test"
-}
+    content = f"""```hcl
+module "{_SUB}" {{
+  source = "{_REL}"
+  project_id = "proj"
+}}
 ```"""
-    result = mod.transform_submodule_source(
-        content, "terraform-mongodbatlas-modules/cluster/mongodbatlas", "cluster_import"
-    )
-    assert (
-        'source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas//modules/cluster_import"'
-        in result
-    )
+    result = mod.transform_submodule_source(content, _REGISTRY, _SUB)
+    assert f'source  = "{_ABS}"' in result
     assert "version" not in result
 
 
 def test_transform_submodule_source_with_version() -> None:
-    content = """```hcl
-module "cluster_import" {
-  source = "../../modules/cluster_import"
-  cluster_name = "test"
-}
+    content = f"""```hcl
+module "{_SUB}" {{
+  source = "{_REL}"
+  project_id = "proj"
+}}
 ```"""
-    result = mod.transform_submodule_source(
-        content,
-        "terraform-mongodbatlas-modules/cluster/mongodbatlas",
-        "cluster_import",
-        "v0.2.0",
-    )
-    assert (
-        'source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas//modules/cluster_import"'
-        in result
-    )
+    result = mod.transform_submodule_source(content, _REGISTRY, _SUB, "v0.2.0")
+    assert f'source  = "{_ABS}"' in result
     assert 'version = "0.2.0"' in result
 
 
 def test_transform_submodule_source_multiple_occurrences() -> None:
-    content = """First block:
+    content = f"""First block:
 ```hcl
-module "cluster_import" {
-  source = "../../modules/cluster_import"
-}
+module "{_SUB}" {{
+  source = "{_REL}"
+}}
 ```
 
 Second block:
 ```hcl
-module "cluster_import" {
-  for_each = {}
-  source = "../../modules/cluster_import"
-}
+module "{_SUB}" {{
+  for_each = {{}}
+  source = "{_REL}"
+}}
 ```"""
-    result = mod.transform_submodule_source(
-        content, "owner/module/provider", "cluster_import", "v1.0.0"
-    )
-    assert result.count('source  = "owner/module/provider//modules/cluster_import"') == 2
+    result = mod.transform_submodule_source(content, "owner/module/provider", _SUB, "v1.0.0")
+    assert result.count(f'source  = "owner/module/provider//modules/{_SUB}"') == 2
     assert result.count('version = "1.0.0"') == 2
