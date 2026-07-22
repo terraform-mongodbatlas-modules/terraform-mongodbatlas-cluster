@@ -5,6 +5,7 @@ This guide explains how to configure and manage backups in the MongoDB Atlas Ter
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Recommendations Summary](#recommendations-summary)
 - [Backup Modes](#backup-modes)
 - [Schedule Defaults](#schedule-defaults)
 - [`pit_enabled` and `backup_enabled` Recommendations](#pit_enabled-and-backup_enabled-recommendations)
@@ -12,7 +13,6 @@ This guide explains how to configure and manage backups in the MongoDB Atlas Ter
 - [Exporting Snapshots (Other LZ Modules)](#exporting-snapshots-other-lz-modules)
 - [Deletion Behavior](#deletion-behavior)
 - [Key Variables Reference](#key-variables-reference)
-- [Recommendations Summary](#recommendations-summary)
 - [Additional Resources](#additional-resources)
 
 ## Introduction
@@ -20,6 +20,15 @@ This guide explains how to configure and manage backups in the MongoDB Atlas Ter
 The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class capability, you no longer need a separate `mongodbatlas_cloud_backup_schedule` resource block alongside the cluster. `backup_mode` controls whether and how the module manages this resource; `backup_retention`, `backup_copy_region`, `backup_export`, and `backup_schedule_skip_destroy` configure it.
 
 See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_backup_schedule) for a complete working example combining retention overrides, cross-region copy, and deletion behavior.
+
+## Recommendations Summary
+
+| Scenario | `backup_enabled` | `pit_enabled` | `backup_mode` |
+| --- | --- | --- | --- |
+| Production | `true` (default) | `null` (default: `true`) | `SCHEDULED` (default) |
+| Dev/non-production, still want some coverage | `true` (default) | `false` or default | `ON_DEMAND` |
+| Backup Compliance Policy enabled | `true` | default | `SCHEDULED`, `backup_schedule_skip_destroy = true` |
+| Migrating off module-managed backups | -- | -- | Two-apply `UNMANAGED` migration, see [Deletion Behavior](#deletion-behavior) |
 
 ## Backup Modes
 
@@ -145,15 +154,6 @@ Setting both in the same apply does **not** skip the delete, Terraform still des
 | `retain_backups_enabled` | Retain snapshots when the cluster itself is deleted |
 
 See the [main README](../README.md#backup-schedule) for the full generated variable reference, including types and defaults.
-
-## Recommendations Summary
-
-| Scenario | `backup_enabled` | `pit_enabled` | `backup_mode` |
-| --- | --- | --- | --- |
-| Production | `true` (default) | `null` (default: `true`) | `SCHEDULED` (default) |
-| Dev/non-production, still want some coverage | `true` (default) | `false` or default | `ON_DEMAND` |
-| Backup Compliance Policy enabled | `true` | default | `SCHEDULED`, `backup_schedule_skip_destroy = true` |
-| Migrating off module-managed backups | -- | -- | Two-apply `UNMANAGED` migration, see [Deletion Behavior](#deletion-behavior) |
 
 ## Additional Resources
 
