@@ -11,7 +11,7 @@ from workspace.import_validation import (
     _diff_attributes,
     assert_clean_plan,
     assert_import_plan,
-    assert_no_destroys,
+    assert_no_actions_outside_prefixes,
     backup_and_restore_state,
     extract_import_id,
     extract_state_resources,
@@ -55,7 +55,6 @@ def test_resolve_import_entries_missing_state_address():
             [example],
             {
                 "module.ex_other.mongodbatlas_encryption_at_rest.this": StateResource(
-                    address="module.ex_other.mongodbatlas_encryption_at_rest.this",
                     resource_type="mongodbatlas_encryption_at_rest",
                     values={"project_id": "p1"},
                 )
@@ -322,28 +321,41 @@ def test_assert_import_plan_actions_mismatch():
     assert "expected actions" in failures[0]
 
 
-def test_assert_no_destroys_clean():
+def test_assert_no_actions_outside_prefixes_allows_noop_and_read():
     plan_json = {
         "resource_changes": [
-            _make_rc("module.ex_enc.mongodbatlas_encryption_at_rest.this", ["no-op"]),
-            _make_rc("module.ex_enc.aws_kms_key.this", ["update"]),
+            _make_rc("module.ex_enc.mongodbatlas_encryption_at_rest.this", ["update"]),
+            _make_rc("module.ex_other.aws_kms_key.this", ["no-op"]),
+            _make_rc("data.aws_caller_identity.current", ["read"]),
         ]
     }
-    assert assert_no_destroys(plan_json) == []
+    assert assert_no_actions_outside_prefixes(plan_json, ["module.ex_enc."]) == []
 
 
-def test_assert_no_destroys_with_deletes():
+def test_assert_no_actions_outside_prefixes_rejects_unrelated_create():
     plan_json = {
         "resource_changes": [
             _make_rc("module.ex_enc.mongodbatlas_encryption_at_rest.this", ["no-op"]),
+            _make_rc("module.ex_other.aws_kms_key.atlas", ["create"]),
+        ]
+    }
+    result = assert_no_actions_outside_prefixes(plan_json, ["module.ex_enc."])
+    assert len(result) == 1
+    assert "module.ex_other.aws_kms_key.atlas" in result[0]
+    assert "['create']" in result[0]
+
+
+def test_assert_no_actions_outside_prefixes_rejects_delete_and_update():
+    plan_json = {
+        "resource_changes": [
             _make_rc("module.ex_other.aws_kms_key.atlas", ["delete"]),
-            _make_rc("module.ex_other.aws_iam_role.this", ["create", "delete"]),
+            _make_rc("module.ex_other.aws_iam_role.this", ["update"]),
         ]
     }
-    result = assert_no_destroys(plan_json)
+    result = assert_no_actions_outside_prefixes(plan_json, ["module.ex_enc."])
     assert len(result) == 2
-    assert "module.ex_other.aws_kms_key.atlas" in result
-    assert "module.ex_other.aws_iam_role.this" in result
+    assert any("delete" in msg for msg in result)
+    assert any("update" in msg for msg in result)
 
 
 def test_assert_clean_plan_all_noop():

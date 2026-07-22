@@ -25,7 +25,6 @@ TFSTATE_FILE = "terraform.tfstate"
 
 @dataclass
 class StateResource:
-    address: str
     resource_type: str
     values: dict[str, Any]
 
@@ -39,9 +38,7 @@ def extract_state_resources(state_json: dict[str, Any]) -> dict[str, StateResour
 
 def _extract_from_module(module: dict[str, Any], result: dict[str, StateResource]) -> None:
     for resource in module.get("resources", []):
-        addr = resource["address"]
-        result[addr] = StateResource(
-            address=addr,
+        result[resource["address"]] = StateResource(
             resource_type=resource["type"],
             values=resource.get("values", {}),
         )
@@ -131,18 +128,8 @@ def assert_import_plan(
             continue
 
         if known := example.import_validation.find_known_change(rel_addr):
-            if actions != known.actions:
-                failures.append(
-                    f"{rel_addr}: expected actions {known.actions}, got {actions}"
-                    f" (changed: {sorted(_diff_attributes(change))})"
-                )
-            elif known.changed_attributes:
-                changed = _diff_attributes(change)
-                if changed != set(known.changed_attributes):
-                    expected = sorted(known.changed_attributes)
-                    failures.append(
-                        f"{rel_addr}: expected changed_attributes {expected}, got {sorted(changed)}"
-                    )
+            if msg := _known_change_mismatch(rel_addr, change, actions, known):
+                failures.append(msg)
             continue
 
         changed = _diff_attributes(change)
@@ -160,11 +147,17 @@ def assert_import_plan(
     return failures
 
 
-def assert_no_destroys(plan_json: dict[str, Any]) -> list[str]:
+def assert_no_actions_outside_prefixes(
+    plan_json: dict[str, Any], enabled_prefixes: list[str]
+) -> list[str]:
+    """Reject non-noop/read actions outside enabled example prefixes before apply."""
     return [
-        rc.get("address", "?")
+        f"{addr}: unexpected actions {actions} outside enabled examples"
         for rc in plan_json.get("resource_changes", [])
-        if "delete" in rc.get("change", {}).get("actions", [])
+        if (addr := rc.get("address", "?"))
+        and not any(addr.startswith(p) for p in enabled_prefixes)
+        and (actions := rc.get("change", {}).get("actions", []))
+        and actions not in (["no-op"], ["read"])
     ]
 
 
@@ -183,18 +176,8 @@ def assert_clean_plan(plan_json: dict[str, Any], example: models.Example) -> lis
             continue
 
         if known := example.import_validation.find_known_change(rel_addr):
-            if actions != known.actions:
-                failures.append(
-                    f"{rel_addr}: expected actions {known.actions}, got {actions}"
-                    f" (changed: {sorted(_diff_attributes(change))})"
-                )
-            elif known.changed_attributes:
-                changed = _diff_attributes(change)
-                if changed != set(known.changed_attributes):
-                    failures.append(
-                        f"{rel_addr}: expected changed_attributes "
-                        f"{sorted(known.changed_attributes)}, got {sorted(changed)}"
-                    )
+            if msg := _known_change_mismatch(rel_addr, change, actions, known):
+                failures.append(msg)
             continue
 
         failures.append(
@@ -202,6 +185,27 @@ def assert_clean_plan(plan_json: dict[str, Any], example: models.Example) -> lis
             f" (changed: {sorted(_diff_attributes(change))})"
         )
     return failures
+
+
+def _known_change_mismatch(
+    rel_addr: str,
+    change: dict[str, Any],
+    actions: list[str],
+    known: models.ImportKnownChange,
+) -> str | None:
+    if actions != known.actions:
+        return (
+            f"{rel_addr}: expected actions {known.actions}, got {actions}"
+            f" (changed: {sorted(_diff_attributes(change))})"
+        )
+    if known.changed_attributes:
+        changed = _diff_attributes(change)
+        if changed != set(known.changed_attributes):
+            return (
+                f"{rel_addr}: expected changed_attributes "
+                f"{sorted(known.changed_attributes)}, got {sorted(changed)}"
+            )
+    return None
 
 
 def _diff_attributes(change: dict[str, Any]) -> set[str]:
@@ -332,12 +336,13 @@ def process_workspace(
             else:
                 logger.info(f"PASS: {ex.identifier}")
 
-        destroy_addrs = assert_no_destroys(plan_data)
-        if destroy_addrs:
-            for addr in destroy_addrs:
-                logger.error(f"DESTROY: {addr}")
+        enabled_prefixes = [f"module.ex_{ex.identifier}." for ex in enabled]
+        outside = assert_no_actions_outside_prefixes(plan_data, enabled_prefixes)
+        if outside:
+            for msg in outside:
+                logger.error(f"OUTSIDE: {msg}")
             all_failures.append(
-                f"Plan includes {len(destroy_addrs)} destroy action(s). "
+                f"Plan includes {len(outside)} action(s) outside enabled examples. "
                 "Refusing to apply. Ensure all examples are included or state is clean."
             )
 
