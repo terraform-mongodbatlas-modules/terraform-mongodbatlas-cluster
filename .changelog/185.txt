@@ -1,0 +1,7 @@
+```release-note:breaking-change
+submodule/cluster_import: Removes the experimental `cluster_import` submodule. Last available at https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/tree/v0.3.1/modules/cluster_import. A simpler CLI-based import workflow is being worked on
+```
+
+```release-note:note
+example: Removes `13_example_import`. Last available at https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/tree/v0.3.1/examples/13_example_import
+```
