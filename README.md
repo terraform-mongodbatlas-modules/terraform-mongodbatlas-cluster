@@ -759,6 +759,8 @@ Config Server Management Mode for creating or updating a sharded cluster.
 
 Defaults to `ATLAS_MANAGED` so Atlas may switch the cluster's config server type without Terraform plan churn.
 Set `FIXED_TO_DEDICATED` only when you need a dedicated config server escape hatch.
+Set `null` to leave the attribute unset and keep the pre-v0.4.0 behavior.
+Only applies to `SHARDED` / `GEOSHARDED` clusters; ignored for `REPLICASET`.
 
 Type: `string`
 
