@@ -1,0 +1,3 @@
+```release-note:note
+provider/mongodbatlas: Requires minimum version 2.12 for cloud_backup_schedule skip_destroy support
+```
