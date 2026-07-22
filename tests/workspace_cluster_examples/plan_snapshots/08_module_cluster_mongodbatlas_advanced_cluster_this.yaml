@@ -5,7 +5,7 @@ advanced_configuration:
 backup_enabled: false
 cluster_type: REPLICASET
 delete_on_create_timeout: true
-pit_enabled: true
+pit_enabled: false
 project_id: <project_id>
 redact_client_log_data: true
 replication_specs:
