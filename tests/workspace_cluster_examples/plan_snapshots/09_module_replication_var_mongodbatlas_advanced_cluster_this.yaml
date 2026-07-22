@@ -18,4 +18,3 @@ replication_specs:
     provider_name: AWS
     region_name: US_EAST_1
 retain_backups_enabled: true
-tags: <tags>
