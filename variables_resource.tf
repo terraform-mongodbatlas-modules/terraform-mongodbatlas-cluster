@@ -337,6 +337,6 @@ variable "version_release_system" {
 
   validation {
     condition     = !(var.version_release_system == "CONTINUOUS" && var.mongo_db_major_version != null)
-    error_message = "Cannot set mongo_db_major_version when version_release_system is \"CONTINUOUS\". Omit mongo_db_major_version, or set version_release_system to \"LTS\"."
+    error_message = "Cannot set mongo_db_major_version when version_release_system is `CONTINUOUS`. Either omit version_release_system or set it to `LTS`, or omit mongo_db_major_version to keep `CONTINUOUS`."
   }
 }
