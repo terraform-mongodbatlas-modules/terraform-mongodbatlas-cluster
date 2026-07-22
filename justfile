@@ -2,7 +2,7 @@
 
 # === OK_EDIT: path-sync header ===
 # Module-specific configuration
-PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl -filter=tests/plan_backup_pit.tftest.hcl"
+PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl -filter=tests/plan_backup_pit.tftest.hcl -filter=tests/plan_backup_schedule.tftest.hcl"
 
 # === DO_NOT_EDIT: path-sync core ===
 set dotenv-load
@@ -290,7 +290,7 @@ tf-gen *args:
 
 dev-integration-test:
     terraform init
-    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -filter=tests/apply_backup_copy_settings_geosharded.tftest.hcl -filter=tests/apply_backup_schedule_retention_edge_cases.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 sdlc-sync-dry:
     uvx path-sync@latest copy -n sdlc --skip-commit --dry-run

@@ -24,7 +24,7 @@ See [MongoDB Atlas Provider Authentication](https://registry.terraform.io/provid
 # Plan-only tests (no resources created)
 just unit-plan-tests
 
-# Single dev cluster test (creates resources)
+# Real-Atlas apply tests (creates resources)
 just dev-integration-test
 
 # All terraform tests (plan + apply, no filter)
