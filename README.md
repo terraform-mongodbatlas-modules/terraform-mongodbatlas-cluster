@@ -767,7 +767,7 @@ Default: `null`
 
 ### delete_on_create_timeout
 
-Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false.
+Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true.
 
 Type: `bool`
 
@@ -932,6 +932,6 @@ See [Terraform Version Requirements](./docs/terraform_version_requirements.md) f
 ### What is the `provider_meta "mongodbatlas"` doing?
 
 - This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
-  - `User-Agent: terraform-provider-mongodbatlas/2.1.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
+  - `User-Agent: terraform-provider-mongodbatlas/2.12.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
 - Note: We **do not** send any configuration-specific values, only these values to help us track feature adoption.
 - You can use `export TF_LOG=debug` to see the API requests with headers and their responses.

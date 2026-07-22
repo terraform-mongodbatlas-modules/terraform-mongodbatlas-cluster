@@ -17,7 +17,7 @@ from tf_gen.schema_config import (
 )
 
 MONGODBATLAS_SOURCE = os.getenv("MONGODBATLAS_SOURCE", "mongodb/mongodbatlas")
-MONGODBATLAS_VERSION = os.getenv("MONGODBATLAS_VERSION", "~> 2.2")
+MONGODBATLAS_VERSION = os.getenv("MONGODBATLAS_VERSION", "~> 2.12")
 TESTDATA_DIR = Path(__file__).parent / "testdata"
 SCHEMAS_DIR = TESTDATA_DIR / "schemas"
 

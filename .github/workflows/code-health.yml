@@ -10,12 +10,6 @@ on:
   merge_group:
   schedule:
     - cron: '0 2 * * *'
-  workflow_dispatch:
-    inputs:
-      provider_ref:
-        description: 'Provider git ref (empty = default branch)'
-        required: false
-        type: string
 # === OK_EDIT: path-sync triggers ===
 
 permissions:
@@ -82,11 +76,25 @@ jobs:
 
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   plan-snapshot-tests:
-    name: Terraform Examples Plan Snapshot Tests
+    name: Plan Snapshots (${{ matrix.lane }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: minimum
+            terraform_version: '1.10'
+            provider_mode: minimum
+          - lane: maximum
+            terraform_version: latest
+            provider_mode: registry
+          - lane: provider-head
+            terraform_version: latest
+            provider_mode: head
   # === OK_EDIT: path-sync job-snapshot-tests ===
     env:
-      # Module-specific: Add required cloud provider credentials
+      # Module-specific: Set the minimum provider release and required cloud provider credentials.
+      MONGODB_ATLAS_PROVIDER_MIN_VERSION: '2.12.0'
       MONGODB_ATLAS_CLIENT_ID: ${{ secrets.MONGODB_ATLAS_CLIENT_ID }}
       MONGODB_ATLAS_CLIENT_SECRET: ${{ secrets.MONGODB_ATLAS_CLIENT_SECRET }}
       MONGODB_ATLAS_BASE_URL: ${{ secrets.MONGODB_ATLAS_BASE_URL }}
@@ -97,14 +105,25 @@ jobs:
         with:
           just: 'true'
           uv: 'true'
-          terraform: 'true'
-      - uses: ./.github/actions/setup-provider-dev
+      - name: Configure minimum provider
+        if: matrix.provider_mode == 'minimum'
+        shell: bash
+        run: |
+          if [[ -z "${MONGODB_ATLAS_PROVIDER_MIN_VERSION:-}" ]]; then
+            echo "::error::MONGODB_ATLAS_PROVIDER_MIN_VERSION must be set for the minimum lane"
+            exit 1
+          fi
+          echo "MONGODB_ATLAS_PROVIDER_VERSION=${MONGODB_ATLAS_PROVIDER_MIN_VERSION}" >> "$GITHUB_ENV"
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         with:
-          provider-ref: ${{ inputs.provider_ref }}
+          terraform_version: ${{ matrix.terraform_version }}
+          terraform_wrapper: false
+      - uses: ./.github/actions/setup-provider-dev
+        if: matrix.provider_mode == 'head'
   # === OK_EDIT: path-sync job-snapshot-tests ===
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
-      - run: just plan-snapshot-test --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+      - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 
