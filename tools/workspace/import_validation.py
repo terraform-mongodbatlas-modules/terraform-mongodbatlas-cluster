@@ -205,32 +205,40 @@ def assert_clean_plan(plan_json: dict[str, Any], example: models.Example) -> lis
 
 
 def _diff_attributes(change: dict[str, Any]) -> set[str]:
-    """Return attribute names that differ between before and after.
-
-    Attributes marked as after_unknown (shown as 'known after apply' in
-    terraform plan) are excluded because their concrete value is not
-    available at plan time. Nested after_unknown (list/dict) still counts
-    as unknown for the top-level key; an empty dict ``{}`` does not —
-    Terraform uses that when the attribute itself is known.
-    """
+    """Known portions of before/after; top-level after_unknown True excludes the key."""
     before = change.get("before", {}) or {}
     after = change.get("after", {}) or {}
     after_unknown = change.get("after_unknown", {}) or {}
-    all_keys = set(before) | set(after)
     return {
         k
-        for k in all_keys
-        if before.get(k) != after.get(k) and not _is_after_unknown(after_unknown.get(k))
+        for k in set(before) | set(after)
+        if not _known_values_equal(before.get(k), after.get(k), after_unknown.get(k))
     }
 
 
-def _is_after_unknown(marker: Any) -> bool:
-    """True when Terraform marks the attribute (or nested parts) as known after apply."""
-    if marker is True:
+def _known_values_equal(before: Any, after: Any, unknown: Any) -> bool:
+    """Ignore leaves marked True in after_unknown. Zip assumes TF aligns list lengths."""
+    if unknown is True:
         return True
-    if isinstance(marker, list | dict) and marker:
-        return True
-    return False
+    match unknown:
+        case dict() if unknown:
+            before_d = before if isinstance(before, dict) else {}
+            after_d = after if isinstance(after, dict) else {}
+            keys = set(before_d) | set(after_d) | set(unknown)
+            return all(
+                _known_values_equal(before_d.get(k), after_d.get(k), unknown.get(k)) for k in keys
+            )
+        case list() if unknown:
+            if not isinstance(before, list) or not isinstance(after, list):
+                return before == after
+            if len(before) != len(after):
+                return False
+            markers = unknown + [None] * max(0, len(before) - len(unknown))
+            return all(
+                _known_values_equal(b, a, u) for b, a, u in zip(before, after, markers, strict=True)
+            )
+        case _:
+            return before == after
 
 
 def resolve_import_entries(

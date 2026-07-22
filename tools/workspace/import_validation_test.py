@@ -478,13 +478,36 @@ def test_diff_attributes_empty_after_unknown_dict_not_excluded():
     assert _diff_attributes(change) == {"tags"}
 
 
-def test_diff_attributes_nested_after_unknown_excludes_top_level():
-    change = {
-        "before": {"replication_specs": [{"a": 1}]},
-        "after": {"replication_specs": [{"a": 2}]},
-        "after_unknown": {"replication_specs": [{"disk_iops": True}]},
-    }
-    assert _diff_attributes(change) == set()
+def test_diff_attributes_nested_after_unknown_compares_known_portions():
+    # known leaf differs under nested marker -> report top-level key
+    assert _diff_attributes(
+        {
+            "before": {"replication_specs": [{"a": 1}]},
+            "after": {"replication_specs": [{"a": 2}]},
+            "after_unknown": {"replication_specs": [{"disk_iops": True}]},
+        }
+    ) == {"replication_specs"}
+    # project limits: concrete blocks vs [], only computed leaves unknown
+    assert _diff_attributes(
+        {
+            "before": {"limits": []},
+            "after": {"limits": [{"name": "openDownloadBytes", "value": 42}]},
+            "after_unknown": {
+                "limits": [{"current_usage": True, "default_limit": True, "maximum_limit": True}]
+            },
+        }
+    ) == {"limits"}
+    # only unknown leaf differs -> ignore
+    assert (
+        _diff_attributes(
+            {
+                "before": {"replication_specs": [{"a": 1, "disk_iops": None}]},
+                "after": {"replication_specs": [{"a": 1, "disk_iops": 3000}]},
+                "after_unknown": {"replication_specs": [{"disk_iops": True}]},
+            }
+        )
+        == set()
+    )
 
 
 def test_assert_clean_plan_known_change_actions_mismatch():
