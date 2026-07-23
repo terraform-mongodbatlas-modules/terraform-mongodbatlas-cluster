@@ -64,14 +64,23 @@ variable "config_server_management_mode" {
   description = <<-EOT
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
-
-When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
+Defaults to `ATLAS_MANAGED` so Atlas may switch the cluster's config server type without Terraform plan churn.
+Set `FIXED_TO_DEDICATED` only when you need a dedicated config server escape hatch.
+Set `null` to leave the attribute unset and keep the pre-v0.4.0 behavior.
+Only applies to `SHARDED` / `GEOSHARDED` clusters; ignored for `REPLICASET`.
 EOT
 
   type     = string
   nullable = true
-  default  = null
+  default  = "ATLAS_MANAGED"
+
+  validation {
+    condition = (
+      var.config_server_management_mode == null ||
+      contains(["ATLAS_MANAGED", "FIXED_TO_DEDICATED"], var.config_server_management_mode)
+    )
+    error_message = "Invalid config_server_management_mode. Valid values are: null, ATLAS_MANAGED, FIXED_TO_DEDICATED."
+  }
 }
 
 variable "delete_on_create_timeout" {
