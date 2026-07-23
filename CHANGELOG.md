@@ -13,6 +13,7 @@ ENHANCEMENTS:
 
 * example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy` ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
+* variable/version_release_system: Rejects `CONTINUOUS` when `mongo_db_major_version` is set ([#183](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/183))
 
 ## 0.3.1 (March 17, 2026)
 
