@@ -163,5 +163,4 @@ destinations:
     default_branch: main
     skip_sections:
       justfile: [dev-vars-org, regions, checks, import-validate]  # import-validate: TODO Remove after import onboarding.
-      .github/workflows/code-health.yml: [triggers, job-snapshot-tests] # TODO: Remove both after snapshot-matrix onboarding.
       .github/workflows/pre-release-tests.yml: [env, job-import-validate]  # env: separate org credentials. job-import-validate: TODO Remove after import onboarding.
