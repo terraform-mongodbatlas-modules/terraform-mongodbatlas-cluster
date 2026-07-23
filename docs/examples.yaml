@@ -1,7 +1,6 @@
 examples_readme:
   readme_template: docs/example_readme.md
-  skip_examples:
-    - "13_example_import"
+  skip_examples: []
   code_snippet_files:
     additional: []
   template_vars:
