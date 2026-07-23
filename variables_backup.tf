@@ -78,8 +78,8 @@ variable "backup_retention" {
       - `yearly`: `frequency_interval=12`, `retention_unit="years"`, `retention_value=1`
     - If `skip_default_retentions=true`, the frequency is not created at all.
 
-    `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation
-    time). `restore_window_days` controls the PIT restore window.
+    `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: 18:00 UTC per
+    Atlas's default backup policy when left unset). `restore_window_days` controls the PIT restore window.
 
     `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
     but has no corresponding field on `cloud_backup_schedule`. It is ignored by this module.

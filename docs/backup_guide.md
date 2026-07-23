@@ -60,7 +60,7 @@ backup_retention = {
 }
 ```
 
-`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation time), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days), this is your effective RPO (how far back you can restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
+`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: `18:00` UTC per [Atlas's default backup policy](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#example) when left unset), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days), this is your effective RPO (how far back you can restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
 
 **`ON_DEMAND` and frequency fields:** setting `backup_retention`'s frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is rejected (validation error at `terraform plan`) when `backup_mode = "ON_DEMAND"`, since that mode removes all frequency policies. `restore_window_days` and `ondemand` remain valid there.
 
@@ -74,7 +74,7 @@ backup_retention = {
 
 **Atlas requires an `hourly` policy item for Continuous Cloud Backup.** If `backup_mode = "SCHEDULED"` and PIT is effectively enabled, omitting the `hourly` frequency (via `skip_default_retentions = true` with `hourly` unset) is rejected at `terraform plan`, since Atlas rejects that combination at the API level. If you don't need PIT, set `pit_enabled = false` explicitly to omit `hourly`.
 
-**Dev/non-production clusters** that don't need scheduled backups at all can use `backup_mode = "ON_DEMAND"` instead of `backup_enabled = false`. This keeps manual snapshots and PIT available (cheaper than full scheduled backups) without disabling backup coverage entirely. See [`examples/08_development_cluster`](../examples/08_development_cluster) for this pattern.
+**Dev/non-production clusters** that don't need scheduled backups at all can use `backup_mode = "ON_DEMAND"` instead of `backup_enabled = false`. This keeps manual snapshots and PIT available without disabling backup coverage entirely, but note that PIT (continuous backup) is billed separately regardless of `backup_mode`; set `pit_enabled = false` explicitly if you want to avoid that cost too. See [`examples/08_development_cluster`](../examples/08_development_cluster) for this pattern.
 
 ## Cross-Region Copy
 
@@ -139,6 +139,8 @@ Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no
 Setting both in the same apply does **not** skip the delete, Terraform still destroys the resource (`skip_destroy` only takes effect if the resource already exists with that setting applied in a prior state).
 
 `retain_backups_enabled` is a separate, cluster-level flag (not part of the backup schedule resource) that controls whether existing backup snapshots are retained when the *cluster itself* is deleted. Recommended `true` for production clusters.
+
+**Known limitation:** if you delete a cluster with `retain_backups_enabled = true` (retaining its backups), Atlas will not let you create a new cluster with the same name in that project afterward. Use a different name for the new cluster, or delete the retained backups first if you no longer need them before reusing the name.
 
 ## Key Variables Reference
 
