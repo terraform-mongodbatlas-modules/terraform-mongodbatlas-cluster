@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import os
 from pathlib import Path
 
 import typer
@@ -12,6 +13,7 @@ from workspace import gen, import_validation, models, output_assertions, plan, r
 app = typer.Typer()
 
 EXAMPLES_DIR = models.REPO_ROOT / "examples"
+PROVIDER_VERSION_ENV = "MONGODB_ATLAS_PROVIDER_VERSION"
 
 
 def _resolve_example_dirs(ws_dir: Path, include_examples: str) -> list[Path]:
@@ -57,37 +59,45 @@ def main(
         raise typer.Exit(1)
 
     examples = "none" if mode == RunMode.SETUP_ONLY else include_examples
+    provider_version = os.getenv(PROVIDER_VERSION_ENV)
 
     for ws_dir in ws_dirs:
         typer.echo(f"=== {ws_dir.name} ({mode}) ===")
         gen.process_workspace(ws_dir, include_examples=examples)
         example_dirs = _resolve_example_dirs(ws_dir, examples)
 
-        with plan.strip_provider_blocks(example_dirs):
-            if not skip_init:
-                plan.run_terraform_init(ws_dir)
+        try:
+            with (
+                plan.strip_provider_blocks(example_dirs),
+                plan.provider_version_override(ws_dir, provider_version),
+            ):
+                if not skip_init:
+                    plan.run_terraform_init(ws_dir)
 
-            if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
-                plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
+                if mode in (RunMode.PLAN_ONLY, RunMode.PLAN_SNAPSHOT_TEST):
+                    plan.run_terraform_plan(ws_dir, var_file, skip_init=True)
 
-            if mode == RunMode.PLAN_SNAPSHOT_TEST:
-                reg.process_workspace(
-                    ws_dir,
-                    force_regen=force_regen,
-                    show_uncovered=show_uncovered,
-                )
+                if mode == RunMode.PLAN_SNAPSHOT_TEST:
+                    reg.process_workspace(
+                        ws_dir,
+                        force_regen=force_regen,
+                        show_uncovered=show_uncovered,
+                    )
 
-            if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
-                plan.run_terraform_apply(ws_dir, var_file, auto_approve)
+                if mode in (RunMode.SETUP_ONLY, RunMode.APPLY):
+                    plan.run_terraform_apply(ws_dir, var_file, auto_approve)
 
-            if mode == RunMode.CHECK_OUTPUTS:
-                output_assertions.process_workspace(ws_dir, include_examples)
+                if mode == RunMode.CHECK_OUTPUTS:
+                    output_assertions.process_workspace(ws_dir, include_examples)
 
-            if mode == RunMode.IMPORT:
-                import_validation.process_workspace(ws_dir, include_examples, var_file)
+                if mode == RunMode.IMPORT:
+                    import_validation.process_workspace(ws_dir, include_examples, var_file)
 
-            if mode == RunMode.DESTROY:
-                plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
+                if mode == RunMode.DESTROY:
+                    plan.run_terraform_destroy(ws_dir, var_file, auto_approve)
+        except (FileExistsError, ValueError) as e:
+            typer.echo(f"Error: {e}", err=True)
+            raise typer.Exit(1) from e
 
     typer.echo("Done.")
 
