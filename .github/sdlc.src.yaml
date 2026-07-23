@@ -128,7 +128,6 @@ destinations:
     include_groups: [project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org, regions, import-validate]  # TODO: Remove after import onboarding.
-      .github/workflows/code-health.yml: [triggers, job-snapshot-tests] # TODO: Remove both after snapshot-matrix onboarding.
       .github/workflows/pre-release-tests.yml: [job-import-validate]  # TODO: Remove after import onboarding.
   - name: azure
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-azure
