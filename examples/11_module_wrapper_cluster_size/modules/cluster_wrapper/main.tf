@@ -59,7 +59,7 @@ locals {
         [for region_config in zone_config.regions :
           merge({
             zone_name  = zone_name
-            shard_name = format("s%s%d", substr(replace(lower(zone_name), "/[^a-z0-9]/", ""), 0, 20), shard)
+            shard_name = format("s%s%d", substr(replace(lower(zone_name), "/[^a-z0-9]/", ""), 0, 23 - length(tostring(shard))), shard)
         }, region_config)]
       ])
     ]
