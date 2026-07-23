@@ -118,6 +118,9 @@ def _run_validate(job: TestJob) -> TestResult:
 
 
 def run_validate(job: TestJob) -> TestResult:
+    if job.use_temp_dir:
+        return _run_validate(job)
+
     with job.target_lock:
         return _run_validate(job)
 
