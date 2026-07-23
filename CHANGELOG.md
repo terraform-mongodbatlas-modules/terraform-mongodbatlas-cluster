@@ -3,16 +3,20 @@
 BREAKING CHANGES:
 
 * submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
+* submodule/cluster_import: Removes the experimental `cluster_import` submodule ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
+* variable/config_server_management_mode: Defaults to `ATLAS_MANAGED` instead of `null`. To keep a dedicated config server, set to `FIXED_TO_DEDICATED` ([#186](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/186))
 
 NOTES:
 
-* provider/mongodbatlas: Requires minimum version 2.1 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
+* example: Removes the `13_example_import` example ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
+* provider/mongodbatlas: Requires minimum version 2.12 for `mongodbatlas_cloud_backup_schedule` `skip_destroy` support ([#184](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/184))
 * terraform: Requires minimum version 1.10 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
 
 ENHANCEMENTS:
 
 * example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy` ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
+* variable/version_release_system: Rejects `CONTINUOUS` when `mongo_db_major_version` is set ([#183](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/183))
 
 ## 0.3.1 (March 17, 2026)
 

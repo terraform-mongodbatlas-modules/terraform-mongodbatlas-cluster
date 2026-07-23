@@ -328,7 +328,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   advanced_configuration                           = local.effective_advanced_configuration
   backup_enabled                                   = var.backup_enabled
   bi_connector_config                              = var.bi_connector_config
-  config_server_management_mode                    = var.config_server_management_mode
+  config_server_management_mode                    = local.is_sharded || local.is_geosharded ? var.config_server_management_mode : null
   delete_on_create_timeout                         = var.delete_on_create_timeout
   encryption_at_rest_provider                      = var.encryption_at_rest_provider
   global_cluster_self_managed_sharding             = var.global_cluster_self_managed_sharding

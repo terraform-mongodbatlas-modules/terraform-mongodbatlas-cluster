@@ -17,16 +17,20 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 
 | Category | Paths | Notes |
 |----------|-------|-------|
-| Python tooling | `tools/{changelog,docs,release,workspace}/` | Excludes `dev_vars.py` |
+| Python tooling | `tools/{changelog,docs,release,workspace}/` and selected `tools/dev/` files | `dev_vars.py` is scaffolded once, then destination-owned |
 | Workflows | `.github/workflows/` | `code-health.yml` has per-job section markers |
 | Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | `justfile` has section markers |
 | GitHub | `.github/CODEOWNERS`, `pull_request_template.md`, `ISSUE_TEMPLATE/` | |
 
-**Not synced** (module-specific):
-- `tools/dev/dev_vars.py` - workspace paths and test file patterns
-- `docs/examples.yaml` - example configuration
-- `docs/inputs_groups.yaml` - README input grouping
-- `cleanup-test-env.yml`, `dev-integration-test.yml`, `pre-release-tests.yml`
+**Scaffolded once, then destination-owned:**
+
+- `tools/dev/dev_vars.py` - workspace paths and test file patterns.
+- `docs/examples.yaml` - example configuration.
+- `docs/inputs_groups.yaml` - README input grouping.
+
+**Not synced:**
+
+- `cleanup-test-env.yml` and `dev-integration-test.yml`.
 
 ## Sync Modes
 
@@ -34,6 +38,7 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 |------|----------|
 | `sync` (default) | Copy if destination missing or source newer |
 | `replace` | Always overwrite destination |
+| `scaffold` | Copy only when the destination path is missing; the destination owns later changes |
 
 ## Section Markers
 
@@ -92,9 +97,10 @@ The `code-health.yml` workflow uses per-job section markers:
 |------------|-----|-------|
 | `triggers` | - | Workflow triggers (on: push, PR, etc.) |
 | `job-check` | `check` | Code quality validation |
+| `job-py-tests` | `py-tests` | Shared Python tooling tests |
 | `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
 | `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
-| `job-snapshot-tests` | `plan-snapshot-tests` | Plan snapshot tests with resumable gaps for env vars and commands |
+| `job-snapshot-tests` | `plan-snapshot-tests` | Version selection and plan snapshots with resumable gaps for env vars and commands |
 | `job-slack` | `slack-notification` | Slack notification on failure |
 
 **Gradual enablement**: New repos can use `skip_sections` to exclude jobs not yet ready:
@@ -104,10 +110,21 @@ The `code-health.yml` workflow uses per-job section markers:
 destinations:
   - name: gcp
     skip_sections:
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
+      .github/workflows/code-health.yml: [triggers, job-snapshot-tests]
 ```
 
-When workspace tests are ready, remove from `skip_sections` and re-sync to enable the jobs.
+Skip `triggers` and `job-snapshot-tests` together when a destination retains a legacy snapshot job
+or workflow inputs. This prevents shared triggers from removing inputs required by the
+destination-owned job. Remove both skips in the same onboarding change and re-sync.
+
+Skipping a section prevents path-sync from adding or updating it; it does not disable an existing
+destination section.
+
+Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact supported release
+in the destination-owned environment gap. Preserve the destination's credentials, setup, and
+snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](./test-guide.md) for lane behavior.
+
+Import validation (`justfile` section `import-validate`, workflow section `job-import-validate`) is enabled for cluster (source) and project by default. Other destinations skip those sections until they opt in.
 
 ## For Destination Module Developers
 
@@ -153,6 +170,9 @@ From the cluster repository:
 just sdlc-sync-dry  # Preview changes
 just sdlc-sync      # Apply sync
 ```
+
+Destination verification runs before pull request creation. Failures are reported but do not block
+pull request creation, so resolve them before merging.
 
 ## Testing Changes (Source Developers)
 

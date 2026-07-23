@@ -226,6 +226,44 @@ var_groups:
     assert config.examples[0].plan_regressions[0].address == "module.cluster.this"
     assert "shared" in config.var_groups
     assert config.var_groups["shared"][0].name == "tags"
+    assert not config.examples[0].import_validation.enabled
+    assert config.resource_type_import_ids == {}
+
+
+def test_parse_ws_config_import_validation(tmp_path: Path):
+    ws_config = tmp_path / models.WORKSPACE_CONFIG_FILE
+    ws_config.write_text("""
+resource_type_import_ids:
+  mongodbatlas_advanced_cluster: "{project_id}-{name}"
+
+examples:
+  - number: 1
+    var_groups: [shared]
+    import_validation:
+      enabled: true
+      known_changes:
+        - address: module.cluster.mongodbatlas_advanced_cluster.this
+          actions: [update]
+          changed_attributes: [timeouts]
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+
+var_groups:
+  shared:
+    - name: tags
+      expose_in_workspace: true
+""")
+    config = models.parse_ws_config(ws_config)
+    assert config.resource_type_import_ids == {
+        "mongodbatlas_advanced_cluster": "{project_id}-{name}"
+    }
+    iv = config.examples[0].import_validation
+    assert iv.enabled
+    assert len(iv.known_changes) == 1
+    kc = iv.find_known_change("module.cluster.mongodbatlas_advanced_cluster.this")
+    assert kc is not None
+    assert kc.actions == ["update"]
+    assert kc.changed_attributes == ["timeouts"]
 
 
 def test_parse_ws_config_module_depends_on(tmp_path: Path):

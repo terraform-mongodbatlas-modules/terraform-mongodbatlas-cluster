@@ -1,0 +1,7 @@
+```release-note:breaking-change
+submodule/cluster_import: Removes the experimental `cluster_import` submodule
+```
+
+```release-note:note
+example: Removes the `13_example_import` example
+```

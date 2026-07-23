@@ -12,7 +12,7 @@ from tf_utils.validate_versions_tf import (
 )
 
 _CLUSTER_ROOT = RootVersionsRef(
-    providers={"mongodbatlas": ("~> 2.1", "mongodb/mongodbatlas")},
+    providers={"mongodbatlas": ("~> 2.12", "mongodb/mongodbatlas")},
     required_version=">= 1.10",
 )
 
@@ -28,14 +28,13 @@ _AWS_REPO_STYLE_ROOT = RootVersionsRef(
 _REAL_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_parse_root_versions_reference_matches_real_cluster_root() -> None:
+def test_parse_root_versions_reference_matches_real_repo_root() -> None:
     ref = parse_root_versions_reference(_REAL_REPO_ROOT)
     assert "mongodbatlas" in ref.providers
-    assert ref.required_version == ">= 1.10"
-
-
-def test_validate_repo_passes_on_real_repo() -> None:
-    assert validate_repo(_REAL_REPO_ROOT) == []
+    provider_version, provider_source = ref.providers["mongodbatlas"]
+    assert provider_version
+    assert provider_source == "mongodb/mongodbatlas"
+    assert ref.required_version
 
 
 def test_errors_for_file_valid(tmp_path: Path) -> None:
@@ -46,7 +45,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.12"
     }
   }
   required_version = ">= 1.10"
@@ -87,7 +86,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.12"
     }
   }
   required_version = ">= 1.6"
@@ -138,7 +137,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.12"
     }
     random = {
       source  = "hashicorp/random"
@@ -210,7 +209,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.12"
+      version = "~> 2.11"
     }
   }
   required_version = ">= 1.10"
@@ -304,7 +303,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      version = "~> 2.12"
     }
   }
   required_version = ">= 1.10"

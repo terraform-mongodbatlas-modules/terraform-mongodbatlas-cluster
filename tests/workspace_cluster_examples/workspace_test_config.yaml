@@ -8,53 +8,107 @@
 # - 11: 25 (project4 = 25)
 # - 12: 15 (project5 = 15)
 
+resource_type_import_ids:
+  mongodbatlas_advanced_cluster: "{project_id}-{name}"
+
+# Provider does not import TF-only attrs; module always writes them after import.
+_cluster_import_known_changes: &cluster_import_known_changes
+  - address: module.cluster.mongodbatlas_advanced_cluster.this
+    actions: [update]
+    changed_attributes: [retain_backups_enabled]
+
 examples:
   # Project 1: Examples 01-06 (29 nodes)
   - number: 1
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 2
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 3
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 4
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 5
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 6
     var_groups: [shared, project1]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   # Project 2: Examples 07-09 (20 nodes)
   - number: 7
     var_groups: [shared, project2]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 8
     var_groups: [shared, project2]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   - number: 9
     var_groups: [shared, project2]
+    import_validation:
+      enabled: true
+      known_changes:
+        - address: module.replication_var.mongodbatlas_advanced_cluster.this
+          actions: [update]
+          changed_attributes: [retain_backups_enabled]
     plan_regressions:
       - address: module.replication_var.mongodbatlas_advanced_cluster.this
   # Project 3: Example 10 (24 nodes)
   - number: 10
     var_groups: [shared, project3]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
   # Project 4: Example 11 (25 nodes - 3 clusters)
   - number: 11
     var_groups: [shared, project4]
+    import_validation:
+      enabled: true
+      known_changes:
+        - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
+          actions: [update]
+          changed_attributes: [retain_backups_enabled]
+        - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
+          actions: [update]
+          changed_attributes: [retain_backups_enabled]
+        - address: module.cluster_geosharded.module.cluster.mongodbatlas_advanced_cluster.this
+          actions: [update]
+          changed_attributes: [retain_backups_enabled]
     plan_regressions:
       - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
       - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
@@ -62,6 +116,9 @@ examples:
   # Project 5: Example 12 (15 nodes)
   - number: 12
     var_groups: [shared, project5]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
     plan_regressions:
       - address: module.cluster.mongodbatlas_advanced_cluster.this
 

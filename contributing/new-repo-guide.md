@@ -66,10 +66,12 @@ destinations:
 
 | Section | When to skip |
 |---------|--------------|
+| `triggers` | During migration, when a retained snapshot job requires destination-owned workflow inputs. |
 | `job-snapshot-tests` | No workspace/plan-snapshot tests configured yet. |
 | `job-slack` | No `SLACK_WEBHOOK_URL` secret configured yet. |
 
-When the module is ready for these features, remove from `skip_sections` and re-sync.
+When a destination retains its existing snapshot job, skip `triggers` and `job-snapshot-tests`
+together. Remove both in the same onboarding change and re-sync.
 
 ## Step 2: Run SDLC Sync from Branch
 

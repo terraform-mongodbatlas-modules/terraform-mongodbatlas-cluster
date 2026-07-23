@@ -63,18 +63,27 @@ variable "config_server_management_mode" {
   description = <<-EOT
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
-
-When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
+Defaults to `ATLAS_MANAGED` so Atlas may switch the cluster's config server type without Terraform plan churn.
+Set `FIXED_TO_DEDICATED` only when you need a dedicated config server escape hatch.
+Set `null` to leave the attribute unset and keep the pre-v0.4.0 behavior.
+Only applies to `SHARDED` / `GEOSHARDED` clusters; ignored for `REPLICASET`.
 EOT
 
   type     = string
   nullable = true
-  default  = null
+  default  = "ATLAS_MANAGED"
+
+  validation {
+    condition = (
+      var.config_server_management_mode == null ||
+      contains(["ATLAS_MANAGED", "FIXED_TO_DEDICATED"], var.config_server_management_mode)
+    )
+    error_message = "Invalid config_server_management_mode. Valid values are: null, ATLAS_MANAGED, FIXED_TO_DEDICATED."
+  }
 }
 
 variable "delete_on_create_timeout" {
-  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false."
+  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true."
   type        = bool
   nullable    = true
   default     = null
@@ -329,8 +338,13 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`."
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    condition     = !(var.version_release_system == "CONTINUOUS" && var.mongo_db_major_version != null)
+    error_message = "Cannot set `mongo_db_major_version` when `version_release_system` is `CONTINUOUS`. Either omit `version_release_system` or set it to `LTS`, or omit `mongo_db_major_version` to keep `CONTINUOUS`."
+  }
 }

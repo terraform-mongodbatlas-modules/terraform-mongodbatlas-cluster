@@ -49,11 +49,22 @@ To update the version matrix when new Terraform versions are released, edit `.te
 
 Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/workspace_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
+The Code Health matrix declares the Terraform version and provider mode for each snapshot lane. The
+minimum lane uses Terraform 1.10 and the module's configured minimum provider release. The maximum
+lane uses the latest Terraform release and latest compatible registry provider. The provider-head
+lane uses the latest Terraform release and the provider default branch.
+
+All lanes are plan-only and share the same checked-in snapshots. Normalize intentional version-only
+differences instead of regenerating the shared baseline.
+
 ### Workspace Commands
 
 ```bash
 # Plan and compare against baselines (requires dev.tfvars with project_ids)
 just ws-run -m plan-snapshot-test -v dev.tfvars
+
+# Plan with an exact released provider version
+MONGODB_ATLAS_PROVIDER_VERSION=2.12.0 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # First run or after intentional changes: create/update baselines
 just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen
@@ -67,12 +78,20 @@ just ws-run -m setup-only --auto-approve
 # Apply examples (creates real resources)
 just ws-run -m apply -v dev.tfvars --auto-approve
 
+# Validate that applied Atlas resources can be imported cleanly (requires prior apply)
+just import-validate --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
+# Run import validation for specific examples only
+just import-validate -e 1,8 --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+
 # Destroy resources after testing
 just ws-run -m destroy --auto-approve
 
 # Find resources without plan_regressions entries (shows [data], [example], [module] hints)
 just ws-run -m reg -u
 ```
+
+The typical end-to-end workflow is: `plan-snapshot-test` -> `apply-examples` -> `import-validate` -> `destroy-examples`.
 
 ### Snapshot Configuration
 
@@ -156,4 +175,5 @@ export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
 just unit-plan-tests
 ```
 
-CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use the provider default branch via the `setup-provider-dev` action.
+The development integration workflow uses the provider default branch through the
+`setup-provider-dev` action.

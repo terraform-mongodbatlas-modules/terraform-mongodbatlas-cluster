@@ -2,7 +2,7 @@
 
 # === OK_EDIT: path-sync header ===
 # Module-specific configuration
-PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl -filter=tests/plan_backup_pit.tftest.hcl -filter=tests/plan_feature_set.tftest.hcl -filter=tests/plan_backup_schedule.tftest.hcl"
+PLAN_TEST_FILES := "-filter=tests/plan_auto_scaling.tftest.hcl -filter=tests/plan_regions.tftest.hcl -filter=tests/plan_replication_spec.tftest.hcl -filter=tests/plan_geosharded_multi_shard.tftest.hcl -filter=tests/plan_sharded.tftest.hcl -filter=tests/plan_backup_pit.tftest.hcl -filter=tests/plan_feature_set.tftest.hcl -filter=tests/plan_backup_schedule.tftest.hcl -filter=tests/plan_version_release_system.tftest.hcl -filter=tests/plan_config_server.tftest.hcl"
 
 # === DO_NOT_EDIT: path-sync core ===
 set dotenv-load
@@ -227,6 +227,11 @@ check-outputs *args:
 destroy-examples *args:
     just ws-run -m destroy {{args}}
 # === OK_EDIT: path-sync workspace ===
+
+# === DO_NOT_EDIT: path-sync import-validate ===
+import-validate *args:
+    just ws-run -m import {{args}}
+# === OK_EDIT: path-sync import-validate ===
 
 # === DO_NOT_EDIT: path-sync provider-dev ===
 # PROVIDER DEV SETUP

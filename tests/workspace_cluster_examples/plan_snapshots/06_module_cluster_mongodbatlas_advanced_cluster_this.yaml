@@ -4,6 +4,7 @@ advanced_configuration:
   minimum_enabled_tls_protocol: TLS1_3
 backup_enabled: true
 cluster_type: GEOSHARDED
+config_server_management_mode: ATLAS_MANAGED
 delete_on_create_timeout: true
 name: multi-geo-zone-sharded
 pit_enabled: true
