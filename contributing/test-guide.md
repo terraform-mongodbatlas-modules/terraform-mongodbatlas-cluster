@@ -27,6 +27,9 @@ just unit-plan-tests
 # Real-Atlas apply tests (creates resources)
 just dev-integration-test
 
+# Real-Atlas apply tests, including backup schedule scenarios (creates resources)
+just dev-integration-test-backup
+
 # All terraform tests (plan + apply, no filter)
 just tftest-all
 ```
