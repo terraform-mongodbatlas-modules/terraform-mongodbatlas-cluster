@@ -12,7 +12,7 @@ def test_run_validate_bypasses_lock_for_temp_dir():
     target_lock = MagicMock()
     job = CompatJob(
         version="1.15",
-        target=Path("/repo"),
+        target=Path("/repo/repo"),
         use_temp_dir=True,
         target_lock=target_lock,
     )
