@@ -97,6 +97,7 @@ The `code-health.yml` workflow uses per-job section markers:
 |------------|-----|-------|
 | `triggers` | - | Workflow triggers (on: push, PR, etc.) |
 | `job-check` | `check` | Code quality validation |
+| `job-py-tests` | `py-tests` | Shared Python tooling tests |
 | `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
 | `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
 | `job-snapshot-tests` | `plan-snapshot-tests` | Version selection and plan snapshots with resumable gaps for env vars and commands |
@@ -109,12 +110,15 @@ The `code-health.yml` workflow uses per-job section markers:
 destinations:
   - name: gcp
     skip_sections:
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
+      .github/workflows/code-health.yml: [triggers, job-snapshot-tests]
 ```
 
-Skipping `job-snapshot-tests` prevents path-sync from adding or updating that section; it does not
-disable an existing destination job. When a destination is ready, remove the section from
-`skip_sections` and re-sync.
+Skip `triggers` and `job-snapshot-tests` together when a destination retains a legacy snapshot job
+or workflow inputs. This prevents shared triggers from removing inputs required by the
+destination-owned job. Remove both skips in the same onboarding change and re-sync.
+
+Skipping a section prevents path-sync from adding or updating it; it does not disable an existing
+destination section.
 
 Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact supported release
 in the destination-owned environment gap. Preserve the destination's credentials, setup, and
