@@ -185,9 +185,12 @@ Within each item in the `regions` list, you can specify:
   - Used for Independent Shard Scaling (ISS) with manual scaling
   - Example: `"M30"`, `"M40"`, `"R50"`
   
-- **`shard_number`** - Explicit shard assignment
-  - Required for SHARDED/GEOSHARDED clusters when using ISS
-  - Not used when using `shard_count`
+- **`shard_name`** - Preferred shard identity for grouping regions into shards
+  - Required for SHARDED/GEOSHARDED when using ISS (or use deprecated `shard_number`)
+  - Must match `^[a-z][a-z0-9]{0,23}$`; cluster-wide unique for GEOSHARDED
+  - Groups follow first appearance in `regions`; not used when using `shard_count`
+- **`shard_number`** (deprecated) - Numeric shard grouping; removed in v1
+  - Zone-scoped for GEOSHARDED; sorts numerically ascending
   
 - **`zone_name`** - Geographic zone identifier
   - Required for GEOSHARDED clusters
@@ -338,7 +341,7 @@ Independent Shard Scaling (ISS) allows different shards to have different instan
 
 **Requirements for ISS:**
 - Must explicitly specify `instance_size` for each region
-- Must explicitly specify `shard_number` for each region
+- Must explicitly specify `shard_name` (preferred) or `shard_number` for each region
 - Cannot use `shard_count` (which creates uniform shards)
 - Must disable auto-scaling (set `auto_scaling = {compute_enabled = false}`)
 - See example in [Production Cluster with Manual Scaling](../examples/02_production_cluster_with_manual_scaling)

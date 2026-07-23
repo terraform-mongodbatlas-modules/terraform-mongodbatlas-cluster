@@ -52,8 +52,8 @@ locals {
       flatten([for shard in range(zone_config.shard_count) :
         [for region_config in zone_config.regions :
           merge({
-            zone_name    = zone_name
-            shard_number = shard
+            zone_name  = zone_name
+            shard_name = format("%s%d", lower(zone_name), shard)
         }, region_config)]
       ])
     ]

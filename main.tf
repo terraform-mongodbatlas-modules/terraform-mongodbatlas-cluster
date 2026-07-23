@@ -15,34 +15,50 @@ locals {
   grouped_regions_replicaset = local.is_replicaset ? [local.regions] : []
 
   # ---- SHARDED  ----
-  sharded_uniform          = local.is_sharded && var.shard_count != null
-  sharded_explicit         = local.is_sharded && var.shard_count == null
-  has_any_zone_in_shard    = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && try(trimspace(r.zone_name), "") != ""])
-  has_any_number_in_shard  = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
-  all_have_number_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([for r in var.regions : r.shard_number != null])
+  sharded_uniform         = local.is_sharded && var.shard_count != null
+  sharded_explicit        = local.is_sharded && var.shard_count == null
+  has_any_zone_in_shard   = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && try(trimspace(r.zone_name), "") != ""])
+  has_any_name_in_shard   = local.is_sharded && anytrue([for r in var.regions : r.shard_name != null])
+  has_any_number_in_shard = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
+  all_have_identity_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([
+    for r in var.regions : r.shard_name != null || r.shard_number != null
+  ])
+  sharded_use_name           = local.sharded_explicit && local.has_any_name_in_shard && !local.has_any_number_in_shard
+  sharded_mixed_field_family = local.sharded_explicit && local.has_any_name_in_shard && local.has_any_number_in_shard
   sharded_validation_errors = local.is_sharded && !local.replication_specs_resource_var_used ? compact(concat(
     local.has_any_zone_in_shard
     ? ["SHARDED validation: do not set regions[*].zone_name."] : [],
 
-    (local.sharded_uniform && local.has_any_number_in_shard)
-    ? ["SHARDED validation: when shard_count is set, do not set regions[*].shard_number."] : [],
+    (local.sharded_uniform && (local.has_any_number_in_shard || local.has_any_name_in_shard))
+    ? ["SHARDED validation: when shard_count is set, do not set regions[*].shard_name or regions[*].shard_number."] : [],
 
-    (!local.sharded_uniform && !local.all_have_number_in_shard)
-    ? ["SHARDED validation: set regions[*].shard_number on every region (or use shard_count)."] : [],
+    (!local.sharded_uniform && !local.all_have_identity_in_shard)
+    ? ["SHARDED validation: set regions[*].shard_name or regions[*].shard_number on every region (or use shard_count)."] : [],
+
+    local.sharded_mixed_field_family
+    ? ["SHARDED validation: use either regions[*].shard_name or regions[*].shard_number on all regions, not both fields across the cluster."] : [],
 
     (local.sharded_uniform && length(var.regions) == 0)
     ? ["SHARDED: when shard_count is set, you must define at least one region."] : []
   )) : []
 
-  unique_shard_numbers = local.sharded_explicit ? distinct([
-    for r in local.regions : tostring(r.shard_number)
-    if r.shard_number != null
+  # shard_name: first appearance order. shard_number: numeric ascending (padded sort).
+  unique_shard_names = local.sharded_use_name ? distinct([
+    for r in local.regions : r.shard_name if r.shard_name != null
   ]) : []
+  unique_shard_numbers_sorted = local.sharded_explicit && !local.sharded_use_name ? distinct(sort([
+    for r in local.regions : format("%09d", r.shard_number) if r.shard_number != null
+  ])) : []
 
-  grouped_regions_sharded_explicit = local.sharded_explicit ? [
-    for sn in local.unique_shard_numbers :
-    [for r in local.regions : r if tostring(r.shard_number) == sn]
-  ] : []
+  grouped_regions_sharded_explicit = local.sharded_explicit ? (
+    local.sharded_use_name ? [
+      for sn in local.unique_shard_names :
+      [for r in local.regions : r if r.shard_name == sn]
+      ] : [
+      for sn in local.unique_shard_numbers_sorted :
+      [for r in local.regions : r if r.shard_number != null && format("%09d", r.shard_number) == sn]
+    ]
+  ) : []
 
   grouped_regions_sharded_uniform = local.sharded_uniform ? [
     for _i in range(var.shard_count) : local.regions
@@ -58,40 +74,59 @@ locals {
     for r in local.geo_rows : trimspace(r.zone_name)
   ]) : []
 
-  # per-zone counts to ensure either "all-or-none" region blocks within each zone have shard_number set.
-  # if no regions in a zone have shard_number set, then they are all assigned to the one shard by default.
+  # Per zone: all-or-none identity; same field family within a zone.
   zones_with_counts = local.is_geosharded ? {
     for z in local.unique_zone_names :
     z => {
-      with_sn    = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number != null])
-      without_sn = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number == null])
+      with_id    = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && (r.shard_number != null || r.shard_name != null)])
+      without_id = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number == null && r.shard_name == null])
+      with_name  = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_name != null])
+      with_num   = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && r.shard_number != null])
     }
   } : {}
 
   invalid_geo_zones_mixed = local.is_geosharded ? [
     for z, c in local.zones_with_counts :
-    z if(c.with_sn > 0 && c.without_sn > 0)
+    z if(c.with_id > 0 && c.without_id > 0)
+  ] : []
+
+  invalid_geo_zones_mixed_family = local.is_geosharded ? [
+    for z, c in local.zones_with_counts :
+    z if(c.with_name > 0 && c.with_num > 0)
   ] : []
 
   zones_numbered = local.is_geosharded ? {
-    for z, c in local.zones_with_counts : z => (c.with_sn > 0 && c.without_sn == 0)
+    for z, c in local.zones_with_counts : z => (c.with_id > 0 && c.without_id == 0)
   } : {}
 
-  # compute a key per region block:
-  #  - numbered zone: "zone||<shard_number>"
-  #  - single-shard zone: "zone||0"
+  shard_names_in_multiple_zones = local.is_geosharded ? [
+    for name in distinct([for r in local.geo_rows : r.shard_name if r.shard_name != null]) :
+    name if length(distinct([for r in local.geo_rows : trimspace(r.zone_name) if r.shard_name == name])) > 1
+  ] : []
+
+  # Keys: named shard = shard_name; numbered = zone||padded; single-shard zone = zone||0.
   geo_keyed_rows = local.is_geosharded ? [
     for r in local.geo_rows : {
-      key    = local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}" : "${trimspace(r.zone_name)}||000000000"
+      key = !local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||000000000" : (
+        r.shard_name != null ? r.shard_name : "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}"
+      )
       region = r
     }
   ] : []
 
-  geoshard_keys = local.is_geosharded ? distinct([
-    for x in local.geo_keyed_rows : x.key
+  # Zone order by first appearance; within numbered zones sort ascending; named shards by first index.
+  geoshard_keys = local.is_geosharded ? flatten([
+    for z in local.unique_zone_names : (
+      !local.zones_numbered[z] ? ["${z}||000000000"] : (
+        local.zones_with_counts[z].with_name > 0 ? distinct([
+          for r in local.geo_rows : r.shard_name if trimspace(r.zone_name) == z && r.shard_name != null
+          ]) : distinct(sort([
+            for r in local.geo_rows : "${z}||${format("%09d", r.shard_number)}" if trimspace(r.zone_name) == z && r.shard_number != null
+        ]))
+      )
+    )
   ]) : []
 
-  # group by computed key: "zone||<shard_number>"
   grouped_regions_geosharded = local.is_geosharded ? [
     for key in local.geoshard_keys : [
       for x in local.geo_keyed_rows : x.region if x.key == key
@@ -186,7 +221,7 @@ locals {
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
-      zone_name = local.is_geosharded ? split("||", local.geoshard_keys[gi])[0] : null
+      zone_name = local.is_geosharded ? trimspace(local.grouped_regions[gi][0].zone_name) : null
 
 
       region_configs = tolist([
@@ -276,15 +311,15 @@ locals {
     # Cluster type vs region fields
     local.is_geosharded ? concat(
       [for idx, r in local.regions : (r.zone_name == null || try(trimspace(r.zone_name), "") == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
-      length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : []
+      length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_name/shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : [],
+      length(local.invalid_geo_zones_mixed_family) > 0 ? ["GEOSHARDED validation: Within a zone, use either shard_name or shard_number, not both. Mixed field family in zones: ${join(", ", local.invalid_geo_zones_mixed_family)}"] : [],
+      length(local.shard_names_in_multiple_zones) > 0 ? ["GEOSHARDED validation: regions[*].shard_name must be unique across the cluster. Duplicates across zones: ${join(", ", local.shard_names_in_multiple_zones)}"] : []
     ) : [],
     local.is_replicaset ? concat(
+      [for idx, r in local.regions : r.shard_name != null ? "Replicaset cluster should not define shard_name: regions[${idx}].shard_name=${r.shard_name}" : ""],
       [for idx, r in local.regions : r.shard_number != null ? "Replicaset cluster should not define shard_number: regions[${idx}].shard_number=${r.shard_number}" : ""],
       [for idx, r in local.regions : r.zone_name != null ? "Replicaset cluster should not define zone_name: regions[${idx}].zone_name=${r.zone_name}" : ""]
     ) : [],
-    local.is_geosharded && length(local.invalid_geo_zones_mixed) > 0 ? [
-      "GEOSHARDED validation: Each zone must either set shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"
-    ] : [],
     # Provider name presence
     var.provider_name == null ? [for idx, r in local.regions : r.provider_name == null ? "Must use regions[*].provider_name when root provider_name is not specified: regions[${idx}].provider_name is missing" : ""] : [],
     local.sharded_validation_errors,
