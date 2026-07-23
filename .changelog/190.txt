@@ -2,6 +2,6 @@
 variable/regions: Adds `shard_name` for SHARDED/GEOSHARDED grouping (`^[a-z][a-z0-9]{0,23}$`), named shards order by first appearance in `regions`
 ```
 
-```release-note:deprecation
+```release-note:note
 variable/regions: Deprecates `shard_number` in favor of `shard_name` (removal in v1), numeric ascending order unchanged while still in use
 ```
