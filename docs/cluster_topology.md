@@ -329,7 +329,7 @@ Auto-scaling is only available when using the simplified `regions` configuration
 **Workaround:**
 If you need auto-scaling, use the `regions` approach. If you need direct `replication_specs` control, use manual scaling.
 
-**Multi-shard clusters:** `replication_specs` is a direct passthrough to the provider, so for clusters with more than one entry, review [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation before adding, removing, or reordering entries. For significant production topology changes, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support).
+**Multi-shard clusters:** `replication_specs` is a direct passthrough to the provider, so for clusters with more than one shard (more than one `replication_specs` entry), review [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation before adding, removing, or reordering entries. For significant production topology changes, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support).
 
 ### Manual Scaling with Different Instance Sizes (ISS)
 
