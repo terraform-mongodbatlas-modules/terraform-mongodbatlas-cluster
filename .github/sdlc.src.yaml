@@ -154,7 +154,6 @@ destinations:
     include_groups: [regions, project_generator, pre_release]
     skip_sections:
       justfile: [dev-vars-org, import-validate]  # TODO: Remove after import onboarding.
-      .github/workflows/code-health.yml: [triggers, job-snapshot-tests] # TODO: Remove both after snapshot-matrix onboarding.
       .github/workflows/pre-release-tests.yml: [job-import-validate]  # TODO: Remove after import onboarding.
   - name: org
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-organization
