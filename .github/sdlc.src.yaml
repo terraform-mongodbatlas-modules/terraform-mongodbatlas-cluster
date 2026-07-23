@@ -146,7 +146,6 @@ destinations:
     include_groups: [pre_release]
     skip_sections:
       justfile: [regions]  # Project needs org vars but not region extraction
-      .github/workflows/code-health.yml: [triggers, job-snapshot-tests] # TODO: Remove both after snapshot-matrix onboarding.
   - name: gcp
     repo_url: https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp
     dest_path_relative: ../gcp
