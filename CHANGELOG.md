@@ -4,6 +4,7 @@ BREAKING CHANGES:
 
 * submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * submodule/cluster_import: Removes the experimental `cluster_import` submodule ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
+* variable/config_server_management_mode: Defaults to `ATLAS_MANAGED` instead of `null`. To keep a dedicated config server, set to `FIXED_TO_DEDICATED` ([#186](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/186))
 
 NOTES:
 
