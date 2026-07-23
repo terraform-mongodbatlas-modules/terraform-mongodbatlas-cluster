@@ -43,6 +43,26 @@ run "fixed_to_dedicated_escape_hatch" {
   }
 }
 
+run "null_zero_diff_upgrade_path_is_accepted" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name                          = "tf-test-config-server-null"
+    project_id                    = var.project_id
+    provider_name                 = "AWS"
+    cluster_type                  = "SHARDED"
+    shard_count                   = 1
+    regions                       = [{ name = "US_EAST_1", node_count = 3 }]
+    config_server_management_mode = null
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.cluster_type == "SHARDED"
+    error_message = "config_server_management_mode = null (zero-diff upgrade path) should validate and plan"
+  }
+}
+
 run "invalid_value_fails_validation" {
   command = plan
   module { source = "./" }
