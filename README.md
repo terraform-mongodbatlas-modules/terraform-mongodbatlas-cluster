@@ -859,7 +859,7 @@ Default: `null`
 
 ### version_release_system
 
-Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`.
+Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`.
 
 Type: `string`
 
