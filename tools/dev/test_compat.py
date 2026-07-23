@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +43,7 @@ class TestJob:
     version: str
     target: Path
     use_temp_dir: bool
+    target_lock: threading.Lock
 
 
 def load_versions(config_path: Path) -> list[str]:
@@ -68,7 +70,7 @@ def copy_module_files(source: Path, dest: Path) -> None:
         shutil.copytree(modules_dir, dest / "modules")
 
 
-def run_validate(job: TestJob) -> TestResult:
+def _run_validate(job: TestJob) -> TestResult:
     target_name = job.target.name if job.target.name != job.target.parent.name else "root"
     work_dir = job.target
     temp_dir_path = None
@@ -113,6 +115,11 @@ def run_validate(job: TestJob) -> TestResult:
     finally:
         if temp_dir_path:
             shutil.rmtree(temp_dir_path, ignore_errors=True)
+
+
+def run_validate(job: TestJob) -> TestResult:
+    with job.target_lock:
+        return _run_validate(job)
 
 
 def print_summary(results: list[TestResult]) -> None:
@@ -176,12 +183,21 @@ def main() -> int:
     targets = discover_targets()
 
     jobs: list[TestJob] = []
+    # Serialize Terraform versions per target because examples share on-disk working data.
+    target_locks = {target: threading.Lock() for target in targets}
     # Always use temp dirs for root module to avoid .terraform directory conflicts
     # when running multiple versions in parallel
     for version in versions:
         for target in targets:
             is_root = target == REPO_ROOT
-            jobs.append(TestJob(version=version, target=target, use_temp_dir=is_root))
+            jobs.append(
+                TestJob(
+                    version=version,
+                    target=target,
+                    use_temp_dir=is_root,
+                    target_lock=target_locks[target],
+                )
+            )
 
     total_jobs = len(jobs)
     print(f"Testing {len(versions)} Terraform versions against {len(targets)} targets...")
