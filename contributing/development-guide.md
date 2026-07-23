@@ -90,7 +90,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 | Workflow | Triggers | Just Targets | Provider |
 |----------|----------|--------------|----------|
-| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | registry boundaries and default branch |
+| `code-health.yml` | PR, push main, nightly | `pre-commit`, `py-test`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | registry boundaries and default branch |
 | `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
@@ -99,7 +99,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 - **Code Health plan snapshots**: Tests registry boundaries and the provider default branch.
 - **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
-- **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
+- **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_ref` input to test with a specific provider branch
 
 ### Required Secrets
 
