@@ -52,8 +52,8 @@ run "sharded_explicit_null_zone_name" {
     provider_name = "AWS"
     cluster_type  = "SHARDED"
     regions = [
-      { name = "US_EAST_1", node_count = 3, shard_number = 0 },
-      { name = "US_WEST_2", node_count = 3, shard_number = 1 },
+      { name = "US_EAST_1", node_count = 3, shard_name = "s0" },
+      { name = "US_WEST_2", node_count = 3, shard_name = "s1" },
     ]
   }
 

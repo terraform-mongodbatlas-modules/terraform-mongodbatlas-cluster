@@ -93,7 +93,7 @@ run "autoscaling_analytics_disabled_when_using_manual_scaling" {
       {
         name                    = "US_EAST_1"
         node_count              = 3 # electable auto-scaled
-        shard_number            = 1
+        shard_name              = "s1"
         node_count_analytics    = 1
         instance_size_analytics = "M10" # use only M10 (less than M30) for analytics node
       }
@@ -227,7 +227,7 @@ run "analytics_scale_down_disabled_should_not_set_compute_min_instance_size" {
       {
         name                 = "US_EAST_1"
         node_count           = 3
-        shard_number         = 1
+        shard_name           = "s1"
         node_count_analytics = 1
       }
     ]
@@ -282,7 +282,7 @@ run "analytics_scale_down_enabled_should_set_compute_min_instance_size" {
       {
         name                 = "US_EAST_1"
         node_count           = 3
-        shard_number         = 1
+        shard_name           = "s1"
         node_count_analytics = 1
       }
     ]
@@ -331,7 +331,7 @@ run "analytics_auto_scaling_undefined_inherits_from_electable" {
       {
         name                 = "US_EAST_1"
         node_count           = 3
-        shard_number         = 1
+        shard_name           = "s1"
         node_count_analytics = 1
       }
     ]

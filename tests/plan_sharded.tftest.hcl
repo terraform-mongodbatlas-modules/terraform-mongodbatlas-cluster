@@ -59,7 +59,8 @@ run "sharded_uniform_layout_and_priorities" {
 run "sharded_uniform_conflicts_with_shard_number" {
   command = plan
   expect_failures = [
-    mongodbatlas_advanced_cluster.this
+    mongodbatlas_advanced_cluster.this,
+    check.shard_number_deprecated,
   ]
 
   module {
@@ -163,6 +164,9 @@ run "sharded_shard_name_grouping_and_order" {
 
 run "sharded_shard_number_numeric_order" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
 
   module {
     source = "./"
@@ -237,7 +241,8 @@ run "sharded_rejects_invalid_shard_name" {
 run "sharded_rejects_mixed_field_family" {
   command = plan
   expect_failures = [
-    mongodbatlas_advanced_cluster.this
+    mongodbatlas_advanced_cluster.this,
+    check.shard_number_deprecated,
   ]
 
   module {

@@ -50,6 +50,10 @@ run "geo_single_shard_per_zone_order" {
 
 run "geo_multi_shards_in_zone" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
 
   module {
     source = "./"
@@ -124,6 +128,10 @@ run "geo_shard_name_multi_shard_and_order" {
 
 run "geo_shard_number_numeric_order_within_zone" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
 
   module {
     source = "./"
@@ -178,6 +186,10 @@ run "geo_rejects_duplicate_shard_name_across_zones" {
 
 run "geo_multi_regions_in_same_shard" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
 
   module {
     source = "./"

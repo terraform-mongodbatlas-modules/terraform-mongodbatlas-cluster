@@ -334,6 +334,13 @@ locals {
 }
 
 
+check "shard_number_deprecated" {
+  assert {
+    condition     = !anytrue([for r in var.regions : r.shard_number != null])
+    error_message = "regions[*].shard_number is deprecated and will be removed in v1. Migrate to regions[*].shard_name (must match ^[a-z][a-z0-9]{0,23}$)."
+  }
+}
+
 resource "mongodbatlas_advanced_cluster" "this" {
   lifecycle {
     precondition {
