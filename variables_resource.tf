@@ -84,7 +84,7 @@ EOT
 }
 
 variable "delete_on_create_timeout" {
-  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false."
+  description = "Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true."
   type        = bool
   nullable    = true
   default     = null
@@ -339,8 +339,13 @@ variable "timeouts" {
 }
 
 variable "version_release_system" {
-  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`."
+  description = "Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`."
   type        = string
   nullable    = true
   default     = null
+
+  validation {
+    condition     = !(var.version_release_system == "CONTINUOUS" && var.mongo_db_major_version != null)
+    error_message = "Cannot set `mongo_db_major_version` when `version_release_system` is `CONTINUOUS`. Either omit `version_release_system` or set it to `LTS`, or omit `mongo_db_major_version` to keep `CONTINUOUS`."
+  }
 }

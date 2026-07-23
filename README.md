@@ -151,13 +151,13 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](https://developer.hashicorp.com/terraform/install) (>= 1.10)
 
-- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
+- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.12)
 
 ## Providers
 
 The following providers are used by this module:
 
-- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
+- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.12)
 
 ## Resources
 
@@ -768,7 +768,7 @@ Default: `"ATLAS_MANAGED"`
 
 ### delete_on_create_timeout
 
-Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false.
+Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true.
 
 Type: `bool`
 
@@ -860,7 +860,7 @@ Default: `null`
 
 ### version_release_system
 
-Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`.
+Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`.
 
 Type: `string`
 
@@ -933,6 +933,6 @@ See [Terraform Version Requirements](./docs/terraform_version_requirements.md) f
 ### What is the `provider_meta "mongodbatlas"` doing?
 
 - This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
-  - `User-Agent: terraform-provider-mongodbatlas/2.1.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
+  - `User-Agent: terraform-provider-mongodbatlas/2.12.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
 - Note: We **do not** send any configuration-specific values, only these values to help us track feature adoption.
 - You can use `export TF_LOG=debug` to see the API requests with headers and their responses.

@@ -18,7 +18,7 @@ def test_load_config_minimal():
 providers:
   - provider_name: mongodbatlas
     provider_source: mongodb/mongodbatlas
-    provider_version: "~> 2.1"
+    provider_version: "~> 2.12"
     resources:
       project:
         - output_dir: ./code/project

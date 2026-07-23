@@ -9,7 +9,7 @@ AWS_PROVIDER_SOURCE = "hashicorp/aws"
 
 # Provider sources and versions
 PROVIDER_VERSIONS: dict[str, str] = {
-    MONGODB_ATLAS_PROVIDER_SOURCE: "~> 2.2",
+    MONGODB_ATLAS_PROVIDER_SOURCE: "~> 2.12",
     AWS_PROVIDER_SOURCE: "~> 5.0",
 }
 
