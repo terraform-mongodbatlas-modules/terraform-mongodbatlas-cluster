@@ -99,7 +99,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 - **Code Health plan snapshots**: Tests registry boundaries and the provider default branch.
 - **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
-- **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_ref` input to test with a specific provider branch
+- **Pre-release**: Uses the latest published registry provider by default; optionally specify the `provider_ref` input to test a branch, tag, or commit.
 
 ### Required Secrets
 
