@@ -91,7 +91,7 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 | Workflow | Triggers | Just Targets | Provider |
 |----------|----------|--------------|----------|
 | `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | registry boundaries and default branch |
-| `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
+| `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test`, or `dev-integration-test-backup` when backup-related paths changed | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
 
