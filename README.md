@@ -583,10 +583,13 @@ Default: `null`
 
 ## Backup Schedule
 
-Configures the `cloud_backup_schedule` resource managed internally by this module. When
+Configures the `mongodbatlas_cloud_backup_schedule` resource managed internally by this module. When
 `backup_enabled = false`: `backup_mode` and `backup_schedule_skip_destroy` are ignored (no
 effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
 validation error if set.
+
+**For a comprehensive guide on backup configuration, see [Backup Guide](./docs/backup_guide.md), which
+includes schedule defaults, PIT recommendations, deletion behavior, and cross-region/export examples.**
 
 ### backup_mode
 
@@ -600,7 +603,8 @@ Schedule mode for backup. Controls whether and how the module manages the `cloud
 
 Migrating to `UNMANAGED` with `backup_schedule_skip_destroy = true` requires two applies: set it to `true`
 first while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`, then switch to `UNMANAGED` in a second apply.
-Setting both in the same apply does not skip the delete.
+Setting both in the same apply does not skip the delete. See the [Backup Guide](./docs/backup_guide.md)
+for the full deletion-workflow writeup.
 
 Type: `string`
 
@@ -660,8 +664,8 @@ the Atlas UI default for that frequency if omitted. When omitted:
   - `yearly`: `frequency_interval=12`, `retention_unit="years"`, `retention_value=1`
 - If `skip_default_retentions=true`, the frequency is not created at all.
 
-`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: cluster creation
-time). `restore_window_days` controls the PIT restore window.
+`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: 18:00 UTC per
+Atlas's default backup policy when left unset). `restore_window_days` controls the PIT restore window.
 
 `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
 but has no corresponding field on `cloud_backup_schedule`. It is ignored by this module.
