@@ -11,6 +11,7 @@ This guide explains how to configure and manage Cloud Backup in the MongoDB Atla
 - [`pit_enabled` and `backup_enabled` Recommendations](#pit_enabled-and-backup_enabled-recommendations)
 - [Cross-Region Copy](#cross-region-copy)
 - [Exporting Snapshots (Other LZ Modules)](#exporting-snapshots-other-lz-modules)
+- [Restoring from a Snapshot](#restoring-from-a-snapshot)
 - [Deletion Behavior](#deletion-behavior)
 - [Key Variables Reference](#key-variables-reference)
 - [Additional Resources](#additional-resources)
@@ -153,6 +154,18 @@ module "cluster" {
 The same pattern applies to `atlas-azure` (`create_storage_account`) and `atlas-gcp` (`create_gcs_bucket`), only the bucket-creation block differs; `export_bucket_id` is the integration point in all three.
 
 Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no independent toggle. Valid with `backup_mode = "ON_DEMAND"` (exports whatever snapshots exist). Rejected (validation error) when set together with `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
+
+## Restoring from a Snapshot
+
+Restoring is not a module-managed operation: a restore is a one-off action, not steady-state cluster configuration, so it isn't wrapped by this module. Use the `mongodbatlas_cloud_backup_snapshot_restore_job` resource directly, alongside a module-managed cluster. See [Restore a Cluster from a Backup Snapshot](../examples/15_restore_snapshot_to_cluster) for a full example covering the automated and point-in-time delivery types.
+
+The resource supports three delivery types (set exactly one per restore job):
+
+- **`automated`**: Atlas restores the snapshot directly onto a target cluster (`target_cluster_name`/`target_project_id`), which can be the same cluster it came from or a different one, in the same or a different project. This wipes all existing data on the target cluster before loading the snapshot.
+- **`point_in_time`**: the same destructive restore-onto-a-cluster behavior as `automated`, but replays the oplog forward to a specific instant (`point_in_time_utc_seconds`, or `oplog_ts`/`oplog_inc`) instead of restoring the snapshot as-is. Requires point-in-time restore to be enabled on the source cluster. See [`pit_enabled` and `backup_enabled` Recommendations](#pit_enabled-and-backup_enabled-recommendations) for details.
+- **`download`**: Atlas doesn't touch any cluster; it returns a `delivery_url` for a downloadable `.tar.gz` of the snapshot's raw data files, which expires after a time window. Use this to pull snapshot data out of Atlas entirely (load into a self-hosted MongoDB, inspect it, archive it outside Atlas) instead of restoring it into a running cluster.
+
+See the provider's [`mongodbatlas_cloud_backup_snapshot_restore_job` resource documentation](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/cloud_backup_snapshot_restore_job) for the full attribute reference.
 
 ## Deletion Behavior
 
