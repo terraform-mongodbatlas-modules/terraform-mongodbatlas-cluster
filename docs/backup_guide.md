@@ -7,7 +7,7 @@ This guide explains how to configure and manage Cloud Backup in the MongoDB Atla
 - [Introduction](#introduction)
 - [Recommendations Summary](#recommendations-summary)
 - [Backup Modes](#backup-modes)
-- [Schedule Defaults](#schedule-defaults)
+- [Backup Schedule Configuration and Defaults](#backup-schedule-configuration-and-defaults)
 - [`pit_enabled` and `backup_enabled` Recommendations](#pit_enabled-and-backup_enabled-recommendations)
 - [Cross-Region Copy](#cross-region-copy)
 - [Exporting Snapshots (Other LZ Modules)](#exporting-snapshots-other-lz-modules)
@@ -35,14 +35,18 @@ See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_bac
 `backup_mode` (default `"SCHEDULED"`) has three values:
 
 - **`SCHEDULED`**: the module creates the `mongodbatlas_cloud_backup_schedule` resource and manages the cluster's backup policy for you. It applies a default policy (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) unless you override it through `backup_retention`. This is what most users want.
-- **`ON_DEMAND`**: the schedule resource is still created, but all frequency-based policy items are removed. Only manual (on-demand) snapshots and PIT (if enabled) are covered. Use this when you want to trigger snapshots yourself rather than on a recurring schedule.
+- **`ON_DEMAND`**: the module creates the `mongodbatlas_cloud_backup_schedule` resource but removes all default frequency policy items (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) and rejects any backup policy configuration through `backup_retention`. Only on-demand snapshots and point-in-time restores are available; PIT restore always needs an on-demand snapshot to exist before your target time to serve as the base for oplog replay, so PIT has nothing to restore from until you trigger at least one. Use this when you want to trigger snapshots yourself instead of on a recurring schedule.
 - **`UNMANAGED`**: the module does not create the `mongodbatlas_cloud_backup_schedule` resource. You manage it yourself with a standalone `mongodbatlas_cloud_backup_schedule` resource. `backup_copy_region`, `backup_retention`, and `backup_export` must be left at their defaults in this mode. See [Deletion Behavior](#deletion-behavior) for the migration path from a module-managed mode.
 
 `backup_mode` is ignored (no effect, no error) when `backup_enabled = false`. The module never creates the `mongodbatlas_cloud_backup_schedule` resource in that case, regardless of `backup_mode`.
 
-## Schedule Defaults
+## Backup Schedule Configuration and Defaults
 
-Each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) in `backup_retention` is optional. When a frequency is provided, `retention_value` is required; `frequency_interval`/`retention_unit` fall back to the Atlas UI default for that frequency if omitted. When a frequency is omitted and `skip_default_retentions = false` (the default), the module creates it using the same defaults as the Atlas UI:
+You can use this module to manage scheduled backup snapshots by setting `backup_mode = "SCHEDULED"` (the default) and defining custom retention values per frequency in `backup_retention`. `backup_retention` is optional; the module falls back to a pre-configured schedule when it's omitted.
+
+### Default Retention Values
+
+When `backup_mode = "SCHEDULED"` and `skip_default_retentions = false` (the default), the module creates a backup policy using the same defaults as the Atlas UI:
 
 | Frequency | `frequency_interval` | `retention_unit` | `retention_value` |
 | --- | --- | --- | --- |
@@ -52,7 +56,9 @@ Each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) in `backup_retenti
 | `monthly` | 40 | `months` | 12 |
 | `yearly`  | 12 | `years`  | 1  |
 
-Set `skip_default_retentions = true` to create only the frequencies you explicitly declare. Any frequency you don't list is omitted entirely, not just defaulted.
+### Overriding Defaults
+
+Set the frequencies you want in `backup_retention` to override the defaults above. Declare a block for each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) you want to customize; within each block, `retention_value` is required, and `frequency_interval`/`retention_unit` are optional and fall back to the defaults above when omitted:
 
 ```hcl
 backup_retention = {
@@ -60,11 +66,35 @@ backup_retention = {
 }
 ```
 
-`reference_hour_of_day` or `reference_minute_of_hour` control the UTC snapshot window (default: `18:00` UTC per [Atlas's default backup policy](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#example) when left unset), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days). This is your effective RPO (Recovery Point Objective: the maximum acceptable data loss, in time, if you need to restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
+`frequency_interval` means something different for each frequency:
 
-**`ON_DEMAND` and frequency fields:** setting `backup_retention`'s frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is rejected (validation error at `terraform plan`) when `backup_mode = "ON_DEMAND"`, since that mode removes all frequency policies. `restore_window_days` and `ondemand` remain valid there.
+| Frequency | `frequency_interval` accepts | Meaning |
+| --- | --- | --- |
+| `hourly`  | `1`, `2`, `4`, `6`, `8`, `12` (NVMe tiers: `12` only) | Hours between snapshots |
+| `daily`   | `1` (fixed) | Once per day |
+| `weekly`  | `1`-`7` | Day of the week (`1` = Monday, `7` = Sunday) |
+| `monthly` | `1`-`28`, or `40` | Day of the month (`40` = last day) |
+| `yearly`  | `1`-`12` | Month of the year, on the 1st (`1` = January, `12` = December) |
 
-**Caveat: NVMe tiers:** the `hourly` default above (6 hours) matches Atlas's documented default for standard tiers, but Atlas documents a 12-hour default for NVMe tiers. The module does not currently derive the default from the cluster's effective instance tier, so NVMe users who want the Atlas-recommended interval should set `backup_retention.hourly.frequency_interval = 12` explicitly.
+`retention_unit` accepts `days`, `weeks`, `months`, or `years`.
+
+Set `skip_default_retentions = true` to create only the frequencies you explicitly declare; any frequency you don't list is then omitted entirely, not just defaulted:
+
+```hcl
+backup_retention = {
+  skip_default_retentions = true
+  daily   = { retention_value = 30 } # create daily only
+  monthly = { retention_value = 6 }  # and monthly; no hourly/weekly/yearly
+}
+```
+
+Frequency fields can't be set at all when `backup_mode = "ON_DEMAND"` (validation error at `terraform plan`), since that mode removes all frequency policies. See [Backup Modes](#backup-modes). `restore_window_days` and `ondemand` remain valid there. When point-in-time restore is effectively enabled, you also can't omit the `hourly` frequency. See [`pit_enabled` and `backup_enabled` Recommendations](#pit_enabled-and-backup_enabled-recommendations).
+
+**Caveat: NVMe tiers.** The `hourly` default above (6 hours) matches Atlas's documented default for standard tiers; NVMe tiers only accept `frequency_interval = 12` for the `hourly` policy item (no other value is valid). The module does not currently derive this from the cluster's effective instance tier, so NVMe users must set `backup_retention.hourly.frequency_interval = 12` explicitly.
+
+`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: `18:00` UTC per [Atlas's default backup policy](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#example) when left unset), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days); this is your effective RPO (Recovery Point Objective: the maximum acceptable data loss, in time, if you need to restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details.
+
+`ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
 
 ## `pit_enabled` and `backup_enabled` Recommendations
 
@@ -149,7 +179,7 @@ Setting both in the same apply does **not** skip the delete; Terraform still des
 | `backup_enabled` | Whether the cluster can perform backups at all (production default: `true`) |
 | `pit_enabled` | Continuous backup / point-in-time restore (defaults to `backup_enabled`) |
 | `backup_mode` | `SCHEDULED` / `ON_DEMAND` / `UNMANAGED`. See [Backup Modes](#backup-modes) |
-| `backup_retention` | Per-frequency retention overrides. See [Schedule Defaults](#schedule-defaults) |
+| `backup_retention` | Per-frequency retention overrides. See [Backup Schedule Configuration and Defaults](#backup-schedule-configuration-and-defaults) |
 | `backup_copy_region` | Cross-region snapshot copy target. See [Cross-Region Copy](#cross-region-copy) |
 | `backup_export` | Export snapshots to a CSP bucket. See [Exporting Snapshots](#exporting-snapshots-other-lz-modules) |
 | `backup_schedule_skip_destroy` | Deletion behavior on destroy. See [Deletion Behavior](#deletion-behavior) |
