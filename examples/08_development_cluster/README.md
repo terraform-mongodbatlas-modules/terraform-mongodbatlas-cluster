@@ -63,8 +63,8 @@ module "cluster" {
   auto_scaling = {
     compute_enabled = false # use manual instance_size to avoid any accidental cost
   }
-  retain_backups_enabled = false       # don't keep backups when deleting the cluster
-  backup_mode            = "ON_DEMAND" # manual snapshots only, no scheduled policies, for dev cluster
+  retain_backups_enabled = false # don't keep backups when deleting the cluster
+  backup_enabled         = false # skip backup for dev cluster (pit_enabled auto-disables)
 
   cluster_type = "REPLICASET"
 
