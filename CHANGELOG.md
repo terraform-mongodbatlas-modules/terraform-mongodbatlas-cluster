@@ -13,12 +13,14 @@ NOTES:
 * example: Removes the `13_example_import` example ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
 * provider/mongodbatlas: Requires minimum version 2.12 for `mongodbatlas_cloud_backup_schedule` `skip_destroy` support ([#184](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/184))
 * terraform: Requires minimum version 1.10 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
+* variable/regions: Deprecates `shard_number` in favor of `shard_name` (removal in v1), first-appearance group order unchanged while still in use ([#190](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/190))
 
 ENHANCEMENTS:
 
 * example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy` ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * variable/default_feature_set: Adds `RECOMMENDED` and `STANDARD` modes so future module defaults can opt in or opt out of plan changes on minor upgrades ([#181](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/181))
+* variable/regions: Adds `shard_name` for SHARDED/GEOSHARDED grouping (`^[a-z][a-z0-9]{0,23}$`), named shards order by first appearance in `regions` ([#190](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/190))
 * variable/version_release_system: Rejects `CONTINUOUS` when `mongo_db_major_version` is set ([#183](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/183))
 
 ## 0.3.1 (March 17, 2026)
