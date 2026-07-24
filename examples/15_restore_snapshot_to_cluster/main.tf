@@ -12,6 +12,10 @@ module "source" {
   ]
   provider_name = "AWS"
 
+  # ON_DEMAND keeps this example focused on the manual snapshot + restore job below, instead of
+  # also provisioning the default recurring schedule (see docs/backup_guide.md).
+  backup_mode = "ON_DEMAND"
+
   tags = var.tags
 }
 
@@ -28,6 +32,8 @@ module "target" {
     }
   ]
   provider_name = "AWS"
+
+  backup_mode = "ON_DEMAND"
 
   tags = var.tags
 }
