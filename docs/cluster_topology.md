@@ -329,8 +329,6 @@ Auto-scaling is only available when using the simplified `regions` configuration
 **Workaround:**
 If you need auto-scaling, use the `regions` approach. If you need direct `replication_specs` control, use manual scaling.
 
-**Multi-shard clusters:** `replication_specs` is a direct passthrough to the provider, so for clusters with more than one shard (more than one `replication_specs` entry), review [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation before adding, removing, or reordering entries. For significant production topology changes, contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support).
-
 ### Manual Scaling with Different Instance Sizes (ISS)
 
 Independent Shard Scaling (ISS) allows different shards to have different instance sizes. This is useful for:
@@ -405,7 +403,7 @@ When using the simplified `regions` approach with auto-scaling enabled, the modu
 
 This automatic persistence is one of the key benefits of using the simplified configuration approach.
 
-**Limitation for clusters with more than one shard:** the module correlates each shard between the current configuration and the previous cluster state by list position (the same mechanism, and the same limitation, as the provider's own `replication_specs` handling). If you add, remove, or reorder shards, the persisted instance size read back from the previous state may be applied to a different shard than intended. This does not affect dedicated clusters with exactly one shard (replica sets, and sharded or geosharded clusters with a single shard). See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation for current guidance, and contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support) before removing a shard or making other significant production topology changes.
+**Limitation for clusters with more than one shard:** the module's auto-scaling persistence lookup correlates shards by list position, the same mechanism (and limitation) as the provider's own `replication_specs` handling. See [Multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) in the provider documentation for more details. If you add, remove, or reorder shards, the persisted instance size may be applied to a different shard than intended.
 
 ### Validation & Error Messages
 
