@@ -108,7 +108,9 @@ locals {
     z if(c.with_name > 0 && c.with_num > 0)
   ] : []
 
-  zones_numbered = local.is_geosharded ? {
+  # True when every region in the zone sets an explicit shard identity (shard_name or shard_number);
+  # false means the zone is a single default shard.
+  zone_has_shard_identity = local.is_geosharded ? {
     for z, c in local.zones_with_counts : z => (c.with_id > 0 && c.without_id == 0)
   } : {}
 
@@ -120,7 +122,7 @@ locals {
   # Keys: named shard = shard_name; numbered = zone||shard_number; single-shard zone = zone||single.
   geo_keyed_rows = local.is_geosharded ? [
     for r in local.geo_rows : {
-      key = !local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||single" : (
+      key = !local.zone_has_shard_identity[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||single" : (
         r.shard_name != null ? r.shard_name : "${trimspace(r.zone_name)}||${r.shard_number}"
       )
       region = r
@@ -130,7 +132,7 @@ locals {
   # Zone order by first appearance; within a zone, shards follow first appearance too (named and numbered).
   geoshard_keys = local.is_geosharded ? flatten([
     for z in local.unique_zone_names : (
-      !local.zones_numbered[z] ? ["${z}||single"] : (
+      !local.zone_has_shard_identity[z] ? ["${z}||single"] : (
         local.zones_with_counts[z].with_name > 0 ? distinct([
           for r in local.geo_rows : r.shard_name if trimspace(r.zone_name) == z && r.shard_name != null
           ]) : distinct([
