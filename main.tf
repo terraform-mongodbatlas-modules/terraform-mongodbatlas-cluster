@@ -246,10 +246,24 @@ locals {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            # instance_size is required by the API until effctive fields are supported
+            # instance_size is required by the API until effctive fields are supported.
+            # Clamp existing size into auto-scaling bounds via numeric tier (M10/M40_NVME → 10/40).
+            # Terraform min()/max() reject strings, so do not use them here.
+            # Always cap at compute_max_instance_size; floor at compute_min_instance_size only when scale-down is enabled.
             instance_size = local.auto_scaling_compute_enabled ? try(
-              min(local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size, var.auto_scaling.compute_max_instance_size), # ensure the instance size is not greater than the max instance size
-              var.auto_scaling.compute_min_instance_size,                                                                                                                           # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
+              (
+                tonumber(regex("[0-9]+", local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size))
+                > tonumber(regex("[0-9]+", var.auto_scaling.compute_max_instance_size))
+              )
+              ? var.auto_scaling.compute_max_instance_size
+              : (
+                var.auto_scaling.compute_scale_down_enabled
+                && tonumber(regex("[0-9]+", local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size))
+                < tonumber(regex("[0-9]+", var.auto_scaling.compute_min_instance_size))
+              )
+              ? var.auto_scaling.compute_min_instance_size
+              : local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
+              var.auto_scaling.compute_min_instance_size, # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
             ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
             node_count = r.node_count
           } : null
