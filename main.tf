@@ -242,7 +242,7 @@ locals {
     var.auto_scaling.compute_scale_down_enabled,
   )
 
-  # Auto-scaling instance_size inputs for electable / read-only / analytics (modules/_instance_size_computed).
+  # Auto-scaling instance_size inputs for electable / read-only / analytics (modules/_autoscaling_instance_size).
   autoscaling_instance_size_requests = merge(
     {
       for item in flatten([
@@ -302,7 +302,7 @@ locals {
 }
 
 module "autoscaling_instance_size" {
-  source   = "./modules/_instance_size_computed"
+  source   = "./modules/_autoscaling_instance_size"
   for_each = local.autoscaling_instance_size_requests
 
   existing_instance_size     = each.value.existing

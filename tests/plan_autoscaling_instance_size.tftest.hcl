@@ -1,10 +1,10 @@
-# Plan tests for modules/_instance_size_computed (used by root electable auto-scaling).
+# Plan tests for modules/_autoscaling_instance_size (used by root electable auto-scaling).
 # Cannot mock data.mongodbatlas_advanced_clusters.results end-to-end today:
 # override_data fails on Plugin Framework nested_type lists (tuple vs object).
 
 run "above_max_clamps_to_max" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M80"
@@ -21,7 +21,7 @@ run "above_max_clamps_to_max" {
 
 run "below_min_clamps_to_min_when_scale_down_enabled" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M10"
@@ -38,7 +38,7 @@ run "below_min_clamps_to_min_when_scale_down_enabled" {
 
 run "below_min_keeps_existing_when_scale_down_disabled" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M10"
@@ -55,7 +55,7 @@ run "below_min_keeps_existing_when_scale_down_disabled" {
 
 run "in_range_keeps_existing" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M30"
@@ -72,7 +72,7 @@ run "in_range_keeps_existing" {
 
 run "nvme_above_max_clamps_to_max" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M80_NVME"
@@ -89,7 +89,7 @@ run "nvme_above_max_clamps_to_max" {
 
 run "null_existing_uses_min" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = null
@@ -106,7 +106,7 @@ run "null_existing_uses_min" {
 
 run "lexicographic_trap_m100_vs_m40" {
   command = plan
-  module { source = "./modules/_instance_size_computed" }
+  module { source = "./modules/_autoscaling_instance_size" }
 
   variables {
     existing_instance_size     = "M100"
