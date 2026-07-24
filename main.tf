@@ -42,21 +42,21 @@ locals {
     ? ["SHARDED: when shard_count is set, you must define at least one region."] : []
   )) : []
 
-  # shard_name: first appearance order. shard_number: numeric ascending (padded sort).
+  # Both shard_name and shard_number groups follow first appearance in regions.
   unique_shard_names = local.sharded_use_name ? distinct([
     for r in local.regions : r.shard_name if r.shard_name != null
   ]) : []
-  unique_shard_numbers_sorted = local.sharded_explicit && !local.sharded_use_name ? distinct(sort([
-    for r in local.regions : format("%09d", r.shard_number) if r.shard_number != null
-  ])) : []
+  unique_shard_numbers = local.sharded_explicit && !local.sharded_use_name ? distinct([
+    for r in local.regions : tostring(r.shard_number) if r.shard_number != null
+  ]) : []
 
   grouped_regions_sharded_explicit = local.sharded_explicit ? (
     local.sharded_use_name ? [
       for sn in local.unique_shard_names :
       [for r in local.regions : r if r.shard_name == sn]
       ] : [
-      for sn in local.unique_shard_numbers_sorted :
-      [for r in local.regions : r if r.shard_number != null && format("%09d", r.shard_number) == sn]
+      for sn in local.unique_shard_numbers :
+      [for r in local.regions : r if r.shard_number != null && tostring(r.shard_number) == sn]
     ]
   ) : []
 
@@ -104,25 +104,25 @@ locals {
     name if length(distinct([for r in local.geo_rows : trimspace(r.zone_name) if r.shard_name == name])) > 1
   ] : []
 
-  # Keys: named shard = shard_name; numbered = zone||padded; single-shard zone = zone||0.
+  # Keys: named shard = shard_name; numbered = zone||shard_number; single-shard zone = zone||single.
   geo_keyed_rows = local.is_geosharded ? [
     for r in local.geo_rows : {
-      key = !local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||000000000" : (
-        r.shard_name != null ? r.shard_name : "${trimspace(r.zone_name)}||${format("%09d", r.shard_number)}"
+      key = !local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||single" : (
+        r.shard_name != null ? r.shard_name : "${trimspace(r.zone_name)}||${r.shard_number}"
       )
       region = r
     }
   ] : []
 
-  # Zone order by first appearance; within numbered zones sort ascending; named shards by first index.
+  # Zone order by first appearance; within a zone, shards follow first appearance too (named and numbered).
   geoshard_keys = local.is_geosharded ? flatten([
     for z in local.unique_zone_names : (
-      !local.zones_numbered[z] ? ["${z}||000000000"] : (
+      !local.zones_numbered[z] ? ["${z}||single"] : (
         local.zones_with_counts[z].with_name > 0 ? distinct([
           for r in local.geo_rows : r.shard_name if trimspace(r.zone_name) == z && r.shard_name != null
-          ]) : distinct(sort([
-            for r in local.geo_rows : "${z}||${format("%09d", r.shard_number)}" if trimspace(r.zone_name) == z && r.shard_number != null
-        ]))
+          ]) : distinct([
+          for r in local.geo_rows : "${z}||${r.shard_number}" if trimspace(r.zone_name) == z && r.shard_number != null
+        ])
       )
     )
   ]) : []

@@ -126,7 +126,7 @@ run "geo_shard_name_multi_shard_and_order" {
   }
 }
 
-run "geo_shard_number_numeric_order_within_zone" {
+run "geo_shard_number_first_appearance_order_within_zone" {
   command = plan
   expect_failures = [
     check.shard_number_deprecated
@@ -153,11 +153,11 @@ run "geo_shard_number_numeric_order_within_zone" {
   assert {
     condition = (
       length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
-      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_EAST_1" &&
-      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_EAST_1" &&
       mongodbatlas_advanced_cluster.this.replication_specs[2].zone_name == "EU"
     )
-    error_message = "Within a zone, shard_number groups should sort ascending (0 then 1)"
+    error_message = "Within a zone, shard_number groups should follow first appearance in regions (1 then 0 as listed)"
   }
 }
 

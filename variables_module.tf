@@ -18,7 +18,7 @@ The simplest way to define your cluster topology:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Prefer `shard_name` for shard grouping. It must match `^[a-z][a-z0-9]{0,23}$` (starts with a lowercase letter; remaining characters lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` is set.
-- `shard_name` groups sort by first appearance in `regions`. Deprecated `shard_number` groups sort numerically ascending. Both fields are module-only grouping keys and are not sent to Atlas today.
+- Both `shard_name` and deprecated `shard_number` groups follow first appearance in `regions`. Both fields are module-only grouping keys and are not sent to Atlas today.
 - Within a zone, deprecated `shard_number` values are zone-scoped. `shard_name` values must be unique across the whole cluster (including across zones).
 EOT
   type = list(object({

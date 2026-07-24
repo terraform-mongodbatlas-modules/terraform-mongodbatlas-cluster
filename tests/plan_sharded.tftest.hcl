@@ -162,7 +162,7 @@ run "sharded_shard_name_grouping_and_order" {
   }
 }
 
-run "sharded_shard_number_numeric_order" {
+run "sharded_shard_number_first_appearance_order" {
   command = plan
   expect_failures = [
     check.shard_number_deprecated
@@ -187,10 +187,10 @@ run "sharded_shard_number_numeric_order" {
   assert {
     condition = (
       length(mongodbatlas_advanced_cluster.this.replication_specs) == 2 &&
-      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_EAST_1" &&
-      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_WEST_2"
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_2" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_EAST_1"
     )
-    error_message = "shard_number groups should sort numerically ascending (0 then 1)"
+    error_message = "shard_number groups should follow first appearance in regions (1 then 0 as listed)"
   }
 }
 

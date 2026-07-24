@@ -190,7 +190,7 @@ Within each item in the `regions` list, you can specify:
   - Must match `^[a-z][a-z0-9]{0,23}$`; cluster-wide unique for GEOSHARDED
   - Groups follow first appearance in `regions`; not used when using `shard_count`
 - **`shard_number`** (deprecated) - Numeric shard grouping; removed in v1
-  - Zone-scoped for GEOSHARDED; sorts numerically ascending
+  - Zone-scoped for GEOSHARDED; groups follow first appearance in `regions`
   
 - **`zone_name`** - Geographic zone identifier
   - Required for GEOSHARDED clusters

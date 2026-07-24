@@ -3,5 +3,5 @@ variable/regions: Adds `shard_name` for SHARDED/GEOSHARDED grouping (`^[a-z][a-z
 ```
 
 ```release-note:note
-variable/regions: Deprecates `shard_number` in favor of `shard_name` (removal in v1), numeric ascending order unchanged while still in use
+variable/regions: Deprecates `shard_number` in favor of `shard_name` (removal in v1), first-appearance group order unchanged while still in use
 ```
