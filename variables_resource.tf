@@ -301,6 +301,11 @@ variable "replication_specs" {
   }
 
   validation {
+    condition     = length(var.replication_specs) == 0 || var.geoshard_counts == null
+    error_message = "Cannot use `var.geoshard_counts` when `var.replication_specs` is used. Shard configuration is defined by the number of `replication_specs` provided."
+  }
+
+  validation {
     condition     = length(var.replication_specs) == 0 || var.provider_name == null
     error_message = "Cannot use `var.provider_name` when `var.replication_specs` is used. Configure `provider_name` within `replication_specs[*].region_configs[*].provider_name` instead."
   }

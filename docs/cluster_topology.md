@@ -153,6 +153,11 @@ When using the simplified `regions` approach, these variables are available:
   - Auto-scaling continues to use [Independent Shard Scaling (ISS)](https://www.mongodb.com/docs/atlas/cluster-autoscaling/#scaling-a-sharded-cluster)
   - Cannot be used with manual Independent Shard Scaling (ISS) since each shard must be set explicitly
 
+- **`geoshard_counts`** (optional) - Per-zone uniform shard counts for GEOSHARDED
+  - Keys must match every `regions[*].zone_name` (all zones or none)
+  - Each zone's region list is duplicated that many times; do not set `shard_name` / `shard_number` on regions
+  - Per-shard ISS still needs explicit `shard_name` (or deprecated `shard_number`) instead of `geoshard_counts`
+
 #### Scaling & Sizing
 
 - **`auto_scaling`** - Auto-scaling configuration (enabled by default)
@@ -188,7 +193,7 @@ Within each item in the `regions` list, you can specify:
 - **`shard_name`** - Preferred shard identity for grouping regions into shards
   - Required for SHARDED/GEOSHARDED when using ISS (or use deprecated `shard_number`)
   - Must match `^[a-z][a-z0-9]{0,23}$`; cluster-wide unique for GEOSHARDED
-  - Groups follow first appearance in `regions`; not used when using `shard_count`
+  - Groups follow first appearance in `regions`; not used when using `shard_count` or `geoshard_counts`
 - **`shard_number`** (deprecated) - Numeric shard grouping; removed in v1
   - Zone-scoped for GEOSHARDED; groups follow first appearance in `regions`
   

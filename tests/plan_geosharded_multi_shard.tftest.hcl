@@ -233,3 +233,172 @@ run "geo_multi_regions_in_same_shard" {
     error_message = "Expected EU(0) to have 1 region_config"
   }
 }
+
+run "geo_uniform_layout" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-uniform"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    geoshard_counts = {
+      US = 2
+      EU = 3
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+      { name = "US_WEST_2", node_count = 2, zone_name = "US" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+      { name = "EU_NORTH_1", node_count = 3, zone_name = "EU" },
+    ]
+  }
+
+  assert {
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 5 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].zone_name == "US" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].zone_name == "US" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].zone_name == "EU" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[3].zone_name == "EU" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[4].zone_name == "EU" &&
+      length(mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs) == 2 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_EAST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[1].region_name == "US_WEST_2" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].priority == 7 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[1].priority == 6 &&
+      length(mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs) == 2
+    )
+    error_message = "Uniform geo should expand US×2 then EU×3 with duplicated region layouts"
+  }
+}
+
+run "geo_uniform_rejects_shard_name" {
+  command = plan
+  expect_failures = [
+    mongodbatlas_advanced_cluster.this
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-uniform-name"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    geoshard_counts = {
+      US = 2
+      EU = 1
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_name = "us0" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+    ]
+  }
+}
+
+run "geo_uniform_rejects_missing_zone" {
+  command = plan
+  expect_failures = [
+    mongodbatlas_advanced_cluster.this
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-uniform-missing"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    geoshard_counts = {
+      US = 2
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+    ]
+  }
+}
+
+run "geo_uniform_rejects_extra_zone" {
+  command = plan
+  expect_failures = [
+    mongodbatlas_advanced_cluster.this
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-uniform-extra"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    geoshard_counts = {
+      US = 2
+      EU = 1
+      AP = 1
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+    ]
+  }
+}
+
+run "geoshard_counts_zero_invalid" {
+  command = plan
+  expect_failures = [
+    var.geoshard_counts
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-counts-zero"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    geoshard_counts = {
+      US = 0
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+    ]
+  }
+}
+
+run "geoshard_counts_wrong_cluster_type" {
+  command = plan
+  expect_failures = [
+    var.geoshard_counts
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-counts-sharded"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "SHARDED"
+    geoshard_counts = {
+      US = 2
+    }
+    regions = [
+      { name = "US_EAST_1", node_count = 3, shard_name = "s0" },
+    ]
+  }
+}

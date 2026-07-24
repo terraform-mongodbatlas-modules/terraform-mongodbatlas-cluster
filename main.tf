@@ -78,6 +78,9 @@ locals {
   ] : []
 
   # ---- GEOSHARDED  ----
+  geo_uniform  = local.is_geosharded && var.geoshard_counts != null
+  geo_explicit = local.is_geosharded && var.geoshard_counts == null
+
   geo_rows = local.is_geosharded ? [
     for r in local.regions : r
     if r.zone_name != null && try(trimspace(r.zone_name), "") != ""
@@ -87,8 +90,29 @@ locals {
     for r in local.geo_rows : trimspace(r.zone_name)
   ]) : []
 
-  # Per zone: all-or-none identity; same field family within a zone.
-  zones_with_counts = local.is_geosharded ? {
+  geo_count_keys          = local.geo_uniform ? keys(var.geoshard_counts) : []
+  geo_missing_count_zones = local.geo_uniform ? [for z in local.unique_zone_names : z if !contains(local.geo_count_keys, z)] : []
+  geo_extra_count_zones   = local.geo_uniform ? [for z in local.geo_count_keys : z if !contains(local.unique_zone_names, z)] : []
+  geo_has_any_identity = local.geo_uniform && anytrue([
+    for r in local.geo_rows : r.shard_name != null || r.shard_number != null
+  ])
+
+  geosharded_validation_errors = local.is_geosharded && !local.replication_specs_resource_var_used ? compact(concat(
+    (local.geo_uniform && local.geo_has_any_identity)
+    ? ["GEOSHARDED validation: when geoshard_counts is set, do not set regions[*].shard_name or regions[*].shard_number."] : [],
+
+    (local.geo_uniform && length(local.geo_missing_count_zones) > 0)
+    ? ["GEOSHARDED validation: geoshard_counts must include every zone. Missing: ${join(", ", local.geo_missing_count_zones)}"] : [],
+
+    (local.geo_uniform && length(local.geo_extra_count_zones) > 0)
+    ? ["GEOSHARDED validation: geoshard_counts has unknown zones. Unexpected: ${join(", ", local.geo_extra_count_zones)}"] : [],
+
+    (local.geo_uniform && length(local.unique_zone_names) == 0)
+    ? ["GEOSHARDED: when geoshard_counts is set, you must define at least one region with zone_name."] : []
+  )) : []
+
+  # Per zone: all-or-none identity; same field family within a zone (explicit path only).
+  zones_with_counts = local.geo_explicit ? {
     for z in local.unique_zone_names :
     z => {
       with_id    = length([for r in local.geo_rows : r if trimspace(r.zone_name) == z && (r.shard_number != null || r.shard_name != null)])
@@ -98,27 +122,27 @@ locals {
     }
   } : {}
 
-  invalid_geo_zones_mixed = local.is_geosharded ? [
+  invalid_geo_zones_mixed = local.geo_explicit ? [
     for z, c in local.zones_with_counts :
     z if(c.with_id > 0 && c.without_id > 0)
   ] : []
 
-  invalid_geo_zones_mixed_family = local.is_geosharded ? [
+  invalid_geo_zones_mixed_family = local.geo_explicit ? [
     for z, c in local.zones_with_counts :
     z if(c.with_name > 0 && c.with_num > 0)
   ] : []
 
-  zones_numbered = local.is_geosharded ? {
+  zones_numbered = local.geo_explicit ? {
     for z, c in local.zones_with_counts : z => (c.with_id > 0 && c.without_id == 0)
   } : {}
 
-  shard_names_in_multiple_zones = local.is_geosharded ? [
+  shard_names_in_multiple_zones = local.geo_explicit ? [
     for name in distinct([for r in local.geo_rows : r.shard_name if r.shard_name != null]) :
     name if length(distinct([for r in local.geo_rows : trimspace(r.zone_name) if r.shard_name == name])) > 1
   ] : []
 
   # Keys: named shard = shard_name; numbered = zone||shard_number; single-shard zone = zone||single.
-  geo_keyed_rows = local.is_geosharded ? [
+  geo_keyed_rows = local.geo_explicit ? [
     for r in local.geo_rows : {
       key = !local.zones_numbered[trimspace(r.zone_name)] ? "${trimspace(r.zone_name)}||single" : (
         r.shard_name != null ? r.shard_name : "${trimspace(r.zone_name)}||${r.shard_number}"
@@ -128,7 +152,7 @@ locals {
   ] : []
 
   # Zone order by first appearance; within a zone, shards follow first appearance too (named and numbered).
-  geoshard_keys = local.is_geosharded ? flatten([
+  geoshard_keys = local.geo_explicit ? flatten([
     for z in local.unique_zone_names : (
       !local.zones_numbered[z] ? ["${z}||single"] : (
         local.zones_with_counts[z].with_name > 0 ? distinct([
@@ -140,15 +164,30 @@ locals {
     )
   ]) : []
 
-  grouped_regions_geosharded = local.is_geosharded ? [
+  grouped_regions_geosharded_explicit = local.geo_explicit ? [
     for key in local.geoshard_keys : [
       for x in local.geo_keyed_rows : x.region if x.key == key
     ]
   ] : []
+
+  # Zone order by first appearance; within a zone, shards are range(count) (last drops on scale-down).
+  geo_uniform_shard_refs = local.geo_uniform ? flatten([
+    for z in local.unique_zone_names : [
+      for _i in range(lookup(var.geoshard_counts, z, 0)) : { zone = z }
+    ]
+  ]) : []
+  grouped_regions_geosharded_uniform = local.geo_uniform ? [
+    for ref in local.geo_uniform_shard_refs : [
+      for r in local.geo_rows : r if trimspace(r.zone_name) == ref.zone
+    ]
+  ] : []
+
+  clustered_regions_geosharded = local.geo_uniform ? local.grouped_regions_geosharded_uniform : local.grouped_regions_geosharded_explicit
+
   cluster_type_regions = {
     REPLICASET = local.grouped_regions_replicaset
     SHARDED    = local.sharded_uniform ? local.grouped_regions_sharded_uniform : local.grouped_regions_sharded_explicit
-    GEOSHARDED = local.grouped_regions_geosharded
+    GEOSHARDED = local.clustered_regions_geosharded
   }
 
   grouped_regions = local.cluster_type_regions[var.cluster_type]
@@ -326,7 +365,8 @@ locals {
       [for idx, r in local.regions : (r.zone_name == null || try(trimspace(r.zone_name), "") == "") ? "Must use regions[*].zone_name when cluster_type is GEOSHARDED: zone_name missing @ index ${idx}" : ""],
       length(local.invalid_geo_zones_mixed) > 0 ? ["GEOSHARDED validation: Each zone must either set shard_name/shard_number on all regions or on none. Mixed usage in zones: ${join(", ", local.invalid_geo_zones_mixed)}"] : [],
       length(local.invalid_geo_zones_mixed_family) > 0 ? ["GEOSHARDED validation: Within a zone, use either shard_name or shard_number, not both. Mixed field family in zones: ${join(", ", local.invalid_geo_zones_mixed_family)}"] : [],
-      length(local.shard_names_in_multiple_zones) > 0 ? ["GEOSHARDED validation: regions[*].shard_name must be unique across the cluster. Duplicates across zones: ${join(", ", local.shard_names_in_multiple_zones)}"] : []
+      length(local.shard_names_in_multiple_zones) > 0 ? ["GEOSHARDED validation: regions[*].shard_name must be unique across the cluster. Duplicates across zones: ${join(", ", local.shard_names_in_multiple_zones)}"] : [],
+      local.geosharded_validation_errors
     ) : [],
     local.is_replicaset ? concat(
       [for idx, r in local.regions : r.shard_name != null ? "Replicaset cluster should not define shard_name: regions[${idx}].shard_name=${r.shard_name}" : ""],

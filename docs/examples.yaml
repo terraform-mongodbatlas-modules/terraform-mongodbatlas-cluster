@@ -67,8 +67,8 @@ tables:
       - folder: 9
         name: Cluster using the `replication_specs` to define Cluster Topology
       - folder: 10
-        name: Cluster with Multi Zone and each zone with multiple shards
-        title_suffix: (Advanced)
+        name: Cluster with Multi Zone and uniform per-zone shards using `geoshard_counts`
+        title_suffix: (GEOSHARDED)
       - folder: 11
         name: Demonstrate how to create a module "on-top" of the module with a simplified interface
         title_suffix: (cluster_size=S/M/L)

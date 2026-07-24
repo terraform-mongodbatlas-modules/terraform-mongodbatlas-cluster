@@ -11,13 +11,13 @@ The simplest way to define your cluster topology:
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
 - For `cluster_type.REPLICASET`: omit `shard_name`, `shard_number`, and `zone_name`.
 - For `cluster_type.SHARDED`: set `shard_name` (preferred) or `shard_number` on each region, or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same identity belong to the same shard.
-- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name` (preferred) or `shard_number`. Regions with the same `zone_name` form one zone.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name` (preferred) or `shard_number`, or use the `geoshard_counts` [variable](#geoshard_counts). Regions with the same `zone_name` form one zone.
 - See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 
 **NOTE**:
 - The order in which region blocks are defined in this list determines their priority within each shard or zone.
   - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
-- Prefer `shard_name` for shard grouping. It must match `^[a-z][a-z0-9]{0,23}$` (starts with a lowercase letter; remaining characters lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` is set.
+- Prefer `shard_name` for shard grouping. It must match `^[a-z][a-z0-9]{0,23}$` (starts with a lowercase letter; remaining characters lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` or `geoshard_counts` is set.
 - Both `shard_name` and deprecated `shard_number` groups follow first appearance in `regions`. Both fields are module-only grouping keys and are not sent to Atlas today.
 - Within a zone, deprecated `shard_number` values are zone-scoped. `shard_name` values must be unique across the whole cluster (including across zones).
 EOT
@@ -258,6 +258,33 @@ EOT
   validation {
     condition     = var.shard_count == null || var.cluster_type == "SHARDED"
     error_message = "`shard_count` can only be set when `cluster_type` is SHARDED."
+  }
+}
+
+variable "geoshard_counts" {
+  description = <<-EOT
+Per-zone shard counts for GEOSHARDED clusters.
+
+- When set, keys must match every `regions[*].zone_name` (all zones or none). Each zone's region list is duplicated that many times.
+- Do NOT set `regions[*].shard_name` or `regions[*].shard_number` when `geoshard_counts` is set (they are mutually exclusive).
+- When unset, use one shard per zone or set `regions[*].shard_name` (preferred) / `regions[*].shard_number` for explicit multi-shard zones.
+- Decreasing a zone's count removes the last shards for that zone (same scale-down order as `shard_count`).
+
+EOT
+  type        = map(number)
+  nullable    = true
+  default     = null
+
+  validation {
+    condition = var.geoshard_counts == null || alltrue([
+      for c in values(var.geoshard_counts) : try(c == floor(c) && c >= 1, false)
+    ])
+    error_message = "Each geoshard_counts value must be ≥ 1 if set."
+  }
+
+  validation {
+    condition     = var.geoshard_counts == null || var.cluster_type == "GEOSHARDED"
+    error_message = "`geoshard_counts` can only be set when `cluster_type` is GEOSHARDED."
   }
 }
 

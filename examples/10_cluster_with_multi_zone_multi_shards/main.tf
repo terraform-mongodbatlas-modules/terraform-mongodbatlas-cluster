@@ -4,56 +4,38 @@ module "cluster" {
   name         = "multi-zone-geo-sharded"
   project_id   = var.project_id
   cluster_type = "GEOSHARDED"
+  geoshard_counts = {
+    US  = 2
+    EU  = 1
+    EU2 = 1
+  }
   regions = [
-    { # zone: US, shard: 0
+    {
       name       = "US_EAST_1"
       node_count = 3
       zone_name  = "US"
-      shard_name = "us0"
     },
     {
       name       = "US_EAST_2"
       node_count = 2
       zone_name  = "US"
-      shard_name = "us0"
     },
     {
       name       = "US_WEST_2"
       node_count = 2
       zone_name  = "US"
-      shard_name = "us0"
-    },
-    { # zone: US, shard: 1
-      name       = "US_EAST_1"
-      node_count = 3
-      zone_name  = "US"
-      shard_name = "us1"
     },
     {
-      name       = "US_EAST_2"
-      node_count = 2
-      zone_name  = "US"
-      shard_name = "us1"
-    },
-    {
-      name       = "US_WEST_2"
-      node_count = 2
-      zone_name  = "US"
-      shard_name = "us1"
-    },
-    { # zone: EU, shard: 0
       name                 = "EU_WEST_1"
       node_count           = 3
       node_count_read_only = 2
       zone_name            = "EU"
-      shard_name           = "eu0"
     },
-    { # zone: EU2, shard: 0
+    {
       name                 = "EU_WEST_2"
       node_count           = 3
       node_count_read_only = 2
       zone_name            = "EU2"
-      shard_name           = "eu20"
     }
   ]
   provider_name = "AWS"

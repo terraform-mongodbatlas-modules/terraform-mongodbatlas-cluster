@@ -19,6 +19,7 @@ sections:
         - "regions"
         - "provider_name"
         - "shard_count"
+        - "geoshard_counts"
 
   - id: auto_scaling
     title: "Auto Scaling"
