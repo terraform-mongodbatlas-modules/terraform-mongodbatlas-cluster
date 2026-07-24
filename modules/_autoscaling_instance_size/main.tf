@@ -21,13 +21,14 @@ variable "compute_scale_down_enabled" {
 
 # Numeric tier compare (M10 / M40_NVME → 10 / 40). Terraform min()/max() reject strings.
 locals {
+  existing_tier = var.existing_instance_size == null ? null : tonumber(regex("[0-9]+", var.existing_instance_size))
+  max_tier      = tonumber(regex("[0-9]+", var.compute_max_instance_size))
+  min_tier      = tonumber(regex("[0-9]+", var.compute_min_instance_size))
+
   instance_size = var.existing_instance_size == null ? var.compute_min_instance_size : (
-    tonumber(regex("[0-9]+", var.existing_instance_size)) > tonumber(regex("[0-9]+", var.compute_max_instance_size))
+    local.existing_tier > local.max_tier
     ? var.compute_max_instance_size
-    : (
-      var.compute_scale_down_enabled
-      && tonumber(regex("[0-9]+", var.existing_instance_size)) < tonumber(regex("[0-9]+", var.compute_min_instance_size))
-    )
+    : (var.compute_scale_down_enabled && local.existing_tier < local.min_tier)
     ? var.compute_min_instance_size
     : var.existing_instance_size
   )

@@ -180,4 +180,14 @@ def providers_referenced_in_module_dir(
                 p = provider_from_resource_type(type_str, root_names)
                 if p is not None:
                     used.add(p)
+        # A `provider "name" {}` config block also counts as usage even without resources/data.
+        for block in data.get("provider") or []:
+            if not isinstance(block, dict):
+                continue
+            for name in block:
+                if name in ("__is_block__", "__comments__"):
+                    continue
+                provider_name = unwrap_hcl2_string(name)
+                if provider_name in root_names:
+                    used.add(provider_name)
     return frozenset(used), errs
