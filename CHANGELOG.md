@@ -6,6 +6,7 @@ BREAKING CHANGES:
 * submodule/cluster_import: Removes the experimental `cluster_import` submodule ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
 * variable/advanced_configuration: Changes recommended default value for `minimum_enabled_tls_protocol` from `TLS1_2` to `TLS1_3` under `default_feature_set = "RECOMMENDED"`. To leave `minimum_enabled_tls_protocol` unset, set `default_feature_set` to `"STANDARD"`. To pin a TLS value for a zero-diff upgrade, explicitly set `minimum_enabled_tls_protocol` to the desired TLS value (see docs/v0.4.0-upgrade-guide.md) ([#181](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/181))
 * variable/config_server_management_mode: Defaults to `ATLAS_MANAGED` instead of `null`. To keep a dedicated config server, set to `FIXED_TO_DEDICATED` ([#186](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/186))
+* variable/tags: Defaults to `null` instead of `{}` so imported clusters without tags do not plan an empty-map update ([#187](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/187))
 
 NOTES:
 
