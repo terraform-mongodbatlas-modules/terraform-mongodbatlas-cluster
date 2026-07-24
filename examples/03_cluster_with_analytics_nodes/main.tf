@@ -10,7 +10,7 @@ module "cluster" {
       node_count           = 3
       provider_name        = "AWS"
       node_count_analytics = 1
-      shard_number         = 1
+      shard_name           = "s1"
     }
   ]
   auto_scaling_analytics = {

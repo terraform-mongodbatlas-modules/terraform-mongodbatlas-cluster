@@ -47,13 +47,19 @@ locals {
   }
 
   regions = [for region in lookup(local.sizes, var.cluster_size, []) : merge(region, var.region_extra)]
+  /*
+    shard_name is derived from the zone key. Keys are sanitized below so arbitrary
+    zone names (uppercase, hyphens, long strings) still satisfy the module's
+    ^[a-z][a-z0-9]{0,23}$ validation. Note: distinct zone keys that sanitize to the
+    same prefix would collide and break cluster-wide shard_name uniqueness.
+  */
   regions_zones = flatten(
     [for zone_name, zone_config in var.zones :
       flatten([for shard in range(zone_config.shard_count) :
         [for region_config in zone_config.regions :
           merge({
-            zone_name    = zone_name
-            shard_number = shard
+            zone_name  = zone_name
+            shard_name = format("s%s%d", substr(replace(lower(zone_name), "/[^a-z0-9]/", ""), 0, 23 - length(tostring(shard))), shard)
         }, region_config)]
       ])
     ]

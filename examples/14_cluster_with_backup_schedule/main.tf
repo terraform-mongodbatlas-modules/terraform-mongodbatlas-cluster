@@ -9,14 +9,14 @@ module "cluster" {
       name          = "US_EAST_1"
       node_count    = 3
       provider_name = "AWS"
-      shard_number  = 1
+      shard_name    = "s1"
     },
     {
       # Auto-derived copy target (see backup_copy_region below).
       name          = "US_WEST_2"
       node_count    = 2
       provider_name = "AWS"
-      shard_number  = 1
+      shard_name    = "s1"
     }
   ]
 

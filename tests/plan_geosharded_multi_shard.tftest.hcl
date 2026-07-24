@@ -50,6 +50,10 @@ run "geo_single_shard_per_zone_order" {
 
 run "geo_multi_shards_in_zone" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
 
   module {
     source = "./"
@@ -87,25 +91,170 @@ run "geo_multi_shards_in_zone" {
     condition     = mongodbatlas_advanced_cluster.this.replication_specs[2].zone_name == "EU"
     error_message = "Expected replication_specs[2] zone_name to be EU"
   }
+}
 
-  assert {
-    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs) == 1
-    error_message = "Expected US(0) to have 1 region_config"
+run "geo_shard_name_multi_shard_and_order" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-shard-name"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_name = "us1" },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_name = "us0" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_name = "eu0" },
+    ]
   }
 
   assert {
-    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs) == 1
-    error_message = "Expected US(1) to have 1 region_config"
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].zone_name == "US" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].zone_name == "US" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_EAST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].zone_name == "EU"
+    )
+    error_message = "Named geo shards should follow first appearance within each zone (us1 then us0), then next zone"
+  }
+}
+
+run "geo_shard_number_first_appearance_order_within_zone" {
+  command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-number-order"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_number = 1 },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_number = 0 },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_number = 0 },
+    ]
   }
 
   assert {
-    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs) == 1
-    error_message = "Expected EU(0) to have 1 region_config"
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_EAST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].zone_name == "EU"
+    )
+    error_message = "Within a zone, shard_number groups should follow first appearance in regions (1 then 0 as listed)"
+  }
+}
+
+run "geo_shard_number_interleaved_zones_global_order" {
+  command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-number-interleaved"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_number = 1 },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_number = 0 },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_number = 0 },
+    ]
+  }
+
+  assert {
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "EU_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs[0].region_name == "US_EAST_1"
+    )
+    error_message = "Interleaved shard_number zones should keep global first-appearance order (US/1, EU/0, US/0)"
+  }
+}
+
+run "geo_shard_name_interleaved_zones_global_order" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-name-interleaved"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_name = "us1" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_name = "eu0" },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_name = "us0" },
+    ]
+  }
+
+  assert {
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "EU_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs[0].region_name == "US_EAST_1"
+    )
+    error_message = "Interleaved shard_name zones should keep global first-appearance order (us1, eu0, us0)"
+  }
+}
+
+run "geo_rejects_duplicate_shard_name_across_zones" {
+  command = plan
+  expect_failures = [
+    mongodbatlas_advanced_cluster.this
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-dup-name"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_name = "s0" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_name = "s0" },
+    ]
   }
 }
 
 run "geo_multi_regions_in_same_shard" {
   command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
 
   module {
     source = "./"

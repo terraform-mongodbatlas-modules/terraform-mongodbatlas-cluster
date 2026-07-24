@@ -11,12 +11,12 @@ module "cluster" {
     {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number  = 1
+      shard_name    = "s1"
       instance_size = "M40"
       }, {
       name          = "US_EAST_1"
       node_count    = 3
-      shard_number  = 2
+      shard_name    = "s2"
       instance_size = "M30"
     }
   ]
