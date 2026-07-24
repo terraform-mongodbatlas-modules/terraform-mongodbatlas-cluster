@@ -90,14 +90,15 @@ To skip hooks temporarily: `git commit --no-verify` or `git push --no-verify`.
 
 | Workflow | Triggers | Just Targets | Provider |
 |----------|----------|--------------|----------|
-| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | master |
-| `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test` | master |
+| `code-health.yml` | PR, push main, nightly | `pre-commit`, `unit-plan-tests`, `test-compat`, `plan-snapshot-test` | registry boundaries and default branch |
+| `dev-integration-test.yml` | PR/push (tf changes), nightly | `dev-integration-test`, or `dev-integration-test-backup` when backup-related paths changed | master |
 | `pre-release-tests.yml` | manual | `tftest-all`, `apply-examples`, `destroy-examples` | registry (or custom branch) |
 | `release.yml` | manual | `check-release-ready`, `release-commit`, `generate-release-body` | N/A |
 
 ### Provider Testing Policy
 
-- **PR/push/nightly**: Uses provider `master` branch via `TF_CLI_CONFIG` dev_overrides
+- **Code Health plan snapshots**: Tests registry boundaries and the provider default branch.
+- **Development integration**: Uses the provider default branch through `TF_CLI_CONFIG` dev overrides.
 - **Pre-release**: Uses latest published registry provider by default; optionally specify `provider_branch` input to test with a specific provider branch
 
 ### Required Secrets
@@ -120,6 +121,11 @@ Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when
 | Variable | Description |
 |----------|-------------|
 | `MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST` | Project ID for plan snapshot tests |
+
+### Code Health Configuration
+
+Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to the module's exact minimum supported provider release in
+the module-specific environment block of the `plan-snapshot-tests` job.
 
 ## Testing
 

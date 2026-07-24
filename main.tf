@@ -4,6 +4,19 @@ locals {
   # pit_enabled: null → inherit from backup_enabled, explicit value → use as-is
   effective_pit_enabled = coalesce(var.pit_enabled, var.backup_enabled)
 
+  feature_set_tls = var.default_feature_set == "RECOMMENDED" ? "TLS1_3" : null
+
+  effective_advanced_configuration = var.advanced_configuration == null ? null : merge(
+    var.advanced_configuration,
+    {
+      minimum_enabled_tls_protocol = (
+        var.advanced_configuration.minimum_enabled_tls_protocol != null
+        ? var.advanced_configuration.minimum_enabled_tls_protocol
+        : local.feature_set_tls
+      )
+    }
+  )
+
   regions = coalesce(var.regions, [])
 
   is_geosharded                       = var.cluster_type == "GEOSHARDED"
@@ -312,10 +325,10 @@ resource "mongodbatlas_advanced_cluster" "this" {
   project_id                                       = var.project_id
   replication_specs                                = jsondecode(local.replication_specs_json)
   accept_data_risks_and_force_replica_set_reconfig = var.accept_data_risks_and_force_replica_set_reconfig
-  advanced_configuration                           = var.advanced_configuration
+  advanced_configuration                           = local.effective_advanced_configuration
   backup_enabled                                   = var.backup_enabled
   bi_connector_config                              = var.bi_connector_config
-  config_server_management_mode                    = var.config_server_management_mode
+  config_server_management_mode                    = local.is_sharded || local.is_geosharded ? var.config_server_management_mode : null
   delete_on_create_timeout                         = var.delete_on_create_timeout
   encryption_at_rest_provider                      = var.encryption_at_rest_provider
   global_cluster_self_managed_sharding             = var.global_cluster_self_managed_sharding

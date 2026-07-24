@@ -151,13 +151,13 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](https://developer.hashicorp.com/terraform/install) (>= 1.10)
 
-- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
+- <a name="requirement_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.12)
 
 ## Providers
 
 The following providers are used by this module:
 
-- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.1)
+- <a name="provider_mongodbatlas"></a> [mongodbatlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs) (~> 2.12)
 
 ## Resources
 
@@ -456,6 +456,17 @@ Default: `[]`
 
 These recommendations are based on the [Atlas Architecture Center Documentation](https://www.mongodb.com/docs/atlas/architecture/current/hierarchy/#atlas-cluster-size-guide)
 
+### default_feature_set
+
+Controls which module features with default values are automatically enabled.
+
+- **`RECOMMENDED`** (default): features that have module defaults and do not require additional customer input are automatically enabled. Upgrading the module version adopts new best practices without any configuration changes. Minor version upgrades may introduce plan changes (for example new recommended attribute defaults).
+- **`STANDARD`**: features with module defaults are not automatically enabled. Only existing module defaults and Atlas defaults apply. Minor version upgrades do not introduce plan changes from new recommended defaults (provider changes or bug fixes can still affect plans).
+
+Type: `string`
+
+Default: `"RECOMMENDED"`
+
 ### advanced_configuration
 
 Additional settings for an Atlas cluster.
@@ -469,7 +480,7 @@ object({
   default_max_time_ms                                            = optional(number)
   default_write_concern                                          = optional(string, "majority")
   javascript_enabled                                             = optional(bool, false)
-  minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
+  minimum_enabled_tls_protocol                                   = optional(string)
   no_table_scan                                                  = optional(bool)
   oplog_min_retention_hours                                      = optional(number)
   oplog_size_mb                                                  = optional(number)
@@ -485,8 +496,7 @@ Default:
 ```json
 {
   "default_write_concern": "majority",
-  "javascript_enabled": false,
-  "minimum_enabled_tls_protocol": "TLS1_2"
+  "javascript_enabled": false
 }
 ```
 
@@ -757,17 +767,18 @@ Default: `null`
 
 Config Server Management Mode for creating or updating a sharded cluster.
 
-When configured as `ATLAS_MANAGED`, Atlas may automatically switch the cluster's config server type for optimal performance and savings.
-
-When configured as `FIXED_TO_DEDICATED`, the cluster always uses a dedicated config server.
+Defaults to `ATLAS_MANAGED` so Atlas may switch the cluster's config server type without Terraform plan churn.
+Set `FIXED_TO_DEDICATED` only when you need a dedicated config server escape hatch.
+Set `null` to leave the attribute unset and keep the pre-v0.4.0 behavior.
+Only applies to `SHARDED` / `GEOSHARDED` clusters; ignored for `REPLICASET`.
 
 Type: `string`
 
-Default: `null`
+Default: `"ATLAS_MANAGED"`
 
 ### delete_on_create_timeout
 
-Flag that indicates whether to delete the cluster if the cluster creation times out. Default is false.
+Flag that indicates whether to delete the cluster if the cluster creation times out. When null, the provider defaults to true.
 
 Type: `bool`
 
@@ -859,7 +870,7 @@ Default: `null`
 
 ### version_release_system
 
-Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version*`.
+Method by which the cluster maintains the MongoDB versions. If value is `CONTINUOUS`, you must not specify `mongo_db_major_version`.
 
 Type: `string`
 
@@ -932,6 +943,10 @@ See [Terraform Version Requirements](./docs/terraform_version_requirements.md) f
 ### What is the `provider_meta "mongodbatlas"` doing?
 
 - This block allows us to track the usage of this module by updating the User-Agent of requests to Atlas, for example:
-  - `User-Agent: terraform-provider-mongodbatlas/2.1.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
+  - `User-Agent: terraform-provider-mongodbatlas/2.12.0 Terraform/1.13.1 module_name/cluster module_version/0.1.0`
 - Note: We **do not** send any configuration-specific values, only these values to help us track feature adoption.
 - You can use `export TF_LOG=debug` to see the API requests with headers and their responses.
+
+### How do I upgrade to v0.4.0?
+
+See the [v0.3.x to v0.4.0 upgrade guide](docs/v0.4.0-upgrade-guide.md) for migration instructions, including the TLS minimum protocol default under `RECOMMENDED` and zero-diff options.

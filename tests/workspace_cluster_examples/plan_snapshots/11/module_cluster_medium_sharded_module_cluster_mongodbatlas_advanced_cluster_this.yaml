@@ -1,9 +1,10 @@
 advanced_configuration:
   default_write_concern: majority
   javascript_enabled: false
-  minimum_enabled_tls_protocol: TLS1_2
+  minimum_enabled_tls_protocol: TLS1_3
 backup_enabled: true
 cluster_type: SHARDED
+config_server_management_mode: ATLAS_MANAGED
 delete_on_create_timeout: true
 name: medium-sharded
 pit_enabled: true

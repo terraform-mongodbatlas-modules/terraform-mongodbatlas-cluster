@@ -27,6 +27,9 @@ just unit-plan-tests
 # Real-Atlas apply tests (creates resources)
 just dev-integration-test
 
+# Real-Atlas apply tests, including backup schedule scenarios (creates resources)
+just dev-integration-test-backup
+
 # All terraform tests (plan + apply, no filter)
 just tftest-all
 ```
@@ -49,11 +52,22 @@ To update the version matrix when new Terraform versions are released, edit `.te
 
 Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/workspace_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
+The Code Health matrix declares the Terraform version and provider mode for each snapshot lane. The
+minimum lane uses Terraform 1.10 and the module's configured minimum provider release. The maximum
+lane uses the latest Terraform release and latest compatible registry provider. The provider-head
+lane uses the latest Terraform release and the provider default branch.
+
+All lanes are plan-only and share the same checked-in snapshots. Normalize intentional version-only
+differences instead of regenerating the shared baseline.
+
 ### Workspace Commands
 
 ```bash
 # Plan and compare against baselines (requires dev.tfvars with project_ids)
 just ws-run -m plan-snapshot-test -v dev.tfvars
+
+# Plan with an exact released provider version
+MONGODB_ATLAS_PROVIDER_VERSION=2.12.0 just ws-run -m plan-snapshot-test -v dev.tfvars
 
 # First run or after intentional changes: create/update baselines
 just ws-run -m plan-snapshot-test -v dev.tfvars --force-regen
@@ -164,4 +178,5 @@ export TF_CLI_CONFIG_FILE=$(pwd)/dev.tfrc
 just unit-plan-tests
 ```
 
-CI workflows (`code-health.yml`, `dev-integration-test.yml`) automatically use the provider default branch via the `setup-provider-dev` action.
+The development integration workflow uses the provider default branch through the
+`setup-provider-dev` action.

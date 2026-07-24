@@ -1,8 +1,10 @@
 terraform {
   required_providers {
     mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "~> 2.1"
+      source = "mongodb/mongodbatlas"
+      # This shared child module declares only its compatibility floor.
+      # Each repository selects and tests its own provider versions.
+      version = ">= 2.1"
     }
     random = {
       source  = "hashicorp/random"
