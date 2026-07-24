@@ -96,11 +96,6 @@ def _errors_for_file(
 
     terraform_blocks = data.get("terraform") or []
     providers = all_provider_entries(data)
-    if not providers:
-        errs.append(f"{path}: missing or empty required_providers")
-        return errs
-
-    child_map = {e.name: (e.version, e.source) for e in providers}
     child_rv = terraform_required_version(terraform_blocks)
 
     if root.required_version is not None and child_rv != root.required_version:
@@ -109,6 +104,13 @@ def _errors_for_file(
             f"got {child_rv!r}"
         )
 
+    # Pure helper modules (no provider resources/data) may omit required_providers.
+    if not providers:
+        if used:
+            errs.append(f"{path}: missing or empty required_providers")
+        return errs
+
+    child_map = {e.name: (e.version, e.source) for e in providers}
     skip_version_check = path.resolve() in provider_version_exceptions
 
     for name, (root_ver, root_src) in root.providers.items():
