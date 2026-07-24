@@ -98,4 +98,3 @@ replication_specs:
       node_count: 2
     region_name: US_EAST_2
 retain_backups_enabled: true
-tags: <tags>

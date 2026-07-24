@@ -79,7 +79,8 @@ These values can be used for:
 - Regional compliance requirements for audit and governance purposes.
 EOT
   type        = map(string)
-  default     = {}
+  nullable    = true
+  default     = null
 }
 
 variable "shard_count" {

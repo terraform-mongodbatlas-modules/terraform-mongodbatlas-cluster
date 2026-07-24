@@ -170,4 +170,3 @@ replication_specs:
     region_name: EU_WEST_2
   zone_name: EU2
 retain_backups_enabled: true
-tags: <tags>

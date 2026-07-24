@@ -177,4 +177,3 @@ replication_specs:
     provider_name: AWS
     region_name: AP_SOUTHEAST_1
 retain_backups_enabled: true
-tags: <tags>

@@ -554,7 +554,7 @@ Default: `true`
 ### tags
 
 Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
-We recommend setting the following values:
+We recommend setting the following values when used:
 - Department
 - Team name
 - Application name
@@ -570,7 +570,7 @@ These values can be used for:
 
 Type: `map(string)`
 
-Default: `{}`
+Default: `null`
 
 ### termination_protection_enabled
 

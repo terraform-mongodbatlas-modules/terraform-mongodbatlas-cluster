@@ -93,4 +93,3 @@ replication_specs:
     region_name: US_EAST_2
   zone_name: US
 retain_backups_enabled: true
-tags: <tags>
