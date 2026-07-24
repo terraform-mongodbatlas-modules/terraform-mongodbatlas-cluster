@@ -226,6 +226,92 @@ locals {
 
   # manual compute for electable or analytics nodes
   manual_compute = local.manual_compute_electable || local.manual_compute_analytics
+
+  # Resolved analytics auto-scaling bounds (inherit electable when analytics config omits a field).
+  analytics_compute_max_instance_size = coalesce(
+    try(var.auto_scaling_analytics.compute_max_instance_size, null),
+    var.auto_scaling.compute_max_instance_size,
+  )
+  analytics_compute_min_instance_size = coalesce(
+    try(var.auto_scaling_analytics.compute_min_instance_size, null),
+    var.auto_scaling.compute_min_instance_size,
+    local.DEFAULT_INSTANCE_SIZE,
+  )
+  analytics_compute_scale_down_enabled = coalesce(
+    try(var.auto_scaling_analytics.compute_scale_down_enabled, null),
+    var.auto_scaling.compute_scale_down_enabled,
+  )
+
+  # Auto-scaling instance_size inputs for electable / read-only / analytics (modules/_instance_size_computed).
+  autoscaling_instance_size_requests = merge(
+    {
+      for item in flatten([
+        for gi, group in local.grouped_regions : [
+          for region_index, r in group : {
+            key = "electable.${gi}.${region_index}"
+            existing = try(
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
+              null,
+            )
+          } if local.auto_scaling_compute_enabled && r.node_count != null
+        ]
+        ]) : item.key => {
+        existing                   = item.existing
+        compute_max_instance_size  = var.auto_scaling.compute_max_instance_size
+        compute_min_instance_size  = var.auto_scaling.compute_min_instance_size
+        compute_scale_down_enabled = var.auto_scaling.compute_scale_down_enabled
+      }
+    },
+    {
+      for item in flatten([
+        for gi, group in local.grouped_regions : [
+          for region_index, r in group : {
+            key = "read_only.${gi}.${region_index}"
+            existing = try(
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
+              null,
+            )
+          } if local.auto_scaling_compute_enabled && r.node_count_read_only != null
+        ]
+        ]) : item.key => {
+        existing                   = item.existing
+        compute_max_instance_size  = var.auto_scaling.compute_max_instance_size
+        compute_min_instance_size  = var.auto_scaling.compute_min_instance_size
+        compute_scale_down_enabled = var.auto_scaling.compute_scale_down_enabled
+      }
+    },
+    {
+      for item in flatten([
+        for gi, group in local.grouped_regions : [
+          for region_index, r in group : {
+            key = "analytics.${gi}.${region_index}"
+            existing = try(
+              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
+              null,
+            )
+          } if local.auto_scaling_compute_enabled_analytics && r.node_count_analytics != null
+        ]
+        ]) : item.key => {
+        existing                   = item.existing
+        compute_max_instance_size  = local.analytics_compute_max_instance_size
+        compute_min_instance_size  = local.analytics_compute_min_instance_size
+        compute_scale_down_enabled = local.analytics_compute_scale_down_enabled
+      }
+    },
+  )
+}
+
+module "autoscaling_instance_size" {
+  source   = "./modules/_instance_size_computed"
+  for_each = local.autoscaling_instance_size_requests
+
+  existing_instance_size     = each.value.existing
+  compute_max_instance_size  = each.value.compute_max_instance_size
+  compute_min_instance_size  = each.value.compute_min_instance_size
+  compute_scale_down_enabled = each.value.compute_scale_down_enabled
+}
+
+locals {
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
@@ -246,48 +332,25 @@ locals {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            # instance_size is required by the API until effctive fields are supported.
-            # Clamp existing size into auto-scaling bounds via numeric tier (M10/M40_NVME → 10/40).
-            # Terraform min()/max() reject strings, so do not use them here.
-            # Always cap at compute_max_instance_size; floor at compute_min_instance_size only when scale-down is enabled.
-            instance_size = local.auto_scaling_compute_enabled ? try(
-              (
-                tonumber(regex("[0-9]+", local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size))
-                > tonumber(regex("[0-9]+", var.auto_scaling.compute_max_instance_size))
-              )
-              ? var.auto_scaling.compute_max_instance_size
-              : (
-                var.auto_scaling.compute_scale_down_enabled
-                && tonumber(regex("[0-9]+", local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size))
-                < tonumber(regex("[0-9]+", var.auto_scaling.compute_min_instance_size))
-              )
-              ? var.auto_scaling.compute_min_instance_size
-              : local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].electable_specs.instance_size,
-              var.auto_scaling.compute_min_instance_size, # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
-            ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
-            node_count = r.node_count
+            # instance_size is required by the API until effective fields are supported
+            instance_size = local.auto_scaling_compute_enabled ? module.autoscaling_instance_size["electable.${gi}.${region_index}"].instance_size : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
+            node_count    = r.node_count
           } : null
 
           read_only_specs = r.node_count_read_only != null ? {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            instance_size = local.auto_scaling_compute_enabled ? try(
-              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].read_only_specs.instance_size,
-              var.auto_scaling.compute_min_instance_size, # not using effective_auto_scaling since the value might be filtered out if compute_scale_down is false
-            ) : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
-            node_count = r.node_count_read_only
+            instance_size   = local.auto_scaling_compute_enabled ? module.autoscaling_instance_size["read_only.${gi}.${region_index}"].instance_size : coalesce(r.instance_size, var.instance_size, local.DEFAULT_INSTANCE_SIZE)
+            node_count      = r.node_count_read_only
           } : null
 
           analytics_specs = r.node_count_analytics != null ? {
             disk_iops       = try(coalesce(r.disk_iops, var.disk_iops), null)
             disk_size_gb    = try(coalesce(r.disk_size_gb, var.disk_size_gb), null)
             ebs_volume_type = try(coalesce(r.ebs_volume_type, var.ebs_volume_type), null)
-            instance_size = local.effective_auto_scaling_analytics != null && local.effective_auto_scaling_analytics.compute_enabled ? try(
-              local.existing_cluster.old_cluster.replication_specs[gi].region_configs[region_index].analytics_specs.instance_size,
-              try(var.auto_scaling_analytics.compute_min_instance_size, local.DEFAULT_INSTANCE_SIZE), # not using effective_auto_scaling_analytics since the value might be filtered out if compute_scale_down is false
-            ) : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
-            node_count = r.node_count_analytics
+            instance_size   = local.auto_scaling_compute_enabled_analytics ? module.autoscaling_instance_size["analytics.${gi}.${region_index}"].instance_size : coalesce(r.instance_size_analytics, var.instance_size_analytics, local.DEFAULT_INSTANCE_SIZE)
+            node_count      = r.node_count_analytics
           } : null
         }
       ])

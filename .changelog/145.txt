@@ -1,3 +1,3 @@
 ```release-note:bug
-module: Clamps electable `instance_size` into auto-scaling bounds (`<= compute_max_instance_size`, and `>= compute_min_instance_size` when scale-down is enabled) so an existing size outside the configured range does not fail the plan
+module: Clamps auto-scaling `instance_size` (electable, read-only, analytics) to the configured min/max when an existing cluster is outside that range
 ```
