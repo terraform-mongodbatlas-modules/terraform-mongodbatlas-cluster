@@ -1,6 +1,6 @@
 # MongoDB Atlas Cluster Backup Guide
 
-This guide explains how to configure and manage backups in the MongoDB Atlas Terraform Cluster Module: schedule defaults, point-in-time restore recommendations, deletion behavior, and how to export snapshots using the other Landing Zone modules.
+This guide explains how to configure and manage Cloud Backup in the MongoDB Atlas Terraform Cluster Module, including backup schedule configuration and defaults, point-in-time restore recommendations, snapshot export through the companion Landing Zone modules (`atlas-aws`, `atlas-azure`, `atlas-gcp`), and deletion behavior.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This guide explains how to configure and manage backups in the MongoDB Atlas Ter
 
 ## Introduction
 
-The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class capability, you no longer need a separate `mongodbatlas_cloud_backup_schedule` resource block alongside the cluster. `backup_mode` controls whether and how the module manages this resource; `backup_retention`, `backup_copy_region`, `backup_export`, and `backup_schedule_skip_destroy` configure it.
+The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class resource, so you don't need to declare a separate resource block alongside the cluster. `backup_mode` controls whether and how the module manages the resource, and backup_retention, backup_copy_region, backup_export, and backup_schedule_skip_destroy configure the backup policy.
 
 See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_backup_schedule) for a complete working example combining retention overrides, cross-region copy, and deletion behavior.
 
@@ -34,11 +34,11 @@ See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_bac
 
 `backup_mode` (default `"SCHEDULED"`) has three values:
 
-- **`SCHEDULED`**: module-managed frequency policies (`hourly`/`daily`/`weekly`/`monthly`/`yearly`). This is what most users want.
+- **`SCHEDULED`**: the module creates the `mongodbatlas_cloud_backup_schedule` resource and manages the cluster's backup policy for you. It applies a default policy (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) unless you override it through `backup_retention`. This is what most users want.
 - **`ON_DEMAND`**: the schedule resource is still created, but all frequency-based policy items are removed. Only manual (on-demand) snapshots and PIT (if enabled) are covered. Use this when you want to trigger snapshots yourself rather than on a recurring schedule.
-- **`UNMANAGED`**: the module does not create the schedule resource at all. You manage `mongodbatlas_cloud_backup_schedule` yourself with a standalone resource. `backup_copy_region`, `backup_retention`, and `backup_export` must be left at their defaults in this mode; see [Deletion Behavior](#deletion-behavior) for the migration path.
+- **`UNMANAGED`**: the module does not create the `mongodbatlas_cloud_backup_schedule` resource. You manage it yourself with a standalone `mongodbatlas_cloud_backup_schedule` resource. `backup_copy_region`, `backup_retention`, and `backup_export` must be left at their defaults in this mode. See [Deletion Behavior](#deletion-behavior) for the migration path from a module-managed mode.
 
-`backup_mode` is ignored (no effect, no error) when `backup_enabled = false`. The module never creates the schedule resource in that case, regardless of `backup_mode`.
+`backup_mode` is ignored (no effect, no error) when `backup_enabled = false`. The module never creates the `mongodbatlas_cloud_backup_schedule` resource in that case, regardless of `backup_mode`.
 
 ## Schedule Defaults
 
@@ -52,7 +52,7 @@ Each frequency (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) in `backup_retenti
 | `monthly` | 40 | `months` | 12 |
 | `yearly`  | 12 | `years`  | 1  |
 
-Set `skip_default_retentions = true` to only create the frequencies you explicitly declare. Any frequency you don't list is omitted entirely, not just defaulted.
+Set `skip_default_retentions = true` to create only the frequencies you explicitly declare. Any frequency you don't list is omitted entirely, not just defaulted.
 
 ```hcl
 backup_retention = {
@@ -60,7 +60,7 @@ backup_retention = {
 }
 ```
 
-`reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: `18:00` UTC per [Atlas's default backup policy](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#example) when left unset), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days), this is your effective RPO (Recovery Point Objective: the maximum acceptable data loss, in time, if you need to restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
+`reference_hour_of_day` or `reference_minute_of_hour` control the UTC snapshot window (default: `18:00` UTC per [Atlas's default backup policy](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#example) when left unset), and `restore_window_days` controls the PIT restore window. `restore_window_days` cannot exceed the `hourly` policy's `retention_value` (in days). This is your effective RPO (Recovery Point Objective: the maximum acceptable data loss, in time, if you need to restore). See [Configure the Restore Window](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/#configure-the-restore-window) for details. `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`, but has no corresponding field on `mongodbatlas_cloud_backup_schedule` and is ignored.
 
 **`ON_DEMAND` and frequency fields:** setting `backup_retention`'s frequency fields (`hourly`/`daily`/`weekly`/`monthly`/`yearly`) is rejected (validation error at `terraform plan`) when `backup_mode = "ON_DEMAND"`, since that mode removes all frequency policies. `restore_window_days` and `ondemand` remain valid there.
 
@@ -70,7 +70,7 @@ backup_retention = {
 
 `pit_enabled` (continuous backup / point-in-time restore) defaults to the value of `backup_enabled` when left `null`, so by default, enabling backups also enables PIT. You can override it explicitly in either direction, except you cannot set `pit_enabled = true` when `backup_enabled = false` (PIT requires Cloud Backup).
 
-**Recommendation:** leave both at their defaults (`backup_enabled = true`, `pit_enabled = null`) for production clusters. `backup_enabled` is an Atlas Architecture Center recommended default; leaving `pit_enabled` at its default enables continuous backup alongside it, giving you the finest-grained restore window available. See [How Backups Support Disaster Recovery](https://www.mongodb.com/docs/atlas/architecture/current/disaster-recovery/#how-backups-support-disaster-recovery) for RPO/RTO guidance (RTO, Recovery Time Objective, is the maximum acceptable downtime before service is restored -- e.g. a "4 hour RTO" means back online within 4 hours).
+**Recommendation:** leave both at their defaults (`backup_enabled = true`, `pit_enabled = null`) for production clusters. `backup_enabled` is an Atlas Architecture Center recommended default; leaving `pit_enabled` at its default enables continuous backup alongside it, giving you the finest-grained restore window available. See [How Backups Support Disaster Recovery](https://www.mongodb.com/docs/atlas/architecture/current/disaster-recovery/#how-backups-support-disaster-recovery) for RPO/RTO guidance (RTO, Recovery Time Objective, is the maximum acceptable downtime before service is restored. For example, a "4 hour RTO" means back online within 4 hours).
 
 **Atlas requires an `hourly` policy item for Continuous Cloud Backup.** If `backup_mode = "SCHEDULED"` and PIT is effectively enabled, omitting the `hourly` frequency (via `skip_default_retentions = true` with `hourly` unset) is rejected at `terraform plan`, since Atlas rejects that combination at the API level. If you don't need PIT, set `pit_enabled = false` explicitly to omit `hourly`.
 
@@ -86,17 +86,17 @@ Cross-region copy protects your snapshots against a regional outage: if the prim
 backup_copy_region = {} # auto-derive the secondary region from var.regions
 ```
 
-- **`region`**: when omitted (`backup_copy_region = {}`), the module auto-derives a secondary region from `var.regions` (the highest-priority region after the primary), so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. Not derived from `var.replication_specs`, set `region` explicitly when using that variable.
+- **`region`**: when omitted (`backup_copy_region = {}`), the module auto-derives a secondary region from `var.regions` (the highest-priority region after the primary), so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. Not derived from `var.replication_specs`, so set `region` explicitly when using that variable.
 - **`cloud_provider`**: override for multi-cloud clusters (default: derived from the target region, or left for the provider to infer if it can't be resolved).
 - **`should_copy_oplogs`**: copies oplogs for point-in-time restore from the copy region (default: `true` if PIT is enabled).
 
-**`GEOSHARDED` clusters** get one cluster-wide copy target derived from the first zone's regions, per-zone copy targets are not supported. The module also sends the created cluster's `zone_id` for that same first zone, matching the zone `region`/`cloud_provider` are derived from. The underlying Atlas API disambiguates copy targets by zone, so this is needed on multi-zone clusters even though the provider itself marks `zone_id` optional.
+**`GEOSHARDED` clusters** get one cluster-wide copy target derived from the first zone's regions. Per-zone copy targets are not supported. The module also sends the created cluster's `zone_id` for that same first zone, matching the zone `region`/`cloud_provider` are derived from. The underlying Atlas API disambiguates copy targets by zone, so this is needed on multi-zone clusters even though the provider itself marks `zone_id` optional.
 
 Setting `backup_copy_region` is rejected (validation error) when `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
 
 ## Exporting Snapshots (Other LZ Modules)
 
-`backup_export` exports snapshots to a cloud storage bucket. The bucket itself is **not** managed by this module, it's managed by the corresponding CSP Landing Zone module (`atlas-aws`, `atlas-azure`, `atlas-gcp`), which each expose a dedicated `export_bucket_id` output built for exactly this purpose.
+`backup_export` exports snapshots to a cloud storage bucket. The bucket itself is **not** managed by this module; it's managed by the corresponding CSP Landing Zone module (`atlas-aws`, `atlas-azure`, `atlas-gcp`), which each expose a dedicated `export_bucket_id` output built for exactly this purpose.
 
 ```hcl
 module "atlas_aws" {
@@ -128,7 +128,7 @@ Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no
 
 `backup_schedule_skip_destroy` maps directly to the provider's `skip_destroy` on the `mongodbatlas_cloud_backup_schedule` resource:
 
-- **`false`** (default): deletes the schedule (the recurring policy that creates new snapshots and governs retention) on destroy. This does **not** delete snapshots that already exist, those remain until their own previously-assigned retention expires; no new scheduled snapshots are created afterward.
+- **`false`** (default): deletes the schedule (the recurring policy that creates new snapshots and governs retention) on destroy. This does **not** delete snapshots that already exist; those remain until their own previously-assigned retention expires; no new scheduled snapshots are created afterward.
 - **`true`**: no-op on destroy; the schedule resource is removed from Terraform state only, and the schedule itself (including future snapshot creation) is left intact in Atlas. Use this when a Backup Compliance Policy is enabled on the project.
 
 **Migrating to `UNMANAGED` requires two applies** if you want to preserve the existing schedule/snapshots:
@@ -136,7 +136,7 @@ Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no
 1. First apply: set `backup_schedule_skip_destroy = true` while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`.
 2. Second apply: switch `backup_mode` to `UNMANAGED`.
 
-Setting both in the same apply does **not** skip the delete, Terraform still destroys the resource (`skip_destroy` only takes effect if the resource already exists with that setting applied in a prior state).
+Setting both in the same apply does **not** skip the delete; Terraform still destroys the resource (`skip_destroy` only takes effect if the resource already exists with that setting applied in a prior state).
 
 `retain_backups_enabled` is a separate, cluster-level flag (not part of the backup schedule resource) that controls whether existing backup snapshots are retained when the *cluster itself* is deleted. Recommended `true` for production clusters.
 
