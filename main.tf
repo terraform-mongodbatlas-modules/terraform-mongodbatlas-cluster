@@ -30,11 +30,11 @@ locals {
   # ---- SHARDED  ----
   sharded_uniform         = local.is_sharded && var.shard_count != null
   sharded_explicit        = local.is_sharded && var.shard_count == null
-  has_any_zone_in_shard   = local.is_sharded && anytrue([for r in var.regions : r.zone_name != null && try(trimspace(r.zone_name), "") != ""])
-  has_any_name_in_shard   = local.is_sharded && anytrue([for r in var.regions : r.shard_name != null])
-  has_any_number_in_shard = local.is_sharded && anytrue([for r in var.regions : r.shard_number != null])
-  all_have_identity_in_shard = local.is_sharded && length(var.regions) > 0 && alltrue([
-    for r in var.regions : r.shard_name != null || r.shard_number != null
+  has_any_zone_in_shard   = local.is_sharded && anytrue([for r in local.regions : r.zone_name != null && try(trimspace(r.zone_name), "") != ""])
+  has_any_name_in_shard   = local.is_sharded && anytrue([for r in local.regions : r.shard_name != null])
+  has_any_number_in_shard = local.is_sharded && anytrue([for r in local.regions : r.shard_number != null])
+  all_have_identity_in_shard = local.is_sharded && length(local.regions) > 0 && alltrue([
+    for r in local.regions : r.shard_name != null || r.shard_number != null
   ])
   sharded_use_name           = local.sharded_explicit && local.has_any_name_in_shard && !local.has_any_number_in_shard
   sharded_mixed_field_family = local.sharded_explicit && local.has_any_name_in_shard && local.has_any_number_in_shard
@@ -51,7 +51,7 @@ locals {
     local.sharded_mixed_field_family
     ? ["SHARDED validation: use either regions[*].shard_name or regions[*].shard_number on all regions, not both fields across the cluster."] : [],
 
-    (local.sharded_uniform && length(var.regions) == 0)
+    (local.sharded_uniform && length(local.regions) == 0)
     ? ["SHARDED: when shard_count is set, you must define at least one region."] : []
   )) : []
 
@@ -340,7 +340,7 @@ locals {
 
   validation_errors = compact(concat(
     # Mutual exclusivity: regions vs replication_specs
-    length(var.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
+    length(local.regions) > 0 && local.replication_specs_resource_var_used ? ["Cannot use var.regions and var.replication_specs together, set regions=[] to use var.replication_specs"] : [],
     local.validation_errors_regions_usage,
     local.backup_copy_region_validation_errors,
   ))
@@ -349,7 +349,7 @@ locals {
 
 check "shard_number_deprecated" {
   assert {
-    condition     = !anytrue([for r in var.regions : r.shard_number != null])
+    condition     = !anytrue([for r in local.regions : r.shard_number != null])
     error_message = "regions[*].shard_number is deprecated and will be removed in v1. Migrate to regions[*].shard_name (must match ^[a-z][a-z0-9]{0,23}$)."
   }
 }
