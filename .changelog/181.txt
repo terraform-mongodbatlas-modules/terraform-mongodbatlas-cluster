@@ -1,7 +1,7 @@
 ```release-note:enhancement
-variable/default_feature_set: Adds RECOMMENDED and STANDARD modes so future module defaults can opt in or opt out of plan changes on minor upgrades
+variable/default_feature_set: Adds `RECOMMENDED` and `STANDARD` modes so future module defaults can opt in or opt out of plan changes on minor upgrades
 ```
 
 ```release-note:breaking-change
-variable/advanced_configuration: Changes recommended default for minimum_enabled_tls_protocol from TLS1_2 to TLS1_3 under default_feature_set = RECOMMENDED, set default_feature_set = STANDARD or set the attribute explicitly for a zero-diff upgrade (see docs/v0.4.0-upgrade-guide.md)
+variable/advanced_configuration: Changes recommended default value for `minimum_enabled_tls_protocol` from `TLS1_2` to `TLS1_3` under `default_feature_set = "RECOMMENDED"`. To leave `minimum_enabled_tls_protocol` unset, set `default_feature_set` to `"STANDARD"`. To pin a TLS value for a zero-diff upgrade, explicitly set `minimum_enabled_tls_protocol` to the desired TLS value (see docs/v0.4.0-upgrade-guide.md)
 ```
