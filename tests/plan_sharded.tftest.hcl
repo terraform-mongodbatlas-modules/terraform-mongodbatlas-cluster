@@ -233,8 +233,33 @@ run "sharded_rejects_invalid_shard_name" {
     cluster_type  = "SHARDED"
 
     regions = [
-      { name = "US_EAST_1", node_count = 3, shard_name = "0" },
+      { name = "US_EAST_1", node_count = 3, shard_name = "Shard-0" },
     ]
+  }
+}
+
+run "sharded_accepts_digit_leading_shard_name" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-sharded-digit-name"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "SHARDED"
+
+    regions = [
+      { name = "US_EAST_1", node_count = 3, shard_name = "0" },
+      { name = "US_WEST_2", node_count = 3, shard_name = "1" },
+    ]
+  }
+
+  assert {
+    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs) == 2
+    error_message = "Expected 2 shards for digit-leading names 0 and 1"
   }
 }
 

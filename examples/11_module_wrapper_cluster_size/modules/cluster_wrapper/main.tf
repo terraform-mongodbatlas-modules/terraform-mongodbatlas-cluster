@@ -50,7 +50,7 @@ locals {
   /*
     shard_name is derived from the zone key. Keys are sanitized below so arbitrary
     zone names (uppercase, hyphens, long strings) still satisfy the module's
-    ^[a-z0-9]{0,23}$ validation. Note: distinct zone keys that sanitize to the
+    ^[a-z0-9]{1,24}$ validation. Note: distinct zone keys that sanitize to the
     same prefix would collide and break cluster-wide shard_name uniqueness.
   */
   regions_zones = flatten(
