@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 env:
   MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
@@ -30,6 +31,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706
+        id: filter
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        with:
+          filters: |
+            backup:
+              - 'modules/cloud_backup_schedule/**'
+              - 'tests/apply_backup_*.tftest.hcl'
       - uses: ./.github/actions/setup
         with:
           just: 'true'
@@ -38,7 +47,15 @@ jobs:
       - uses: ./.github/actions/setup-provider-dev
         with:
           provider-ref: ${{ inputs.provider_ref }}
-      - run: just dev-integration-test
+      - name: Run dev integration tests
+        env:
+          RUN_BACKUP_TESTS: ${{ steps.filter.outcome == 'skipped' || steps.filter.outputs.backup == 'true' }}
+        run: |
+          if [ "$RUN_BACKUP_TESTS" = "true" ]; then
+            just dev-integration-test-backup
+          else
+            just dev-integration-test
+          fi
 
   slack-notification:
     needs: [dev-integration-test]

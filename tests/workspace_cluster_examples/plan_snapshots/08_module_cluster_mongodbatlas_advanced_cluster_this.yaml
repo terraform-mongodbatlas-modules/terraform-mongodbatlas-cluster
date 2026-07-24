@@ -1,11 +1,11 @@
 advanced_configuration:
   default_write_concern: majority
   javascript_enabled: false
-  minimum_enabled_tls_protocol: TLS1_2
-backup_enabled: true
+  minimum_enabled_tls_protocol: TLS1_3
+backup_enabled: false
 cluster_type: REPLICASET
 delete_on_create_timeout: true
-pit_enabled: true
+pit_enabled: false
 project_id: <project_id>
 redact_client_log_data: true
 replication_specs:
@@ -23,4 +23,3 @@ replication_specs:
     provider_name: AWS
     region_name: US_EAST_1
 retain_backups_enabled: false
-tags: <tags>

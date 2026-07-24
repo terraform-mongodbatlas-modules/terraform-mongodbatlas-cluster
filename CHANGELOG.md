@@ -4,7 +4,9 @@ BREAKING CHANGES:
 
 * submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * submodule/cluster_import: Removes the experimental `cluster_import` submodule ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
+* variable/advanced_configuration: Changes recommended default value for `minimum_enabled_tls_protocol` from `TLS1_2` to `TLS1_3` under `default_feature_set = "RECOMMENDED"`. To leave `minimum_enabled_tls_protocol` unset, set `default_feature_set` to `"STANDARD"`. To pin a TLS value for a zero-diff upgrade, explicitly set `minimum_enabled_tls_protocol` to the desired TLS value (see docs/v0.4.0-upgrade-guide.md) ([#181](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/181))
 * variable/config_server_management_mode: Defaults to `ATLAS_MANAGED` instead of `null`. To keep a dedicated config server, set to `FIXED_TO_DEDICATED` ([#186](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/186))
+* variable/tags: Defaults to `null` instead of `{}` so imported clusters without tags do not plan an empty-map update ([#187](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/187))
 
 NOTES:
 
@@ -16,6 +18,7 @@ ENHANCEMENTS:
 
 * example: Adds a "Cluster with Scheduled Backups" example demonstrating retention overrides, cross-region copy, and `backup_schedule_skip_destroy` ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
 * module: Adds `backup_mode`, `backup_copy_region`, `backup_schedule_skip_destroy`, `backup_retention`, and `backup_export` variables for first-class backup schedule configuration ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
+* variable/default_feature_set: Adds `RECOMMENDED` and `STANDARD` modes so future module defaults can opt in or opt out of plan changes on minor upgrades ([#181](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/181))
 * variable/version_release_system: Rejects `CONTINUOUS` when `mongo_db_major_version` is set ([#183](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/183))
 
 ## 0.3.1 (March 17, 2026)

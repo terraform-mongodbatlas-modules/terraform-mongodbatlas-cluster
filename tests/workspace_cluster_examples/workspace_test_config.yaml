@@ -127,7 +127,7 @@ var_groups:
     - name: tags
       expose_in_workspace: true
       var_type: map(string)
-      module_value: "{}"
+      module_value: "null"
   project1:
     - name: project_id
       expose_in_workspace: false

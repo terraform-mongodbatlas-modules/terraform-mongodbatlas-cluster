@@ -218,7 +218,7 @@ EOT
 variable "tags" {
   description = <<-EOT
 Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
-We recommend setting the following values:
+We recommend setting the following values when used:
 - Department
 - Team name
 - Application name
@@ -233,7 +233,8 @@ These values can be used for:
 - Regional compliance requirements for audit and governance purposes.
 EOT
   type        = map(string)
-  default     = {}
+  nullable    = true
+  default     = null
 }
 
 variable "shard_count" {
@@ -257,5 +258,21 @@ EOT
   validation {
     condition     = var.shard_count == null || var.cluster_type == "SHARDED"
     error_message = "`shard_count` can only be set when `cluster_type` is SHARDED."
+  }
+}
+
+variable "default_feature_set" {
+  description = <<-EOT
+Controls which module features with default values are automatically enabled.
+
+- **`RECOMMENDED`** (default): features that have module defaults and do not require additional customer input are automatically enabled. Upgrading the module version adopts new best practices without any configuration changes. Minor version upgrades may introduce plan changes (for example new recommended attribute defaults).
+- **`STANDARD`**: features with module defaults are not automatically enabled. Only existing module defaults and Atlas defaults apply. Minor version upgrades do not introduce plan changes from new recommended defaults (provider changes or bug fixes can still affect plans).
+EOT
+  type        = string
+  default     = "RECOMMENDED"
+
+  validation {
+    condition     = contains(["RECOMMENDED", "STANDARD"], var.default_feature_set)
+    error_message = "Invalid value for default_feature_set. Valid values are: RECOMMENDED, STANDARD."
   }
 }

@@ -1,0 +1,3 @@
+```release-note:breaking-change
+variable/tags: Defaults to `null` instead of `{}` so imported clusters without tags do not plan an empty-map update
+```

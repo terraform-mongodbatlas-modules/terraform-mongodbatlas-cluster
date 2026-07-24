@@ -1,7 +1,7 @@
 advanced_configuration:
   default_write_concern: majority
   javascript_enabled: false
-  minimum_enabled_tls_protocol: TLS1_2
+  minimum_enabled_tls_protocol: TLS1_3
 backup_enabled: true
 cluster_type: SHARDED
 config_server_management_mode: ATLAS_MANAGED
@@ -31,4 +31,3 @@ replication_specs:
     provider_name: AWS
     region_name: US_EAST_1
 retain_backups_enabled: true
-tags: <tags>
