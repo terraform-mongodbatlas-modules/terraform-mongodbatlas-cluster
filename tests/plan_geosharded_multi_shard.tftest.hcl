@@ -161,6 +161,71 @@ run "geo_shard_number_first_appearance_order_within_zone" {
   }
 }
 
+run "geo_shard_number_interleaved_zones_global_order" {
+  command = plan
+  expect_failures = [
+    check.shard_number_deprecated
+  ]
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-number-interleaved"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_number = 1 },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_number = 0 },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_number = 0 },
+    ]
+  }
+
+  assert {
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "EU_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs[0].region_name == "US_EAST_1"
+    )
+    error_message = "Interleaved shard_number zones should keep global first-appearance order (US/1, EU/0, US/0)"
+  }
+}
+
+run "geo_shard_name_interleaved_zones_global_order" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-geo-name-interleaved"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+
+    regions = [
+      { name = "US_WEST_1", node_count = 3, zone_name = "US", shard_name = "us1" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU", shard_name = "eu0" },
+      { name = "US_EAST_1", node_count = 3, zone_name = "US", shard_name = "us0" },
+    ]
+  }
+
+  assert {
+    condition = (
+      length(mongodbatlas_advanced_cluster.this.replication_specs) == 3 &&
+      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "EU_WEST_1" &&
+      mongodbatlas_advanced_cluster.this.replication_specs[2].region_configs[0].region_name == "US_EAST_1"
+    )
+    error_message = "Interleaved shard_name zones should keep global first-appearance order (us1, eu0, us0)"
+  }
+}
+
 run "geo_rejects_duplicate_shard_name_across_zones" {
   command = plan
   expect_failures = [

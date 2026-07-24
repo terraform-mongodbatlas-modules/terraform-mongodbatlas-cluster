@@ -129,17 +129,10 @@ locals {
     }
   ] : []
 
-  # Zone order by first appearance; within a zone, shards follow first appearance too (named and numbered).
-  geoshard_keys = local.is_geosharded ? flatten([
-    for z in local.unique_zone_names : (
-      !local.zone_has_shard_identity[z] ? ["${z}||single"] : (
-        local.zones_with_counts[z].with_name > 0 ? distinct([
-          for r in local.geo_rows : r.shard_name if trimspace(r.zone_name) == z && r.shard_name != null
-          ]) : distinct([
-          for r in local.geo_rows : "${z}||${r.shard_number}" if trimspace(r.zone_name) == z && r.shard_number != null
-        ])
-      )
-    )
+  # Global first-appearance order across all regions (named and numbered), so interleaved
+  # zones keep their original replication_specs sequence and stay no-op on upgrade.
+  geoshard_keys = local.is_geosharded ? distinct([
+    for x in local.geo_keyed_rows : x.key
   ]) : []
 
   grouped_regions_geosharded = local.is_geosharded ? [
