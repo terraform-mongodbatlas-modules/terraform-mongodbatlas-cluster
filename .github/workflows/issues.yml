@@ -1,5 +1,5 @@
 # path-sync copy -n sdlc
-name: Create JIRA ticket for new issues
+name: Manage JIRA tickets for GitHub issues
 
 on:
   issues:
@@ -26,6 +26,8 @@ jobs:
           set -euo pipefail
 
           json_response=$(curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 60 \
             --request POST \
             --url 'https://jira.mongodb.org/rest/api/2/issue' \
             --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
@@ -83,12 +85,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\""
+          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 2 \
             --request GET \
-            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&jql=${JIRA_URL}" \
+            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&maxResults=1&jql=${JIRA_URL}" \
             --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
             --header 'Accept: application/json')
 
@@ -99,6 +105,8 @@ jobs:
           fi
 
           curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 60 \
             --request POST \
             --url "https://jira.mongodb.org/rest/api/2/issue/${JIRA_TICKET_ID}/transitions" \
             --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
@@ -133,12 +141,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\""
+          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 2 \
             --request GET \
-            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&jql=${JIRA_URL}" \
+            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&maxResults=1&jql=${JIRA_URL}" \
             --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
             --header 'Accept: application/json')
 
@@ -149,6 +161,8 @@ jobs:
           fi
 
           curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 60 \
             --request POST \
             --url "https://jira.mongodb.org/rest/api/2/issue/${JIRA_TICKET_ID}/transitions" \
             --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
