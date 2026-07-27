@@ -127,6 +127,7 @@ GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanc
 Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
 SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
 SHARDED | [Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)](./examples/14_cluster_with_backup_schedule)
+REPLICASET | [Restore a Cluster from a Backup Snapshot (`cloud_backup_snapshot_restore_job`, automated + point-in-time)](./examples/15_restore_snapshot_to_cluster)
 
 <!-- END_TABLES -->
 

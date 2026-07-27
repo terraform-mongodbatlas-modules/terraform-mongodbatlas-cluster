@@ -78,3 +78,6 @@ tables:
       - folder: 14
         name: Cluster with Scheduled Backups
         title_suffix: (retention override, cross-region copy, skip destroy on delete)
+      - folder: 15
+        name: Restore a Cluster from a Backup Snapshot
+        title_suffix: (`cloud_backup_snapshot_restore_job`, automated + point-in-time)
