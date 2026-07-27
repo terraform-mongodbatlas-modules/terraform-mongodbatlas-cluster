@@ -1,5 +1,5 @@
 ```release-note:enhancement
-variable/regions: Adds `shard_name` for SHARDED/GEOSHARDED grouping (`^[a-z0-9]{1,24}$`), named shards order by first appearance in `regions`
+variable/regions: Adds `shard_name` for `SHARDED`/`GEOSHARDED` grouping (`^[a-z0-9]{1,24}$`). Orders named shards by first appearance in `regions`
 ```
 
 ```release-note:note
