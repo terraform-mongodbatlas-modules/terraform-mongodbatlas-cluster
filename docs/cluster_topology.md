@@ -187,7 +187,7 @@ Within each item in the `regions` list, you can specify:
   
 - **`shard_name`** - Preferred shard identity for grouping regions into shards
   - Required for SHARDED/GEOSHARDED when using ISS (or use deprecated `shard_number`)
-  - Must match `^[a-z][a-z0-9]{0,23}$`; for GEOSHARDED a given `shard_name` maps to a single zone (regions in one shard share it; do not reuse it across zones)
+  - Must match `^[a-z0-9]{1,24}$`; for GEOSHARDED a given `shard_name` maps to a single zone (regions in one shard share it; do not reuse it across zones)
   - Groups follow first appearance in `regions`; not used when using `shard_count`
 - **`shard_number`** (deprecated) - Numeric shard grouping; removed in v1
   - Zone-scoped for GEOSHARDED; groups follow first appearance in `regions`
