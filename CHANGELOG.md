@@ -23,6 +23,10 @@ ENHANCEMENTS:
 * variable/regions: Adds `shard_name` for `SHARDED`/`GEOSHARDED` grouping (`^[a-z0-9]{1,24}$`). Orders named shards by first appearance in `regions` ([#190](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/190))
 * variable/version_release_system: Rejects `CONTINUOUS` when `mongo_db_major_version` is set ([#183](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/183))
 
+BUG FIXES:
+
+* module: Clamps auto-scaling `instance_size` (electable, read-only, analytics) to the configured min/max when an existing cluster is outside that range ([#145](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/145))
+
 ## 0.3.1 (March 17, 2026)
 
 BUG FIXES:
