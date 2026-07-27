@@ -95,7 +95,7 @@ jobs:
           JIRA_TICKET_ID=$(jq -r '.issues[0].id // empty' <<< "${json_response}")
           if [[ -z "${JIRA_TICKET_ID}" ]]; then
             echo "No matching JIRA ticket was found."
-            exit 1
+            exit 0
           fi
 
           curl --silent --show-error --fail-with-body \
@@ -145,7 +145,7 @@ jobs:
           JIRA_TICKET_ID=$(jq -r '.issues[0].id // empty' <<< "${json_response}")
           if [[ -z "${JIRA_TICKET_ID}" ]]; then
             echo "No matching JIRA ticket was found."
-            exit 1
+            exit 0
           fi
 
           curl --silent --show-error --fail-with-body \
