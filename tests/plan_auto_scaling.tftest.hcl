@@ -368,3 +368,77 @@ run "analytics_auto_scaling_undefined_inherits_from_electable" {
     error_message = "Expected analytics compute_scale_down_enabled to inherit from electable (true)"
   }
 }
+
+run "create_path_electable_instance_size_uses_compute_min" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-autoscaling-create-min"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    regions = [
+      {
+        name       = "US_EAST_1"
+        node_count = 3
+      }
+    ]
+    auto_scaling = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M40"
+      compute_min_instance_size  = "M20"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size == "M20"
+    error_message = "Create path (no existing cluster) should use compute_min_instance_size M20, got ${mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].electable_specs.instance_size}"
+  }
+}
+
+run "create_path_analytics_instance_size_uses_compute_min" {
+  command = plan
+
+  module {
+    source = "./"
+  }
+
+  variables {
+    name          = "tf-test-analytics-create-min"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    regions = [
+      {
+        name                 = "US_EAST_1"
+        node_count           = 3
+        node_count_analytics = 1
+      }
+    ]
+    auto_scaling = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M40"
+      compute_min_instance_size  = "M20"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+    auto_scaling_analytics = {
+      compute_enabled            = true
+      compute_max_instance_size  = "M50"
+      compute_min_instance_size  = "M30"
+      compute_scale_down_enabled = true
+      disk_gb_enabled            = true
+    }
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_specs.instance_size == "M30"
+    error_message = "Create path analytics should use analytics compute_min_instance_size M30, got ${mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].analytics_specs.instance_size}"
+  }
+}

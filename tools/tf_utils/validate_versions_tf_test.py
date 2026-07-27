@@ -98,6 +98,109 @@ terraform {
     assert "required_version" in errs[0]
 
 
+def test_errors_for_file_allows_empty_required_providers_when_no_providers_used(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "main.tf").write_text(
+        """\
+variable "existing_instance_size" {
+  type    = string
+  default = null
+}
+
+locals {
+  instance_size = coalesce(var.existing_instance_size, "M10")
+}
+
+output "instance_size" {
+  value = local.instance_size
+}
+""",
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.10"
+}
+""",
+    )
+    assert _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT) == []
+
+
+def test_errors_for_file_rejects_empty_required_providers_when_provider_used(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "main.tf").write_text(
+        'resource "mongodbatlas_project" "x" { org_id = "o" name = "n" }\n',
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.10"
+}
+""",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT)
+    assert any("missing or empty required_providers" in e for e in errs)
+
+
+def test_errors_for_file_rejects_empty_required_providers_when_provider_block_used(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "main.tf").write_text('provider "mongodbatlas" {}\n')
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.10"
+}
+""",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT)
+    assert any("missing or empty required_providers" in e for e in errs)
+
+
+def test_errors_for_file_rejects_empty_required_providers_when_module_providers_map_used(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "main.tf").write_text(
+        """\
+module "child" {
+  source    = "./child"
+  providers = { mongodbatlas = mongodbatlas }
+}
+""",
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.10"
+}
+""",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT)
+    assert any("missing or empty required_providers" in e for e in errs)
+
+
+def test_errors_for_file_empty_required_providers_still_checks_required_version(
+    tmp_path: Path,
+) -> None:
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.6"
+}
+""",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT)
+    assert len(errs) == 1
+    assert "required_version" in errs[0]
+
+
 def test_errors_for_file_missing_root_provider(tmp_path: Path) -> None:
     (tmp_path / "main.tf").write_text(
         'resource "mongodbatlas_project" "x" { org_id = "o" name = "n" }\n',
