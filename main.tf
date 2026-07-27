@@ -237,10 +237,10 @@ locals {
     var.auto_scaling.compute_min_instance_size,
     local.DEFAULT_INSTANCE_SIZE,
   )
-  analytics_compute_scale_down_enabled = coalesce(
-    try(var.auto_scaling_analytics.compute_scale_down_enabled, null),
-    var.auto_scaling.compute_scale_down_enabled,
-  )
+  # Inherit electable when auto_scaling_analytics is omitted (undefined); when explicitly set,
+  # an omitted compute_scale_down_enabled defaults to true (matches effective_auto_scaling_analytics
+  # and the auto_scaling_analytics variable contract).
+  analytics_compute_scale_down_enabled = local.analytics_auto_scaling_undefined ? var.auto_scaling.compute_scale_down_enabled : try(var.auto_scaling_analytics.compute_scale_down_enabled, true)
 
   # Auto-scaling instance_size inputs for electable / read-only / analytics (modules/_autoscaling_instance_size).
   autoscaling_instance_size_requests = merge(

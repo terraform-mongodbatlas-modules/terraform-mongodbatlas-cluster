@@ -162,6 +162,29 @@ terraform {
     assert any("missing or empty required_providers" in e for e in errs)
 
 
+def test_errors_for_file_rejects_empty_required_providers_when_module_providers_map_used(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "main.tf").write_text(
+        """\
+module "child" {
+  source    = "./child"
+  providers = { mongodbatlas = mongodbatlas }
+}
+""",
+    )
+    vf = tmp_path / "versions.tf"
+    vf.write_text(
+        """\
+terraform {
+  required_version = ">= 1.10"
+}
+""",
+    )
+    errs = _errors_for_file(vf, vf.read_text(), _CLUSTER_ROOT)
+    assert any("missing or empty required_providers" in e for e in errs)
+
+
 def test_errors_for_file_empty_required_providers_still_checks_required_version(
     tmp_path: Path,
 ) -> None:

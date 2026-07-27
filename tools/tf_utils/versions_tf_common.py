@@ -190,4 +190,17 @@ def providers_referenced_in_module_dir(
                 provider_name = unwrap_hcl2_string(name)
                 if provider_name in root_names:
                     used.add(provider_name)
+        # A `module` block's `providers = { name = ... }` map references provider names too.
+        for block in data.get("module") or []:
+            if not isinstance(block, dict):
+                continue
+            for body in block.values():
+                if not isinstance(body, dict):
+                    continue
+                providers_map = body.get("providers")
+                if not isinstance(providers_map, dict):
+                    continue
+                for name in providers_map:
+                    if unwrap_hcl2_string(name) in root_names:
+                        used.add(unwrap_hcl2_string(name))
     return frozenset(used), errs
