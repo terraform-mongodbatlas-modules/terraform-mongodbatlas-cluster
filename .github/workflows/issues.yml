@@ -1,0 +1,175 @@
+# path-sync copy -n sdlc
+name: Create JIRA ticket for new issues
+
+on:
+  issues:
+    types: [opened, reopened, closed]
+
+permissions:
+  issues: write
+
+jobs:
+  jira_task:
+    name: Create Jira issue
+    if: github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create JIRA ticket
+        id: create
+        shell: bash
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+
+          json_response=$(curl --silent --show-error --fail-with-body \
+            --request POST \
+            --url 'https://jira.mongodb.org/rest/api/2/issue' \
+            --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "fields": {
+                "project": {
+                  "id": "10984"
+                },
+                "summary": "MODULE HELP: '"${REPOSITORY_NAME}"' GitHub Issue n. '"${ISSUE_NUMBER}"'",
+                "issuetype": {
+                  "id": "12"
+                },
+                "customfield_12751": [
+                  {
+                    "id": "25550"
+                  }
+                ],
+                "description": "This ticket tracks the following GitHub issue: '"${ISSUE_URL}"'.",
+                "components": [
+                  {
+                    "id": "34035"
+                  }
+                ]
+              }
+            }')
+
+          JIRA_TICKET_ID=$(jq -er '.key' <<< "${json_response}")
+
+          echo "The following JIRA ticket has been created: ${JIRA_TICKET_ID}"
+          echo "jira-ticket-id=${JIRA_TICKET_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Add comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          token: ${{ github.token }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Thanks for opening this issue. Please ensure you have included the information requested in [our bug report template](${{ github.server_url }}/${{ github.repository }}/issues/new?template=bug_report.yml) so we can reproduce it.
+
+            The ticket [${{ steps.create.outputs.jira-ticket-id }}](https://jira.mongodb.org/browse/${{ steps.create.outputs.jira-ticket-id }}) was created for internal tracking.
+
+  reopen_jira_ticket:
+    name: Reopen JIRA ticket
+    if: github.event.action == 'reopened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reopen JIRA ticket if it exists
+        shell: bash
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+
+          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\""
+          JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
+
+          json_response=$(curl --silent --show-error --fail-with-body \
+            --request GET \
+            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&jql=${JIRA_URL}" \
+            --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
+            --header 'Accept: application/json')
+
+          JIRA_TICKET_ID=$(jq -r '.issues[0].id // empty' <<< "${json_response}")
+          if [[ -z "${JIRA_TICKET_ID}" ]]; then
+            echo "No matching JIRA ticket was found."
+            exit 1
+          fi
+
+          curl --silent --show-error --fail-with-body \
+            --request POST \
+            --url "https://jira.mongodb.org/rest/api/2/issue/${JIRA_TICKET_ID}/transitions" \
+            --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "transition": {
+                "id": 3
+              },
+              "update": {
+                "comment": [
+                  {
+                    "add": {
+                      "body": "The related GitHub issue was reopened. Updated via automated process."
+                    }
+                  }
+                ]
+              }
+            }'
+
+  close_jira_ticket:
+    name: Close JIRA ticket
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close JIRA ticket if it exists
+        shell: bash
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+
+          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\""
+          JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
+
+          json_response=$(curl --silent --show-error --fail-with-body \
+            --request GET \
+            --url "https://jira.mongodb.org/rest/api/2/search?fields=id&jql=${JIRA_URL}" \
+            --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
+            --header 'Accept: application/json')
+
+          JIRA_TICKET_ID=$(jq -r '.issues[0].id // empty' <<< "${json_response}")
+          if [[ -z "${JIRA_TICKET_ID}" ]]; then
+            echo "No matching JIRA ticket was found."
+            exit 1
+          fi
+
+          curl --silent --show-error --fail-with-body \
+            --request POST \
+            --url "https://jira.mongodb.org/rest/api/2/issue/${JIRA_TICKET_ID}/transitions" \
+            --header 'Authorization: Bearer '"${JIRA_API_TOKEN}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "transition": {
+                "id": 1371
+              },
+              "update": {
+                "comment": [
+                  {
+                    "add": {
+                      "body": "The related GitHub issue was closed. Resolved via automated process."
+                    }
+                  }
+                ]
+              },
+              "fields": {
+                "resolution": {
+                  "name": "Declined"
+                }
+              }
+            }'
