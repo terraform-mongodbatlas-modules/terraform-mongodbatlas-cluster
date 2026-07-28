@@ -26,6 +26,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          MODULE_NAME="${REPOSITORY_NAME#terraform-mongodbatlas-}"
+
           json_response=$(curl --silent --show-error --fail-with-body \
             --connect-timeout 10 \
             --max-time 60 \
@@ -39,7 +41,7 @@ jobs:
                 "project": {
                   "id": "10984"
                 },
-                "summary": "MODULE HELP: '"${REPOSITORY_NAME}"' GitHub Issue n. '"${ISSUE_NUMBER}"'",
+                "summary": "MODULE HELP: '"${MODULE_NAME}"' GitHub Issue n. '"${ISSUE_NUMBER}"'",
                 "issuetype": {
                   "id": "12"
                 },
@@ -86,7 +88,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
+          MODULE_NAME="${REPOSITORY_NAME#terraform-mongodbatlas-}"
+          JIRA_QUERY="project = CLOUDP AND resolution = Declined AND (text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" OR text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\") ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
@@ -142,7 +145,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
+          MODULE_NAME="${REPOSITORY_NAME#terraform-mongodbatlas-}"
+          JIRA_QUERY="project = CLOUDP AND resolution = Unresolved AND (text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" OR text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\") ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
