@@ -1,0 +1,4 @@
+```release-note:note
+example: Removes multi-shard examples 02_production_cluster_with_manual_scaling, 06_cluster_with_multi_zones, 07_cluster_with_multi_clouds, 10_cluster_with_multi_zone_multi_shards, 11_module_wrapper_cluster_size, and 12_cluster_uniform_sharded_topology due to known provider topology-change limitations on multi-shard clusters
+```
+
