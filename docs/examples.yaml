@@ -38,9 +38,7 @@ tables:
       - folder: 1
         environment: Production
         name: Production Cluster with Auto Scaling
-      - folder: 2
-        environment: Production
-        name: Production Cluster with Manual Scaling
+      # Example 2 removed (multi-shard cluster)
   - name: Examples
     readme_template: docs/example.tmpl.md
     columns: ["cluster_type", "name"]
@@ -58,23 +56,11 @@ tables:
       - folder: 5
         name: Cluster with Multi Regions Global
         title_suffix: (US+EU)
-      - folder: 6
-        name: Cluster with Multi Zones
-        title_suffix: (GEOSHARDED)
-      - folder: 7
-        name: Cluster with Multi Clouds
-        title_suffix: (AWS+AZURE)
+      # Examples 6, 7 removed (multi-shard clusters)
+
       - folder: 9
         name: Cluster using the `replication_specs` to define Cluster Topology
-      - folder: 10
-        name: Cluster with Multi Zone and each zone with multiple shards
-        title_suffix: (Advanced)
-      - folder: 11
-        name: Demonstrate how to create a module "on-top" of the module with a simplified interface
-        title_suffix: (cluster_size=S/M/L)
-        cluster_type: Multiple # must be explicit when there are more than one cluster_type in the example
-      - folder: 12
-        name: Cluster with uniform SHARDED topology using `shard_count`
+      # Examples 10, 11, 12 removed (multi-shard clusters)
       - folder: 14
         name: Cluster with Scheduled Backups
         title_suffix: (retention override, cross-region copy, skip destroy on delete)
