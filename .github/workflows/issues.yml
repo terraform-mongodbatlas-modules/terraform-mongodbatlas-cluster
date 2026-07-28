@@ -89,7 +89,7 @@ jobs:
           set -euo pipefail
 
           MODULE_NAME="${REPOSITORY_NAME#terraform-mongodbatlas-}"
-          JIRA_QUERY="project = CLOUDP AND resolution = Declined AND (text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" OR text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\") ORDER BY created DESC"
+          JIRA_QUERY="project = CLOUDP AND resolution = Declined AND text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
@@ -146,7 +146,7 @@ jobs:
           set -euo pipefail
 
           MODULE_NAME="${REPOSITORY_NAME#terraform-mongodbatlas-}"
-          JIRA_QUERY="project = CLOUDP AND resolution = Unresolved AND (text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" OR text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\") ORDER BY created DESC"
+          JIRA_QUERY="project = CLOUDP AND resolution = Unresolved AND text ~ \"MODULE HELP: ${MODULE_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
