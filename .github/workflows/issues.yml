@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
+          JIRA_QUERY="project = CLOUDP AND resolution = Declined AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
@@ -142,7 +142,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          JIRA_QUERY="project = CLOUDP AND issuetype in (Story, Bug, Investigation) AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
+          JIRA_QUERY="project = CLOUDP AND resolution = Unresolved AND text ~ \"MODULE HELP: ${REPOSITORY_NAME} GitHub Issue n. ${ISSUE_NUMBER}\" ORDER BY created DESC"
           JIRA_URL=$(jq -rn --arg query "${JIRA_QUERY}" '$query | @uri')
 
           json_response=$(curl --silent --show-error --fail-with-body \
