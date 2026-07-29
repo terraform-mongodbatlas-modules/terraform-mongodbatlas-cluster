@@ -344,7 +344,6 @@ Independent Shard Scaling (ISS) allows different shards to have different instan
 - Must explicitly specify `shard_name` (preferred) or `shard_number` for each region
 - Cannot use `shard_count` (which creates uniform shards)
 - Must disable auto-scaling (set `auto_scaling = {compute_enabled = false}`)
-- See example in [Production Cluster with Manual Scaling](../examples/02_production_cluster_with_manual_scaling)
 
 **Multi-shard topology changes:** because ISS inherently involves more than one shard, the same [multi-shard clusters and topology changes](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster#multi-shard-clusters-and-topology-changes) guidance from the provider applies here: keep existing shards in the same order, add new shards only after existing entries, and contact [MongoDB Support](https://www.mongodb.com/docs/atlas/support/#request-support) before removing a shard or making other significant production topology changes.
 

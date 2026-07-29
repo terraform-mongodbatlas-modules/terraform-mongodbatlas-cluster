@@ -1,0 +1,3 @@
+```release-note:note
+example: Updates 02_production_cluster_with_manual_scaling to a symmetric sharded topology: `instance_size` is now set once at the root level (`M40` for all shards) instead of per-shard sizes (`M40`/`M30` via Independent Shard Scaling). Per-shard sizing was dropped from the example due to known provider topology-change limitations on asymmetric sharded clusters
+```
