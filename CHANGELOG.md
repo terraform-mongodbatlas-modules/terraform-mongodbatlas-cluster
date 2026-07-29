@@ -11,6 +11,7 @@ BREAKING CHANGES:
 NOTES:
 
 * example: Removes the `13_example_import` example ([#185](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/185))
+* example: Updates 02_production_cluster_with_manual_scaling to a symmetric sharded topology: `instance_size` is now set once at the root level (`M40` for all shards) instead of per-shard sizes (`M40`/`M30` via Independent Shard Scaling). Per-shard sizing was dropped from the example due to known provider topology-change limitations on asymmetric sharded clusters ([#202](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/202))
 * provider/mongodbatlas: Requires minimum version 2.12 for `mongodbatlas_cloud_backup_schedule` `skip_destroy` support ([#184](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/184))
 * terraform: Requires minimum version 1.10 ([#171](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/171))
 * variable/regions: Deprecates `shard_number` in favor of `shard_name` (removal in v1), first-appearance group order unchanged while still in use ([#190](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/190))
