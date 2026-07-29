@@ -58,10 +58,16 @@ paths:
   - src_path: .github/workflows/generate-changelog.yml
   - src_path: .github/workflows/issues.yml
   - src_path: .github/workflows/notify-docs-team.yml
+  # Destinations use this GitHub Actions-only config; cluster owns fully SDLC-synced updates.
+  # Keep its GitHub Actions settings aligned with the active cluster config.
+  - src_path: .github/dependabot_destination.yml
+    dest_path: .github/dependabot.yml
   - src_path: .github/pr-labeler.yml
   - src_path: .github/workflows/pull-request-lint.yml
   - src_path: .github/workflows/release.yml
   - src_path: .github/workflows/update-terraform-versions.yml
+  - src_path: .github/workflows_destination/dependabot-sdlc-triage.yml
+    dest_path: .github/workflows/dependabot-sdlc-triage.yml
   - src_path: .github/workflows_destination/sdlc_validate.yaml
     dest_path: .github/workflows/sdlc-validate.yml
   - src_path: .github/actions/
