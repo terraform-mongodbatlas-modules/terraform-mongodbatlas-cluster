@@ -1,5 +1,7 @@
 ## (Unreleased)
 
+## 0.4.0 (July 29, 2026)
+
 BREAKING CHANGES:
 
 * submodule/cloud_backup_schedule: Manages the `cloud_backup_schedule` resource automatically when `backup_enabled` is `true` and `backup_mode` is not `UNMANAGED`, adding a new resource for existing clusters on next apply ([#169](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/169))
