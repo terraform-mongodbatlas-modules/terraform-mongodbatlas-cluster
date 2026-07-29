@@ -20,7 +20,7 @@ This guide explains how to configure and manage Cloud Backup in the MongoDB Atla
 
 The module manages the `mongodbatlas_cloud_backup_schedule` resource for you as a first-class resource, so you don't need to declare a separate resource block alongside the cluster. `backup_mode` controls whether and how the module manages the resource, and backup_retention, backup_copy_region, backup_export, and backup_schedule_skip_destroy configure the backup policy.
 
-See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_backup_schedule) for a complete working example combining retention overrides, cross-region copy, and deletion behavior.
+See [`examples/14_cluster_with_backup_schedule`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/14_cluster_with_backup_schedule) for a complete working example combining retention overrides, cross-region copy, and deletion behavior.
 
 ## Recommendations Summary
 
@@ -105,7 +105,7 @@ Frequency fields can't be set at all when `backup_mode = "ON_DEMAND"` (validatio
 
 **Atlas requires an `hourly` policy item for Continuous Cloud Backup.** If `backup_mode = "SCHEDULED"` and PIT is effectively enabled, omitting the `hourly` frequency (via `skip_default_retentions = true` with `hourly` unset) is rejected at `terraform plan`, since Atlas rejects that combination at the API level. If you don't need PIT, set `pit_enabled = false` explicitly to omit `hourly`.
 
-**Dev/non-production clusters** that don't need scheduled backups at all can use `backup_mode = "ON_DEMAND"` instead of `backup_enabled = false`. This keeps manual snapshots and PIT available without disabling backup coverage entirely, but note that PIT (continuous backup) is billed separately regardless of `backup_mode`; set `pit_enabled = false` explicitly if you want to avoid that cost too. See [`examples/08_development_cluster`](../examples/08_development_cluster) for this pattern.
+**Dev/non-production clusters** that don't need scheduled backups at all can use `backup_mode = "ON_DEMAND"` instead of `backup_enabled = false`. This keeps manual snapshots and PIT available without disabling backup coverage entirely, but note that PIT (continuous backup) is billed separately regardless of `backup_mode`; set `pit_enabled = false` explicitly if you want to avoid that cost too. See [`examples/08_development_cluster`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster) for this pattern.
 
 ## Cross-Region Copy
 
@@ -157,7 +157,7 @@ Setting this hardcodes `auto_export_enabled = true` on the schedule; there is no
 
 ## Restoring from a Snapshot
 
-Restoring is not a module-managed operation: a restore is a one-off action, not a steady-state cluster configuration, so it isn't wrapped by this module. To restore from a snapshot, use the `mongodbatlas_cloud_backup_snapshot_restore_job` resource directly, alongside a module-managed cluster. See [Restore a Cluster from a Backup Snapshot](../examples/15_restore_snapshot_to_cluster) for a full example covering the automated and point-in-time delivery types.
+Restoring is not a module-managed operation: a restore is a one-off action, not a steady-state cluster configuration, so it isn't wrapped by this module. To restore from a snapshot, use the `mongodbatlas_cloud_backup_snapshot_restore_job` resource directly, alongside a module-managed cluster. See [Restore a Cluster from a Backup Snapshot](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/15_restore_snapshot_to_cluster) for a full example covering the automated and point-in-time delivery types.
 
 The resource supports three delivery types (set exactly one per restore job):
 
@@ -198,13 +198,13 @@ Setting both in the same apply does **not** skip the delete; Terraform still des
 | `backup_schedule_skip_destroy` | Deletion behavior on destroy. See [Deletion Behavior](#deletion-behavior) |
 | `retain_backups_enabled` | Retain snapshots when the cluster itself is deleted |
 
-See the [main README](../README.md#backup-schedule) for the full generated variable reference, including types and defaults.
+See the [main README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/README.md#backup-schedule) for the full generated variable reference, including types and defaults.
 
 ## Additional Resources
 
-- **[Main Module README](../README.md#backup-schedule)**: Complete generated variable documentation for the Backup Schedule section
-- **[`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_backup_schedule)**: Complete working example
-- **[`examples/08_development_cluster`](../examples/08_development_cluster)**: `ON_DEMAND` mode for dev clusters
+- **[Main Module README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/README.md#backup-schedule)**: Complete generated variable documentation for the Backup Schedule section
+- **[`examples/14_cluster_with_backup_schedule`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/14_cluster_with_backup_schedule)**: Complete working example
+- **[`examples/08_development_cluster`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster)**: `ON_DEMAND` mode for dev clusters
 - **[Atlas Configure Backup Policy Documentation](https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/)**: Official Atlas backup policy documentation, including PIT restore window constraints
 - **[`mongodbatlas_cloud_backup_schedule` Provider Documentation](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/cloud_backup_schedule)**: Complete resource schema reference
 

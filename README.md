@@ -40,7 +40,7 @@ One of this project's primary objectives is to provide durable modules that supp
 
 ## Getting Started
 
-This section guides you through the basic steps to set up Terraform and run this module to create a new [development cluster](./examples/08_development_cluster) as a practical example.
+This section guides you through the basic steps to set up Terraform and run this module to create a new [development cluster](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster) as a practical example.
 
 ### Pre Requirements
 
@@ -56,7 +56,7 @@ Perform the following steps to download and configure the tools required to crea
 
    **NOTE**: Service Accounts (SA) is the preferred authentication method. See [Grant Programatic Access to an Organization](https://www.mongodb.com/docs/atlas/configure-api-access/#grant-programmatic-access-to-an-organization) in the MongoDB Atlas documentation for detailed instructions on configuring SA access to your project.
 
-4. Use an existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) or [create a new Atlas Project](./examples/08_development_cluster/README.md/#optionally-create-a-new-atlas-project-resource).
+4. Use an existing [MongoDB Atlas Project](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/project) or [create a new Atlas Project](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster/README.md/#optionally-create-a-new-atlas-project-resource).
 
 ### Create a New Cluster
 
@@ -65,9 +65,9 @@ Perform the following steps to create a new cluster using the cluster module:
 1. Create your Terraform configuration files.
   Ensure your files contain the code provided in this repository:
   
-   - [main.tf](./examples/08_development_cluster/README.md/#code-snippet)
-   - [variables.tf](./examples/08_development_cluster/variables.tf)
-   - [versions.tf](examples/08_development_cluster/versions.tf)
+   - [main.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster/README.md/#code-snippet)
+   - [variables.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster/variables.tf)
+   - [versions.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster/versions.tf)
 
 2. Initialize Terraform.
   
@@ -109,31 +109,31 @@ Run 'just gen-readme' to regenerate. -->
 
 Cluster Type | Environment | Name
 --- | --- | ---
-REPLICASET | Development | [Development Cluster](./examples/08_development_cluster)
-SHARDED | Production | [Production Cluster with Auto Scaling](./examples/01_production_cluster_with_auto_scaling)
-SHARDED | Production | [Production Cluster with Manual Scaling](./examples/02_production_cluster_with_manual_scaling)
+REPLICASET | Development | [Development Cluster](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/08_development_cluster)
+SHARDED | Production | [Production Cluster with Auto Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/01_production_cluster_with_auto_scaling)
+SHARDED | Production | [Production Cluster with Manual Scaling](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/02_production_cluster_with_manual_scaling)
 
 ## Examples
 
 Cluster Type | Name
 --- | ---
-SHARDED | [Cluster with Analytics Nodes](./examples/03_cluster_with_analytics_nodes)
-REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](./examples/04_cluster_with_multi_regions_local)
-SHARDED | [Cluster with Multi Regions Global (US+EU)](./examples/05_cluster_with_multi_regions_global)
-GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](./examples/06_cluster_with_multi_zones)
-SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](./examples/07_cluster_with_multi_clouds)
-SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](./examples/09_cluster_using_replication_specs)
-GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](./examples/10_cluster_with_multi_zone_multi_shards)
-Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](./examples/11_module_wrapper_cluster_size)
-SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](./examples/12_cluster_uniform_sharded_topology)
-SHARDED | [Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)](./examples/14_cluster_with_backup_schedule)
-REPLICASET | [Restore a Cluster from a Backup Snapshot (`cloud_backup_snapshot_restore_job`, automated + point-in-time)](./examples/15_restore_snapshot_to_cluster)
+SHARDED | [Cluster with Analytics Nodes](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/03_cluster_with_analytics_nodes)
+REPLICASET | [Cluster with Multi Regions Local (US_EAST_1 + US_EAST_2)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/04_cluster_with_multi_regions_local)
+SHARDED | [Cluster with Multi Regions Global (US+EU)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/05_cluster_with_multi_regions_global)
+GEOSHARDED | [Cluster with Multi Zones (GEOSHARDED)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/06_cluster_with_multi_zones)
+SHARDED | [Cluster with Multi Clouds (AWS+AZURE)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/07_cluster_with_multi_clouds)
+SHARDED | [Cluster using the `replication_specs` to define Cluster Topology](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/09_cluster_using_replication_specs)
+GEOSHARDED | [Cluster with Multi Zone and each zone with multiple shards (Advanced)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/10_cluster_with_multi_zone_multi_shards)
+Multiple | [Demonstrate how to create a module "on-top" of the module with a simplified interface (cluster_size=S/M/L)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/11_module_wrapper_cluster_size)
+SHARDED | [Cluster with uniform SHARDED topology using `shard_count`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/12_cluster_uniform_sharded_topology)
+SHARDED | [Cluster with Scheduled Backups (retention override, cross-region copy, skip destroy on delete)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/14_cluster_with_backup_schedule)
+REPLICASET | [Restore a Cluster from a Backup Snapshot (`cloud_backup_snapshot_restore_job`, automated + point-in-time)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/15_restore_snapshot_to_cluster)
 
 <!-- END_TABLES -->
 
 ## Cluster Topology Configuration
 
-**For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](./docs/cluster_topology.md), which includes detailed explanations, examples, and migration instructions.**
+**For a comprehensive guide on cluster topology configuration, see [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/cluster_topology.md), which includes detailed explanations, examples, and migration instructions.**
 
 This module offers two mutually exclusive ways to configure cluster topology:
 
@@ -593,7 +593,7 @@ Configures the `mongodbatlas_cloud_backup_schedule` resource managed internally 
 effect, no error); `backup_copy_region`, `backup_retention`, and `backup_export` return a
 validation error if set.
 
-**For a comprehensive guide on backup configuration, see [Backup Guide](./docs/backup_guide.md), which
+**For a comprehensive guide on backup configuration, see [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/backup_guide.md), which
 includes schedule defaults, PIT recommendations, deletion behavior, and cross-region/export examples.**
 
 ### backup_mode
@@ -608,7 +608,7 @@ Schedule mode for backup. Controls whether and how the module manages the `cloud
 
 Migrating to `UNMANAGED` with `backup_schedule_skip_destroy = true` requires two applies: set it to `true`
 first while `backup_mode` is still `SCHEDULED`/`ON_DEMAND`, then switch to `UNMANAGED` in a second apply.
-Setting both in the same apply does not skip the delete. See the [Backup Guide](./docs/backup_guide.md)
+Setting both in the same apply does not skip the delete. See the [Backup Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/backup_guide.md)
 for the full deletion-workflow writeup.
 
 Type: `string`
@@ -941,13 +941,13 @@ The module provides two approaches to accommodate different user needs and migra
 - Easier migration path from existing `mongodbatlas_advanced_cluster` resources
 - Ideal for users already familiar with the resource structure
 
-📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](./docs/cluster_topology.md)**
+📖 **For detailed guidance on when to use each approach, see the [Cluster Topology Guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/cluster_topology.md)**
 
 ### Why does this module require Terraform 1.10+?
 
 This module requires Terraform 1.10+ to remain aligned with the [MongoDB Atlas Provider compatibility matrix](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs#hashicorp-terraform-version-compatibility-matrix). While cross-variable validation references establish a technical minimum of Terraform 1.9, the provider support policy raises the module's supported minimum to Terraform 1.10.
 
-See [Terraform Version Requirements](./docs/terraform_version_requirements.md) for detailed explanation.
+See [Terraform Version Requirements](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/terraform_version_requirements.md) for detailed explanation.
 
 ### Does the module have cluster topology change limitations?
 
@@ -966,4 +966,4 @@ See [Multi-shard clusters and topology changes](https://registry.terraform.io/pr
 
 ### How do I upgrade to v0.4.0?
 
-See the [v0.3.x to v0.4.0 upgrade guide](docs/v0.4.0-upgrade-guide.md) for migration instructions, including the TLS minimum protocol default under `RECOMMENDED` and zero-diff options.
+See the [v0.3.x to v0.4.0 upgrade guide](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/docs/v0.4.0-upgrade-guide.md) for migration instructions, including the TLS minimum protocol default under `RECOMMENDED` and zero-diff options.
