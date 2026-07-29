@@ -137,6 +137,7 @@ def test_triage_label_names():
     assert MANAGED_LABEL.name == "dependabot-cluster"
     assert DESTINATION_LABEL.name == "dependabot-required"
     assert UNSUPPORTED_LABEL.name == "dependabot-unsupported"
+    assert "classification was incomplete" in UNSUPPORTED_LABEL.description
 
 
 def test_dependabot_ecosystem_uses_branch_prefix():
@@ -446,7 +447,9 @@ def test_unclassified_github_actions_change_gets_unsupported_label():
         unclassified_paths=(path,),
     )
     assert client.added_labels == [(42, UNSUPPORTED_LABEL)]
-    assert "classification was incomplete" in client.created_comments[0][1]
+    body = client.created_comments[0][1]
+    assert "classification was incomplete" in body
+    assert "no changed external `uses:` reference could be paired" not in body
 
 
 def test_schedule_refreshes_only_managed_pull_with_exact_cluster_match():
@@ -545,3 +548,15 @@ def test_github_client_only_sends_authorization_when_token_is_set(
 
     request = mock_urlopen.call_args.args[0]
     assert request.get_header("Authorization") == expected_authorization
+
+
+def test_github_client_sends_json_content_type_for_payloads():
+    response = MagicMock()
+    response.__enter__.return_value.read.return_value = b"{}"
+    client = GitHubClient("token", "example/repository")
+
+    with patch.object(dependabot_sdlc_triage, "urlopen", return_value=response) as mock_urlopen:
+        client._request("POST", "/issues/42/comments", payload={"body": "test"})
+
+    request = mock_urlopen.call_args.args[0]
+    assert request.get_header("Content-type") == "application/json"

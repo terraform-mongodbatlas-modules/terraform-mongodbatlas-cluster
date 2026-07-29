@@ -59,7 +59,10 @@ DESTINATION_LABEL = Label(
 UNSUPPORTED_LABEL = Label(
     name="dependabot-unsupported",
     color="FBCA04",
-    description="Dependabot ecosystem is not supported by automatic SDLC classification.",
+    description=(
+        "Dependabot update needs manual review because its ecosystem is unsupported or "
+        "automatic SDLC classification was incomplete."
+    ),
 )
 
 
@@ -124,6 +127,8 @@ class GitHubClient:
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         }
+        if data is not None:
+            headers["Content-Type"] = "application/json"
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(url, data=data, method=method, headers=headers)
@@ -407,7 +412,7 @@ def _unclassified_list(classification: ActionClassification) -> str:
     if classification.unclassified:
         lines.append(_reference_list(classification.unclassified))
     lines.extend(
-        f"- `{_escape_code(path)}`: no changed external `uses:` reference could be paired."
+        f"- `{_escape_code(path)}`: automatic GitHub Actions classification was incomplete."
         for path in classification.unclassified_paths
     )
     return "\n".join(lines)
