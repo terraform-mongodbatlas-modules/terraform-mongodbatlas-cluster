@@ -4,7 +4,7 @@ This guide explains how SDLC tooling is shared from the **cluster module** (sour
 
 ## How It Works
 
-The cluster module defines shared tooling in [`.github/sdlc.src.yaml`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/.github/sdlc.src.yaml). The `path-sync` tool copies files one-way from cluster to destination modules.
+The cluster module defines shared tooling in [`.github/sdlc.src.yaml`](../.github/sdlc.src.yaml). The `path-sync` tool copies files one-way from cluster to destination modules.
 
 ```
 cluster (source) ──sync──> atlas-azure (destination)
@@ -122,7 +122,7 @@ destination section.
 
 Before enabling the section, set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to an exact supported release
 in the destination-owned environment gap. Preserve the destination's credentials, setup, and
-snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/contributing/test-guide.md) for lane behavior.
+snapshot commands in the `OK_EDIT` gaps. See [test-guide.md](./test-guide.md) for lane behavior.
 
 Import validation (`justfile` section `import-validate`, workflow section `job-import-validate`) is enabled for cluster (source) and project by default. Other destinations skip those sections until they opt in.
 

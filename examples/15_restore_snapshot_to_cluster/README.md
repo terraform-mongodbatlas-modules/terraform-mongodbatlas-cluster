@@ -38,7 +38,6 @@ Copy and use this code to get started quickly:
 ```hcl
 module "source" {
   source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  version = "v0.4.0"
 
   name         = "restore-source"
   project_id   = var.project_id
@@ -60,7 +59,6 @@ module "source" {
 
 module "target" {
   source  = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  version = "v0.4.0"
 
   name         = "restore-target"
   project_id   = var.project_id
@@ -114,13 +112,13 @@ output "target_cluster" {
 ```
 
 **Additional files needed:**
-- [variables.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/15_restore_snapshot_to_cluster/variables.tf)
-- [versions.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/15_restore_snapshot_to_cluster/versions.tf)
+- [variables.tf](./variables.tf)
+- [versions.tf](./versions.tf)
 
 
 ## Production Considerations
-- This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/README.md#production-recommendations-enabled-by-default) for details.
-- However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/README.md#production-recommendations-manually-configured) list.
+- This example enables recommended production settings by default, see the [Production Recommendations (Enabled By Default)](../../README.md#production-recommendations-enabled-by-default) for details.
+- However, some recommendations must be manually set, see the [Production Recommendations (Manually Configured)](../../README.md#production-recommendations-manually-configured) list.
 
 ## Feedback or Help
 
@@ -140,4 +138,4 @@ resource "mongodbatlas_project" "this" {
 }
 ```
 
-- You can use this and replace the `var.project_id` with `mongodbatlas_project.this.project_id` in the [main.tf](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.0/examples/15_restore_snapshot_to_cluster/main.tf) file.
+- You can use this and replace the `var.project_id` with `mongodbatlas_project.this.project_id` in the [main.tf](./main.tf) file.
