@@ -496,6 +496,7 @@ def test_render_comment_explains_label_driven_triage():
     assert "`dependabot-cluster`" in body
     assert "`dependabot-required`" in body
     assert "`dependabot-unsupported`" in body
+    assert "`@dependabot recreate`" in body
     assert "If Dependabot PR checks fail because they need credentials" in body
 
 

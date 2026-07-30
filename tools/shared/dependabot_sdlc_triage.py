@@ -374,6 +374,10 @@ def render_comment() -> str:
             "workflow run before relying on it. If it did not run or failed, correct the workflow "
             "or script and rerun it manually.",
             "",
+            "After a cluster update and its SDLC sync are merged, comment `@dependabot recreate` "
+            "on this pull request to rebuild it from the updated default branch. Triage runs "
+            "automatically after the refresh; run it manually if labels still need reconciliation.",
+            "",
             "If Dependabot PR checks fail because they need credentials, define them as Dependabot "
             "secrets as well as Actions secrets. Dependabot-triggered checks cannot access Actions "
             "secrets.",
