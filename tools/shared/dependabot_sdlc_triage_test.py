@@ -364,7 +364,9 @@ def test_mixed_references_list_both_and_require_cluster_first():
     assert len(classification.destination) == 1
     assert client.added_labels == [(42, MANAGED_LABEL), (42, DESTINATION_LABEL)]
     body = client.created_comments[0][1]
-    assert "Both labels: wait for the cluster update and SDLC sync first" in body
+    assert "If a matching cluster Dependabot PR exists" in body
+    assert "Create a cluster PR with the suggested action version" in body
+    assert "Both labels: follow the `dependabot-cluster` guidance first" in body
 
 
 def test_destination_references_reconcile_only_changed_labels_and_keep_comment():

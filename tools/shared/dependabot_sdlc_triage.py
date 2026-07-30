@@ -359,12 +359,14 @@ def render_comment() -> str:
             "Review this pull request's `dependabot-*` labels.",
             "",
             "- `dependabot-cluster`: this update affects SDLC-managed content. Do not merge this "
-            "pull request. Check the equivalent cluster update and its SDLC sync; those changes "
-            "should be brought here automatically.",
+            "pull request. If a matching cluster Dependabot PR exists, wait for it and its SDLC "
+            "sync. If none exists, the source may be a destination-only workflow that Dependabot "
+            "does not scan in cluster. Create a cluster PR with the suggested action version, then "
+            "merge its SDLC sync.",
             "- `dependabot-required`: this pull request contains destination-owned updates. It can "
             "follow normal review once it has no `dependabot-cluster` label.",
-            "- Both labels: wait for the cluster update and SDLC sync first. Then run triage "
-            "again; merge only when `dependabot-cluster` has been removed.",
+            "- Both labels: follow the `dependabot-cluster` guidance first. Then run triage again; "
+            "merge only when `dependabot-cluster` has been removed.",
             "- `dependabot-unsupported`: automatic ownership classification was not possible. "
             "Review manually and extend the triage script if this update type should be supported.",
             "",
