@@ -9,6 +9,7 @@ on:
     types: [opened, reopened, synchronize]
   schedule:
     - cron: '0 9 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,7 +17,7 @@ permissions:
 
 jobs:
   triage:
-    if: github.event_name == 'schedule' || github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

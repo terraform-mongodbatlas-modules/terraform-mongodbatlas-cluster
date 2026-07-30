@@ -17,10 +17,9 @@ from shared.dependabot_sdlc_triage import (
     classify_action_references,
     dependabot_ecosystem,
     is_sdlc_managed,
-    matching_cluster_pulls,
     render_comment,
     triage_event,
-    triage_schedule,
+    triage_open_dependabot_pulls,
 )
 
 
@@ -32,18 +31,21 @@ class FakeClient:
         files_by_pull: dict[int, list[dict[str, Any]]] | None = None,
         contents: dict[tuple[str, str], str | None] | None = None,
         comments: list[dict[str, Any]] | None = None,
+        issue_labels: list[str] | None = None,
         open_pulls: list[dict[str, Any]] | None = None,
     ) -> None:
         self.files = files or []
         self.files_by_pull = files_by_pull or {}
         self.contents = contents or {}
-        self.comments = comments or []
+        self.comments_by_pull = {42: comments or []}
+        self.issue_labels_by_pull = {42: set(issue_labels or [])}
         self.open_pulls = open_pulls or []
         self.ensured_labels = []
         self.removed_labels = []
         self.added_labels = []
         self.created_comments = []
         self.updated_comments = []
+        self.operations = []
         self.reads = []
         self.list_open_pulls_count = 0
 
@@ -59,19 +61,27 @@ class FakeClient:
         return self.contents.get((path, ref))
 
     def ensure_label(self, label) -> None:
+        self.operations.append("ensure-label")
         self.ensured_labels.append(label)
 
     def remove_label(self, pull_number: int, label) -> None:
+        self.operations.append("remove-label")
         self.removed_labels.append((pull_number, label))
+        self.issue_labels_by_pull[pull_number].remove(label.name)
 
     def add_label(self, pull_number: int, label) -> None:
+        self.operations.append("add-label")
         self.added_labels.append((pull_number, label))
+        self.issue_labels_by_pull.setdefault(pull_number, set()).add(label.name)
+
+    def list_issue_labels(self, pull_number: int) -> list[dict[str, str]]:
+        return [{"name": name} for name in self.issue_labels_by_pull.setdefault(pull_number, set())]
 
     def list_comments(self, pull_number: int) -> list[dict[str, Any]]:
-        assert pull_number == 42
-        return self.comments
+        return self.comments_by_pull.setdefault(pull_number, [])
 
     def create_comment(self, pull_number: int, body: str) -> None:
+        self.operations.append("create-comment")
         self.created_comments.append((pull_number, body))
 
     def update_comment(self, comment_id: int, body: str) -> None:
@@ -137,7 +147,11 @@ def test_triage_label_names():
     assert MANAGED_LABEL.name == "dependabot-cluster"
     assert DESTINATION_LABEL.name == "dependabot-required"
     assert UNSUPPORTED_LABEL.name == "dependabot-unsupported"
-    assert "classification was incomplete" in UNSUPPORTED_LABEL.description
+    assert "unclassified" in UNSUPPORTED_LABEL.description
+    assert all(
+        len(label.description) <= 100
+        for label in (MANAGED_LABEL, DESTINATION_LABEL, UNSUPPORTED_LABEL)
+    )
 
 
 def test_dependabot_ecosystem_uses_branch_prefix():
@@ -277,24 +291,6 @@ def test_non_dependabot_event_has_no_effect():
     assert client.created_comments == []
 
 
-def test_matching_cluster_pulls_requires_exact_head_ref_and_title():
-    destination_pull = _pull()
-    exact_match = _pull(
-        7,
-        html_url="https://github.com/terraform-mongodbatlas-modules/"
-        "terraform-mongodbatlas-cluster/pull/7",
-    )
-    different_title = _pull(8, title="chore(deps): bump example from 1.2.1 to 1.2.3")
-    different_ref = _pull(9, head_ref="dependabot/go_modules/tools/example-1.2.4")
-
-    matches = matching_cluster_pulls(
-        destination_pull,
-        [exact_match, different_title, different_ref],
-    )
-
-    assert matches == (exact_match,)
-
-
 def test_managed_references_select_sync_label_and_create_comment():
     path = ".github/workflows/notify-docs-team.yml"
     client = FakeClient(
@@ -311,21 +307,15 @@ def test_managed_references_select_sync_label_and_create_comment():
         managed=(ActionReferenceChange(path, "actions/checkout", "old", "new"),),
         destination=(),
     )
-    assert client.ensured_labels == [
-        MANAGED_LABEL,
-        DESTINATION_LABEL,
-        UNSUPPORTED_LABEL,
-    ]
-    assert client.removed_labels == [
-        (42, DESTINATION_LABEL),
-        (42, UNSUPPORTED_LABEL),
-    ]
+    assert client.ensured_labels == [MANAGED_LABEL]
+    assert client.removed_labels == []
     assert client.added_labels == [(42, MANAGED_LABEL)]
     assert len(client.created_comments) == 1
+    assert client.operations[0] == "create-comment"
     body = client.created_comments[0][1]
     assert COMMENT_MARKER in body
-    assert "Land the equivalent update" in body
-    assert f"`{path}`: `actions/checkout@old` → `actions/checkout@new`" in body
+    assert "Review this pull request's `dependabot-*` labels" in body
+    assert "If it did not run or failed" in body
 
 
 def test_mixed_references_list_both_and_require_cluster_first():
@@ -346,37 +336,12 @@ def test_mixed_references_list_both_and_require_cluster_first():
     assert classification is not None
     assert len(classification.managed) == 1
     assert len(classification.destination) == 1
-    assert client.added_labels == [(42, MANAGED_LABEL)]
+    assert client.added_labels == [(42, MANAGED_LABEL), (42, DESTINATION_LABEL)]
     body = client.created_comments[0][1]
-    assert "mixes cluster-managed and destination-owned" in body
-    assert "SDLC sync first" in body
-    assert "`actions/checkout@old-managed`" in body
-    assert "`google-github-actions/auth@old-destination`" in body
+    assert "Both labels: wait for the cluster update and SDLC sync first" in body
 
 
-def test_pull_event_includes_matching_cluster_pull_link():
-    path = ".github/workflows/notify-docs-team.yml"
-    client = FakeClient(
-        files=[{"filename": path, "status": "modified"}],
-        contents={
-            (path, "base-sha"): "steps:\n  - uses: actions/checkout@old\n",
-            (path, "head-sha"): "steps:\n  - uses: actions/checkout@new\n",
-        },
-    )
-    cluster_pull = _pull(
-        7,
-        html_url="https://github.com/terraform-mongodbatlas-modules/"
-        "terraform-mongodbatlas-cluster/pull/7",
-    )
-
-    triage_event(_event(), client, [cluster_pull])
-
-    body = client.created_comments[0][1]
-    assert "#7: chore(deps): bump actions/example from 1.2.2 to 1.2.3" in body
-    assert cluster_pull["html_url"] in body
-
-
-def test_destination_references_select_destination_label_and_update_sticky_comment():
+def test_destination_references_reconcile_only_changed_labels_and_keep_comment():
     path = ".github/workflows/destination-only.yml"
     client = FakeClient(
         files=[{"filename": path, "status": "modified"}],
@@ -391,6 +356,7 @@ def test_destination_references_select_destination_label_and_update_sticky_comme
                 "body": f"{COMMENT_MARKER}\nold result",
             }
         ],
+        issue_labels=[MANAGED_LABEL.name, UNSUPPORTED_LABEL.name],
     )
 
     classification = triage_event(_event(), client)
@@ -399,16 +365,10 @@ def test_destination_references_select_destination_label_and_update_sticky_comme
         managed=(),
         destination=(ActionReferenceChange(path, "example/action", "old", "new"),),
     )
-    assert client.removed_labels == [
-        (42, MANAGED_LABEL),
-        (42, UNSUPPORTED_LABEL),
-    ]
+    assert client.removed_labels == [(42, MANAGED_LABEL), (42, UNSUPPORTED_LABEL)]
     assert client.added_labels == [(42, DESTINATION_LABEL)]
     assert client.created_comments == []
-    assert len(client.updated_comments) == 1
-    comment_id, body = client.updated_comments[0]
-    assert comment_id == 123
-    assert "normal review and merge process" in body
+    assert client.updated_comments == []
 
 
 def test_non_github_actions_dependabot_pr_gets_unsupported_label_and_comment():
@@ -420,17 +380,16 @@ def test_non_github_actions_dependabot_pr_gets_unsupported_label_and_comment():
         )
     }
 
-    assert triage_event(event, client) is None
+    assert triage_event(event, client) == ActionClassification(
+        managed=(),
+        destination=(),
+        unclassified_paths=("unsupported ecosystem",),
+    )
     assert client.reads == []
-    assert client.removed_labels == [
-        (42, MANAGED_LABEL),
-        (42, DESTINATION_LABEL),
-    ]
+    assert client.removed_labels == []
     assert client.added_labels == [(42, UNSUPPORTED_LABEL)]
     body = client.created_comments[0][1]
-    assert "`go_modules` Dependabot ecosystem is not supported" in body
-    assert "No automatic ownership classification was performed" in body
-    assert "add explicit classifier support" in body
+    assert "dependabot-unsupported" in body
 
 
 def test_unclassified_github_actions_change_gets_unsupported_label():
@@ -448,11 +407,10 @@ def test_unclassified_github_actions_change_gets_unsupported_label():
     )
     assert client.added_labels == [(42, UNSUPPORTED_LABEL)]
     body = client.created_comments[0][1]
-    assert "classification was incomplete" in body
-    assert "no changed external `uses:` reference could be paired" not in body
+    assert "automatic ownership classification was not possible" in body
 
 
-def test_schedule_refreshes_only_managed_pull_with_exact_cluster_match():
+def test_scheduled_triage_processes_every_open_dependabot_pull():
     managed_path = ".github/workflows/notify-docs-team.yml"
     destination_path = ".github/workflows/destination-only.yml"
     matched_managed = _pull(
@@ -460,14 +418,14 @@ def test_schedule_refreshes_only_managed_pull_with_exact_cluster_match():
         base_sha="base-42",
         head_sha="head-42",
     )
-    unmatched_managed = _pull(
+    second_managed = _pull(
         43,
         head_ref="dependabot/github_actions/github-actions-other",
         head_sha="head-43",
         title="chore(deps): bump actions/other from 1.0.0 to 2.0.0",
         base_sha="base-43",
     )
-    matched_destination = _pull(
+    destination = _pull(
         44,
         head_ref="dependabot/github_actions/actions/example-2",
         head_sha="head-44",
@@ -477,8 +435,8 @@ def test_schedule_refreshes_only_managed_pull_with_exact_cluster_match():
     client = FakeClient(
         open_pulls=[
             matched_managed,
-            unmatched_managed,
-            matched_destination,
+            second_managed,
+            destination,
             _pull(45, login="user"),
         ],
         files_by_pull={
@@ -489,38 +447,38 @@ def test_schedule_refreshes_only_managed_pull_with_exact_cluster_match():
         contents={
             (managed_path, "base-42"): "steps:\n  - uses: actions/checkout@old\n",
             (managed_path, "head-42"): "steps:\n  - uses: actions/checkout@new\n",
+            (managed_path, "base-43"): "steps:\n  - uses: actions/checkout@old\n",
+            (managed_path, "head-43"): "steps:\n  - uses: actions/checkout@new\n",
             (destination_path, "base-44"): "steps:\n  - uses: example/action@old\n",
             (destination_path, "head-44"): "steps:\n  - uses: example/action@new\n",
         },
     )
-    cluster_pulls = [
-        _pull(7),
-        _pull(
-            8,
-            head_ref=matched_destination["head"]["ref"],
-            title=matched_destination["title"],
-        ),
-    ]
+    refreshed = triage_open_dependabot_pulls(client)
 
-    refreshed = triage_schedule(client, cluster_pulls)
-
-    assert refreshed == (42,)
+    assert refreshed == (42, 43, 44)
     assert client.list_open_pulls_count == 1
-    assert [pull_number for pull_number, _ in client.created_comments] == [42]
-    assert (managed_path, "base-43") not in client.reads
+    assert [pull_number for pull_number, _ in client.created_comments] == [42, 43, 44]
+    assert (managed_path, "base-43") in client.reads
     assert (destination_path, "base-44") in client.reads
 
 
-def test_render_comment_escapes_backticks_in_paths():
-    body = render_comment(
-        ActionClassification(
-            managed=(),
-            destination=(ActionReferenceChange("odd`name.yml", "odd`action", "old", "new"),),
-        )
+def test_render_comment_explains_label_driven_triage():
+    body = render_comment()
+
+    assert "`dependabot-cluster`" in body
+    assert "`dependabot-required`" in body
+    assert "`dependabot-unsupported`" in body
+    assert "If Dependabot PR checks fail because they need credentials" in body
+
+
+def test_github_actions_error_annotation_escapes_workflow_commands():
+    annotation = dependabot_sdlc_triage._github_actions_error_annotation(
+        RuntimeError("status 422\ninvalid % payload")
     )
 
-    assert "`odd\\`name.yml`" in body
-    assert "`odd\\`action@old`" in body
+    assert annotation == (
+        "::error title=Dependabot SDLC triage failed::status 422%0Ainvalid %25 payload"
+    )
 
 
 def test_github_client_rejects_invalid_repository():
@@ -548,6 +506,7 @@ def test_github_client_only_sends_authorization_when_token_is_set(
 
     request = mock_urlopen.call_args.args[0]
     assert request.get_header("Authorization") == expected_authorization
+    assert mock_urlopen.call_args.kwargs["timeout"] == 15
 
 
 def test_github_client_sends_json_content_type_for_payloads():
@@ -560,3 +519,4 @@ def test_github_client_sends_json_content_type_for_payloads():
 
     request = mock_urlopen.call_args.args[0]
     assert request.get_header("Content-type") == "application/json"
+    assert request.get_header("User-agent") == "dependabot-sdlc-triage"

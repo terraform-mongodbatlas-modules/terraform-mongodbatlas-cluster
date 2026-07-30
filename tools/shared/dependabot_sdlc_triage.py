@@ -15,10 +15,10 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 COMMENT_MARKER = "<!-- dependabot-sdlc-triage -->"
-CLUSTER_REPOSITORY = "terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster"
 DEPENDABOT_LOGIN = "dependabot[bot]"
 SDLC_MARKER = "path-sync copy -n sdlc"
 GITHUB_ACTIONS_ECOSYSTEM = "github_actions"
+API_REQUEST_TIMEOUT_SECONDS = 15
 SECTION_MARKER_PATTERN = re.compile(
     r"^\s*#\s*===\s*(DO_NOT_EDIT|OK_EDIT):\s*path-sync\s+\S+\s*===\s*$"
 )
@@ -59,11 +59,9 @@ DESTINATION_LABEL = Label(
 UNSUPPORTED_LABEL = Label(
     name="dependabot-unsupported",
     color="FBCA04",
-    description=(
-        "Dependabot update needs manual review because its ecosystem is unsupported or "
-        "automatic SDLC classification was incomplete."
-    ),
+    description="Dependabot update needs manual review: unsupported or unclassified.",
 )
+TRIAGE_LABELS = (MANAGED_LABEL, DESTINATION_LABEL, UNSUPPORTED_LABEL)
 
 
 @dataclass(frozen=True)
@@ -125,6 +123,7 @@ class GitHubClient:
         data = json.dumps(payload).encode() if payload is not None else None
         headers = {
             "Accept": "application/vnd.github+json",
+            "User-Agent": "dependabot-sdlc-triage",
             "X-GitHub-Api-Version": "2022-11-28",
         }
         if data is not None:
@@ -133,7 +132,7 @@ class GitHubClient:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(url, data=data, method=method, headers=headers)
         try:
-            with urlopen(request) as response:
+            with urlopen(request, timeout=API_REQUEST_TIMEOUT_SECONDS) as response:
                 body = response.read()
         except HTTPError as error:
             message = error.read().decode(errors="replace")
@@ -206,14 +205,10 @@ class GitHubClient:
             )
 
     def remove_label(self, pull_number: int, label: Label) -> None:
-        try:
-            self._request(
-                "DELETE",
-                f"/issues/{pull_number}/labels/{quote(label.name)}",
-            )
-        except GitHubApiError as error:
-            if error.status != 404:
-                raise
+        self._request(
+            "DELETE",
+            f"/issues/{pull_number}/labels/{quote(label.name)}",
+        )
 
     def add_label(self, pull_number: int, label: Label) -> None:
         self._request(
@@ -221,6 +216,9 @@ class GitHubClient:
             f"/issues/{pull_number}/labels",
             payload={"labels": [label.name]},
         )
+
+    def list_issue_labels(self, pull_number: int) -> list[dict[str, Any]]:
+        return self._paginate(f"/issues/{pull_number}/labels")
 
     def list_comments(self, pull_number: int) -> list[dict[str, Any]]:
         return self._paginate(f"/issues/{pull_number}/comments")
@@ -244,28 +242,8 @@ def is_dependabot_event(event: dict[str, Any]) -> bool:
     return event.get("pull_request", {}).get("user", {}).get("login") == DEPENDABOT_LOGIN
 
 
-def dependabot_pull_key(pull_request: dict[str, Any]) -> tuple[str, str] | None:
-    if pull_request.get("user", {}).get("login") != DEPENDABOT_LOGIN:
-        return None
-    head_ref = pull_request.get("head", {}).get("ref")
-    title = pull_request.get("title")
-    if not head_ref or not title:
-        return None
-    return head_ref, title
-
-
-def matching_cluster_pulls(
-    pull_request: dict[str, Any],
-    cluster_pulls: list[dict[str, Any]],
-) -> tuple[dict[str, Any], ...]:
-    key = dependabot_pull_key(pull_request)
-    if key is None:
-        return ()
-    return tuple(pull for pull in cluster_pulls if dependabot_pull_key(pull) == key)
-
-
 def dependabot_ecosystem(pull_request: dict[str, Any]) -> str | None:
-    if dependabot_pull_key(pull_request) is None:
+    if pull_request.get("user", {}).get("login") != DEPENDABOT_LOGIN:
         return None
     head_ref = pull_request["head"]["ref"]
     parts = head_ref.split("/", 2)
@@ -388,122 +366,31 @@ def classify_action_references(
     )
 
 
-def _escape_code(value: str) -> str:
-    return value.replace("`", r"\`")
-
-
-def _reference_list(references: tuple[ActionReferenceChange, ...]) -> str:
-    if not references:
-        return "_None._"
-    lines = []
-    for reference in references:
-        before = reference.before or "_missing_"
-        after = reference.after or "_missing_"
-        lines.append(
-            f"- `{_escape_code(reference.path)}`: "
-            f"`{_escape_code(reference.action)}@{_escape_code(before)}` → "
-            f"`{_escape_code(reference.action)}@{_escape_code(after)}`"
-        )
-    return "\n".join(lines)
-
-
-def _unclassified_list(classification: ActionClassification) -> str:
-    lines = []
-    if classification.unclassified:
-        lines.append(_reference_list(classification.unclassified))
-    lines.extend(
-        f"- `{_escape_code(path)}`: automatic GitHub Actions classification was incomplete."
-        for path in classification.unclassified_paths
-    )
-    return "\n".join(lines)
-
-
-def render_comment(
-    classification: ActionClassification,
-    cluster_pulls: tuple[dict[str, Any], ...] = (),
-) -> str:
-    if classification.unclassified or classification.unclassified_paths:
-        guidance = (
-            "Automatic GitHub Actions classification was incomplete. Review the references "
-            "manually and add classifier support before relying on this triage result."
-        )
-    elif classification.managed and classification.destination:
-        guidance = (
-            "This pull request mixes cluster-managed and destination-owned GitHub Actions "
-            "references.\n\n"
-            "Land the equivalent shared update in the "
-            "[cluster repository](https://github.com/terraform-mongodbatlas-modules/"
-            "terraform-mongodbatlas-cluster) and its SDLC sync first. Then update this pull "
-            "request and review the remaining destination-owned references normally."
-        )
-    elif classification.managed:
-        guidance = (
-            "This pull request changes only cluster-managed GitHub Actions references.\n\n"
-            "Land the equivalent update in the "
-            "[cluster repository](https://github.com/terraform-mongodbatlas-modules/"
-            "terraform-mongodbatlas-cluster) and its SDLC sync before merging this pull "
-            "request. After the sync lands, close this pull request if it was superseded."
-        )
-    else:
-        guidance = (
-            "This pull request changes only destination-owned GitHub Actions references, "
-            "so it can follow the normal review and merge process."
-        )
-    lines = [
-        COMMENT_MARKER,
-        "## Dependabot SDLC triage",
-        "",
-        guidance,
-    ]
-    if cluster_pulls:
-        lines.extend(
-            [
-                "",
-                "### Matching cluster Dependabot PRs",
-                "",
-                *(
-                    f"- [#{pull['number']}: {pull['title']}]({pull['html_url']})"
-                    for pull in cluster_pulls
-                ),
-            ]
-        )
-    lines.extend(
-        [
-            "",
-            "### Cluster-managed GitHub Actions references",
-            "",
-            _reference_list(classification.managed),
-            "",
-            "### Destination-owned GitHub Actions references",
-            "",
-            _reference_list(classification.destination),
-        ]
-    )
-    if classification.unclassified or classification.unclassified_paths:
-        lines.extend(
-            [
-                "",
-                "### Unclassified GitHub Actions changes",
-                "",
-                _unclassified_list(classification),
-            ]
-        )
-    return "\n".join(lines)
-
-
-def render_unsupported_comment(ecosystem: str | None) -> str:
-    ecosystem_name = ecosystem or "unknown"
+def render_comment() -> str:
     return "\n".join(
         [
             COMMENT_MARKER,
             "## Dependabot SDLC triage",
             "",
-            f"The `{_escape_code(ecosystem_name)}` Dependabot ecosystem is not supported by "
-            "automatic SDLC classification.",
+            "Review this pull request's `dependabot-*` labels.",
             "",
-            "No automatic ownership classification was performed. If this ecosystem becomes "
-            "destination-managed, add explicit classifier support before relying on automatic "
-            "triage.",
+            "- `dependabot-cluster`: this update affects SDLC-managed content. Do not merge this "
+            "pull request. Check the equivalent cluster update and its SDLC sync; those changes "
+            "should be brought here automatically.",
+            "- `dependabot-required`: this pull request contains destination-owned updates. It can "
+            "follow normal review once it has no `dependabot-cluster` label.",
+            "- Both labels: wait for the cluster update and SDLC sync first. Then run triage "
+            "again; merge only when `dependabot-cluster` has been removed.",
+            "- `dependabot-unsupported`: automatic ownership classification was not possible. "
+            "Review manually and extend the triage script if this update type should be supported.",
+            "",
+            "If this pull request has no `dependabot-*` label, check the Dependabot SDLC triage "
+            "workflow run before relying on it. If it did not run or failed, correct the workflow "
+            "or script and rerun it manually.",
+            "",
+            "If Dependabot PR checks fail because they need credentials, define them as Dependabot "
+            "secrets as well as Actions secrets. Dependabot-triggered checks cannot access Actions "
+            "secrets.",
         ]
     )
 
@@ -519,55 +406,34 @@ def classify_pull_request(
     return classify_action_references(files, client.read_file, base_ref, head_ref)
 
 
-def apply_triage(
-    pull_request: dict[str, Any],
-    classification: ActionClassification,
-    client: GitHubClient,
-    cluster_pulls: tuple[dict[str, Any], ...] = (),
-) -> None:
-    pull_number = int(pull_request["number"])
-
-    for label in (MANAGED_LABEL, DESTINATION_LABEL, UNSUPPORTED_LABEL):
-        client.ensure_label(label)
-
+def desired_labels(classification: ActionClassification) -> tuple[Label, ...]:
     if classification.unclassified or classification.unclassified_paths:
-        selected_label = UNSUPPORTED_LABEL
-    elif classification.managed:
-        selected_label = MANAGED_LABEL
-    else:
-        selected_label = DESTINATION_LABEL
-    for label in (MANAGED_LABEL, DESTINATION_LABEL, UNSUPPORTED_LABEL):
-        if label != selected_label:
-            client.remove_label(pull_number, label)
-    client.add_label(pull_number, selected_label)
-
-    body = render_comment(classification, cluster_pulls)
-    update_sticky_comment(pull_number, body, client)
+        return (UNSUPPORTED_LABEL,)
+    labels = []
+    if classification.managed:
+        labels.append(MANAGED_LABEL)
+    if classification.destination:
+        labels.append(DESTINATION_LABEL)
+    return tuple(labels) or (UNSUPPORTED_LABEL,)
 
 
-def apply_unsupported_triage(
-    pull_request: dict[str, Any],
-    ecosystem: str | None,
-    client: GitHubClient,
+def reconcile_labels(
+    pull_request: dict[str, Any], desired: tuple[Label, ...], client: GitHubClient
 ) -> None:
     pull_number = int(pull_request["number"])
-    for label in (MANAGED_LABEL, DESTINATION_LABEL, UNSUPPORTED_LABEL):
+    current_names = {label["name"] for label in client.list_issue_labels(pull_number)}
+    desired_names = {label.name for label in desired}
+    for label in desired:
         client.ensure_label(label)
-    for label in (MANAGED_LABEL, DESTINATION_LABEL):
-        client.remove_label(pull_number, label)
-    client.add_label(pull_number, UNSUPPORTED_LABEL)
-    update_sticky_comment(
-        pull_number,
-        render_unsupported_comment(ecosystem),
-        client,
-    )
+    for label in TRIAGE_LABELS:
+        if label.name in current_names - desired_names:
+            client.remove_label(pull_number, label)
+    for label in desired:
+        if label.name not in current_names:
+            client.add_label(pull_number, label)
 
 
-def update_sticky_comment(
-    pull_number: int,
-    body: str,
-    client: GitHubClient,
-) -> None:
+def create_comment_once(pull_number: int, client: GitHubClient) -> None:
     existing_comment = next(
         (
             comment
@@ -577,60 +443,48 @@ def update_sticky_comment(
         ),
         None,
     )
-    if existing_comment:
-        client.update_comment(int(existing_comment["id"]), body)
-    else:
-        client.create_comment(pull_number, body)
+    if not existing_comment:
+        client.create_comment(pull_number, render_comment())
 
 
 def triage_event(
     event: dict[str, Any],
     client: GitHubClient,
-    cluster_pulls: list[dict[str, Any]] | None = None,
 ) -> ActionClassification | None:
     if not is_dependabot_event(event):
         return None
 
     pull_request = event["pull_request"]
     ecosystem = dependabot_ecosystem(pull_request)
-    if ecosystem != GITHUB_ACTIONS_ECOSYSTEM:
-        apply_unsupported_triage(pull_request, ecosystem, client)
-        return None
-
-    classification = classify_pull_request(pull_request, client)
-    matches = matching_cluster_pulls(pull_request, cluster_pulls or [])
-    apply_triage(pull_request, classification, client, matches)
+    classification = (
+        classify_pull_request(pull_request, client)
+        if ecosystem == GITHUB_ACTIONS_ECOSYSTEM
+        else ActionClassification((), (), unclassified_paths=("unsupported ecosystem",))
+    )
+    create_comment_once(int(pull_request["number"]), client)
+    reconcile_labels(pull_request, desired_labels(classification), client)
     return classification
 
 
-def triage_schedule(
-    client: GitHubClient,
-    cluster_pulls: list[dict[str, Any]],
-) -> tuple[int, ...]:
+def triage_open_dependabot_pulls(client: GitHubClient) -> tuple[int, ...]:
     refreshed: list[int] = []
-    for pull_request in client.list_open_pulls():
-        matches = matching_cluster_pulls(pull_request, cluster_pulls)
-        if not matches:
-            continue
-        ecosystem = dependabot_ecosystem(pull_request)
-        if ecosystem != GITHUB_ACTIONS_ECOSYSTEM:
-            apply_unsupported_triage(pull_request, ecosystem, client)
-            refreshed.append(int(pull_request["number"]))
-            continue
-        classification = classify_pull_request(pull_request, client)
-        if (
-            not classification.managed
-            and not classification.unclassified
-            and not classification.unclassified_paths
-        ):
-            continue
-        apply_triage(pull_request, classification, client, matches)
+    for pull_request in open_dependabot_pulls(client):
+        triage_event({"pull_request": pull_request}, client)
         refreshed.append(int(pull_request["number"]))
     return tuple(refreshed)
 
 
 def open_dependabot_pulls(client: GitHubClient) -> list[dict[str, Any]]:
-    return [pull for pull in client.list_open_pulls() if dependabot_pull_key(pull) is not None]
+    return [
+        pull
+        for pull in client.list_open_pulls()
+        if pull.get("user", {}).get("login") == DEPENDABOT_LOGIN
+    ]
+
+
+def _github_actions_error_annotation(error: Exception) -> str:
+    message = str(error).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    return f"::error title=Dependabot SDLC triage failed::{message}"
 
 
 def main() -> None:
@@ -641,25 +495,19 @@ def main() -> None:
         repository=os.environ["GITHUB_REPOSITORY"],
         api_url=os.environ.get("GITHUB_API_URL", "https://api.github.com"),
     )
-    cluster_client = GitHubClient(
-        token=None,
-        repository=CLUSTER_REPOSITORY,
-        api_url=os.environ.get("GITHUB_API_URL", "https://api.github.com"),
-    )
-    try:
-        cluster_pulls = open_dependabot_pulls(cluster_client)
-    except GitHubApiError as error:
-        logging.warning("could not list public cluster pull requests: %s", error)
-        cluster_pulls = []
-
     event_name = os.environ["GITHUB_EVENT_NAME"]
     if event_name == "pull_request_target":
-        triage_event(event, destination_client, cluster_pulls)
-    elif event_name == "schedule":
-        triage_schedule(destination_client, cluster_pulls)
+        triage_event(event, destination_client)
+    elif event_name in {"schedule", "workflow_dispatch"}:
+        triage_open_dependabot_pulls(destination_client)
     else:
         raise ValueError(f"unsupported GitHub event: {event_name}")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as error:
+        print(_github_actions_error_annotation(error))
+        logging.exception("Dependabot SDLC triage failed")
+        raise

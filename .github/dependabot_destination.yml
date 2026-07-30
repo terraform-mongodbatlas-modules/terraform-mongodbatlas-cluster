@@ -22,5 +22,3 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "chore(deps)"
-    labels:
-      - "dependencies"
