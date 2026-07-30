@@ -45,7 +45,9 @@ paths:
   - src_path: tools/tf_utils/
   - src_path: tools/release/
   - src_path: tools/pyproject.toml
+  # Shared helpers and their tests must update together in every destination.
   - src_path: tools/shared/
+    sync_mode: replace
   - src_path: tools/uv.lock
   - src_path: tools/workspace/
   - src_path: tools/dev/__init__.py
