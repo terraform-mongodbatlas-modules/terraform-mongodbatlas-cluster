@@ -22,7 +22,7 @@ jobs:
           just: 'true'
           uv: 'true'
           go: 'true'
-      - uses: mongodb/terraform-provider-mongodbatlas/.github/templates/run-script-and-commit@6d44933d2bdc6384c2c8e0e7c17e5602866ced6f
+      - uses: mongodb/terraform-provider-mongodbatlas/.github/templates/run-script-and-commit@master
         with:
           script_call: 'just init-changelog build-changelog'
           file_to_commit: 'CHANGELOG.md'
