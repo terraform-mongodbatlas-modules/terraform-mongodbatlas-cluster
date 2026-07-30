@@ -23,20 +23,8 @@ SECTION_MARKER_PATTERN = re.compile(
     r"^\s*#\s*===\s*(DO_NOT_EDIT|OK_EDIT):\s*path-sync\s+\S+\s*===\s*$"
 )
 USES_PATTERN = re.compile(r"^\s*(?:-\s*)?uses:\s*(.+?)\s*$")
-# Mirrors whole-file workflow mappings in .github/sdlc.src.yaml. Section-managed workflows are
-# classified from their trusted base markers instead.
-WHOLE_FILE_MANAGED_PATHS = {
-    ".github/workflows/check-changelog-entry-file.yml",
-    ".github/workflows/dependabot-sdlc-triage.yml",
-    ".github/workflows/generate-changelog.yml",
-    ".github/workflows/issues.yml",
-    ".github/workflows/notify-docs-team.yml",
-    ".github/workflows/pull-request-lint.yml",
-    ".github/workflows/release.yml",
-    ".github/workflows/sdlc-validate.yml",
-    ".github/workflows/update-terraform-versions.yml",
-}
-WHOLE_FILE_MANAGED_PREFIXES = (".github/actions/",)
+# Composite actions do not carry the path-sync marker that identifies copied workflows.
+COMPOSITE_ACTION_MANAGED_PREFIXES = (".github/actions/",)
 
 
 @dataclass(frozen=True)
@@ -260,11 +248,7 @@ def is_sdlc_managed(content: str | None) -> bool:
 
 
 def _whole_file_managed(path: str, content: str) -> bool:
-    return (
-        path in WHOLE_FILE_MANAGED_PATHS
-        or path.startswith(WHOLE_FILE_MANAGED_PREFIXES)
-        or is_sdlc_managed(content)
-    )
+    return path.startswith(COMPOSITE_ACTION_MANAGED_PREFIXES) or is_sdlc_managed(content)
 
 
 def _line_ownership(path: str, content: str) -> dict[int, str]:

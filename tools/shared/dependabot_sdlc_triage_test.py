@@ -226,11 +226,31 @@ def test_classify_action_references_ignores_untrusted_head_marker_changes():
     )
 
 
-def test_classify_action_references_knows_whole_file_sdlc_mappings_without_marker():
+def test_classify_action_references_uses_marker_for_new_copied_workflows():
     path = ".github/workflows/notify-docs-team.yml"
     contents = {
-        (path, "base"): "steps:\n  - uses: actions/checkout@old\n",
-        (path, "head"): "steps:\n  - uses: actions/checkout@new\n",
+        (path, "base"): "# path-sync copy -n sdlc\nsteps:\n  - uses: actions/checkout@old\n",
+        (path, "head"): "# path-sync copy -n sdlc\nsteps:\n  - uses: actions/checkout@new\n",
+    }
+
+    classification = classify_action_references(
+        [{"filename": path, "status": "modified"}],
+        lambda file_path, ref: contents.get((file_path, ref)),
+        "base",
+        "head",
+    )
+
+    assert classification.managed == (
+        ActionReferenceChange(path, "actions/checkout", "old", "new"),
+    )
+    assert classification.destination == ()
+
+
+def test_classify_action_references_treats_composite_actions_as_managed_without_marker():
+    path = ".github/actions/setup/action.yml"
+    contents = {
+        (path, "base"): "runs:\n  using: composite\n  steps:\n    - uses: actions/checkout@old\n",
+        (path, "head"): "runs:\n  using: composite\n  steps:\n    - uses: actions/checkout@new\n",
     }
 
     classification = classify_action_references(
@@ -296,8 +316,14 @@ def test_managed_references_select_sync_label_and_create_comment():
     client = FakeClient(
         files=[{"filename": path, "status": "modified"}],
         contents={
-            (path, "base-sha"): "steps:\n  - uses: actions/checkout@old\n",
-            (path, "head-sha"): "steps:\n  - uses: actions/checkout@new\n",
+            (
+                path,
+                "base-sha",
+            ): "# path-sync copy -n sdlc\nsteps:\n  - uses: actions/checkout@old\n",
+            (
+                path,
+                "head-sha",
+            ): "# path-sync copy -n sdlc\nsteps:\n  - uses: actions/checkout@new\n",
         },
     )
 
