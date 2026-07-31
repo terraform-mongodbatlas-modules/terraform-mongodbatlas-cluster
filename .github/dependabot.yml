@@ -7,6 +7,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
     groups:
       python-deps:
         patterns: ["*"]
@@ -22,6 +24,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
     allow:
       - dependency-type: "all"
     groups:
@@ -33,10 +37,14 @@ updates:
       - "dependencies"
 
   - package-ecosystem: "github-actions"
+    cooldown:
+      default-days: 7
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
     groups:
       github-actions:
         patterns: ["*"]

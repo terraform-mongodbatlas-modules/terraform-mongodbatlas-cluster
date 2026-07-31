@@ -283,6 +283,10 @@ update-terraform-versions:
 # SDLC VALIDATION (only for destination repos)
 sdlc-validate:
     uvx path-sync validate-no-changes -b main
+
+dependabot-sdlc-triage:
+    # Reconcile Dependabot SDLC triage labels and guidance comments.
+    {{py}} shared.dependabot_sdlc_triage
 # === OK_EDIT: path-sync sdlc-validate ===
 
 # ---- Module-specific recipes (not synced) ----

@@ -64,7 +64,7 @@ runs:
 
     - name: Install terraform-docs
       if: inputs.docs == 'true'
-      uses: jaxxstorm/action-install-gh-release@v1.10.0
+      uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8
       with:
         repo: terraform-docs/terraform-docs
         tag: v0.20.0
