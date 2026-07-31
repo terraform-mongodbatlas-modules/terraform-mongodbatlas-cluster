@@ -16,6 +16,7 @@ from shared.dependabot_sdlc_triage import (
     GitHubClient,
     classify_action_references,
     dependabot_ecosystem,
+    is_dependabot_pull_request,
     is_sdlc_managed,
     render_comment,
     triage_event,
@@ -44,7 +45,6 @@ class FakeClient:
         self.removed_labels = []
         self.added_labels = []
         self.created_comments = []
-        self.updated_comments = []
         self.operations = []
         self.reads = []
         self.list_open_pulls_count = 0
@@ -83,9 +83,6 @@ class FakeClient:
     def create_comment(self, pull_number: int, body: str) -> None:
         self.operations.append("create-comment")
         self.created_comments.append((pull_number, body))
-
-    def update_comment(self, comment_id: int, body: str) -> None:
-        self.updated_comments.append((comment_id, body))
 
 
 def _pull(
@@ -161,6 +158,11 @@ def test_dependabot_ecosystem_uses_branch_prefix():
         == "go_modules"
     )
     assert dependabot_ecosystem(_pull(head_ref="feature/example")) is None
+
+
+def test_is_dependabot_pull_request_checks_the_pr_author():
+    assert is_dependabot_pull_request(_pull())
+    assert not is_dependabot_pull_request(_pull(login="octocat"))
 
 
 def test_classify_action_references_uses_trusted_base_section_markers():
@@ -396,7 +398,6 @@ def test_destination_references_reconcile_only_changed_labels_and_keep_comment()
     assert client.removed_labels == [(42, MANAGED_LABEL), (42, UNSUPPORTED_LABEL)]
     assert client.added_labels == [(42, DESTINATION_LABEL)]
     assert client.created_comments == []
-    assert client.updated_comments == []
 
 
 def test_non_github_actions_dependabot_pr_gets_unsupported_label_and_comment():

@@ -218,20 +218,17 @@ class GitHubClient:
             payload={"body": body},
         )
 
-    def update_comment(self, comment_id: int, body: str) -> None:
-        self._request(
-            "PATCH",
-            f"/issues/comments/{comment_id}",
-            payload={"body": body},
-        )
-
 
 def is_dependabot_event(event: dict[str, Any]) -> bool:
-    return event.get("pull_request", {}).get("user", {}).get("login") == DEPENDABOT_LOGIN
+    return is_dependabot_pull_request(event.get("pull_request", {}))
+
+
+def is_dependabot_pull_request(pull_request: dict[str, Any]) -> bool:
+    return pull_request.get("user", {}).get("login") == DEPENDABOT_LOGIN
 
 
 def dependabot_ecosystem(pull_request: dict[str, Any]) -> str | None:
-    if pull_request.get("user", {}).get("login") != DEPENDABOT_LOGIN:
+    if not is_dependabot_pull_request(pull_request):
         return None
     head_ref = pull_request["head"]["ref"]
     parts = head_ref.split("/", 2)
@@ -465,11 +462,7 @@ def triage_open_dependabot_pulls(client: GitHubClient) -> tuple[int, ...]:
 
 
 def open_dependabot_pulls(client: GitHubClient) -> list[dict[str, Any]]:
-    return [
-        pull
-        for pull in client.list_open_pulls()
-        if pull.get("user", {}).get("login") == DEPENDABOT_LOGIN
-    ]
+    return [pull for pull in client.list_open_pulls() if is_dependabot_pull_request(pull)]
 
 
 def _github_actions_error_annotation(error: Exception) -> str:
