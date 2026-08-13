@@ -302,7 +302,8 @@ def _parse_dump_config(data: dict[str, Any]) -> DumpConfig:
 
 
 def sanitize_address(address: str) -> str:
-    return address.replace(".", "_").replace("/", "_")
+    # Strip " so snapshot filenames are valid on Windows (NTFS forbids quotes).
+    return address.replace(".", "_").replace("/", "_").replace('"', "")
 
 
 WORKSPACE_CONFIG_FILE = "workspace_test_config.yaml"
