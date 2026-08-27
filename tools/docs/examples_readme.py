@@ -154,7 +154,10 @@ def generate_readme(
         + "\n"
     )
     content = template.replace("{{ .NAME }}", example_name)
-    content = content.replace("{{ .DESCRIPTION }}", description)
+    if description:
+        content = content.replace("{{ .DESCRIPTION }}", description)
+    else:
+        content = content.replace("\n\n{{ .DESCRIPTION }}\n\n", "\n\n")
     code_snippet = generate_code_snippet(example_dir, registry_source, version, additional_files)
     content = content.replace("{{ .CODE_SNIPPET }}", code_snippet)
     content = doc_utils.apply_template_vars(
