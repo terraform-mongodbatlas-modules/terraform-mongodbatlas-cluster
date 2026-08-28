@@ -5,6 +5,8 @@ Run 'just gen-examples' to regenerate.
 -->
 # Restore a Cluster from a Backup Snapshot (`cloud_backup_snapshot_restore_job`, automated + point-in-time)
 
+Uses `mongodbatlas_cloud_backup_snapshot_restore_job` for full-cluster restore. For collection- or database-level restore into a live target without a full-cluster wipe, see the [provider collection-restore examples](https://github.com/mongodb/terraform-provider-mongodbatlas/tree/master/examples/mongodbatlas_cloud_backup_collection_restore_job).
+
 ## Pre Requirements
 
 If you are familiar with Terraform and already have a project configured in MongoDB Atlas go to [commands](#commands).

@@ -1,6 +1,33 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
 from docs import examples_readme as mod
+
+
+@pytest.mark.parametrize(
+    ("description", "expected_content"),
+    [
+        ("Example description", "# Example\n\nExample description\n\n## Body"),
+        ("", "# Example\n\n## Body"),
+    ],
+)
+def test_generate_readme_description(
+    tmp_path: Path, description: str, expected_content: str
+) -> None:
+    readme = mod.generate_readme(
+        "# {{ .NAME }}\n\n{{ .DESCRIPTION }}\n\n## Body\n",
+        "Example",
+        tmp_path,
+        "example/source",
+        {},
+        description=description,
+    )
+
+    assert expected_content in readme
+    assert "{{ .DESCRIPTION }}" not in readme
 
 
 def test_get_example_description_by_folder_number() -> None:
