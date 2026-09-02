@@ -77,6 +77,7 @@ paths:
   - src_path: contributing/sdlc-sync.md
   - src_path: contributing/changelog-process.md
   - src_path: contributing/documentation-guide.md
+  - src_path: contributing/development-guide.md
   - src_path: contributing/README.md
   # GitHub config (replaced to force updates from initial template)
   - src_path: SECURITY.md
