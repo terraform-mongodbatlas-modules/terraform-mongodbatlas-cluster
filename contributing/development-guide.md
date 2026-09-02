@@ -1,4 +1,4 @@
-<!-- === OK_EDIT: path-sync header === -->
+<!-- path-sync copy -n sdlc -->
 # Contributing to terraform-mongodbatlas-cluster
 
 Quick guide for contributing to this Terraform module.
@@ -269,7 +269,7 @@ Scripts are organized in `tools/` subdirectories ([Python](https://www.python.or
 See [tf-gen README](../tools/tf_gen/README.md) for configuration reference and examples.
 
 See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
-<!-- === DO_NOT_EDIT: path-sync release === -->
+
 ## Release Process (Maintainers)
 
 Releases are automated via the `release.yml` GitHub Actions workflow. The workflow uses a 2-commit + revert strategy to keep tags reachable from main branch history.
@@ -322,7 +322,6 @@ The Registry sometimes misses a new tag. Re-sync the module from HCP Terraform:
 3. If the UI shows `403 API rate limit exceeded` for `api.github.com/.../tags`, wait for the reset time in the message and press `Re-sync` again.
 
 The full login path and a sample rate-limit error are in the [modules-management README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-modules-management/blob/main/README.md#troubleshooting-new-module-version-not-showing-up-in-the-terraform-registry).
-<!-- === OK_EDIT: path-sync release === -->
 
 ## Submitting Changes
 
