@@ -21,6 +21,7 @@ Changes to shared tooling must be made in the cluster repository. Destination mo
 | Workflows | `.github/workflows/` | `code-health.yml` has per-job section markers |
 | Config | `justfile`, `.pre-commit-config.yaml`, `.terraform-docs.yml` | `justfile` has section markers |
 | GitHub | `.github/CODEOWNERS`, `pull_request_template.md`, `ISSUE_TEMPLATE/` | |
+| Contributing | `contributing/{README,changelog-process,documentation-guide,development-guide,sdlc-sync}.md` | `development-guide.md` uses section markers; the header is destination-owned |
 
 **Scaffolded once, then destination-owned:**
 
