@@ -1,4 +1,5 @@
 <!-- path-sync copy -n sdlc -->
+<!-- === OK_EDIT: path-sync header === -->
 # Contributing to terraform-mongodbatlas-cluster
 
 Quick guide for contributing to this Terraform module.
@@ -313,12 +314,14 @@ git push origin main              # Push main with changelog + revert
 - Tagged commit has correct version-specific values (registry URLs, `module_version`)
 - Main stays in development state (`"local"` version, relative links)
 
+<!-- === DO_NOT_EDIT: path-sync release-troubleshooting === -->
 ### Troubleshooting: New version not showing in the Terraform Registry
 
 The Registry sometimes misses a new tag. Re-sync the module from HCP Terraform. Sign in and open the org using the steps in the [modules-management README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-modules-management/blob/main/README.md#troubleshooting-new-module-version-not-showing-up-in-the-terraform-registry).
 
 1. Open the [modules page](https://app.terraform.io/app/mongodbatlas/registry/public-namespaces/terraform-mongodbatlas-modules/modules), select the module, and press `Re-sync`.
 2. If the UI shows `403 API rate limit exceeded` for `api.github.com/.../tags`, wait for the reset time in the message and press `Re-sync` again.
+<!-- === OK_EDIT: path-sync release-troubleshooting === -->
 
 ## Submitting Changes
 
