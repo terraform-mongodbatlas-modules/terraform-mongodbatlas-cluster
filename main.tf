@@ -323,6 +323,18 @@ locals {
     ]
   ]
 
+  # Atlas requires descending priorities. Non-electable regions get 0, so they must
+  # follow electable regions within each replica set, shard, or zone.
+  non_electable_before_electable_errors = [
+    for gi, group in local.grouped_regions :
+    alltrue([
+      for i, r in group :
+      r.node_count != null ? true : length([
+        for j, x in group : j if j > i ? x.node_count != null : false
+      ]) == 0
+    ]) ? "" : "List electable regions (node_count) first within each replica set, shard, or zone. replication_specs[${gi}] lists an analytics-only or read-only-only region before an electable region."
+  ]
+
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
@@ -374,6 +386,7 @@ locals {
   validation_errors_regions_usage = local.replication_specs_resource_var_used ? [] : compact(concat(
     # Regions variable usage validations
     [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0],
+    local.non_electable_before_electable_errors,
     # Autoscaling vs fixed sizes
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
