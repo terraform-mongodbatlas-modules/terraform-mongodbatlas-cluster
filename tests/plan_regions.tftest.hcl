@@ -158,6 +158,49 @@ run "sharded_allows_non_electable_before_next_shard_electable" {
   }
 }
 
+run "geosharded_priority_zero_non_electable_regions" {
+  command = plan
+  module { source = "./." }
+
+  variables {
+    name          = "tf-test-geo-mixed-node-regions"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "GEOSHARDED"
+    regions = [
+      { name = "US_EAST_1", node_count = 3, zone_name = "US" },
+      { name = "US_WEST_2", node_count_analytics = 2, zone_name = "US" },
+      { name = "EU_WEST_1", node_count = 3, zone_name = "EU" },
+      { name = "EU_CENTRAL_1", node_count_read_only = 2, zone_name = "EU" },
+    ]
+  }
+
+  assert {
+    condition     = length(mongodbatlas_advanced_cluster.this.replication_specs) == 2
+    error_message = "GEOSHARDED cluster should have exactly 2 replication specs (one per zone)"
+  }
+
+  assert {
+    condition     = [for spec in mongodbatlas_advanced_cluster.this.replication_specs : spec if spec.zone_name == "US"][0].region_configs[0].priority == 7
+    error_message = "US zone electable region priority should be 7"
+  }
+
+  assert {
+    condition     = [for spec in mongodbatlas_advanced_cluster.this.replication_specs : spec if spec.zone_name == "US"][0].region_configs[1].priority == 0
+    error_message = "US zone analytics-only region priority should be 0"
+  }
+
+  assert {
+    condition     = [for spec in mongodbatlas_advanced_cluster.this.replication_specs : spec if spec.zone_name == "EU"][0].region_configs[0].priority == 7
+    error_message = "EU zone electable region priority should be 7"
+  }
+
+  assert {
+    condition     = [for spec in mongodbatlas_advanced_cluster.this.replication_specs : spec if spec.zone_name == "EU"][0].region_configs[1].priority == 0
+    error_message = "EU zone read-only-only region priority should be 0"
+  }
+}
+
 run "multi_geo_zone_sharded" {
   command = plan
 
