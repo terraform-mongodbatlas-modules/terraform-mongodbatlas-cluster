@@ -217,8 +217,7 @@ The simplest way to define your cluster topology:
 - See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 
 **NOTE**:
-- The order in which region blocks are defined in this list determines their priority within each shard or zone.
-  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this section of the Atlas Admin API documentation](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+- List electable regions (`node_count`) first. Those get priority 7, 6, 5... in list order. Regions that only set `node_count_analytics` and/or `node_count_read_only` get priority 0 (Atlas requires that, and priorities must be descending). See [regionConfigs.priority](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Prefer `shard_name` for shard grouping. It must match `^[a-z0-9]{1,24}$` (lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` is set.
 - Both `shard_name` and deprecated `shard_number` groups follow first appearance in `regions`. Both fields are module-only grouping keys and are not sent to Atlas today.
 - Within a zone, deprecated `shard_number` values are zone-scoped. Regions in the same shard share one `shard_name`, but a given `shard_name` must map to a single shard: do not reuse the same `shard_name` in a different zone.

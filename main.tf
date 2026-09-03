@@ -312,6 +312,17 @@ module "autoscaling_instance_size" {
 }
 
 locals {
+  # Electable regions get 7, 6, 5... in list order. Atlas requires priority 0 when a
+  # region has only analyticsSpecs / readOnlySpecs (no electableSpecs).
+  region_priorities = [
+    for group in local.grouped_regions : [
+      for region_index, r in group :
+      r.node_count != null ? max(7 - length([
+        for i, x in group : i if i < region_index && x.node_count != null
+      ]), 0) : 0
+    ]
+  ]
+
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
@@ -322,7 +333,7 @@ locals {
         for region_index, r in local.grouped_regions[gi] : {
           provider_name          = r.provider_name != null ? r.provider_name : var.provider_name
           region_name            = r.name
-          priority               = max(7 - region_index, 0)
+          priority               = local.region_priorities[gi][region_index]
           auto_scaling           = local.effective_auto_scaling
           analytics_auto_scaling = local.effective_auto_scaling_analytics
 

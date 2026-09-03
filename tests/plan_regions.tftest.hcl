@@ -55,6 +55,38 @@ run "replicaset_priorities_multiple_regions" {
   }
 }
 
+run "replicaset_priority_zero_non_electable_regions" {
+  command = plan
+  module { source = "./." }
+
+  variables {
+    name          = "tf-test-mixed-node-regions"
+    project_id    = var.project_id
+    provider_name = "AWS"
+    cluster_type  = "REPLICASET"
+    regions = [
+      { name = "US_EAST_1", node_count = 3 },
+      { name = "US_WEST_2", node_count_analytics = 2 },
+      { name = "EU_WEST_1", node_count_read_only = 2 },
+    ]
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].priority == 7
+    error_message = "electable region priority should be 7"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[1].priority == 0
+    error_message = "analytics-only region priority should be 0, got ${mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[1].priority}"
+  }
+
+  assert {
+    condition     = mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[2].priority == 0
+    error_message = "read-only-only region priority should be 0, got ${mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[2].priority}"
+  }
+}
+
 run "multi_geo_zone_sharded" {
   command = plan
 
