@@ -131,7 +131,7 @@ the module-specific environment block of the `plan-snapshot-tests` job.
 
 ## Testing
 
-See [test-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/contributing/test-guide.md) for detailed testing documentation including:
+See [test-guide.md](./test-guide.md) for detailed testing documentation including:
 - Authentication setup
 - Unit and integration tests
 - Version compatibility testing
@@ -167,7 +167,7 @@ variable "shard_count" {
 }
 ```
 
-**Note**: While cross-variable validation references establish a technical minimum of Terraform 1.9, the module requires Terraform 1.10 or later to remain aligned with the MongoDB Atlas Provider support policy. See [Terraform Version Requirements](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/docs/terraform_version_requirements.md) for details.
+**Note**: While cross-variable validation references establish a technical minimum of Terraform 1.9, the module requires Terraform 1.10 or later to remain aligned with the MongoDB Atlas Provider support policy. See [Terraform Version Requirements](../docs/terraform_version_requirements.md) for details.
 
 ## Documentation
 
@@ -267,9 +267,9 @@ Scripts are organized in `tools/` subdirectories ([Python](https://www.python.or
 - `generators/` - File generators (variables_tf.py, main_tf.py, outputs_tf.py)
 - `schema/` - Provider schema parsing
 
-See [tf-gen README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/tools/tf_gen/README.md) for configuration reference and examples.
+See [tf-gen README](../tools/tf_gen/README.md) for configuration reference and examples.
 
-See [documentation-guide.md](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/contributing/documentation-guide.md) for detailed documentation contributor guidelines.
+See [documentation-guide.md](./documentation-guide.md) for detailed documentation contributor guidelines.
 
 ## Release Process (Maintainers)
 
@@ -341,6 +341,6 @@ git push origin feature/your-feature-name
 
 ## Getting Help
 
-- Check [Issues](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/../../../issues) for similar problems
+- Check [Issues](../../../issues) for similar problems
 - Create new issue with output from `just pre-commit` if needed
 - See [Terraform docs](https://www.terraform.io/docs) and [MongoDB Atlas Provider docs](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs)

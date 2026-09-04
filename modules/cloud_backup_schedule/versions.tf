@@ -9,6 +9,6 @@ terraform {
 
   provider_meta "mongodbatlas" {
     module_name    = "cluster/cloud_backup_schedule"
-    module_version = "0.4.1"
+    module_version = "local"
   }
 }

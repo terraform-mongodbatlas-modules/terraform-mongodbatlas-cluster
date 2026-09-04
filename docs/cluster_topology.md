@@ -226,14 +226,14 @@ This module includes multiple working examples demonstrating different deploymen
 
 ### Simplified Approach (`regions`) Examples
 
-Most examples in this repository use the simplified `regions` approach. Refer to the [Examples section in the main README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/README.md#examples) which provides two organized tables:
+Most examples in this repository use the simplified `regions` approach. Refer to the [Examples section in the main README](../README.md#examples) which provides two organized tables:
 
 - **Getting Started Examples** - Production and development cluster configurations
 - **Advanced Examples** - Multi-region, multi-cloud, sharded topologies, analytics nodes, and more
 
 ### Direct Approach (`replication_specs`) Example
 
-See [`examples/09_cluster_using_replication_specs`](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/examples/09_cluster_using_replication_specs) for a complete example of using the `replication_specs` variable directly with manual scaling.
+See [`examples/09_cluster_using_replication_specs`](../examples/09_cluster_using_replication_specs/) for a complete example of using the `replication_specs` variable directly with manual scaling.
 
 ## Migrating from `regions` to `replication_specs`
 
@@ -428,12 +428,12 @@ Error: When using 'replication_specs', you must set 'regions = []'
 The simplified regions configuration must be explicitly disabled.
 ```
 
-For troubleshooting common issues and additional help, see the FAQ and Troubleshooting sections in the [main README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/README.md#faq).
+For troubleshooting common issues and additional help, see the FAQ and Troubleshooting sections in the [main README](../README.md#faq).
 
 ## Additional Resources
 
-- **[Main Module README](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/README.md)** - Complete module documentation with all variables and outputs
-- **[Examples Directory](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/blob/v0.4.1/examples)** - Working examples for all deployment patterns
+- **[Main Module README](../README.md)** - Complete module documentation with all variables and outputs
+- **[Examples Directory](../examples/)** - Working examples for all deployment patterns
 - **[Provider Documentation](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster)** - Complete resource schema reference
 - **[MongoDB Atlas Documentation](https://www.mongodb.com/docs/atlas/)** - Official Atlas documentation
 
