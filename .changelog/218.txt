@@ -1,0 +1,7 @@
+```release-note:bug
+module: Sets `priority` to 0 on analytics-only and read-only-only regions
+```
+
+```release-note:bug
+module: Rejects analytics-only or read-only-only regions listed before electable regions
+```

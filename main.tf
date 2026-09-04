@@ -312,6 +312,29 @@ module "autoscaling_instance_size" {
 }
 
 locals {
+  # Electable regions get 7, 6, 5... in list order. Atlas requires priority 0 when a
+  # region has only analyticsSpecs / readOnlySpecs (no electableSpecs).
+  region_priorities = [
+    for group in local.grouped_regions : [
+      for region_index, r in group :
+      r.node_count != null ? max(7 - length([
+        for i, x in group : i if i < region_index && x.node_count != null
+      ]), 0) : 0
+    ]
+  ]
+
+  # Atlas requires descending priorities. Non-electable regions get 0, so they must
+  # follow electable regions within each replica set, shard, or zone.
+  non_electable_before_electable_errors = [
+    for gi, group in local.grouped_regions :
+    alltrue([
+      for i, r in group :
+      r.node_count != null ? true : length([
+        for j, x in group : j if j > i ? x.node_count != null : false
+      ]) == 0
+    ]) ? "" : "List electable regions (node_count) first within each replica set, shard, or zone. replication_specs[${gi}] lists an analytics-only or read-only-only region before an electable region."
+  ]
+
   # one replication_spec created per group in local.grouped_regions
   replication_specs_built = tolist([
     for gi in range(length(local.grouped_regions)) : {
@@ -322,7 +345,7 @@ locals {
         for region_index, r in local.grouped_regions[gi] : {
           provider_name          = r.provider_name != null ? r.provider_name : var.provider_name
           region_name            = r.name
-          priority               = max(7 - region_index, 0)
+          priority               = local.region_priorities[gi][region_index]
           auto_scaling           = local.effective_auto_scaling
           analytics_auto_scaling = local.effective_auto_scaling_analytics
 
@@ -363,6 +386,7 @@ locals {
   validation_errors_regions_usage = local.replication_specs_resource_var_used ? [] : compact(concat(
     # Regions variable usage validations
     [for idx, r in local.replication_specs_built : "replication_specs[${idx}].region_configs is empty" if length(r.region_configs) == 0],
+    local.non_electable_before_electable_errors,
     # Autoscaling vs fixed sizes
     var.auto_scaling.compute_enabled && var.instance_size != null ? ["Cannot set var.instance_size when auto_scaling is enabled. Set auto_scaling.compute_enabled=false to use fixed instance sizes"] : [],
     var.auto_scaling_analytics != null && var.instance_size_analytics != null ? ["Cannot use var.auto_scaling_analytics and var.instance_size_analytics together"] : [],
