@@ -1,5 +1,7 @@
 ## (Unreleased)
 
+## 0.4.1 (September 04, 2026)
+
 BUG FIXES:
 
 * module: Rejects analytics-only or read-only-only regions listed before electable regions ([#218](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/218))
