@@ -60,6 +60,7 @@ runs:
       if: inputs.terraform == 'true'
       uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef
       with:
+        # Track the latest tflint because it has rarely broken compatibility and this repo has no .tflint.hcl or plugins to pin against.
         tflint_version: latest
 
     - name: Install terraform-docs
