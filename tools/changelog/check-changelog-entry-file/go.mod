@@ -1,6 +1,6 @@
 module github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/check-changelog-entry-file
 
-go 1.25.5
+go 1.26.0
 
 require github.com/hashicorp/go-changelog v0.0.0-20260420140951-a47758c56a59
 
@@ -26,7 +26,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
