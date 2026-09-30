@@ -1,6 +1,5 @@
 """Compute Terraform Registry source from git repository information."""
 
-import os
 import re
 import subprocess
 import sys
@@ -61,8 +60,6 @@ def get_github_repo_info() -> tuple[str, str, str]:
 
 
 def get_registry_source() -> str:
-    if override := os.environ.get("TF_REGISTRY_SOURCE"):
-        return override
     remote_url = get_git_remote_url()
     owner, repo_name = parse_github_repo(remote_url)
     return compute_registry_source(owner, repo_name)
@@ -70,8 +67,6 @@ def get_registry_source() -> str:
 
 def get_module_name() -> str:
     """HCL-safe module name derived from git remote (hyphens replaced with underscores)."""
-    if override := os.environ.get("TF_REGISTRY_SOURCE"):
-        return override.split("/")[-2].replace("-", "_")
     _, _, repo_name = get_github_repo_info()
     _, module = parse_repo_name(repo_name)
     return module.replace("-", "_")
@@ -79,7 +74,9 @@ def get_module_name() -> str:
 
 def main() -> None:
     try:
-        registry_source = get_registry_source()
+        remote_url = get_git_remote_url()
+        owner, repo_name = parse_github_repo(remote_url)
+        registry_source = compute_registry_source(owner, repo_name)
         print(registry_source)
     except subprocess.CalledProcessError as e:
         print(f"Error: Failed to get git remote: {e}", file=sys.stderr)
