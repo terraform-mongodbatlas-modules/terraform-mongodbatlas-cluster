@@ -176,4 +176,4 @@ destinations:
     default_branch: main
     include_groups: [pre_release]
     skip_sections:
-      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]  # job-snapshot-tests, job-slack: TODO Remove after the first example and its snapshot test land.
