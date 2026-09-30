@@ -170,3 +170,10 @@ destinations:
     skip_sections:
       justfile: [dev-vars-org, regions, checks, import-validate]  # import-validate: TODO Remove after import onboarding.
       .github/workflows/pre-release-tests.yml: [env, job-import-validate]  # env: separate org credentials. job-import-validate: TODO Remove after import onboarding.
+  - name: atlas-aws-chatbot
+    repo_url: https://github.com/terraform-mongodbatlas-modules/atlas-aws-chatbot
+    dest_path_relative: ../atlas-aws-chatbot
+    default_branch: main
+    include_groups: [pre_release]
+    skip_sections:
+      .github/workflows/code-health.yml: [job-snapshot-tests, job-slack]
