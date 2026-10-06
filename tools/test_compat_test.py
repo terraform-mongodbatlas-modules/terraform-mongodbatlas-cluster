@@ -65,3 +65,40 @@ def test_copy_module_files_copies_extra_paths_from_env(tmp_path, monkeypatch):
     assert (dest / "chatbot" / "app.tf").is_file()
     assert (dest / "buildspec.yaml").is_file()
     assert not (dest / "missing").exists()
+
+
+def test_copy_module_files_skips_paths_outside_module_root(tmp_path, monkeypatch):
+    source = tmp_path / "src"
+    dest = tmp_path / "nested" / "dst"
+    dest.mkdir(parents=True)
+    source.mkdir()
+    (source / "main.tf").write_text("")
+    escape_target = tmp_path / "escape.txt"
+    escape_target.write_text("original\n")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", f"../escape.txt {escape_target}")
+
+    copy_module_files(source, dest)
+
+    assert (dest / "main.tf").is_file()
+    assert not (tmp_path / "nested" / "escape.txt").exists()
+    assert escape_target.read_text() == "original\n"
+
+
+def test_copy_module_files_merges_overlapping_paths(tmp_path, monkeypatch):
+    source = tmp_path / "src"
+    dest = tmp_path / "dst"
+    dest.mkdir()
+    source.mkdir()
+    (source / "main.tf").write_text("")
+    (source / "modules").mkdir()
+    (source / "modules" / "child").mkdir()
+    (source / "modules" / "child" / "child.tf").write_text("")
+    (source / "chatbot").mkdir()
+    (source / "chatbot" / "app.tf").write_text("")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", "modules/child chatbot chatbot/app.tf")
+
+    copy_module_files(source, dest)
+
+    assert (dest / "main.tf").is_file()
+    assert (dest / "modules" / "child" / "child.tf").is_file()
+    assert (dest / "chatbot" / "app.tf").is_file()

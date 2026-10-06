@@ -78,12 +78,18 @@ def copy_module_files(source: Path, dest: Path) -> None:
         if relative_path in seen:
             continue
         seen.add(relative_path)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            print(
+                f"Skipping TF_COMPAT_COPY_PATHS entry outside the module root: {relative_path}",
+                file=sys.stderr,
+            )
+            continue
         source_path = source / relative_path
         if not source_path.exists():
             continue
         dest_path = dest / relative_path
         if source_path.is_dir():
-            shutil.copytree(source_path, dest_path)
+            shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
             continue
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, dest_path)

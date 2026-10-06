@@ -50,7 +50,7 @@ This runs `terraform init` and `terraform validate` on the root module and all e
 export TF_COMPAT_COPY_PATHS := "chatbot scripts buildspec.yaml"
 ```
 
-Paths are space-separated and relative to the module root. A missing path is skipped.
+Paths are space-separated and relative to the module root. Entries that are missing, absolute, or outside the module root are skipped.
 
 To update the version matrix when new Terraform versions are released, edit `.terraform-versions.yaml`.
 
