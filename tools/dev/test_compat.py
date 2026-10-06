@@ -62,12 +62,31 @@ def discover_targets() -> list[Path]:
     return targets
 
 
+def extra_copy_paths() -> list[Path]:
+    raw = os.environ.get("TF_COMPAT_COPY_PATHS", "")
+    return [Path(part) for part in raw.split() if part]
+
+
 def copy_module_files(source: Path, dest: Path) -> None:
     for tf_file in source.glob("*.tf"):
         shutil.copy2(tf_file, dest / tf_file.name)
-    modules_dir = source / "modules"
-    if modules_dir.exists():
-        shutil.copytree(modules_dir, dest / "modules")
+
+    # modules/ stays unconditional: root modules source ./modules.
+    # Destinations add other relative paths via TF_COMPAT_COPY_PATHS.
+    seen: set[Path] = set()
+    for relative_path in [Path("modules"), *extra_copy_paths()]:
+        if relative_path in seen:
+            continue
+        seen.add(relative_path)
+        source_path = source / relative_path
+        if not source_path.exists():
+            continue
+        dest_path = dest / relative_path
+        if source_path.is_dir():
+            shutil.copytree(source_path, dest_path)
+            continue
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, dest_path)
 
 
 def _run_validate(job: TestJob) -> TestResult:

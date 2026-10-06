@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from dev.test_compat import TestJob as CompatJob
 from dev.test_compat import TestResult as CompatResult
-from dev.test_compat import run_validate
+from dev.test_compat import copy_module_files, run_validate
 
 MODULE = run_validate.__module__
 
@@ -43,3 +43,25 @@ def test_run_validate_locks_in_place_target():
     mock_run.assert_called_once_with(job)
     target_lock.__enter__.assert_called_once_with()
     target_lock.__exit__.assert_called_once()
+
+
+def test_copy_module_files_copies_extra_paths_from_env(tmp_path, monkeypatch):
+    source = tmp_path / "src"
+    dest = tmp_path / "dst"
+    dest.mkdir()
+    source.mkdir()
+    (source / "main.tf").write_text("")
+    (source / "modules").mkdir()
+    (source / "modules" / "child.tf").write_text("")
+    (source / "chatbot").mkdir()
+    (source / "chatbot" / "app.tf").write_text("")
+    (source / "buildspec.yaml").write_text("version: 0.2\n")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", "modules chatbot buildspec.yaml missing")
+
+    copy_module_files(source, dest)
+
+    assert (dest / "main.tf").is_file()
+    assert (dest / "modules" / "child.tf").is_file()
+    assert (dest / "chatbot" / "app.tf").is_file()
+    assert (dest / "buildspec.yaml").is_file()
+    assert not (dest / "missing").exists()
