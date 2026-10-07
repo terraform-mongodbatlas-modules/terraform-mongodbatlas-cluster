@@ -44,7 +44,13 @@ Test that the module validates correctly across all supported Terraform versions
 just test-compat
 ```
 
-This runs `terraform init` and `terraform validate` on the root module and all examples using each version in `.terraform-versions.yaml`. Requires [mise](https://mise.jdx.dev/) for version switching.
+This runs `terraform init` and `terraform validate` on the root module and all examples using each version in `.terraform-versions.yaml`. Requires [mise](https://mise.jdx.dev/) for version switching. Root validation runs in a temp directory. The copy includes root `*.tf` files and `modules/` when that directory exists. A destination that also needs other files sets `TF_COMPAT_COPY_PATHS` in its justfile header:
+
+```just
+export TF_COMPAT_COPY_PATHS := "chatbot,scripts,buildspec.yaml"
+```
+
+Paths are comma-separated and relative to the module root. Entries that are missing, absolute, or outside the module root are skipped.
 
 To update the version matrix when new Terraform versions are released, edit `.terraform-versions.yaml`.
 
