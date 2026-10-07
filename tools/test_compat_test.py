@@ -56,7 +56,7 @@ def test_copy_module_files_copies_extra_paths_from_env(tmp_path, monkeypatch):
     (source / "chatbot").mkdir()
     (source / "chatbot" / "app.tf").write_text("")
     (source / "buildspec.yaml").write_text("version: 0.2\n")
-    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", "modules chatbot buildspec.yaml missing")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", "modules,chatbot,buildspec.yaml,missing")
 
     copy_module_files(source, dest)
 
@@ -75,7 +75,7 @@ def test_copy_module_files_skips_paths_outside_module_root(tmp_path, monkeypatch
     (source / "main.tf").write_text("")
     escape_target = tmp_path / "escape.txt"
     escape_target.write_text("original\n")
-    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", f"../escape.txt {escape_target}")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", f"../escape.txt,{escape_target}")
 
     copy_module_files(source, dest)
 
@@ -95,7 +95,7 @@ def test_copy_module_files_merges_overlapping_paths(tmp_path, monkeypatch):
     (source / "modules" / "child" / "child.tf").write_text("")
     (source / "chatbot").mkdir()
     (source / "chatbot" / "app.tf").write_text("")
-    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", "modules/child chatbot chatbot/app.tf")
+    monkeypatch.setenv("TF_COMPAT_COPY_PATHS", " modules/child , chatbot ,chatbot/app.tf")
 
     copy_module_files(source, dest)
 

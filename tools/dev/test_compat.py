@@ -64,7 +64,7 @@ def discover_targets() -> list[Path]:
 
 def extra_copy_paths() -> list[Path]:
     raw = os.environ.get("TF_COMPAT_COPY_PATHS", "")
-    return [Path(part) for part in raw.split() if part]
+    return [Path(part.strip()) for part in raw.split(",") if part.strip()]
 
 
 def copy_module_files(source: Path, dest: Path) -> None:
