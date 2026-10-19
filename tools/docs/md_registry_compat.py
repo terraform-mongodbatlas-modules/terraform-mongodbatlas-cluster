@@ -1,4 +1,11 @@
-"""Convert relative links in markdown files to absolute GitHub URLs."""
+"""Convert markdown files for Terraform Registry rendering.
+
+The Terraform Registry serves the tagged README, so at release time the module
+rewrites relative links to absolute GitHub URLs and GitHub alert blockquotes
+(``> [!NOTE]``) to Registry callout markers (``->`` note, ``~>`` warning).
+``main`` keeps the GitHub syntax, and ``release-post-push`` reverts the release
+commit, so ``main`` renders on GitHub while the tag renders on the Registry.
+"""
 
 import argparse
 import re
@@ -10,6 +17,16 @@ DEFAULT_SKIP_FILES = [
     "CONTRIBUTING.md",
     "docs/example_readme.md",
 ]
+
+ALERT_RE = r"^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$"
+
+MARKERS = {
+    "NOTE": "->",
+    "TIP": "->",
+    "IMPORTANT": "~>",
+    "WARNING": "~>",
+    "CAUTION": "~>",
+}
 
 
 def get_git_remote_url() -> str:
@@ -87,29 +104,81 @@ def convert_links_in_content(
     return re.sub(link_pattern, replace_link, content)
 
 
+def convert_admonitions_in_content(content: str) -> tuple[str, int, list[str]]:
+    """Convert GitHub alert blockquotes to Terraform Registry callout markers.
+
+    Returns the converted content, the number of admonitions converted, and the
+    alert header lines left unchanged because their body could not be collapsed
+    onto a single line (a multi-paragraph body, which is out of scope).
+    """
+    lines = content.split("\n")
+    output: list[str] = []
+    converted = 0
+    skipped: list[str] = []
+    index = 0
+    while index < len(lines):
+        match = re.match(ALERT_RE, lines[index])
+        if match is None:
+            output.append(lines[index])
+            index += 1
+            continue
+
+        body_lines: list[str] = []
+        next_index = index + 1
+        while next_index < len(lines) and (
+            lines[next_index].startswith("> ") or lines[next_index] == ">"
+        ):
+            body_lines.append(lines[next_index][2:] if lines[next_index].startswith("> ") else "")
+            next_index += 1
+
+        while body_lines and not body_lines[-1].strip():
+            body_lines.pop()
+
+        if any(not line.strip() for line in body_lines):
+            skipped.append(lines[index])
+            output.append(lines[index])
+            index += 1
+            continue
+
+        label = match.group(1)
+        callout = f"{MARKERS[label]} **{label}:**"
+        body = " ".join(body_lines).strip()
+        if body:
+            callout = f"{callout} {body}"
+        output.append(callout)
+        converted += 1
+        index = next_index
+
+    return "\n".join(output), converted, skipped
+
+
 def process_markdown_file(
     md_file: Path,
     base_url: str,
     tag_version: str,
     root_dir: Path,
     dry_run: bool = False,
-) -> tuple[bool, int]:
+) -> tuple[bool, int, int, list[str]]:
     content = md_file.read_text(encoding="utf-8")
     original_content = content
-    new_content = convert_links_in_content(content, md_file, base_url, tag_version, root_dir)
-    if new_content != original_content:
-        if not dry_run:
-            md_file.write_text(new_content, encoding="utf-8")
-        num_changes = len(re.findall(r"\]\(" + re.escape(base_url), new_content)) - len(
-            re.findall(r"\]\(" + re.escape(base_url), original_content)
-        )
-        return True, num_changes
-    return False, 0
+    link_content = convert_links_in_content(content, md_file, base_url, tag_version, root_dir)
+    new_content, admonitions_converted, skipped = convert_admonitions_in_content(link_content)
+    if new_content == original_content:
+        return False, 0, 0, skipped
+    if not dry_run:
+        md_file.write_text(new_content, encoding="utf-8")
+    num_links = len(re.findall(r"\]\(" + re.escape(base_url), new_content)) - len(
+        re.findall(r"\]\(" + re.escape(base_url), original_content)
+    )
+    return True, num_links, admonitions_converted, skipped
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Convert relative links in markdown files to absolute GitHub URLs"
+        description=(
+            "Convert markdown files for Terraform Registry rendering: relative links to "
+            "absolute GitHub URLs and GitHub alert blockquotes to Registry callout markers"
+        )
     )
     parser.add_argument("tag_version", help="Git tag version in format vX.Y.Z (e.g., v1.0.0)")
     parser.add_argument("--dry-run", action="store_true", help="Preview without modifying")
@@ -146,21 +215,33 @@ def main() -> None:
 
     total_modified = 0
     total_links_converted = 0
+    total_admonitions_converted = 0
+    skipped_alerts: list[tuple[Path, str]] = []
 
     for md_file in md_files:
-        was_modified, num_links = process_markdown_file(
+        was_modified, num_links, num_admonitions, skipped = process_markdown_file(
             md_file, github_url, tag_version, root_dir, dry_run=dry_run
         )
+        rel_path = md_file.relative_to(root_dir)
+        for alert in skipped:
+            skipped_alerts.append((rel_path, alert))
         if was_modified:
             total_modified += 1
             total_links_converted += num_links
-            rel_path = md_file.relative_to(root_dir)
+            total_admonitions_converted += num_admonitions
             prefix = "->" if dry_run else "ok"
-            print(f"{prefix} {rel_path} ({num_links} converted)")
+            print(f"{prefix} {rel_path} ({num_links} links, {num_admonitions} admonitions)")
 
     print()
+    for rel_path, alert in skipped_alerts:
+        print(f"Warning: left multi-paragraph alert unchanged in {rel_path}: {alert}")
     action = "would be modified" if dry_run else "modified"
-    print(f"Summary: {total_modified} files {action}, {total_links_converted} links converted")
+    total_converted = total_links_converted + total_admonitions_converted
+    print(
+        f"Summary: {total_modified} files {action}, "
+        f"{total_links_converted} links and {total_admonitions_converted} admonitions "
+        f"converted ({total_converted} total)"
+    )
 
 
 if __name__ == "__main__":

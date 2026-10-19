@@ -239,7 +239,7 @@ Scripts are organized in `tools/` subdirectories ([Python](https://www.python.or
 - `examples_readme.py` - Generates example README.md files
 - `submodule_readme.py` - Transforms submodule README source paths to registry source
 - `generate_inputs_from_readme.py` - Generates grouped Inputs section from terraform-docs output
-- `md_link_absolute.py` - Converts relative links to absolute GitHub URLs for releases
+- `md_registry_compat.py` - Converts relative links to absolute GitHub URLs and GitHub alert blockquotes to Registry callout markers for releases
 
 **release/** - Release and versioning:
 - `tf_registry_source.py` - Computes Terraform Registry source from git remote
