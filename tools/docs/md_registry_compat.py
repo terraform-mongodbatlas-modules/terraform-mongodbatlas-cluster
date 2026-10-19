@@ -18,7 +18,7 @@ DEFAULT_SKIP_FILES = [
     "docs/example_readme.md",
 ]
 
-ALERT_RE = r"^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$"
+ALERT_RE = r"^> \[!(?P<label>NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$"
 
 MARKERS = {
     "NOTE": "->",
@@ -109,7 +109,8 @@ def convert_admonitions_in_content(content: str) -> tuple[str, int, list[str]]:
 
     Returns the converted content, the number of admonitions converted, and the
     alert header lines left unchanged because their body could not be collapsed
-    onto a single line (a multi-paragraph body, which is out of scope).
+    onto a single line: a multi-paragraph body, a nested blockquote body, or a
+    missing body (all out of scope).
     """
     lines = content.split("\n")
     output: list[str] = []
@@ -134,13 +135,13 @@ def convert_admonitions_in_content(content: str) -> tuple[str, int, list[str]]:
         while body_lines and not body_lines[-1].strip():
             body_lines.pop()
 
-        if any(not line.strip() for line in body_lines):
+        if not body_lines or any(not line.strip() or line.startswith(">") for line in body_lines):
             skipped.append(lines[index])
             output.append(lines[index])
             index += 1
             continue
 
-        label = match.group(1)
+        label = match.group("label")
         callout = f"{MARKERS[label]} **{label}:**"
         body = " ".join(body_lines).strip()
         if body:

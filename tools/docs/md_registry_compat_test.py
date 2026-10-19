@@ -44,6 +44,23 @@ def test_convert_admonitions_leaves_multiparagraph_unchanged() -> None:
     assert skipped == ["> [!NOTE]"]
 
 
+@pytest.mark.parametrize(
+    ("content", "skipped"),
+    [
+        ("> [!NOTE]\n> > nested quote\n> > more", ["> [!NOTE]"]),
+        ("> [!NOTE]", ["> [!NOTE]"]),
+        ("> [!NOTE]\n>", ["> [!NOTE]"]),
+    ],
+)
+def test_convert_admonitions_leaves_uncollapsable_body_unchanged(
+    content: str, skipped: list[str]
+) -> None:
+    result, converted, skipped_result = md_registry_compat.convert_admonitions_in_content(content)
+    assert result == content
+    assert converted == 0
+    assert skipped_result == skipped
+
+
 def test_convert_links_in_content_makes_relative_links_absolute(tmp_path: Path) -> None:
     root_dir = tmp_path.resolve()
     md_file = root_dir / "docs" / "README.md"
