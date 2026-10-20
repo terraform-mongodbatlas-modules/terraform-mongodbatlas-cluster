@@ -20,6 +20,8 @@ DEFAULT_SKIP_FILES = [
 
 ALERT_RE = r"^> \[!(?P<label>NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$"
 
+BLOCK_LEVEL_RE = re.compile(r"^(?:#{1,6} |[-*+] |\d+[.)] |\||```|~~~|>)")
+
 MARKERS = {
     "NOTE": "->",
     "TIP": "->",
@@ -104,20 +106,37 @@ def convert_links_in_content(
     return re.sub(link_pattern, replace_link, content)
 
 
+def fenced_lines(lines: list[str]) -> list[bool]:
+    """Return which lines fall inside a fenced code block, fences included."""
+    fenced: list[bool] = []
+    in_fence = False
+    for line in lines:
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+        fenced.append(in_fence)
+    return fenced
+
+
 def convert_admonitions_in_content(content: str) -> tuple[str, int, list[str]]:
     """Convert GitHub alert blockquotes to Terraform Registry callout markers.
 
     Returns the converted content, the number of admonitions converted, and the
     alert header lines left unchanged because their body could not be collapsed
-    onto a single line: a multi-paragraph body, a nested blockquote body, or a
-    missing body (all out of scope).
+    onto a single line: a multi-paragraph, nested-blockquote, block-level, or
+    missing body. Alerts inside fenced code blocks are left untouched silently,
+    since the fence marks them as example content.
     """
     lines = content.split("\n")
+    fenced = fenced_lines(lines)
     output: list[str] = []
     converted = 0
     skipped: list[str] = []
     index = 0
     while index < len(lines):
+        if fenced[index]:
+            output.append(lines[index])
+            index += 1
+            continue
         match = re.match(ALERT_RE, lines[index])
         if match is None:
             output.append(lines[index])
@@ -135,7 +154,9 @@ def convert_admonitions_in_content(content: str) -> tuple[str, int, list[str]]:
         while body_lines and not body_lines[-1].strip():
             body_lines.pop()
 
-        if not body_lines or any(not line.strip() or line.startswith(">") for line in body_lines):
+        if not body_lines or any(
+            not line.strip() or BLOCK_LEVEL_RE.match(line.lstrip()) for line in body_lines
+        ):
             skipped.append(lines[index])
             output.append(lines[index])
             index += 1
@@ -235,7 +256,7 @@ def main() -> None:
 
     print()
     for rel_path, alert in skipped_alerts:
-        print(f"Warning: left multi-paragraph alert unchanged in {rel_path}: {alert}")
+        print(f"Warning: left alert unchanged (body not collapsible) in {rel_path}: {alert}")
     action = "would be modified" if dry_run else "modified"
     total_converted = total_links_converted + total_admonitions_converted
     print(
