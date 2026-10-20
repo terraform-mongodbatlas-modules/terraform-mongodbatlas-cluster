@@ -394,6 +394,12 @@ def test_snapshot_prefix():
     )
 
 
+def test_snapshot_prefix_relative_ws_dir():
+    assert models.snapshot_prefix(Path("tests/ws_cluster"), "01", nested=False) == (
+        "tests/ws_cluster/regs/01_"
+    )
+
+
 def test_snapshot_stem_short():
     address = "module.cluster.mongodbatlas_advanced_cluster.this"
     prefix = models.snapshot_prefix(WS_DIR, "01", nested=False)
@@ -423,6 +429,13 @@ def test_snapshot_stem_truncates():
     # a second address sharing the tail still differs
     other = address.replace("us-east-1", "us-west-2")
     assert models.snapshot_stem(other, prefix) != stem
+
+
+def test_snapshot_stem_insufficient_budget():
+    address = "module.cluster.mongodbatlas_advanced_cluster.this"
+    prefix = "x" * (models.MAX_LEN_FROM_REPO_ROOT - len(".yaml") - models.SNAPSHOT_HASH_LEN)
+    with pytest.raises(ValueError, match="no room for a fixture stem"):
+        models.snapshot_stem(address, prefix)
 
 
 def test_plan_snapshot_paths_fit_windows():

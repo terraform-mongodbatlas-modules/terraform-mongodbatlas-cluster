@@ -317,7 +317,11 @@ REGS_ACTUAL_DIR = "regs_actual"
 def snapshot_prefix(ws_dir: Path, example_id: str, nested: bool) -> str:
     """Repo-relative path before a fixture's stem, e.g. `tests/ws_aws/regs/encryption/`."""
     sep = "/" if nested else "_"
-    return f"{ws_dir.relative_to(REPO_ROOT).as_posix()}/{REGS_DIR}/{example_id}{sep}"
+    try:
+        relative_ws = ws_dir.relative_to(REPO_ROOT)
+    except ValueError:  # relative --tests-dir input such as `tests/ws_cluster`
+        relative_ws = ws_dir.resolve().relative_to(REPO_ROOT.resolve())
+    return f"{relative_ws.as_posix()}/{REGS_DIR}/{example_id}{sep}"
 
 
 def snapshot_stem(address: str, prefix: str) -> str:
@@ -332,6 +336,11 @@ def snapshot_stem(address: str, prefix: str) -> str:
     if len(stem) <= budget:
         return stem
     token_budget = budget - SNAPSHOT_HASH_LEN - 1
+    if token_budget < 1:
+        raise ValueError(
+            f"snapshot prefix {prefix!r} leaves no room for a fixture stem within "
+            f"{MAX_LEN_FROM_REPO_ROOT} characters"
+        )
     kept: list[str] = []
     for token in reversed(stem.split("_")):
         if len("_".join([token, *kept])) > token_budget:
