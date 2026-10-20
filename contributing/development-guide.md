@@ -129,6 +129,11 @@ Pre-release tests use QA secrets by default. Set `atlas_cloud_env` to `dev` when
 Set `MONGODB_ATLAS_PROVIDER_MIN_VERSION` to the module's exact minimum supported provider release in
 the module-specific environment block of the `plan-snapshot-tests` job.
 
+The `windows-init` job clones the repo and runs `terraform init` and `terraform validate` on
+`windows-latest`. It fails the pull request when the tree contains a path Windows cannot check out,
+such as the plan snapshot filenames with `"` that broke `git clone` in
+[atlas-gcp#73](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp/issues/73).
+
 ## Testing
 
 See [test-guide.md](./test-guide.md) for detailed testing documentation including:

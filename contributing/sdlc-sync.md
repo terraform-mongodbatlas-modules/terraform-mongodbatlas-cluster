@@ -101,6 +101,7 @@ The `code-health.yml` workflow uses per-job section markers:
 | `job-py-tests` | `py-tests` | Shared Python tooling tests |
 | `job-plan-tests` | `plan-tests` | Terraform unit plan tests |
 | `job-compat-tests` | `compat-tests` | Terraform CLI version compatibility |
+| `job-windows-init` | `windows-init` | Windows clone and `terraform init`/`validate` guard against Windows-incompatible paths |
 | `job-snapshot-tests` | `plan-snapshot-tests` | Version selection and plan snapshots with resumable gaps for env vars and commands |
 | `job-slack` | `slack-notification` | Slack notification on failure |
 
