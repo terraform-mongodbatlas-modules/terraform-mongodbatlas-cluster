@@ -348,12 +348,12 @@ def test_output_assertion_invalid_regex():
 
 
 def test_resolve_workspaces_all(tmp_path: Path):
-    (tmp_path / "workspace_one").mkdir()
-    (tmp_path / "workspace_two").mkdir()
+    (tmp_path / "ws_one").mkdir()
+    (tmp_path / "ws_two").mkdir()
     (tmp_path / "other_dir").mkdir()
     ws_dirs = models.resolve_workspaces("all", tmp_path)
     names = [d.name for d in ws_dirs]
-    assert names == ["workspace_one", "workspace_two"]
+    assert names == ["ws_one", "ws_two"]
 
 
 def test_resolve_workspaces_specific(tmp_path: Path):
@@ -379,5 +379,63 @@ def test_resolve_workspaces_tests_dir_not_found(tmp_path: Path):
 
 
 def test_resolve_workspaces_no_workspace_dirs(tmp_path: Path):
-    with pytest.raises(ValueError, match="No workspace_\\* directories found"):
+    with pytest.raises(ValueError, match="No ws_\\* directories found"):
         models.resolve_workspaces("all", tmp_path)
+
+
+WS_DIR = models.REPO_ROOT / "tests" / "ws_cluster"
+
+
+def test_snapshot_prefix():
+    assert models.snapshot_prefix(WS_DIR, "01", nested=False) == "tests/ws_cluster/regs/01_"
+    assert (
+        models.snapshot_prefix(WS_DIR, "encryption", nested=True)
+        == "tests/ws_cluster/regs/encryption/"
+    )
+
+
+def test_snapshot_stem_short():
+    address = "module.cluster.mongodbatlas_advanced_cluster.this"
+    prefix = models.snapshot_prefix(WS_DIR, "01", nested=False)
+    assert models.snapshot_stem(address, prefix) == models.sanitize_address(address)
+
+
+def test_snapshot_stem_truncates():
+    address = (
+        "module.atlas_aws.module.encryption_private_endpoint[us-east-1]"
+        ".mongodbatlas_encryption_at_rest_private_endpoint.this"
+    )
+    prefix = models.snapshot_prefix(WS_DIR, "encryption_private_endpoint", nested=True)
+    stem = models.snapshot_stem(address, prefix)
+    assert stem == models.snapshot_stem(address, prefix)  # deterministic
+    assert len(stem) < len(models.sanitize_address(address))  # truncated
+    # the prefix and the stem together fit the path budget
+    assert len(prefix) + len(stem) + len(".yaml") <= models.MAX_LEN_FROM_REPO_ROOT
+    head, _, digest = stem.rpartition("_")
+    assert head.endswith("_this")  # whole tokens kept from the tail of the address
+    assert len(digest) == models.SNAPSHOT_HASH_LEN
+    assert all(c in "0123456789abcdef" for c in digest)
+    # a longer example name shortens the stem
+    longer_prefix = models.snapshot_prefix(
+        WS_DIR, "encryption_private_endpoint_with_a_very_long_suffix", nested=True
+    )
+    assert len(models.snapshot_stem(address, longer_prefix)) < len(stem)
+    # a second address sharing the tail still differs
+    other = address.replace("us-east-1", "us-west-2")
+    assert models.snapshot_stem(other, prefix) != stem
+
+
+def test_plan_snapshot_paths_fit_windows():
+    regs_dirs = [p for p in (models.REPO_ROOT / "tests").glob("ws_*/regs") if p.is_dir()]
+    if not regs_dirs:
+        pytest.skip("no ws_*/regs directories found")
+    too_long = [
+        str(path.relative_to(models.REPO_ROOT))
+        for regs in regs_dirs
+        for path in regs.rglob("*")
+        if path.is_file()
+        and len(str(path.relative_to(models.REPO_ROOT))) > models.MAX_LEN_FROM_REPO_ROOT
+    ]
+    assert not too_long, (
+        f"snapshot paths exceed {models.MAX_LEN_FROM_REPO_ROOT} characters: {too_long}"
+    )

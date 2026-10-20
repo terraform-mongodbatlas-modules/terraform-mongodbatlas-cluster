@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -306,6 +307,40 @@ def sanitize_address(address: str) -> str:
     return address.replace(".", "_").replace("/", "_").replace('"', "")
 
 
+MAX_LEN_FROM_REPO_ROOT = 100
+SNAPSHOT_HASH_LEN = 8
+
+REGS_DIR = "regs"
+REGS_ACTUAL_DIR = "regs_actual"
+
+
+def snapshot_prefix(ws_dir: Path, example_id: str, nested: bool) -> str:
+    """Repo-relative path before a fixture's stem, e.g. `tests/ws_aws/regs/encryption/`."""
+    sep = "/" if nested else "_"
+    return f"{ws_dir.relative_to(REPO_ROOT).as_posix()}/{REGS_DIR}/{example_id}{sep}"
+
+
+def snapshot_stem(address: str, prefix: str) -> str:
+    """Return a filename stem so the committed fixture path fits `MAX_LEN_FROM_REPO_ROOT`.
+
+    `prefix` is the repo-relative path up to and including the separator before the stem, so a
+    long example name shortens the address part. Keeps whole `_`-separated tokens from the tail of
+    the sanitized address so the identifying resource name survives, then appends a short hash.
+    """
+    stem = sanitize_address(address)
+    budget = MAX_LEN_FROM_REPO_ROOT - len(prefix) - len(".yaml")
+    if len(stem) <= budget:
+        return stem
+    token_budget = budget - SNAPSHOT_HASH_LEN - 1
+    kept: list[str] = []
+    for token in reversed(stem.split("_")):
+        if len("_".join([token, *kept])) > token_budget:
+            break
+        kept.insert(0, token)
+    digest = hashlib.sha1(stem.encode()).hexdigest()[:SNAPSHOT_HASH_LEN]
+    return f"{'_'.join(kept)}_{digest}"
+
+
 WORKSPACE_CONFIG_FILE = "workspace_test_config.yaml"
 
 
@@ -313,11 +348,9 @@ def resolve_workspaces(workspace: str, tests_dir: Path = DEFAULT_TESTS_DIR) -> l
     if not tests_dir.exists():
         raise ValueError(f"{tests_dir} does not exist")
     if workspace == "all":
-        ws_dirs = sorted(
-            d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("workspace_")
-        )
+        ws_dirs = sorted(d for d in tests_dir.iterdir() if d.is_dir() and d.name.startswith("ws_"))
         if not ws_dirs:
-            raise ValueError(f"No workspace_* directories found in {tests_dir}")
+            raise ValueError(f"No ws_* directories found in {tests_dir}")
         return ws_dirs
     workspace_path = tests_dir / workspace
     if not workspace_path.exists():

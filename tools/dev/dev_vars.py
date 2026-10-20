@@ -6,7 +6,7 @@ import typer
 
 app = typer.Typer()
 
-WORKSPACE_DIR = Path(__file__).parent.parent.parent / "tests" / "workspace_cluster_examples"
+WORKSPACE_DIR = Path(__file__).parent.parent.parent / "tests" / "ws_cluster"
 DEV_TFVARS = WORKSPACE_DIR / "dev.tfvars"
 
 

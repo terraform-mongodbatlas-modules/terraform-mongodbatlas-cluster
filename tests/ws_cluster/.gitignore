@@ -5,7 +5,7 @@ plan.json
 dev.tfvars
 *.generated.tf
 test_plan_snapshot.py
-plan_snapshots_actual/
+regs_actual/
 terraform.tfstate
 terraform.tfstate.backup
 __pycache__/
