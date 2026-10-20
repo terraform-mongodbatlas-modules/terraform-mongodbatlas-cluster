@@ -76,6 +76,21 @@ jobs:
       - run: just test-compat
   # === OK_EDIT: path-sync job-compat-tests ===
 
+  # === DO_NOT_EDIT: path-sync job-windows-init ===
+  windows-init:
+    name: Windows Module Init
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
+        with:
+          terraform_wrapper: false
+      - name: Terraform init
+        run: terraform init
+      - name: Terraform validate
+        run: terraform validate
+  # === OK_EDIT: path-sync job-windows-init ===
+
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   plan-snapshot-tests:
     name: Plan Snapshots (${{ matrix.lane }})
@@ -131,7 +146,7 @@ jobs:
 
   # === DO_NOT_EDIT: path-sync job-slack ===
   slack-notification:
-    needs: [check, py-tests, plan-tests, compat-tests, plan-snapshot-tests]
+    needs: [check, py-tests, plan-tests, compat-tests, plan-snapshot-tests, windows-init]
     if: ${{ github.event_name == 'schedule' && !cancelled() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
     permissions: {}
