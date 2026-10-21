@@ -318,9 +318,12 @@ def snapshot_prefix(ws_dir: Path, example_id: str, nested: bool) -> str:
     """Repo-relative path before a fixture's stem, e.g. `tests/ws_aws/regs/encryption/`."""
     sep = "/" if nested else "_"
     try:
-        relative_ws = ws_dir.relative_to(REPO_ROOT)
-    except ValueError:  # relative --tests-dir input such as `tests/ws_cluster`
         relative_ws = ws_dir.resolve().relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        raise ValueError(
+            f"workspace {ws_dir} is outside {REPO_ROOT}; "
+            "snapshot paths are bounded relative to the repository root"
+        ) from None
     return f"{relative_ws.as_posix()}/{REGS_DIR}/{example_id}{sep}"
 
 

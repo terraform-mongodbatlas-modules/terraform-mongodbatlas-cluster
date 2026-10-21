@@ -400,6 +400,11 @@ def test_snapshot_prefix_relative_ws_dir():
     )
 
 
+def test_snapshot_prefix_outside_repo(tmp_path: Path):
+    with pytest.raises(ValueError, match="outside .*; snapshot paths are bounded"):
+        models.snapshot_prefix(tmp_path / "ws_x", "01", nested=False)
+
+
 def test_snapshot_stem_short():
     address = "module.cluster.mongodbatlas_advanced_cluster.this"
     prefix = models.snapshot_prefix(WS_DIR, "01", nested=False)

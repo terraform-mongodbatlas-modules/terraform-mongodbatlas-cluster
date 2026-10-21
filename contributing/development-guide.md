@@ -136,14 +136,12 @@ such as the plan snapshot filenames with `"` that broke `git clone` in
 
 Plan snapshot paths stay short enough for the Windows `MAX_PATH` limit of 260 characters. Snapshots
 live under `tests/ws_*/regs/`, and `models.snapshot_stem` bounds the committed path to
-`MAX_LEN_FROM_REPO_ROOT` (100) characters. The example id and the address stem share that budget, so a long
-example name shortens the address part. The stem keeps the tail of the Terraform address at
-`_`-separated token boundaries so the resource name survives, then appends a short hash.
-`test_plan_snapshot_paths_fit_windows` in `tools/workspace/models_test.py` fails `py-tests` when a
-committed snapshot path exceeds `MAX_LEN_FROM_REPO_ROOT`, so a long example or resource name is caught in
-seconds instead of failing the Windows job after a clone. A user who consumes `atlas-aws` can run
-`terraform init` in a working directory up to about 129 characters; a user who clones `atlas-aws`
-itself can use about 159.
+`MAX_LEN_FROM_REPO_ROOT` (100) characters. The example id and the address stem share that budget, so a
+long example name shortens the address part. The stem keeps whole `_`-separated tokens from the tail
+of the address so the resource name survives, then appends a short hash.
+`test_plan_snapshot_paths_fit_windows` in `tools/workspace/models_test.py` guards the bound. A user who
+consumes the module can run `terraform init` in a working directory up to about 129 characters; a
+repository cloned directly allows about 159.
 
 ## Testing
 
