@@ -29,10 +29,12 @@ Both approaches manage the same underlying `mongodbatlas_advanced_cluster` resou
 The simplified configuration approach uses the `regions` variable to define your cluster topology. This is the **recommended approach** for most users.
 
 **What it is:**
+
 - A module-managed abstraction that automatically generates the underlying `replication_specs` configuration
 - Handles complexity behind the scenes while providing a clean, intuitive interface
 
 **Key features:**
+
 - Automatic `replication_specs` generation from simple region definitions
 - Auto-scaling enabled by default (M10-M200 range) for production-ready deployments
 - Simplified shard management using `shard_count` for uniform topologies
@@ -40,19 +42,20 @@ The simplified configuration approach uses the `regions` variable to define your
 - Automatic persistence of instance sizes between plan/apply cycles when using auto-scaling
 
 **Example:**
+
 ```hcl
 module "cluster" {
   source = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  
+
   project_id   = var.project_id
   name         = "my-cluster"
   cluster_type = "SHARDED"
-  
+
   regions = [
     { name = "US_EAST_1", node_count = 3 },
     { name = "US_WEST_2", node_count = 2 }
   ]
-  
+
   # Auto-scaling enabled by default
   # Instance sizes managed automatically
 }
@@ -63,32 +66,36 @@ module "cluster" {
 The direct configuration approach uses the `replication_specs` variable to pass configuration directly to the underlying resource.
 
 **What it is:**
+
 - A direct passthrough to the `mongodbatlas_advanced_cluster` resource's `replication_specs` attribute
 - Provides full control over all resource attributes without abstraction
 
 **Key features:**
+
 - Full control over all resource configuration details
 - Use the exact schema from the provider documentation
 - Easier migration path from existing `mongodbatlas_advanced_cluster` resources
 - Ideal for users already familiar with the resource schema
 
 **Important limitations:**
+
 - Cannot be used with `auto_scaling` in the current version (support planned for future release)
   - Reason: Direct passthrough bypasses the data source logic required for auto-scaling
 - Cannot be combined with ANY simplified variables (`regions`, `shard_count`, `instance_size`, etc.)
 - Requires explicitly setting `regions = []` to disable simplified configuration
 
 **Example:**
+
 ```hcl
 module "cluster" {
   source = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  
+
   project_id   = var.project_id
   name         = "my-cluster"
   cluster_type = "SHARDED"
-  
+
   regions = []  # Required: explicitly disable simplified config
-  
+
   replication_specs = [
     {
       num_shards = 1
@@ -123,15 +130,15 @@ The module validates your configuration and provides clear error messages if you
 
 **Use `regions` (simplified configuration) if you:**
 
-- Are creating a new cluster deployment  
-- Want auto-scaling capabilities (recommended for production)  
+- Are creating a new cluster deployment
+- Want auto-scaling capabilities (recommended for production)
 - Prefer module-managed configuration that handles complexity
 
 **Use `replication_specs` (direct configuration) if you:**
 
-- Are migrating from an existing `mongodbatlas_advanced_cluster` resource  
-- Already have working `replication_specs` configuration to reuse  
-- Need manual scaling control only (auto-scaling not supported)  
+- Are migrating from an existing `mongodbatlas_advanced_cluster` resource
+- Already have working `replication_specs` configuration to reuse
+- Need manual scaling control only (auto-scaling not supported)
 - Prefer working directly with the provider schema
 
 ## Key Variables Reference
@@ -144,10 +151,10 @@ When using the simplified `regions` approach, these variables are available:
 
 - **`cluster_type`** (required) - Type of cluster topology
   - Valid values: `REPLICASET`, `SHARDED`, or `GEOSHARDED`
-  
+
 - **`regions`** - List of region configurations defining your cluster topology
   - See [Per-Region Configuration Options](#per-region-configuration-options) below
-  
+
 - **`shard_count`** (optional) - Number of uniform shards to create
   - Each shard will contain all regions defined in `regions`
   - Auto-scaling continues to use [Independent Shard Scaling (ISS)](https://www.mongodb.com/docs/atlas/cluster-autoscaling/#scaling-a-sharded-cluster)
@@ -159,7 +166,7 @@ When using the simplified `regions` approach, these variables are available:
   - Default range: M10-M200 (works across AWS/Azure/GCP)
   - Can override min/max instance sizes
   - Set to `null` to disable auto-scaling
-  
+
 - **`instance_size`** - Instance size to use at root level
   - Only applicable when auto-scaling is disabled
   - Can be overridden per-region for Independent Shard Scaling
@@ -170,38 +177,36 @@ Within each item in the `regions` list, you can specify:
 
 - **`name`** (required) - Cloud provider region identifier
   - Examples: `"US_EAST_1"`, `"EU_WEST_1"`, `"ASIA_SOUTH_1"`
-  
+
 - **`node_count`** - Number of electable (voting) nodes in the region
   - Default: `3` (recommended for production high availability)
-  
+
 - **`node_count_read_only`** - Number of read-only nodes
   - Optional: Add read-only nodes for read scaling
-  
+
 - **`node_count_analytics`** - Number of analytics nodes
   - Optional: Add analytics nodes for analytics workloads
   - Note: See [Analytics Node Scaling Limitations](#analytics-node-scaling-limitations)
-  
+
 - **`instance_size`** - Instance size override for this region
   - Used for Independent Shard Scaling (ISS) with manual scaling
   - Example: `"M30"`, `"M40"`, `"R50"`
-  
-- **`shard_name`** - Preferred shard identity for grouping regions into shards
-  - Required for SHARDED/GEOSHARDED when using ISS (or use deprecated `shard_number`)
+
+- **`shard_name`** - Shard identity for grouping regions into shards
+  - Required for SHARDED/GEOSHARDED when using ISS
   - Must match `^[a-z0-9]{1,24}$`; for GEOSHARDED a given `shard_name` maps to a single zone (regions in one shard share it; do not reuse it across zones)
   - Groups follow first appearance in `regions`; not used when using `shard_count`
-- **`shard_number`** (deprecated) - Numeric shard grouping; removed in v1
-  - Zone-scoped for GEOSHARDED; groups follow first appearance in `regions`
-  
+
 - **`zone_name`** - Geographic zone identifier
   - Required for GEOSHARDED clusters
   - Example: `"US"`, `"EU"`, `"APAC"`
-  
+
 - **`disk_iops`** - Provisioned IOPS for EBS volumes
   - Only valid when disk auto-scaling is disabled
-  
+
 - **`disk_size_gb`** - Disk size in gigabytes
   - Only valid when disk auto-scaling is disabled
-  
+
 - **`ebs_volume_type`** - EBS volume type (AWS only)
   - Only valid when disk auto-scaling is disabled
   - Valid values: `"STANDARD"`, `"PROVISIONED"`
@@ -238,6 +243,7 @@ See [`examples/09_cluster_using_replication_specs`](../examples/09_cluster_using
 ## Migrating from `regions` to `replication_specs`
 
 You might want to migrate from the simplified `regions` approach to direct `replication_specs` if you need:
+
 - Configurations not supported by the simplified variables
 - More granular control over specific resource attributes
 - Manual scaling control for specific requirements
@@ -274,24 +280,24 @@ Modify your module configuration to use `replication_specs`:
 ```hcl
 module "cluster" {
   source = "terraform-mongodbatlas-modules/cluster/mongodbatlas"
-  
+
   project_id   = var.project_id
   name         = "my-cluster"
   cluster_type = "SHARDED"
-  
+
   # Disable simplified configuration
   regions = []
-  
+
   # Remove: regions list
   # Remove: shard_count
   # Remove: auto_scaling
   # Remove: instance_size (at root level)
-  
+
   # Add extracted replication_specs
   replication_specs = [
     # Paste the configuration from step 2
   ]
-  
+
   # Keep other variables (backup_enabled, tags, etc.)
 }
 ```
@@ -322,10 +328,12 @@ Your cluster is now using the `replication_specs` approach and you can modify th
 Auto-scaling is only available when using the simplified `regions` configuration approach.
 
 **Current limitation:**
+
 - Cannot use `auto_scaling` with `replication_specs` in the current module version
 - When using `replication_specs`, you must manage instance sizes manually within the specs
 
 **Future support:**
+
 - Auto-scaling with `replication_specs` is planned for a future module version
 - This will provide auto-scaling capabilities regardless of configuration approach
 
@@ -335,13 +343,15 @@ If you need auto-scaling, use the `regions` approach. If you need direct `replic
 ### Manual Scaling with Different Instance Sizes (ISS)
 
 Independent Shard Scaling (ISS) allows different shards to have different instance sizes. This is useful for:
+
 - Cost optimization by sizing shards based on their data and workload
 - Gradual scaling of specific shards without affecting others
 - Testing new instance sizes on a subset of shards
 
 **Requirements for ISS:**
+
 - Must explicitly specify `instance_size` for each region
-- Must explicitly specify `shard_name` (preferred) or `shard_number` for each region
+- Must explicitly specify `shard_name` for each region
 - Cannot use `shard_count` (which creates uniform shards)
 - Must disable auto-scaling (set `auto_scaling = {compute_enabled = false}`)
 
@@ -352,11 +362,13 @@ Independent Shard Scaling (ISS) allows different shards to have different instan
 The disk-related variables (`disk_iops`, `disk_size_gb`, `ebs_volume_type`) can only be used when disk auto-scaling is disabled.
 
 **When using auto-scaling (default):**
+
 - Disk configuration is managed automatically by Atlas
 - You cannot manually specify disk variables
 - Atlas will scale disk capacity and IOPS as needed
 
 **For manual disk configuration:**
+
 1. Disable disk auto-scaling, set `auto_scaling = {disk_gb_enabled = false}`
 2. Specify disk variables as needed (`disk_size_gb`, `disk_iops`, etc.)
 
@@ -367,6 +379,7 @@ This applies to both the `regions` and `replication_specs` configuration approac
 When using the `regions` variable with **manual scaling**, there is a limitation regarding analytics nodes:
 
 **Limitation:**
+
 - Analytics nodes (`node_count_analytics`) will use the same storage configuration as electable nodes
 - Cannot configure different instance sizes or disk settings for analytics nodes independently
 - The following analytics-specific variables are not supported in the simplified configuration:
@@ -374,6 +387,7 @@ When using the `regions` variable with **manual scaling**, there is a limitation
   - `disk_iops_analytics`
 
 **When this matters:**
+
 - If you need analytics nodes with different storage characteristics than electable nodes
 - For example: less compute for analytics workloads, or different IOPS settings
 
@@ -387,17 +401,20 @@ If you need independent storage configuration for analytics nodes, use the `repl
 When using the simplified `regions` approach with auto-scaling enabled, the module automatically handles configuration persistence:
 
 **How it works:**
+
 - The module uses a `data.mongodbatlas_advanced_cluster` data source internally
 - This reads the current cluster state before each plan/apply
 - Instance sizes that may have changed due to auto-scaling are preserved
 - Prevents unwanted configuration drift in your Terraform state
 
 **Benefits:**
+
 - No need to use `lifecycle.ignore_changes` blocks
 - Clean Terraform plans that show only actual configuration changes
 - Auto-scaling can adjust instance sizes without causing plan differences
 
 **Example scenario:**
+
 1. You deploy a cluster with auto-scaling (M10-M60 range)
 2. Atlas auto-scales the cluster to M40 due to workload
 3. Running `terraform plan` shows no changes (not trying to scale back to M10)
@@ -412,12 +429,14 @@ This automatic persistence is one of the key benefits of using the simplified co
 The module validates your configuration and provides specific error messages to help you fix issues quickly:
 
 **Common validation checks:**
+
 - Ensuring `regions` and `replication_specs` are not used together
 - Verifying that simplified variables are not used with `replication_specs`
 - Checking that `regions = []` is set when using `replication_specs`
 - Validating cluster type combinations and required fields
 
 **Error message examples:**
+
 ```
 Error: Cannot use both 'regions' and 'replication_specs'
 Please choose one topology configuration method.

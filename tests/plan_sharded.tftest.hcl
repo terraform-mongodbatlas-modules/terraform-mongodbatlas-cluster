@@ -56,30 +56,6 @@ run "sharded_uniform_layout_and_priorities" {
   }
 }
 
-run "sharded_uniform_conflicts_with_shard_number" {
-  command = plan
-  expect_failures = [
-    mongodbatlas_advanced_cluster.this,
-    check.shard_number_deprecated,
-  ]
-
-  module {
-    source = "./"
-  }
-
-  variables {
-    name          = "tf-test-sharded-conflict"
-    project_id    = var.project_id
-    provider_name = "AWS"
-    cluster_type  = "SHARDED"
-
-    shard_count = 2
-    regions = [
-      { name = "US_EAST_1", node_count = 3, shard_number = 0 },
-    ]
-  }
-}
-
 run "sharded_uniform_conflicts_with_shard_name" {
   command = plan
   expect_failures = [
@@ -162,60 +138,6 @@ run "sharded_shard_name_grouping_and_order" {
   }
 }
 
-run "sharded_shard_number_first_appearance_order" {
-  command = plan
-  expect_failures = [
-    check.shard_number_deprecated
-  ]
-
-  module {
-    source = "./"
-  }
-
-  variables {
-    name          = "tf-test-sharded-number-order"
-    project_id    = var.project_id
-    provider_name = "AWS"
-    cluster_type  = "SHARDED"
-
-    regions = [
-      { name = "US_WEST_2", node_count = 3, shard_number = 1 },
-      { name = "US_EAST_1", node_count = 3, shard_number = 0 },
-    ]
-  }
-
-  assert {
-    condition = (
-      length(mongodbatlas_advanced_cluster.this.replication_specs) == 2 &&
-      mongodbatlas_advanced_cluster.this.replication_specs[0].region_configs[0].region_name == "US_WEST_2" &&
-      mongodbatlas_advanced_cluster.this.replication_specs[1].region_configs[0].region_name == "US_EAST_1"
-    )
-    error_message = "shard_number groups should follow first appearance in regions (1 then 0 as listed)"
-  }
-}
-
-run "sharded_rejects_both_fields_on_region" {
-  command = plan
-  expect_failures = [
-    var.regions
-  ]
-
-  module {
-    source = "./"
-  }
-
-  variables {
-    name          = "tf-test-sharded-both-fields"
-    project_id    = var.project_id
-    provider_name = "AWS"
-    cluster_type  = "SHARDED"
-
-    regions = [
-      { name = "US_EAST_1", node_count = 3, shard_name = "s0", shard_number = 0 },
-    ]
-  }
-}
-
 run "sharded_rejects_invalid_shard_name" {
   command = plan
   expect_failures = [
@@ -260,30 +182,6 @@ run "sharded_accepts_digit_leading_shard_name" {
   assert {
     condition     = length(mongodbatlas_advanced_cluster.this.replication_specs) == 2
     error_message = "Expected 2 shards for digit-leading names 0 and 1"
-  }
-}
-
-run "sharded_rejects_mixed_field_family" {
-  command = plan
-  expect_failures = [
-    mongodbatlas_advanced_cluster.this,
-    check.shard_number_deprecated,
-  ]
-
-  module {
-    source = "./"
-  }
-
-  variables {
-    name          = "tf-test-sharded-mixed-family"
-    project_id    = var.project_id
-    provider_name = "AWS"
-    cluster_type  = "SHARDED"
-
-    regions = [
-      { name = "US_EAST_1", node_count = 3, shard_name = "s0" },
-      { name = "US_WEST_2", node_count = 3, shard_number = 1 },
-    ]
   }
 }
 
