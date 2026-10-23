@@ -134,6 +134,15 @@ The `windows-init` job clones the repo and runs `terraform init` and `terraform 
 such as the plan snapshot filenames with `"` that broke `git clone` in
 [atlas-gcp#73](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-atlas-gcp/issues/73).
 
+Plan snapshot paths stay short enough for the Windows `MAX_PATH` limit of 260 characters. Snapshots
+live under `tests/ws_*/regs/`, and `models.snapshot_stem` bounds the committed path to
+`MAX_LEN_FROM_REPO_ROOT` (100) characters. The example id and the address stem share that budget, so a
+long example name shortens the address part. The stem keeps whole `_`-separated tokens from the tail
+of the address so the resource name survives, then appends a short hash.
+`test_plan_snapshot_paths_fit_windows` in `tools/workspace/models_test.py` guards the bound. A user who
+consumes the module can run `terraform init` in a working directory up to about 129 characters; a
+repository cloned directly allows about 159.
+
 ## Testing
 
 See [test-guide.md](./test-guide.md) for detailed testing documentation including:

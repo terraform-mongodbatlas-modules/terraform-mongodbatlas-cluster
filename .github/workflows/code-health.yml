@@ -140,7 +140,7 @@ jobs:
   # === OK_EDIT: path-sync job-snapshot-tests ===
       # Module-specific: Add dev-vars and plan-snapshot-test commands
       - run: just dev-vars-project ${{ vars.MONGODB_ATLAS_PROJECT_ID_SNAPSHOT_TEST }}
-      - run: just plan-snapshot-test --var-file "$(pwd)/tests/workspace_cluster_examples/dev.tfvars"
+      - run: just plan-snapshot-test --var-file "$(pwd)/tests/ws_cluster/dev.tfvars"
   # === DO_NOT_EDIT: path-sync job-snapshot-tests ===
   # === OK_EDIT: path-sync job-snapshot-tests ===
 

@@ -15,7 +15,6 @@ from workspace import models
 app = typer.Typer()
 
 PLAN_JSON = "plan.json"
-PLAN_SNAPSHOTS_ACTUAL_DIR = "plan_snapshots_actual"
 TEST_PLAN_SNAPSHOT_PY = "test_plan_snapshot.py"
 
 
@@ -177,10 +176,11 @@ def process_workspace(ws_dir: Path, force_regen: bool, show_uncovered: bool) -> 
         uncovered = find_uncovered_resources(resources, config)
         report_uncovered(uncovered)
         return
-    actual_dir = ws_dir / PLAN_SNAPSHOTS_ACTUAL_DIR
+    actual_dir = ws_dir / models.REGS_ACTUAL_DIR
     actual_dir.mkdir(exist_ok=True)
     for ex in config.examples:
         nested = ex.should_use_nested_snapshots()
+        prefix = models.snapshot_prefix(ws_dir, ex.identifier, nested)
         if nested:
             example_dir = actual_dir / ex.identifier
             example_dir.mkdir(exist_ok=True)
@@ -189,14 +189,14 @@ def process_workspace(ws_dir: Path, force_regen: bool, show_uncovered: bool) -> 
             if not full_addr:
                 typer.echo(f"  Warning: {reg.address} not found in plan", err=True)
                 continue
-            sanitized = models.sanitize_address(reg.address)
+            stem = models.snapshot_stem(reg.address, prefix)
             content = dump_resource_yaml(resources[full_addr], config, ex, reg.dump)
             if nested:
-                filepath = actual_dir / ex.identifier / f"{sanitized}.yaml"
-                display_path = f"{ex.identifier}/{sanitized}.yaml"
+                filepath = actual_dir / ex.identifier / f"{stem}.yaml"
+                display_path = f"{ex.identifier}/{stem}.yaml"
             else:
-                filepath = actual_dir / f"{ex.identifier}_{sanitized}.yaml"
-                display_path = f"{ex.identifier}_{sanitized}.yaml"
+                filepath = actual_dir / f"{ex.identifier}_{stem}.yaml"
+                display_path = f"{ex.identifier}_{stem}.yaml"
             filepath.write_text(content)
             typer.echo(f"  Generated {display_path}")
     typer.echo(f"Running pytest for {ws_dir.name}...")

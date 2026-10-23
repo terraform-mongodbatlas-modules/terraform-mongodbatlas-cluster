@@ -56,7 +56,7 @@ To update the version matrix when new Terraform versions are released, edit `.te
 
 ## Plan Snapshot Tests
 
-Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/workspace_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
+Plan snapshot tests verify that `terraform plan` output remains consistent across changes. They use workspace directories under `tests/ws_*/` with YAML snapshots compared via [pytest-regressions](https://pytest-regressions.readthedocs.io/).
 
 The Code Health matrix declares the Terraform version and provider mode for each snapshot lane. The
 minimum lane uses Terraform 1.10 and the module's configured minimum provider release. The maximum
@@ -88,10 +88,10 @@ just ws-run -m setup-only --auto-approve
 just ws-run -m apply -v dev.tfvars --auto-approve
 
 # Validate that applied Atlas resources can be imported cleanly (requires prior apply)
-just import-validate --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+just import-validate --var-file $(pwd)/tests/ws_cluster/dev.tfvars
 
 # Run import validation for specific examples only
-just import-validate -e 1,8 --var-file $(pwd)/tests/workspace_cluster_examples/dev.tfvars
+just import-validate -e 1,8 --var-file $(pwd)/tests/ws_cluster/dev.tfvars
 
 # Destroy resources after testing
 just ws-run -m destroy --auto-approve
@@ -104,7 +104,7 @@ The typical end-to-end workflow is: `plan-snapshot-test` -> `apply-examples` -> 
 
 ### Snapshot Configuration
 
-Add examples to `tests/workspace_cluster_examples/workspace_test_config.yaml`:
+Add examples to `tests/ws_cluster/workspace_test_config.yaml`:
 
 ```yaml
 examples:
