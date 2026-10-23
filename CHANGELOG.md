@@ -1,5 +1,9 @@
 ## (Unreleased)
 
+BREAKING CHANGES:
+
+* variable/regions: Removes deprecated `shard_number` attribute ([#240](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/240))
+
 ## 0.4.1 (September 04, 2026)
 
 BUG FIXES:
