@@ -9,16 +9,16 @@ The simplest way to define your cluster topology:
 - Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
-- For `cluster_type.REPLICASET`: omit `shard_name`, `shard_number`, and `zone_name`.
-- For `cluster_type.SHARDED`: set `shard_name` (preferred) or `shard_number` on each region, or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same identity belong to the same shard.
-- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name` (preferred) or `shard_number`. Regions with the same `zone_name` form one zone.
+- For `cluster_type.REPLICASET`: omit `shard_name` and `zone_name`.
+- For `cluster_type.SHARDED`: set `shard_name` on each region, or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_name` belong to the same shard.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name`. Regions with the same `zone_name` form one zone.
 - See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 
 **NOTE**:
 - List electable regions (`node_count`) first within each replica set, shard, or zone. Those get priority 7, 6, 5... in list order. Regions that only set `node_count_analytics` and/or `node_count_read_only` get priority 0. Atlas requires that, and priorities must be descending; the module fails plan if a non-electable region is listed before an electable one in the same group. See [regionConfigs.priority](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
-- Prefer `shard_name` for shard grouping. It must match `^[a-z0-9]{1,24}$` (lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` is set.
-- Both `shard_name` and deprecated `shard_number` groups follow first appearance in `regions`. Both fields are module-only grouping keys and are not sent to Atlas today.
-- Within a zone, deprecated `shard_number` values are zone-scoped. Regions in the same shard share one `shard_name`, but a given `shard_name` must map to a single shard: do not reuse the same `shard_name` in a different zone.
+- `shard_name` is the shard grouping key. It must match `^[a-z0-9]{1,24}$` (lowercase alphanumeric; length 1 to 24). Do not set `shard_name` when `shard_count` is set.
+- `shard_name` groups follow first appearance in `regions`. It is a module-only grouping key and is not sent to Atlas today.
+- Regions in the same shard share one `shard_name`, but a given `shard_name` must map to a single shard: do not reuse the same `shard_name` in a different zone.
 EOT
   type = list(object({
     name                    = string
@@ -32,7 +32,6 @@ EOT
     node_count_read_only    = optional(number)
     provider_name           = optional(string)
     shard_name              = optional(string)
-    shard_number            = optional(number)
     zone_name               = optional(string)
   }))
 
@@ -53,26 +52,9 @@ EOT
   validation {
     condition = alltrue([
       for r in var.regions :
-      (
-        r.shard_number == null
-        || try(r.shard_number == floor(r.shard_number) && r.shard_number >= 0, false)
-      )
-    ])
-    error_message = "Each `regions[*].shard_number` must be a non-negative whole integer (e.g., 0, 1, 2...) if provided."
-  }
-  validation {
-    condition = alltrue([
-      for r in var.regions :
       r.shard_name == null || can(regex("^[a-z0-9]{1,24}$", r.shard_name))
     ])
     error_message = "Each `regions[*].shard_name` must match ^[a-z0-9]{1,24}$ (lowercase alphanumeric; length 1 to 24)."
-  }
-  validation {
-    condition = alltrue([
-      for r in var.regions :
-      !(r.shard_name != null && r.shard_number != null)
-    ])
-    error_message = "Each region must not set both `shard_name` and `shard_number`."
   }
 }
 
@@ -241,8 +223,8 @@ variable "shard_count" {
 Number of shards for SHARDED clusters.
 
 - When set, all shards share the same region topology (each shard gets the same regions list).
-- Do NOT set `regions[*].shard_name` or `regions[*].shard_number` when `shard_count` is set (they are mutually exclusive).
-- When unset, you must set `regions[*].shard_name` (preferred) or `regions[*].shard_number` on every region to explicitly group regions into shards.
+- Do NOT set `regions[*].shard_name` when `shard_count` is set (they are mutually exclusive).
+- When unset, you must set `regions[*].shard_name` on every region to explicitly group regions into shards.
 
 EOT
   type        = number

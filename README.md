@@ -32,9 +32,10 @@ Run 'just gen-readme' to regenerate. -->
 The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments and embeds MongoDB's best practices as intelligent defaults. This preview validates that these patterns meet the needs of most workloads without constant maintenance or rework. We welcome your feedback and contributions during this preview phase. MongoDB formally supports this module from its v1 release onwards.
 
 <!-- BEGIN_DISCLAIMER -->
+
 ## Disclaimer
 
-One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. The v0 release (public preview) of the MongoDB Atlas Cluster Module focuses on gathering feedback and refining the design. Upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.  
+One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. The v0 release (public preview) of the MongoDB Atlas Cluster Module focuses on gathering feedback and refining the design. Upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.
 
 <!-- END_DISCLAIMER -->
 
@@ -63,36 +64,36 @@ Perform the following steps to download and configure the tools required to crea
 Perform the following steps to create a new cluster using the cluster module:
 
 1. Create your Terraform configuration files.
-  Ensure your files contain the code provided in this repository:
-  
+   Ensure your files contain the code provided in this repository:
+
    - [main.tf](./examples/08_development_cluster/README.md/#code-snippet)
    - [variables.tf](./examples/08_development_cluster/variables.tf)
    - [versions.tf](examples/08_development_cluster/versions.tf)
 
 2. Initialize Terraform.
-  
-    ```sh
-    terraform init # download the required providers and create a `terraform.lock.hcl` file.
-    ```
+
+   ```sh
+   terraform init # download the required providers and create a `terraform.lock.hcl` file.
+   ```
 
 3. Configure your authentication environment variables.
-  
-    ```sh
-    export MONGODB_ATLAS_CLIENT_ID="your-client-id-goes-here"
-    export MONGODB_ATLAS_CLIENT_SECRET="your-client-secret-goes-here"
-    ```
+
+   ```sh
+   export MONGODB_ATLAS_CLIENT_ID="your-client-id-goes-here"
+   export MONGODB_ATLAS_CLIENT_SECRET="your-client-secret-goes-here"
+   ```
 
 4. Preview your configuration to ensure it works correctly.
 
-    ```sh
-    terraform plan
-    ```
+   ```sh
+   terraform plan
+   ```
 
 5. Create your new cluster.
 
-    ```sh
-    terraform apply
-    ```
+   ```sh
+   terraform apply
+   ```
 
    Terraform creates the new cluster in your MongoDB Atlas infrastructure.
 
@@ -211,16 +212,16 @@ The simplest way to define your cluster topology:
 - Set `name`, for example `US_EAST_1`, see all valid [region names](https://www.mongodb.com/docs/atlas/cloud-providers-regions/).
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the `provider_name`.
-- For `cluster_type.REPLICASET`: omit `shard_name`, `shard_number`, and `zone_name`.
-- For `cluster_type.SHARDED`: set `shard_name` (preferred) or `shard_number` on each region, or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same identity belong to the same shard.
-- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name` (preferred) or `shard_number`. Regions with the same `zone_name` form one zone.
+- For `cluster_type.REPLICASET`: omit `shard_name` and `zone_name`.
+- For `cluster_type.SHARDED`: set `shard_name` on each region, or use the `shard_count` [variable](#shard_count); do not set `zone_name`. Regions with the same `shard_name` belong to the same shard.
+- For `cluster_type.GEOSHARDED`: set `zone_name` on each region; optionally set `shard_name`. Regions with the same `zone_name` form one zone.
 - See [auto_scaling](#auto-scaling) vs [manual scaling](#manual-scaling) below.
 
 **NOTE**:
 - List electable regions (`node_count`) first within each replica set, shard, or zone. Those get priority 7, 6, 5... in list order. Regions that only set `node_count_analytics` and/or `node_count_read_only` get priority 0. Atlas requires that, and priorities must be descending; the module fails plan if a non-electable region is listed before an electable one in the same group. See [regionConfigs.priority](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
-- Prefer `shard_name` for shard grouping. It must match `^[a-z0-9]{1,24}$` (lowercase alphanumeric; length 1 to 24). Do not set both `shard_name` and `shard_number` on the same region. Do not set either when `shard_count` is set.
-- Both `shard_name` and deprecated `shard_number` groups follow first appearance in `regions`. Both fields are module-only grouping keys and are not sent to Atlas today.
-- Within a zone, deprecated `shard_number` values are zone-scoped. Regions in the same shard share one `shard_name`, but a given `shard_name` must map to a single shard: do not reuse the same `shard_name` in a different zone.
+- `shard_name` is the shard grouping key. It must match `^[a-z0-9]{1,24}$` (lowercase alphanumeric; length 1 to 24). Do not set `shard_name` when `shard_count` is set.
+- `shard_name` groups follow first appearance in `regions`. It is a module-only grouping key and is not sent to Atlas today.
+- Regions in the same shard share one `shard_name`, but a given `shard_name` must map to a single shard: do not reuse the same `shard_name` in a different zone.
 
 Type:
 
@@ -237,7 +238,6 @@ list(object({
   node_count_read_only    = optional(number)
   provider_name           = optional(string)
   shard_name              = optional(string)
-  shard_number            = optional(number)
   zone_name               = optional(string)
 }))
 ```
@@ -255,8 +255,8 @@ Default: `null`
 Number of shards for SHARDED clusters.
 
 - When set, all shards share the same region topology (each shard gets the same regions list).
-- Do NOT set `regions[*].shard_name` or `regions[*].shard_number` when `shard_count` is set (they are mutually exclusive).
-- When unset, you must set `regions[*].shard_name` (preferred) or `regions[*].shard_number` on every region to explicitly group regions into shards.
+- Do NOT set `regions[*].shard_name` when `shard_count` is set (they are mutually exclusive).
+- When unset, you must set `regions[*].shard_name` on every region to explicitly group regions into shards.
 
 Type: `number`
 
@@ -966,3 +966,7 @@ See [Multi-shard clusters and topology changes](https://registry.terraform.io/pr
 ### How do I upgrade to v0.4.0?
 
 See the [v0.3.x to v0.4.0 upgrade guide](docs/v0.4.0-upgrade-guide.md) for migration instructions, including the TLS minimum protocol default under `RECOMMENDED` and zero-diff options.
+
+### How do I upgrade to v1.0.0?
+
+See the [v0.4.x to v1.0.0 upgrade guide](docs/v1.0.0-upgrade-guide.md) for migration instructions, including the removal of `regions[*].shard_number` in favor of `regions[*].shard_name`.
