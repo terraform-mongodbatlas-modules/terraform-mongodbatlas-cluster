@@ -48,6 +48,15 @@ variable "retention" {
     `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: 18:00 UTC per
     Atlas's default backup policy when left unset). `restore_window_days` controls the PIT restore window.
 
+    Each frequency block also accepts `copy_retention_value` (a number of days), which controls the copy policy
+    item the submodule derives for that frequency when a copy target is present:
+
+    - unset (`null`, the default): copy at the source frequency's retention.
+    - `0`: do not create a copy policy item for the frequency.
+    - positive: copy with that many days of retention (must not exceed the source frequency's retention).
+
+    This replaces the deprecated `frequencies` list the submodule used to send on `copy_settings`.
+
     `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
     but has no corresponding field on `cloud_backup_schedule`. It is ignored by this submodule.
 
@@ -71,43 +80,71 @@ variable "retention" {
       retention_value = number
     }))
     hourly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "days")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "days")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     daily = optional(object({
-      retention_unit  = optional(string, "days")
-      retention_value = number
+      retention_unit       = optional(string, "days")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     weekly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "weeks")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "weeks")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     monthly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "months")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "months")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     yearly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "years")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "years")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
   })
   default = {}
 }
 
 variable "copy_settings" {
-  description = "Fully-resolved cross-region copy target. The root module already derives `region`,`cloud_provider`, `zone_id`, and `should_copy_oplogs`. `null` disables `copy_settings`. `cloud_provider` is left `null` to let the provider infer it when the root module cannot resolve it. `zone_id` disambiguates the copy target's zone on multi-zone (`GEOSHARDED`) clusters and is left `null` only when the root module could not resolve it."
-  type = object({
-    cloud_provider     = optional(string)
-    region_name        = string
-    zone_id            = optional(string)
-    should_copy_oplogs = bool
-  })
-  nullable = true
-  default  = null
+  description = <<-EOT
+    One fully-resolved cross-region copy target per entry. The root module derives `cloud_provider`,
+    `region_name`, `zone_id`, and `should_copy_oplogs` for each target. An empty list disables `copy_settings`.
+    `cloud_provider` is left `null` to let the provider infer it when the root module cannot resolve it.
+    `zone_id` disambiguates the copy target's zone on multi-zone (`GEOSHARDED`) clusters and is left `null`
+    only when the root module could not resolve it.
+
+    Each target declares exactly one copy mechanism: `copy_policy_items` (derived from `retention`, the default)
+    or `last_number_of_snapshots` (count-based copies, when set). The submodule never writes the deprecated
+    `frequencies` list, and always sets `copy_policy_items_enabled = true` when a target is present because the
+    provider requires that flag for both mechanisms.
+  EOT
+  type = list(object({
+    cloud_provider           = optional(string)
+    region_name              = string
+    zone_id                  = optional(string)
+    should_copy_oplogs       = bool
+    last_number_of_snapshots = optional(number)
+  }))
+  default = []
+}
+
+variable "update_copy_snapshots" {
+  description = "Whether retention changes to copy policy items apply to snapshot copies Atlas took previously. Maps to the provider's `update_copy_snapshots`."
+  type        = bool
+  default     = null
+}
+
+variable "delete_copy_snapshots" {
+  description = "Whether Atlas deletes snapshot copies when their associated copy policy item is removed. Maps to the provider's `delete_copy_snapshots`."
+  type        = bool
+  default     = null
 }
 
 variable "export" {
