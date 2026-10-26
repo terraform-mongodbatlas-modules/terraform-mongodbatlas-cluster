@@ -71,9 +71,12 @@ module "cluster" {
   # backup_enabled defaults to true.
   backup_mode = "SCHEDULED" # module-managed policies. Other options: ON_DEMAND (manual snapshots only), UNMANAGED (customer-managed schedule).
 
-  # Keep daily snapshots for 30 days instead of the 7-day default.
+  # Keep daily snapshots for 30 days instead of the 7-day default. Atlas requires each less frequent
+  # policy item to retain at least as long as the more frequent one, so weekly is raised above the
+  # default 4 weeks (28 days) to cover the 30-day daily retention.
   backup_retention = {
-    daily = { retention_value = 30 }
+    daily  = { retention_value = 30 }
+    weekly = { retention_value = 5 }
   }
 
   # Copy to the two highest-priority secondary regions (US_WEST_2 and EU_WEST_1) and keep a
