@@ -3,7 +3,7 @@ submodule/cloud_backup_schedule: Switches `copy_settings` from the deprecated `f
 ```
 
 ```release-note:enhancement
-variable/backup_copy_region: Adds `region_count`, `regions`, `last_number_of_snapshots`, `update_copy_snapshots`, and `delete_copy_snapshots`
+variable/backup_copy_region: Adds `region_count`, `regions`, `last_number_of_snapshots`, `update_copy_snapshots`, and `delete_copy_snapshots` fields
 ```
 
 ```release-note:enhancement

@@ -191,11 +191,12 @@ locals {
 
   backup_copy_region_validation_errors = var.backup_copy_region == null ? [] : compact(concat(
     # region_count = 0 derives no targets, so it does not need a second region.
+    # region_count = 0 derives no targets, so it does not need a second region and cannot exceed any.
     local.backup_copy_derives_by_count && local.backup_copy_region_count > 0 && length(local.backup_copy_candidate_regions) < 2 ? [
       "backup_copy_region = {} needs at least 2 regions in `regions` to derive a copy target from. Add a region or set backup_copy_region.region."
     ] : [],
 
-    local.backup_copy_derives_by_count && local.backup_copy_region_count > length(local.backup_copy_candidate_regions) - 1 ? [
+    local.backup_copy_derives_by_count && local.backup_copy_region_count > 0 && local.backup_copy_region_count > length(local.backup_copy_candidate_regions) - 1 ? [
       "backup_copy_region.region_count = ${local.backup_copy_region_count} is greater than the ${max(length(local.backup_copy_candidate_regions) - 1, 0)} secondary region(s) in `regions`. Add a region or lower region_count."
     ] : [],
 

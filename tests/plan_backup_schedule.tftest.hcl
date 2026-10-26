@@ -425,6 +425,37 @@ run "copy_region_insufficient_regions_fails" {
   }
 }
 
+run "copy_region_replication_specs_region_count_zero_removes_targets" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-repl-specs-removal"
+    project_id   = var.project_id
+    cluster_type = "REPLICASET"
+    regions      = []
+    replication_specs = [{
+      region_configs = [{
+        provider_name   = "AWS"
+        region_name     = "US_EAST_1"
+        priority        = 7
+        electable_specs = { instance_size = "M10", node_count = 3 }
+      }]
+    }]
+    backup_copy_region = { region_count = 0 }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 0
+    error_message = "region_count = 0 should remove every copy target on a replication_specs cluster too"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "region_count = 0 must keep copy_policy_items_enabled = true so Atlas accepts the removal"
+  }
+}
+
 run "copy_region_replication_specs_requires_explicit_region" {
   command         = plan
   expect_failures = [mongodbatlas_advanced_cluster.this]
