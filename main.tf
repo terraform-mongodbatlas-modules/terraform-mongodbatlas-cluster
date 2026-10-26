@@ -131,15 +131,9 @@ locals {
   # Topology candidates for backup_copy_region auto-derivation (first shard/zone group).
   backup_copy_candidate_regions = length(local.grouped_regions) > 0 ? local.grouped_regions[0] : []
 
-  # Provider name per candidate region (may be null when the root provider_name supplies it).
-  backup_copy_provider_by_name = {
-    for r in local.backup_copy_candidate_regions : r.name => r.provider_name
-  }
-
+  # Ternaries, not && -- see tests/plan_short_circuit.tftest.hcl.
   # region_count defaults to 1 when omitted; an explicit value is validated for range below.
   backup_copy_region_count = var.backup_copy_region == null ? 0 : coalesce(try(var.backup_copy_region.region_count, null), 1)
-
-  # Ternaries, not && -- see tests/plan_short_circuit.tftest.hcl.
   # The count-based branch only slices when the count is in range, so an out-of-range count is reported by
   # local.backup_copy_region_validation_errors instead of raising a raw slice error.
   backup_copy_derived_targets = local.backup_copy_region_count <= length(local.backup_copy_candidate_regions) - 1 ? [
@@ -151,15 +145,17 @@ locals {
 
   # One copy target per requested secondary region. `region` pins one, `regions` names a subset explicitly,
   # otherwise `region_count` takes the highest-priority secondaries from the cluster's first region group.
+  # List comprehensions, not a keyed map: a multi-cloud region group can repeat a region name across
+  # providers (AWS and AZURE both have US_EAST_2), which a `{for ... : r.name => ...}` map rejects.
   backup_copy_targets = var.backup_copy_region == null ? [] : (
     var.backup_copy_region.region != null ? [{
       name          = var.backup_copy_region.region
-      provider_name = try(local.backup_copy_provider_by_name[var.backup_copy_region.region], null)
+      provider_name = try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == var.backup_copy_region.region][0], null)
       }] : (
       var.backup_copy_region.regions != null ? [
         for name in var.backup_copy_region.regions : {
           name          = name
-          provider_name = try(local.backup_copy_provider_by_name[name], null)
+          provider_name = try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == name][0], null)
         }
       ] : local.backup_copy_derived_targets
     )

@@ -87,7 +87,9 @@ variable "backup_copy_region" {
   }
 
   validation {
-    condition     = var.backup_copy_region == null || try(var.backup_copy_region.region_count, null) == null || try(var.backup_copy_region.region_count, null) >= 1
+    # Ternary, not || -- || doesn't short-circuit on Terraform < 1.12 (see tests/plan_short_circuit.tftest.hcl),
+    # so a plain "... == null || ... >= 1" would evaluate null >= 1 and fail planning when region_count is omitted.
+    condition     = var.backup_copy_region == null || (try(var.backup_copy_region.region_count, null) == null ? true : var.backup_copy_region.region_count >= 1)
     error_message = "backup_copy_region.region_count must be at least 1."
   }
 

@@ -840,3 +840,52 @@ run "copy_lifecycle_flags_reach_resource" {
     error_message = "delete_copy_snapshots should be plumbed through to the schedule resource"
   }
 }
+
+run "copy_region_multi_cloud_duplicate_region_names_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-duplicate-region-names"
+    project_id   = var.project_id
+    cluster_type = "SHARDED"
+    shard_count  = 1
+    regions = [
+      { name = "US_EAST_2", node_count = 3, provider_name = "AWS" },
+      { name = "US_EAST_2", node_count = 2, provider_name = "AZURE" },
+    ]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 1
+    error_message = "a region name repeated across cloud providers should still derive one copy target"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_EAST_2" && module.backup_schedule[0].schedule.copy_settings[0].cloud_provider == "AZURE"
+    error_message = "the derived target should resolve cloud_provider from the second row (duplicate-tolerant lookup, first-match for the pinned region path)"
+  }
+}
+
+run "copy_region_pinned_region_multi_cloud_duplicate_names_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-pinned-duplicate-region-names"
+    project_id   = var.project_id
+    cluster_type = "SHARDED"
+    shard_count  = 1
+    regions = [
+      { name = "US_EAST_2", node_count = 3, provider_name = "AWS" },
+      { name = "US_EAST_2", node_count = 2, provider_name = "AZURE" },
+    ]
+    backup_copy_region = { region = "US_EAST_2", cloud_provider = "AWS" }
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_EAST_2" && module.backup_schedule[0].schedule.copy_settings[0].cloud_provider == "AWS"
+    error_message = "a pinned region whose name repeats across providers should plan and keep the caller's cloud_provider override"
+  }
+}
