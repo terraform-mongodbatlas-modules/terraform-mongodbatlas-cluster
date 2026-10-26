@@ -63,8 +63,11 @@ module "cluster" {
 
   # Keep daily snapshots for 30 days instead of the 7-day default, and keep 14 days of
   # those on the cross-region copy (a copy_retention_value cannot exceed the source retention).
+  # Atlas requires each less frequent policy item to retain at least as long as the more frequent
+  # one, so weekly is raised above the default 4 weeks (28 days) to cover the 30-day daily retention.
   backup_retention = {
-    daily = { retention_value = 30, copy_retention_value = 14 }
+    daily  = { retention_value = 30, copy_retention_value = 14 }
+    weekly = { retention_value = 5 }
   }
 
   # Omitting `region` auto-derives the secondary from `regions` above (US_WEST_2). To pin an explicit

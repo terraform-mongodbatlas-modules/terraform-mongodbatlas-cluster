@@ -63,9 +63,12 @@ Set the frequencies you want in `backup_retention` to override the defaults abov
 
 ```hcl
 backup_retention = {
-  daily = { retention_value = 30 } # override the 7-day default; hourly/weekly/monthly/yearly keep their defaults
+  daily  = { retention_value = 30 } # override the 7-day default
+  weekly = { retention_value = 5 }  # override the 4-week default; must stay >= the daily retention
 }
 ```
+
+Atlas requires each less frequent policy item to retain at least as long as a more frequent one. Raising `daily` above the 28-day `weekly` default (as above) therefore requires raising `weekly` too, or Atlas rejects the schedule with `INVALID_BACKUP_POLICY`.
 
 `frequency_interval` means something different for each frequency:
 
