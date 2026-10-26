@@ -31,7 +31,10 @@ variable "backup_copy_region" {
     Choose the targets with exactly one of the following (they are mutually exclusive):
     - `region_count`: derive that many targets from the highest-priority secondary regions in `var.regions`, in
       `regions` order. Defaults to `1` when unset. Rejected when it exceeds the number of available secondary
-      regions.
+      regions. Set `0` to remove every copy target while keeping `copy_policy_items_enabled = true`: Atlas enables
+      that flag one-way per cluster and rejects disabling it, so this is the only supported way to stop cross-region
+      copying once a cluster has enabled copy policy items (removing `backup_copy_region` outright fails). See the
+      [Backup Guide](./docs/backup_guide.md#cross-region-copy).
     - `regions`: name the targets explicitly as an ordered list of secondary region names. Each entry must be a
       secondary region in `var.regions` (never the primary), with no duplicates.
     - `region`: pin one Atlas region name.
@@ -88,9 +91,9 @@ variable "backup_copy_region" {
 
   validation {
     # Ternary, not || -- || doesn't short-circuit on Terraform < 1.12 (see tests/plan_short_circuit.tftest.hcl),
-    # so a plain "... == null || ... >= 1" would evaluate null >= 1 and fail planning when region_count is omitted.
-    condition     = var.backup_copy_region == null || (try(var.backup_copy_region.region_count, null) == null ? true : var.backup_copy_region.region_count >= 1)
-    error_message = "backup_copy_region.region_count must be at least 1."
+    # so a plain "... == null || ... >= 0" would evaluate null >= 0 and fail planning when region_count is omitted.
+    condition     = var.backup_copy_region == null || (try(var.backup_copy_region.region_count, null) == null ? true : var.backup_copy_region.region_count >= 0)
+    error_message = "backup_copy_region.region_count must be at least 0."
   }
 
   validation {

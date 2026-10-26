@@ -122,8 +122,8 @@ variable "copy_settings" {
 
     Each target declares exactly one copy mechanism: `copy_policy_items` (derived from `retention`, the default)
     or `last_number_of_snapshots` (count-based copies, when set). The submodule never writes the deprecated
-    `frequencies` list, and always sets `copy_policy_items_enabled = true` when a target is present because the
-    provider requires that flag for both mechanisms.
+    `frequencies` list. `copy_policy_items_enabled` is driven by the `copy_policy_items_enabled` input, which the
+    root module keeps `true` whenever `backup_copy_region` is set, including `region_count = 0`.
   EOT
   type = list(object({
     cloud_provider           = optional(string)
@@ -133,6 +133,18 @@ variable "copy_settings" {
     last_number_of_snapshots = optional(number)
   }))
   default = []
+}
+
+variable "copy_policy_items_enabled" {
+  description = <<-EOT
+    Maps to the provider's `copy_policy_items_enabled`. The root module sets it to `true` whenever
+    `backup_copy_region` is set, including `region_count = 0` (no copy targets). Atlas enables copy policy
+    items one-way per cluster and rejects disabling the flag, so this is the only way to remove every copy
+    target from a cluster that already enabled it: keep the flag `true` and send an empty `copy_settings`.
+    `false` sends the flag off and is rejected once a cluster has enabled it.
+  EOT
+  type        = bool
+  default     = false
 }
 
 variable "update_copy_snapshots" {

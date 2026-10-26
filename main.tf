@@ -190,7 +190,8 @@ locals {
   )
 
   backup_copy_region_validation_errors = var.backup_copy_region == null ? [] : compact(concat(
-    local.backup_copy_derives_by_count && length(local.backup_copy_candidate_regions) < 2 ? [
+    # region_count = 0 derives no targets, so it does not need a second region.
+    local.backup_copy_derives_by_count && local.backup_copy_region_count > 0 && length(local.backup_copy_candidate_regions) < 2 ? [
       "backup_copy_region = {} needs at least 2 regions in `regions` to derive a copy target from. Add a region or set backup_copy_region.region."
     ] : [],
 
@@ -516,9 +517,10 @@ module "backup_schedule" {
     monthly                  = null
     yearly                   = null
   }
-  copy_settings         = local.backup_copy_settings
-  update_copy_snapshots = local.backup_copy_update_snapshots
-  delete_copy_snapshots = local.backup_copy_delete_snapshots
-  export                = var.backup_export
-  skip_destroy          = var.backup_schedule_skip_destroy
+  copy_settings             = local.backup_copy_settings
+  copy_policy_items_enabled = var.backup_copy_region != null
+  update_copy_snapshots     = local.backup_copy_update_snapshots
+  delete_copy_snapshots     = local.backup_copy_delete_snapshots
+  export                    = var.backup_export
+  skip_destroy              = var.backup_schedule_skip_destroy
 }

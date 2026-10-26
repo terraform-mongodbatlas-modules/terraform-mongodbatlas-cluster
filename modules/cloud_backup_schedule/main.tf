@@ -103,8 +103,10 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
 
   auto_export_enabled = var.export != null
 
-  # The provider requires this flag for both `copy_policy_items` and `last_number_of_snapshots`.
-  copy_policy_items_enabled = length(var.copy_settings) > 0
+  # The provider requires this flag for both `copy_policy_items` and `last_number_of_snapshots`, and Atlas
+  # rejects disabling it once a cluster has enabled copy policy items. The root module keeps it `true`
+  # whenever `backup_copy_region` is set (including `region_count = 0`) so copy targets can be removed.
+  copy_policy_items_enabled = var.copy_policy_items_enabled
   update_copy_snapshots     = var.update_copy_snapshots
   delete_copy_snapshots     = var.delete_copy_snapshots
 

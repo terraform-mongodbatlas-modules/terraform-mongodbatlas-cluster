@@ -131,11 +131,12 @@ Choose the copy targets with exactly one of these (they are mutually exclusive):
 ```hcl
 backup_copy_region = {}                          # one copy lands in US_WEST_2
 backup_copy_region = { region_count = 2 }        # copies land in US_WEST_2 and EU_WEST_1
+backup_copy_region = { region_count = 0 }        # no copies; keeps copy_policy_items_enabled = true
 backup_copy_region = { regions = ["US_WEST_2"] } # copies land in US_WEST_2 only
 backup_copy_region = { region = "EU_WEST_1" }    # pin one region by name
 ```
 
-- **`region_count`**: derive that many targets from the highest-priority secondary regions in `var.regions`, in `regions` order. Defaults to `1` when unset. Rejected when it exceeds the available secondaries. Atlas caps copy settings at five per zone.
+- **`region_count`**: derive that many targets from the highest-priority secondary regions in `var.regions`, in `regions` order. Defaults to `1` when unset. Rejected when it exceeds the available secondaries. Atlas caps copy settings at five per zone. Set `0` to remove every copy target while keeping `copy_policy_items_enabled = true`; see [Stopping cross-region copying](#stopping-cross-region-copying).
 - **`regions`**: name the targets explicitly as an ordered list of secondary region names. Each entry must be a secondary region in `var.regions` (never the primary), with no duplicates.
 - **`region`**: pin a single Atlas region name.
 - **`cloud_provider`**: override for multi-cloud clusters (default: derived from the target region, or left for the provider to infer if it can't be resolved). One value applies to every target.
@@ -164,7 +165,11 @@ backup_copy_region = { region_count = 2, last_number_of_snapshots = 5 }
 - **`backup_retention[*].copy_retention_value`** (a number of days): controls the copy policy item the module derives for that frequency. Unset copies at the source frequency's retention; `0` omits the frequency's copy policy item; a positive value sets the copy retention. It cannot exceed the same frequency's source retention (equal is allowed): Atlas rejects a greater value, so this is a ceiling, not a free override.
 - **`backup_copy_region.last_number_of_snapshots`** (1-500): keeps the last N copies in each target region, each with the retention of the source snapshot it came from. It is mutually exclusive with `copy_retention_value`, because count-based copies and copy policy items are two different copy mechanisms.
 
-The module sets `copy_policy_items_enabled = true` on the schedule whenever a target is present, for both mechanisms, because the provider requires the flag. Enabling it is one-way per cluster: existing callers move from the deprecated `frequencies` list to copy policy items on their next apply, and the flag cannot be turned off. Removing `backup_copy_region` after an apply therefore cannot disable the flag: Terraform sends `copy_policy_items_enabled = false` and Atlas rejects it, so to stop cross-region copying, keep a copy target and set it to a region that already holds copies, or remove the copied snapshots out of band. See the [v1.0.0 upgrade guide](./v1.0.0-upgrade-guide.md#frequencies-to-copy-policy-items-breaking-change).
+### Stopping cross-region copying
+
+The module sets `copy_policy_items_enabled = true` on the schedule whenever `backup_copy_region` is set, for both mechanisms, because the provider requires the flag. Enabling it is one-way per cluster: existing callers move from the deprecated `frequencies` list to copy policy items on their next apply, and the flag cannot be turned off.
+
+To remove every copy target, set `backup_copy_region = { region_count = 0 }`. The module keeps `copy_policy_items_enabled = true` and sends an empty `copy_settings`, which Atlas accepts. Removing `backup_copy_region` outright does not work: the module then sends `copy_policy_items_enabled = false` and Atlas rejects the request. See the [v1.0.0 upgrade guide](./v1.0.0-upgrade-guide.md#frequencies-to-copy-policy-items-breaking-change). Because the module sets the flag whenever `backup_copy_region` is present, `region_count = 0` also turns it on for a cluster that never copied anything; the schedule then holds no copy settings.
 
 ### Limitations
 

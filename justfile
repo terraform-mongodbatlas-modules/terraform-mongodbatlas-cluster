@@ -303,7 +303,7 @@ dev-integration-test:
 
 dev-integration-test-backup:
     terraform init
-    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -filter=tests/apply_backup_copy_settings_geosharded.tftest.hcl -filter=tests/apply_backup_schedule_retention_edge_cases.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
+    terraform test -filter=tests/apply_dev_cluster.tftest.hcl -filter=tests/apply_backup_copy_settings_geosharded.tftest.hcl -filter=tests/apply_backup_schedule_retention_edge_cases.tftest.hcl -filter=tests/apply_backup_copy_region_removal.tftest.hcl -var 'org_id={{env_var("MONGODB_ATLAS_ORG_ID")}}'
 
 sdlc-sync-dry:
     uvx path-sync@latest copy -n sdlc --skip-commit --dry-run

@@ -624,7 +624,10 @@ Cross-region snapshot copy settings (multi-region snapshot distribution). When s
 Choose the targets with exactly one of the following (they are mutually exclusive):
 - `region_count`: derive that many targets from the highest-priority secondary regions in `var.regions`, in
   `regions` order. Defaults to `1` when unset. Rejected when it exceeds the number of available secondary
-  regions.
+  regions. Set `0` to remove every copy target while keeping `copy_policy_items_enabled = true`: Atlas enables
+  that flag one-way per cluster and rejects disabling it, so this is the only supported way to stop cross-region
+  copying once a cluster has enabled copy policy items (removing `backup_copy_region` outright fails). See the
+  [Backup Guide](./docs/backup_guide.md#cross-region-copy).
 - `regions`: name the targets explicitly as an ordered list of secondary region names. Each entry must be a
   secondary region in `var.regions` (never the primary), with no duplicates.
 - `region`: pin one Atlas region name.

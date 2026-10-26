@@ -587,6 +587,30 @@ run "copy_region_region_count_derives_multiple_targets" {
   }
 }
 
+run "copy_region_region_count_zero_keeps_flag_and_clears_targets" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-count-zero"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { region_count = 0 }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 0
+    error_message = "region_count = 0 should remove every copy target"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "region_count = 0 must keep copy_policy_items_enabled = true so Atlas accepts the removal"
+  }
+}
+
 run "copy_region_region_count_exceeds_secondaries_fails" {
   command         = plan
   expect_failures = [mongodbatlas_advanced_cluster.this]
