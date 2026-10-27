@@ -57,7 +57,7 @@ Breaking changes require user action during upgrade.
 - **Variable changes:** Removing variables, changing types/names/defaults, adding restrictive validation.
 - **Output changes:** Removing outputs, changing names or types/structure.
 - **Behavior changes:** Changing module defaults, new resources enabled by default, removing moved blocks.
-- **Version requirements:** Provider major version upgrade, significant Terraform CLI version upgrade expected to be supported.
+- **Version requirements:** A provider major version upgrade that requires a configuration change, or a significant Terraform CLI version upgrade expected to be supported.
 - **Module removal:** Removing entire module, variable, output, or submodule (must have migration path and deprecation notice).
 
 ````
@@ -68,12 +68,13 @@ variable/regions: Removes deprecated shard_number attribute
 
 ````
 ```release-note:breaking-change
-provider/mongodbatlas: Requires minimum version 3.0.0
+provider/mongodbatlas: Requires a configuration change to adopt the 3.0 provider major
 ```
 ````
 
 **Not breaking:**
 - **Provider minor upgrades:** Minor version upgrades (e.g., 2.0.0 to 2.3.0) even if user intervention is needed to bump the provider version.
+- **Provider major upgrades without a config change:** Adopting a new provider major is not breaking when it does not rename or remove variables or change defaults. Callers adopt the new provider major on their current module minor version without changing their configuration.
 - **Deprecations:** Deprecation notices without configuration changes required.
 - **Example changes:** Any changes to examples including removals or breaking changes.
 - **EOL version changes:** Changes affecting only EOL Terraform CLI versions.

@@ -1,4 +1,4 @@
-# MongoDB Atlas Cluster Module (Public Preview)
+# MongoDB Atlas Cluster Module
 
 This module simplifies the MongoDB Atlas cluster resource. Obtain more granular control by replacing simplified attributes with the standard resource attributes defined in [`mongodbatlas_advanced_cluster`](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/advanced_cluster).
 
@@ -7,8 +7,7 @@ This module simplifies the MongoDB Atlas cluster resource. Obtain more granular 
 WARNING: This section is auto-generated. Do not edit directly.
 Changes will be overwritten when documentation is regenerated.
 Run 'just gen-readme' to regenerate. -->
-- [Public Preview Note](#public-preview-note)
-- [Disclaimer](#disclaimer)
+- [Module Commitment](#module-commitment)
 - [Getting Started](#getting-started)
 - [Getting Started Examples](#getting-started-examples)
 - [Examples](#examples)
@@ -25,19 +24,16 @@ Run 'just gen-readme' to regenerate. -->
 - [Optional Variables](#optional-variables)
 - [Outputs](#outputs)
 - [FAQ](#faq)
+- [License](#license)
 <!-- END_TOC -->
 
-## Public Preview Note
+## Module Commitment
 
-The MongoDB Atlas Cluster Module (Public Preview) simplifies cluster deployments and embeds MongoDB's best practices as intelligent defaults. This preview validates that these patterns meet the needs of most workloads without constant maintenance or rework. We welcome your feedback and contributions during this preview phase. MongoDB formally supports this module from its v1 release onwards.
+MongoDB formally supports this module, including bug fixes, security patches, and backward-compatible enhancements. The v1 release carries a two-year stability commitment: no breaking changes through October 2028 (at the earliest).
 
-<!-- BEGIN_DISCLAIMER -->
+The module tracks MongoDB Atlas provider releases and adopts each new provider major after a stabilization period following general availability. Before adopting, we test the new provider major against the latest supported minor version of the module. Adopting a provider major does not rename or remove module variables or change defaults. You can move to a new provider major on your current module minor version without changing your configuration.
 
-## Disclaimer
-
-One of this project's primary objectives is to provide durable modules that support non-breaking migration and upgrade paths. The v0 release (public preview) of the MongoDB Atlas Cluster Module focuses on gathering feedback and refining the design. Upgrades from v0 to v1 may not be seamless. We plan to deliver a finalized v1 release early next year with long term upgrade support.
-
-<!-- END_DISCLAIMER -->
+**Note:** This module defaults to `default_feature_set = "RECOMMENDED"`. In `RECOMMENDED` mode, future module features that include defaults and require no additional input are automatically activated when you upgrade the module version. Set `default_feature_set = "STANDARD"` to opt out: new features are never automatically activated, and minor version upgrades do not introduce plan changes. See [default_feature_set](#default_feature_set) for details.
 
 ## Getting Started
 
@@ -921,6 +917,10 @@ Description: Human-readable label that indicates the current operating condition
 
 ## FAQ
 
+### Where can I find what changed in each release?
+
+See [CHANGELOG.md](CHANGELOG.md) in this repository. It lists user-facing changes, including breaking changes and migration notes, per release.
+
 ### Why two options for Cluster Topology?
 
 The module provides two approaches to accommodate different user needs and migration paths:
@@ -970,3 +970,7 @@ See the [v0.3.x to v0.4.0 upgrade guide](docs/v0.4.0-upgrade-guide.md) for migra
 ### How do I upgrade to v1.0.0?
 
 See the [v0.4.x to v1.0.0 upgrade guide](docs/v1.0.0-upgrade-guide.md) for migration instructions, including the removal of `regions[*].shard_number` in favor of `regions[*].shard_name`.
+
+## License
+
+See [LICENSE](LICENSE) for full details.
