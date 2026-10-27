@@ -63,6 +63,8 @@ minimum lane uses Terraform 1.10 and the module's configured minimum provider re
 lane uses the latest Terraform release and latest compatible registry provider. The provider-head
 lane uses the latest Terraform release and the provider default branch.
 
+The lanes run one at a time (`max-parallel: 1`) because they share one Atlas project and its per-project API rate limit.
+
 All lanes are plan-only and share the same checked-in snapshots. Normalize intentional version-only
 differences instead of regenerating the shared baseline.
 

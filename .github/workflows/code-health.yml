@@ -97,6 +97,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # The lanes share one Atlas project, so run them one at a time to stay
+      # under the per-project API rate limit.
+      max-parallel: 1
       matrix:
         include:
           - lane: minimum
