@@ -2,7 +2,14 @@
 
 BREAKING CHANGES:
 
+* submodule/cloud_backup_schedule: Switches `copy_settings` from the deprecated `frequencies` list to `copy_policy_items` and enables `copy_policy_items_enabled` ([#243](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/243))
 * variable/regions: Removes deprecated `shard_number` attribute ([#240](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/240))
+
+ENHANCEMENTS:
+
+* provider/mongodbatlas: Requires minimum version 2.18 ([#243](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/243))
+* variable/backup_copy_region: Adds `region_count`, `regions`, `last_number_of_snapshots`, `update_copy_snapshots`, and `delete_copy_snapshots` fields ([#243](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/243))
+* variable/backup_retention: Adds a per-frequency `copy_retention_value` ([#243](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/243))
 
 ## 0.4.1 (September 04, 2026)
 
