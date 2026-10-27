@@ -24,12 +24,12 @@ See [`examples/14_cluster_with_backup_schedule`](../examples/14_cluster_with_bac
 
 ## Recommendations Summary
 
-| Scenario | `backup_enabled` | `pit_enabled` | `backup_mode` |
-| --- | --- | --- | --- |
-| Production | `true` (default) | `null` (default: `true`) | `SCHEDULED` (default) |
-| Dev/non-production, still want some coverage | `true` (default) | `false` or default | `ON_DEMAND` |
-| Backup Compliance Policy enabled | `true` | default | `SCHEDULED`, `backup_schedule_skip_destroy = true` |
-| Migrating off module-managed backups | -- | -- | Two-apply `UNMANAGED` migration, see [Deletion Behavior](#deletion-behavior) |
+| Scenario                                     | `backup_enabled` | `pit_enabled`            | `backup_mode`                                                                |
+| -------------------------------------------- | ---------------- | ------------------------ | ---------------------------------------------------------------------------- |
+| Production                                   | `true` (default) | `null` (default: `true`) | `SCHEDULED` (default)                                                        |
+| Dev/non-production, still want some coverage | `true` (default) | `false` or default       | `ON_DEMAND`                                                                  |
+| Backup Compliance Policy enabled             | `true`           | default                  | `SCHEDULED`, `backup_schedule_skip_destroy = true`                           |
+| Migrating off module-managed backups         | --               | --                       | Two-apply `UNMANAGED` migration, see [Deletion Behavior](#deletion-behavior) |
 
 ## Backup Modes
 
@@ -50,12 +50,12 @@ You can use this module to manage scheduled backup snapshots by setting `backup_
 When `backup_mode = "SCHEDULED"` and `skip_default_retentions = false` (the default), the module creates a backup policy using the same defaults as the Atlas UI:
 
 | Frequency | `frequency_interval` | `retention_unit` | `retention_value` |
-| --- | --- | --- | --- |
-| `hourly`  | 6  | `days`   | 7  |
-| `daily`   | 1 (fixed) | `days`   | 7  |
-| `weekly`  | 6  | `weeks`  | 4  |
-| `monthly` | 40 | `months` | 12 |
-| `yearly`  | 12 | `years`  | 1  |
+| --------- | -------------------- | ---------------- | ----------------- |
+| `hourly`  | 6                    | `days`           | 7                 |
+| `daily`   | 1 (fixed)            | `days`           | 7                 |
+| `weekly`  | 6                    | `weeks`          | 4                 |
+| `monthly` | 40                   | `months`         | 12                |
+| `yearly`  | 12                   | `years`          | 1                 |
 
 ### Overriding Defaults
 
@@ -63,19 +63,22 @@ Set the frequencies you want in `backup_retention` to override the defaults abov
 
 ```hcl
 backup_retention = {
-  daily = { retention_value = 30 } # override the 7-day default; hourly/weekly/monthly/yearly keep their defaults
+  daily  = { retention_value = 30 } # override the 7-day default
+  weekly = { retention_value = 5 }  # override the 4-week default; must stay >= the daily retention
 }
 ```
 
+Atlas requires each less frequent policy item to retain at least as long as a more frequent one. For example, raising the `daily` retention above the 28-day `weekly` retention default (as above) requires raising the `weekly` retention too. Otherwise, Atlas rejects the schedule with `INVALID_BACKUP_POLICY`.
+
 `frequency_interval` means something different for each frequency:
 
-| Frequency | `frequency_interval` accepts | Meaning |
-| --- | --- | --- |
-| `hourly`  | `1`, `2`, `4`, `6`, `8`, `12` (NVMe tiers: `12` only) | Hours between snapshots |
-| `daily`   | `1` (fixed) | Once per day |
-| `weekly`  | `1`-`7` | Day of the week (`1` = Monday, `7` = Sunday) |
-| `monthly` | `1`-`28`, or `40` | Day of the month (`40` = last day) |
-| `yearly`  | `1`-`12` | Month of the year, on the 1st (`1` = January, `12` = December) |
+| Frequency | `frequency_interval` accepts                          | Meaning                                                        |
+| --------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `hourly`  | `1`, `2`, `4`, `6`, `8`, `12` (NVMe tiers: `12` only) | Hours between snapshots                                        |
+| `daily`   | `1` (fixed)                                           | Once per day                                                   |
+| `weekly`  | `1`-`7`                                               | Day of the week (`1` = Monday, `7` = Sunday)                   |
+| `monthly` | `1`-`28`, or `40`                                     | Day of the month (`40` = last day)                             |
+| `yearly`  | `1`-`12`                                              | Month of the year, on the 1st (`1` = January, `12` = December) |
 
 `retention_unit` accepts `days`, `weeks`, `months`, or `years`.
 
@@ -111,17 +114,68 @@ Frequency fields can't be set at all when `backup_mode = "ON_DEMAND"` (validatio
 
 Cross-region copy protects your snapshots against a regional outage: if the primary region becomes unavailable, you can still restore from the copy in the secondary region. It's also useful for data-residency requirements that call for backups to exist in a specific secondary region.
 
-`backup_copy_region` replicates scheduled and on-demand snapshots to a target region (multi-region snapshot distribution):
+`backup_copy_region` replicates scheduled and on-demand snapshots to one or more secondary regions (multi-region snapshot distribution). Leaving the field unset, the common default, means there are no copies. The module derives the copy targets from the same `regions` list that defines the cluster:
 
 ```hcl
-backup_copy_region = {} # auto-derive the secondary region from var.regions
+regions = [
+  { name = "US_EAST_1", node_count = 3 }, # primary
+  { name = "US_WEST_2", node_count = 2 },
+  { name = "EU_WEST_1", node_count = 2 },
+]
+
+backup_copy_region = {} # one copy lands in US_WEST_2, the highest-priority secondary
 ```
 
-- **`region`**: when omitted (`backup_copy_region = {}`), the module auto-derives a secondary region from `var.regions` (the highest-priority region after the primary), so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. Not derived from `var.replication_specs`, so set `region` explicitly when using that variable.
-- **`cloud_provider`**: override for multi-cloud clusters (default: derived from the target region, or left for the provider to infer if it can't be resolved).
-- **`should_copy_oplogs`**: copies oplogs for point-in-time restore from the copy region (default: `true` if PIT is enabled).
+Choose the copy targets with exactly one of these (they are mutually exclusive):
 
-**`GEOSHARDED` clusters** get one cluster-wide copy target derived from the first zone's regions. Per-zone copy targets are not supported. The module also sends the created cluster's `zone_id` for that same first zone, matching the zone `region`/`cloud_provider` are derived from. The underlying Atlas API disambiguates copy targets by zone, so this is needed on multi-zone clusters even though the provider itself marks `zone_id` optional.
+```hcl
+backup_copy_region = {}                          # one copy lands in US_WEST_2
+backup_copy_region = { region_count = 2 }        # copies land in US_WEST_2 and EU_WEST_1
+backup_copy_region = { region_count = 0 }        # no copies; keeps copy_policy_items_enabled = true
+backup_copy_region = { regions = ["US_WEST_2"] } # copies land in US_WEST_2 only
+backup_copy_region = { region = "EU_WEST_1" }    # pin one region by name
+```
+
+- **`region_count`**: derive that many targets from the highest-priority secondary regions in `var.regions`, in `regions` order. Defaults to `1` when unset. Rejected when it exceeds the available secondaries. Atlas caps copy settings at five per zone. Set `0` to remove every copy target while keeping `copy_policy_items_enabled = true`; see [Stopping cross-region copying](#stopping-cross-region-copying).
+- **`regions`**: name the targets explicitly as an ordered list of secondary region names. Each entry must be a secondary region in `var.regions` (never the primary), with no duplicates. On multi-cloud clusters, matching is by region name (first row wins); see [Limitations](#limitations).
+- **`region`**: pin a single Atlas region name.
+- **`cloud_provider`**: override for multi-cloud clusters. Defaults to the provider Atlas derives from the target region, or left for the provider to infer if it can't be resolved. One value applies to every target.
+- **`should_copy_oplogs`**: copies oplogs for point-in-time restore from the copy region. Defaults to `true` if PIT is enabled, or `false` if PIT is disabled. One value applies to every target.
+- **`update_copy_snapshots`**: apply retention changes for updated copy policy items to snapshot copies Atlas took previously.
+- **`delete_copy_snapshots`**: delete snapshot copies when their associated copy policy item is removed.
+
+When none of `region`, `regions`, or `region_count` is set, the module auto-derives a secondary region from `var.regions`. This is the highest-priority region after the primary, so the copy target stays valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise. The module can't derive this value from `var.replication_specs`, so set `region` explicitly when using `var.replication_specs`.
+
+### Copy policy items and count-based copies
+
+Each target uses exactly one copy mechanism. The default derives `copy_policy_items` from `backup_retention`; `last_number_of_snapshots` switches every target to count-based copies.
+
+```hcl
+# Copy policy items: keep daily snapshots 30 days at the source and 14 on each copy,
+# and stop copying weekly snapshots cross-region.
+backup_retention = {
+  daily  = { retention_value = 30, copy_retention_value = 14 }
+  weekly = { retention_value = 8, copy_retention_value = 0 }
+}
+
+# Or keep a rolling window of the last 5 copies in each target region instead.
+backup_copy_region = { region_count = 2, last_number_of_snapshots = 5 }
+```
+
+- **`backup_retention[*].copy_retention_value`** (a number of days): controls the copy policy item the module derives for that frequency. Leaving this unset copies at the source frequency's retention; `0` omits the frequency's copy policy item; a positive value sets the copy retention. This must be less than or equal to the same frequency's source retention: Atlas rejects a greater value, so this is a ceiling, not a free override.
+- **`backup_copy_region.last_number_of_snapshots`** (1-500): keeps the last N copies in each target region, each with the retention of the source snapshot it came from. It is mutually exclusive with `copy_retention_value`, because count-based copies and copy policy items are two different copy mechanisms.
+
+### Stopping cross-region copying
+
+The module sets `copy_policy_items_enabled = true` on the schedule whenever `backup_copy_region` is set, for both mechanisms, because the provider requires the flag. Enabling it is one-way per cluster: existing callers move from the deprecated `frequencies` list to copy policy items on their next apply, and the flag cannot be turned off.
+
+To remove every copy target, set `backup_copy_region = { region_count = 0 }`. The module keeps `copy_policy_items_enabled = true` and sends an empty `copy_settings`, which Atlas accepts. Removing `backup_copy_region` outright does not work: the module then sends `copy_policy_items_enabled = false` and Atlas rejects the request. See the [v1.0.0 upgrade guide](./v1.0.0-upgrade-guide.md#frequencies-to-copy-policy-items-breaking-change). Because the module sets the flag whenever `backup_copy_region` is present, `region_count = 0` also turns it on for a cluster that never copied anything; the schedule then holds no copy settings.
+
+### Limitations
+
+- One copy mechanism, one retention, and the same `should_copy_oplogs` value apply to every target. Per-target copy settings are not supported.
+- Copy-target matching is by region name: on a multi-cloud cluster where the same region name appears for two providers (for example AWS and AZURE `US_EAST_2`), an explicit `regions` entry naming the primary's name is rejected as "not the primary", while `region_count` derives the first matching row. Name copy targets to avoid the primary's name in that topology.
+- A `GEOSHARDED` cluster gets a copy set for the first zone's regions only; per-zone copy targets are not supported. The module also sends the created cluster's `zone_id` for that same first zone, matching the zone the regions are derived from. The underlying Atlas API disambiguates copy targets by zone, so this is needed on multi-zone clusters even though the provider itself marks `zone_id` optional.
 
 Setting `backup_copy_region` is rejected (validation error) when `backup_mode = "UNMANAGED"` or `backup_enabled = false`.
 
@@ -181,22 +235,22 @@ See the provider's [`mongodbatlas_cloud_backup_snapshot_restore_job` resource do
 
 Setting both in the same apply does **not** skip the delete; Terraform still destroys the resource (`skip_destroy` only takes effect if the resource already exists with that setting applied in a prior state).
 
-`retain_backups_enabled` is a separate, cluster-level flag (not part of the backup schedule resource) that controls whether existing backup snapshots are retained when the *cluster itself* is deleted. Recommended `true` for production clusters.
+`retain_backups_enabled` is a separate, cluster-level flag (not part of the backup schedule resource) that controls whether existing backup snapshots are retained when the _cluster itself_ is deleted. Recommended `true` for production clusters.
 
 **Known limitation:** if you delete a cluster with `retain_backups_enabled = true` (retaining its backups), Atlas will not let you create a new cluster with the same name in that project afterward. Use a different name for the new cluster, or delete the retained backups first if you no longer need them before reusing the name.
 
 ## Key Variables Reference
 
-| Variable | Purpose |
-| --- | --- |
-| `backup_enabled` | Whether the cluster can perform backups at all (production default: `true`) |
-| `pit_enabled` | Continuous backup / point-in-time restore (defaults to `backup_enabled`) |
-| `backup_mode` | `SCHEDULED` / `ON_DEMAND` / `UNMANAGED`. See [Backup Modes](#backup-modes) |
-| `backup_retention` | Per-frequency retention overrides. See [Backup Schedule Configuration and Defaults](#backup-schedule-configuration-and-defaults) |
-| `backup_copy_region` | Cross-region snapshot copy target. See [Cross-Region Copy](#cross-region-copy) |
-| `backup_export` | Export snapshots to a CSP bucket. See [Exporting Snapshots](#exporting-snapshots-other-lz-modules) |
-| `backup_schedule_skip_destroy` | Deletion behavior on destroy. See [Deletion Behavior](#deletion-behavior) |
-| `retain_backups_enabled` | Retain snapshots when the cluster itself is deleted |
+| Variable                       | Purpose                                                                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `backup_enabled`               | Whether the cluster can perform backups at all (production default: `true`)                                                      |
+| `pit_enabled`                  | Continuous backup / point-in-time restore (defaults to `backup_enabled`)                                                         |
+| `backup_mode`                  | `SCHEDULED` / `ON_DEMAND` / `UNMANAGED`. See [Backup Modes](#backup-modes)                                                       |
+| `backup_retention`             | Per-frequency retention overrides. See [Backup Schedule Configuration and Defaults](#backup-schedule-configuration-and-defaults) |
+| `backup_copy_region`           | Cross-region snapshot copy target. See [Cross-Region Copy](#cross-region-copy)                                                   |
+| `backup_export`                | Export snapshots to a CSP bucket. See [Exporting Snapshots](#exporting-snapshots-other-lz-modules)                               |
+| `backup_schedule_skip_destroy` | Deletion behavior on destroy. See [Deletion Behavior](#deletion-behavior)                                                        |
+| `retain_backups_enabled`       | Retain snapshots when the cluster itself is deleted                                                                              |
 
 See the [main README](../README.md#backup-schedule) for the full generated variable reference, including types and defaults.
 

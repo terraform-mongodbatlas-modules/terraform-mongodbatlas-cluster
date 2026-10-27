@@ -62,4 +62,14 @@ run "create_geosharded_cluster_with_copy_settings" {
     condition     = module.backup_schedule[0].schedule.copy_settings[0].zone_id != ""
     error_message = "copy_settings.zone_id should not be empty on a multi-zone cluster -- Atlas must accept the explicitly-derived zone_id"
   }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "copy_policy_items_enabled should be true when a copy target is present"
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items) > 0
+    error_message = "the auto-derived copy target should carry copy_policy_items (the module no longer writes frequencies)"
+  }
 }

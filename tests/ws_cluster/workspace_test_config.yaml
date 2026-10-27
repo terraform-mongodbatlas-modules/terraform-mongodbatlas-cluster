@@ -6,7 +6,7 @@
 # - 07: 14, 08: 3, 09: 3 (project2 = 20)
 # - 10: 24 (project3 = 24)
 # - 11: 25 (project4 = 25)
-# - 12: 15 (project5 = 15)
+# - 12: 15, 16: 7 (project5 = 22)
 
 resource_type_import_ids:
   mongodbatlas_advanced_cluster: "{project_id}-{name}"
@@ -113,8 +113,15 @@ examples:
       - address: module.cluster_small.module.cluster.mongodbatlas_advanced_cluster.this
       - address: module.cluster_medium_sharded.module.cluster.mongodbatlas_advanced_cluster.this
       - address: module.cluster_geosharded.module.cluster.mongodbatlas_advanced_cluster.this
-  # Project 5: Example 12 (15 nodes)
+  # Project 5: Examples 12 and 16 (22 nodes)
   - number: 12
+    var_groups: [shared, project5]
+    import_validation:
+      enabled: true
+      known_changes: *cluster_import_known_changes
+    plan_regressions:
+      - address: module.cluster.mongodbatlas_advanced_cluster.this
+  - number: 16
     var_groups: [shared, project5]
     import_validation:
       enabled: true

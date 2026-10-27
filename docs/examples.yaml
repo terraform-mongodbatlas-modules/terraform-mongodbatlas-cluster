@@ -82,3 +82,7 @@ tables:
         name: Restore a Cluster from a Backup Snapshot
         title_suffix: (`cloud_backup_snapshot_restore_job`, automated + point-in-time)
         description: Uses `mongodbatlas_cloud_backup_snapshot_restore_job` for full-cluster restore. For collection- or database-level restore into a live target without a full-cluster wipe, see the [provider collection-restore examples](https://github.com/mongodb/terraform-provider-mongodbatlas/tree/master/examples/mongodbatlas_cloud_backup_collection_restore_job).
+      - folder: 16
+        name: Cluster with Multi-Region Copy Snapshots
+        title_suffix: (count-based copies, last N per region)
+        description: Copies snapshots to two secondary regions and keeps the last 5 copies in each using `backup_copy_region.region_count` and `backup_copy_region.last_number_of_snapshots`.

@@ -37,14 +37,58 @@ locals {
     retention_value    = coalesce(try(var.retention.yearly.retention_value, null), 1)
   } : null
 
-  # Copy every active frequency, plus ON_DEMAND (manual snapshots are always covered).
-  copy_frequencies = concat(
-    local.hourly_active ? ["HOURLY"] : [],
-    local.daily_active ? ["DAILY"] : [],
-    local.weekly_active ? ["WEEKLY"] : [],
-    local.monthly_active ? ["MONTHLY"] : [],
-    local.yearly_active ? ["YEARLY"] : [],
-    ["ON_DEMAND"],
+  # Copy policy items replace the deprecated legacy frequency list: one item per active frequency whose
+  # `copy_retention_value` is not 0, plus a trailing ON_DEMAND item. `copy_retention_value` is a number of
+  # days; unset copies at the source retention, and a positive value overrides it (Atlas rejects a value
+  # greater than the source frequency's retention).
+  copy_policy_item_hourly = local.hourly_active ? (
+    try(var.retention.hourly.copy_retention_value, null) == 0 ? [] : [{
+      frequency_type  = "hourly"
+      retention_unit  = try(var.retention.hourly.copy_retention_value, null) == null ? local.effective_hourly.retention_unit : "days"
+      retention_value = coalesce(try(var.retention.hourly.copy_retention_value, null), local.effective_hourly.retention_value)
+    }]
+  ) : []
+
+  copy_policy_item_daily = local.daily_active ? (
+    try(var.retention.daily.copy_retention_value, null) == 0 ? [] : [{
+      frequency_type  = "daily"
+      retention_unit  = try(var.retention.daily.copy_retention_value, null) == null ? local.effective_daily.retention_unit : "days"
+      retention_value = coalesce(try(var.retention.daily.copy_retention_value, null), local.effective_daily.retention_value)
+    }]
+  ) : []
+
+  copy_policy_item_weekly = local.weekly_active ? (
+    try(var.retention.weekly.copy_retention_value, null) == 0 ? [] : [{
+      frequency_type  = "weekly"
+      retention_unit  = try(var.retention.weekly.copy_retention_value, null) == null ? local.effective_weekly.retention_unit : "days"
+      retention_value = coalesce(try(var.retention.weekly.copy_retention_value, null), local.effective_weekly.retention_value)
+    }]
+  ) : []
+
+  copy_policy_item_monthly = local.monthly_active ? (
+    try(var.retention.monthly.copy_retention_value, null) == 0 ? [] : [{
+      frequency_type  = "monthly"
+      retention_unit  = try(var.retention.monthly.copy_retention_value, null) == null ? local.effective_monthly.retention_unit : "days"
+      retention_value = coalesce(try(var.retention.monthly.copy_retention_value, null), local.effective_monthly.retention_value)
+    }]
+  ) : []
+
+  copy_policy_item_yearly = local.yearly_active ? (
+    try(var.retention.yearly.copy_retention_value, null) == 0 ? [] : [{
+      frequency_type  = "yearly"
+      retention_unit  = try(var.retention.yearly.copy_retention_value, null) == null ? local.effective_yearly.retention_unit : "days"
+      retention_value = coalesce(try(var.retention.yearly.copy_retention_value, null), local.effective_yearly.retention_value)
+    }]
+  ) : []
+
+  # ON_DEMAND has no retention of its own (copies inherit the source snapshot's retention).
+  copy_policy_items = concat(
+    local.copy_policy_item_hourly,
+    local.copy_policy_item_daily,
+    local.copy_policy_item_weekly,
+    local.copy_policy_item_monthly,
+    local.copy_policy_item_yearly,
+    [{ frequency_type = "ondemand", retention_unit = null, retention_value = null }],
   )
 }
 
@@ -59,6 +103,13 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
 
   auto_export_enabled = var.export != null
 
+  # The provider requires this flag for both `copy_policy_items` and `last_number_of_snapshots`, and Atlas
+  # rejects disabling it once a cluster has enabled copy policy items. The root module keeps it `true`
+  # whenever `backup_copy_region` is set (including `region_count = 0`) so copy targets can be removed.
+  copy_policy_items_enabled = var.copy_policy_items_enabled
+  update_copy_snapshots     = var.update_copy_snapshots
+  delete_copy_snapshots     = var.delete_copy_snapshots
+
   dynamic "export" {
     for_each = var.export != null ? [var.export] : []
     content {
@@ -68,13 +119,23 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
   }
 
   dynamic "copy_settings" {
-    for_each = var.copy_settings != null ? [var.copy_settings] : []
+    for_each = var.copy_settings
     content {
-      cloud_provider     = copy_settings.value.cloud_provider
-      region_name        = copy_settings.value.region_name
-      zone_id            = copy_settings.value.zone_id
-      should_copy_oplogs = copy_settings.value.should_copy_oplogs
-      frequencies        = local.copy_frequencies
+      cloud_provider           = copy_settings.value.cloud_provider
+      region_name              = copy_settings.value.region_name
+      zone_id                  = copy_settings.value.zone_id
+      should_copy_oplogs       = copy_settings.value.should_copy_oplogs
+      last_number_of_snapshots = copy_settings.value.last_number_of_snapshots
+
+      # Exactly one copy mechanism per entry: count-based copies or the derived copy policy items.
+      dynamic "copy_policy_items" {
+        for_each = copy_settings.value.last_number_of_snapshots == null ? local.copy_policy_items : []
+        content {
+          frequency_type  = copy_policy_items.value.frequency_type
+          retention_unit  = copy_policy_items.value.retention_unit
+          retention_value = copy_policy_items.value.retention_value
+        }
+      }
     }
   }
 

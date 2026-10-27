@@ -24,25 +24,54 @@ variable "backup_mode" {
 
 variable "backup_copy_region" {
   description = <<-EOT
-    Cross-region snapshot copy settings (multi-region snapshot distribution). When set, the module creates
-    `copy_settings` to replicate scheduled and on-demand snapshots to the target region.
-    - `region`: Atlas region name. When omitted (`backup_copy_region = {}`), the module auto-derives a secondary
-      region from `var.regions` (the highest-priority region after the primary), so the copy target stays
-      valid across regional failovers without a config change. Requires at least 2 regions in `var.regions`;
-      fails validation otherwise. Not derived from `var.replication_specs` -- set region explicitly when using
-      that variable. `GEOSHARDED` clusters get one cluster-wide copy target derived from the first zone's
-      regions; per-zone copy targets are not supported. The module also sends the created cluster's
-      `zone_id` for that same first zone, matching the zone `region`/`cloud_provider` are derived from --
-      the underlying Atlas API disambiguates copy targets by zone, so this is required for correctness on
-      multi-zone (`GEOSHARDED`) clusters even though the provider itself marks it optional.
-    - `cloud_provider`: override for multi-cloud clusters (default: derived from the target region, or left
-      for the provider to infer if it can't be resolved)
-    - `should_copy_oplogs`: copy oplogs for point-in-time restore from the copy region (default: `true` if PIT enabled)
+    Cross-region snapshot copy settings (multi-region snapshot distribution). When set, the module creates one
+    `copy_settings` entry per target to replicate scheduled and on-demand snapshots to secondary regions. When left
+    unset, the common default, the module creates no copies; `backup_copy_region = {}` derives one target.
+
+    Choose the targets with exactly one of the following (they are mutually exclusive):
+    - `region_count`: derive that many targets from the highest-priority secondary regions in `var.regions`, in
+      `regions` order. Defaults to `1` when unset. Rejected when it exceeds the number of available secondary
+      regions. Set `0` to remove every copy target while keeping `copy_policy_items_enabled = true`: Atlas enables
+      that flag one-way per cluster and rejects disabling it, so this is the only supported way to stop cross-region
+      copying once a cluster has enabled copy policy items (removing `backup_copy_region` outright fails). See the
+      [Backup Guide](./docs/backup_guide.md#cross-region-copy).
+    - `regions`: name the targets explicitly as an ordered list of secondary region names. Each entry must be a
+      secondary region in `var.regions` (never the primary), with no duplicates. On multi-cloud clusters, matching
+      is by region name (first row wins), so a name the primary shares with another provider cannot be named here;
+      see the [Backup Guide](./docs/backup_guide.md#cross-region-copy) limitations.
+    - `region`: pin one Atlas region name.
+
+    When none of the three is set (`backup_copy_region = {}`), the module auto-derives one secondary region from
+    `var.regions`, which is the highest-priority region after the primary, so the copy target stays valid across regional
+    failovers without a config change. Requires at least 2 regions in `var.regions`; fails validation otherwise.
+
+    Each target uses exactly one copy mechanism:
+    - `copy_policy_items` (the default) are derived from `backup_retention`, using each frequency's
+      `copy_retention_value`.
+    - `last_number_of_snapshots` (1-500) switches every target to count-based copies, keeping the last N copies
+      with the retention of the source snapshot. It is mutually exclusive with `backup_retention[*].copy_retention_value`.
+
+    Other fields:
+    - `cloud_provider`: override for multi-cloud clusters. Defaults to the provider Atlas derives from the target
+      region, or left for the provider to infer if it can't be resolved. One value applies to every target.
+    - `should_copy_oplogs`: copy oplogs for point-in-time restore from the copy region. Defaults to `true` if PIT
+      is enabled, or `false` if PIT is disabled. One value applies to every target.
+    - `update_copy_snapshots`: apply retention changes for updated copy policy items to snapshot copies Atlas took
+      previously.
+    - `delete_copy_snapshots`: delete snapshot copies when their associated copy policy item is removed.
+
+    See the [Backup Guide](./docs/backup_guide.md#cross-region-copy) for the one-way `copy_policy_items_enabled`
+    switch, the retention ceiling, and the limitations (no per-target copy settings, no per-zone copy targets).
   EOT
   type = object({
-    region             = optional(string)
-    cloud_provider     = optional(string)
-    should_copy_oplogs = optional(bool)
+    region                   = optional(string)
+    regions                  = optional(list(string))
+    region_count             = optional(number)
+    cloud_provider           = optional(string)
+    should_copy_oplogs       = optional(bool)
+    last_number_of_snapshots = optional(number)
+    update_copy_snapshots    = optional(bool)
+    delete_copy_snapshots    = optional(bool)
   })
   nullable = true
   default  = null
@@ -50,6 +79,35 @@ variable "backup_copy_region" {
   validation {
     condition     = var.backup_copy_region == null || (var.backup_mode != "UNMANAGED" && var.backup_enabled)
     error_message = "Cannot set backup_copy_region when backup_mode = \"UNMANAGED\" or backup_enabled = false."
+  }
+
+  validation {
+    # try() per field -- a leading null-guard doesn't short-circuit here, see tests/plan_short_circuit.tftest.hcl.
+    condition = var.backup_copy_region == null || length(compact([
+      try(var.backup_copy_region.region, null) != null ? "region" : "",
+      try(var.backup_copy_region.regions, null) != null ? "regions" : "",
+      try(var.backup_copy_region.region_count, null) != null ? "region_count" : "",
+    ])) <= 1
+    error_message = "backup_copy_region: set at most one of region, regions, or region_count."
+  }
+
+  validation {
+    # Ternary, not || -- || doesn't short-circuit on Terraform < 1.12 (see tests/plan_short_circuit.tftest.hcl),
+    # so a plain "... == null || ... >= 0" would evaluate null >= 0 and fail planning when region_count is omitted.
+    condition     = var.backup_copy_region == null || (try(var.backup_copy_region.region_count, null) == null ? true : var.backup_copy_region.region_count >= 0)
+    error_message = "backup_copy_region.region_count must be at least 0."
+  }
+
+  validation {
+    # Count-based copies and copy policy items are mutually exclusive on a copy setting.
+    condition = var.backup_copy_region == null || try(var.backup_copy_region.last_number_of_snapshots, null) == null || alltrue([
+      try(var.backup_retention.hourly.copy_retention_value, null) == null,
+      try(var.backup_retention.daily.copy_retention_value, null) == null,
+      try(var.backup_retention.weekly.copy_retention_value, null) == null,
+      try(var.backup_retention.monthly.copy_retention_value, null) == null,
+      try(var.backup_retention.yearly.copy_retention_value, null) == null,
+    ])
+    error_message = "backup_copy_region.last_number_of_snapshots (count-based copies) cannot be combined with backup_retention[*].copy_retention_value (copy policy items); they are mutually exclusive copy mechanisms."
   }
 }
 
@@ -81,6 +139,16 @@ variable "backup_retention" {
     `reference_hour_of_day`/`reference_minute_of_hour` control the UTC snapshot window (default: 18:00 UTC per
     Atlas's default backup policy when left unset). `restore_window_days` controls the PIT restore window.
 
+    Each frequency block also accepts `copy_retention_value` (a number of days), the retention of the copy policy
+    item the module derives for that frequency when `backup_copy_region` is set:
+
+    - unset (`null`, the default): copy at the source frequency's retention.
+    - `0`: do not create a copy policy item for the frequency.
+    - positive: copy with that many days of retention, which must not exceed the source frequency's retention.
+
+    It is mutually exclusive with `backup_copy_region.last_number_of_snapshots`. See the
+    [Backup Guide](./docs/backup_guide.md#cross-region-copy) for the copy retention and count-based copy details.
+
     `ondemand` is accepted for shape-compatibility with the project module's future `backup_compliance_policy.retention`
     but has no corresponding field on `cloud_backup_schedule`. It is ignored by this module.
 
@@ -102,28 +170,33 @@ variable "backup_retention" {
       retention_value = number
     }))
     hourly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "days")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "days")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     daily = optional(object({
-      retention_unit  = optional(string, "days")
-      retention_value = number
+      retention_unit       = optional(string, "days")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     weekly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "weeks")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "weeks")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     monthly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "months")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "months")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
     yearly = optional(object({
-      frequency_interval = optional(number)
-      retention_unit     = optional(string, "years")
-      retention_value    = number
+      frequency_interval   = optional(number)
+      retention_unit       = optional(string, "years")
+      retention_value      = number
+      copy_retention_value = optional(number)
     }))
   })
   nullable = true

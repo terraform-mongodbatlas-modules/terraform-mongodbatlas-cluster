@@ -195,7 +195,12 @@ run "on_demand_mode_with_copy_region_succeeds" {
   }
 
   assert {
-    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].frequencies) == 1 && contains(module.backup_schedule[0].schedule.copy_settings[0].frequencies, "ON_DEMAND")
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "copy policy items must be enabled when a copy target is present"
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items) == 1 && module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items[0].frequency_type == "ondemand"
     error_message = "ON_DEMAND mode should only copy the ON_DEMAND frequency (no scheduled frequencies exist)"
   }
 }
@@ -420,6 +425,37 @@ run "copy_region_insufficient_regions_fails" {
   }
 }
 
+run "copy_region_replication_specs_region_count_zero_removes_targets" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-repl-specs-removal"
+    project_id   = var.project_id
+    cluster_type = "REPLICASET"
+    regions      = []
+    replication_specs = [{
+      region_configs = [{
+        provider_name   = "AWS"
+        region_name     = "US_EAST_1"
+        priority        = 7
+        electable_specs = { instance_size = "M10", node_count = 3 }
+      }]
+    }]
+    backup_copy_region = { region_count = 0 }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 0
+    error_message = "region_count = 0 should remove every copy target on a replication_specs cluster too"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "region_count = 0 must keep copy_policy_items_enabled = true so Atlas accepts the removal"
+  }
+}
+
 run "copy_region_replication_specs_requires_explicit_region" {
   command         = plan
   expect_failures = [mongodbatlas_advanced_cluster.this]
@@ -531,5 +567,380 @@ run "backup_export_wires_export_block" {
   assert {
     condition     = module.backup_schedule[0].schedule.export[0].export_bucket_id == "000000000000000000000000"
     error_message = "export block should carry through the export_bucket_id"
+  }
+}
+
+run "copy_region_default_derives_one_target" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-default-count"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 1
+    error_message = "backup_copy_region = {} should derive exactly one copy target by default"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_WEST_2"
+    error_message = "the derived target should be the highest-priority secondary region (regions[1])"
+  }
+}
+
+run "copy_region_region_count_derives_multiple_targets" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-count"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { region_count = 2 }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 2
+    error_message = "region_count = 2 should derive two copy targets"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_WEST_2" && module.backup_schedule[0].schedule.copy_settings[1].region_name == "EU_WEST_1"
+    error_message = "derived targets should follow regions order (US_WEST_2 then EU_WEST_1)"
+  }
+}
+
+run "copy_region_region_count_zero_keeps_flag_and_clears_targets" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-count-zero"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { region_count = 0 }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 0
+    error_message = "region_count = 0 should remove every copy target"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "region_count = 0 must keep copy_policy_items_enabled = true so Atlas accepts the removal"
+  }
+}
+
+run "copy_region_region_count_exceeds_secondaries_fails" {
+  command         = plan
+  expect_failures = [mongodbatlas_advanced_cluster.this]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-count-overflow"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { region_count = 2 }
+  }
+}
+
+run "copy_region_explicit_regions_list" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-regions-list"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { regions = ["EU_WEST_1", "US_WEST_2"] }
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 2
+    error_message = "an explicit regions list should derive one target per named region"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "EU_WEST_1" && module.backup_schedule[0].schedule.copy_settings[1].region_name == "US_WEST_2"
+    error_message = "explicit regions should keep the order the caller named"
+  }
+}
+
+run "copy_region_regions_not_secondary_fails" {
+  command         = plan
+  expect_failures = [mongodbatlas_advanced_cluster.this]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-regions-primary"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { regions = ["US_EAST_1"] }
+  }
+}
+
+run "copy_region_regions_duplicate_fails" {
+  command         = plan
+  expect_failures = [mongodbatlas_advanced_cluster.this]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-regions-duplicate"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { regions = ["US_WEST_2", "US_WEST_2"] }
+  }
+}
+
+run "copy_region_regions_and_region_count_conflict_fails" {
+  command         = plan
+  expect_failures = [var.backup_copy_region]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-regions-count-conflict"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { regions = ["US_WEST_2"], region_count = 1 }
+  }
+}
+
+run "copy_region_region_and_region_count_conflict_fails" {
+  command         = plan
+  expect_failures = [var.backup_copy_region]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-region-count-conflict"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { region = "US_WEST_2", region_count = 1 }
+  }
+}
+
+run "copy_policy_items_derived_from_retention_defaults" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-items-default"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items) == 6
+    error_message = "the derivation should emit one copy policy item per active frequency plus ondemand"
+  }
+
+  assert {
+    condition = length([
+      for i in module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items :
+      i if i.frequency_type == "weekly" && i.retention_unit == "weeks" && i.retention_value == 4
+    ]) == 1
+    error_message = "the weekly copy policy item should mirror the source retention (4 weeks) when copy_retention_value is unset"
+  }
+
+  assert {
+    condition = contains([
+      for i in module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items : i.frequency_type
+    ], "ondemand")
+    error_message = "the derivation should always include the ondemand copy policy item"
+  }
+}
+
+run "copy_retention_value_zero_omits_frequency" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-retention-zero"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = {}
+    backup_retention = {
+      weekly = { retention_value = 8, copy_retention_value = 0 }
+    }
+  }
+
+  assert {
+    condition = length([
+      for i in module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items :
+      i if i.frequency_type == "weekly"
+    ]) == 0
+    error_message = "copy_retention_value = 0 should omit the frequency's copy policy item"
+  }
+}
+
+run "copy_retention_value_overrides_retention" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-retention-override"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = {}
+    backup_retention = {
+      daily = { retention_value = 30, copy_retention_value = 14 }
+    }
+  }
+
+  assert {
+    condition = length([
+      for i in module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items :
+      i if i.frequency_type == "daily" && i.retention_unit == "days" && i.retention_value == 14
+    ]) == 1
+    error_message = "a positive copy_retention_value should override the copy policy item's retention (in days)"
+  }
+}
+
+run "last_number_of_snapshots_emits_count_based_copies" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-last-n"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }, { name = "EU_WEST_1", node_count = 2 }]
+    backup_copy_region = { region_count = 2, last_number_of_snapshots = 5 }
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].last_number_of_snapshots == 5 && module.backup_schedule[0].schedule.copy_settings[1].last_number_of_snapshots == 5
+    error_message = "last_number_of_snapshots should reach every derived target"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_policy_items_enabled == true
+    error_message = "the provider requires copy_policy_items_enabled for count-based copies too"
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings[0].copy_policy_items) == 0
+    error_message = "count-based copies should not also emit copy_policy_items"
+  }
+}
+
+run "last_number_of_snapshots_with_copy_retention_fails" {
+  command         = plan
+  expect_failures = [var.backup_copy_region]
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-last-n-conflict"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { last_number_of_snapshots = 5 }
+    backup_retention = {
+      daily = { retention_value = 30, copy_retention_value = 30 }
+    }
+  }
+}
+
+run "copy_lifecycle_flags_reach_resource" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name               = "tf-test-backup-copy-lifecycle"
+    project_id         = var.project_id
+    provider_name      = "AWS"
+    cluster_type       = "REPLICASET"
+    regions            = [{ name = "US_EAST_1", node_count = 3 }, { name = "US_WEST_2", node_count = 2 }]
+    backup_copy_region = { update_copy_snapshots = true, delete_copy_snapshots = true }
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.update_copy_snapshots == true
+    error_message = "update_copy_snapshots should be plumbed through to the schedule resource"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.delete_copy_snapshots == true
+    error_message = "delete_copy_snapshots should be plumbed through to the schedule resource"
+  }
+}
+
+run "copy_region_multi_cloud_duplicate_region_names_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-duplicate-region-names"
+    project_id   = var.project_id
+    cluster_type = "SHARDED"
+    shard_count  = 1
+    regions = [
+      { name = "US_EAST_2", node_count = 3, provider_name = "AWS" },
+      { name = "US_EAST_2", node_count = 2, provider_name = "AZURE" },
+    ]
+    backup_copy_region = {}
+  }
+
+  assert {
+    condition     = length(module.backup_schedule[0].schedule.copy_settings) == 1
+    error_message = "a region name repeated across cloud providers should still derive one copy target"
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_EAST_2" && module.backup_schedule[0].schedule.copy_settings[0].cloud_provider == "AZURE"
+    error_message = "the derived target should resolve cloud_provider from the second row (duplicate-tolerant lookup, first-match for the pinned region path)"
+  }
+}
+
+run "copy_region_pinned_region_multi_cloud_duplicate_names_succeeds" {
+  command = plan
+  module { source = "./" }
+
+  variables {
+    name         = "tf-test-backup-copy-pinned-duplicate-region-names"
+    project_id   = var.project_id
+    cluster_type = "SHARDED"
+    shard_count  = 1
+    regions = [
+      { name = "US_EAST_2", node_count = 3, provider_name = "AWS" },
+      { name = "US_EAST_2", node_count = 2, provider_name = "AZURE" },
+    ]
+    backup_copy_region = { region = "US_EAST_2", cloud_provider = "AWS" }
+  }
+
+  assert {
+    condition     = module.backup_schedule[0].schedule.copy_settings[0].region_name == "US_EAST_2" && module.backup_schedule[0].schedule.copy_settings[0].cloud_provider == "AWS"
+    error_message = "a pinned region whose name repeats across providers should plan and keep the caller's cloud_provider override"
   }
 }

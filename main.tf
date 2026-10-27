@@ -132,24 +132,32 @@ locals {
   backup_copy_candidate_regions = length(local.grouped_regions) > 0 ? local.grouped_regions[0] : []
 
   # Ternaries, not && -- see tests/plan_short_circuit.tftest.hcl.
-  backup_copy_region_validation_errors = var.backup_copy_region == null ? [] : (
-    var.backup_copy_region.region != null ? [] : (
-      length(local.backup_copy_candidate_regions) < 2 ? [
-        "backup_copy_region: cluster has fewer than 2 regions to auto-derive a secondary from; set backup_copy_region.region explicitly."
-      ] : []
-    )
-  )
+  # region_count defaults to 1 when omitted; an explicit value is validated for range below.
+  backup_copy_region_count = var.backup_copy_region == null ? 0 : coalesce(try(var.backup_copy_region.region_count, null), 1)
+  # The count-based branch only slices when the count is in range, so an out-of-range count is reported by
+  # local.backup_copy_region_validation_errors instead of raising a raw slice error.
+  backup_copy_derived_targets = local.backup_copy_region_count <= length(local.backup_copy_candidate_regions) - 1 ? [
+    for r in slice(local.backup_copy_candidate_regions, 1, 1 + local.backup_copy_region_count) : {
+      name          = r.name
+      provider_name = r.provider_name
+    }
+  ] : []
 
-  # Not coalesce() -- it errors when all args are null, which is valid here (caught by the precondition instead).
-  backup_copy_region_derived_name = var.backup_copy_region == null ? null : (
-    var.backup_copy_region.region != null ? var.backup_copy_region.region : try(local.backup_copy_candidate_regions[1].name, null)
-  )
-
-  backup_copy_region_derived_provider_name = var.backup_copy_region == null ? null : (
-    var.backup_copy_region.cloud_provider != null ? var.backup_copy_region.cloud_provider : (
-      try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == local.backup_copy_region_derived_name][0], null) != null
-      ? try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == local.backup_copy_region_derived_name][0], null)
-      : var.provider_name
+  # One copy target per requested secondary region. `region` pins one, `regions` names a subset explicitly,
+  # otherwise `region_count` takes the highest-priority secondaries from the cluster's first region group.
+  # List comprehensions, not a keyed map: a multi-cloud region group can repeat a region name across
+  # providers (AWS and AZURE both have US_EAST_2), which a `{for ... : r.name => ...}` map rejects.
+  backup_copy_targets = var.backup_copy_region == null ? [] : (
+    var.backup_copy_region.region != null ? [{
+      name          = var.backup_copy_region.region
+      provider_name = try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == var.backup_copy_region.region][0], null)
+      }] : (
+      var.backup_copy_region.regions != null ? [
+        for name in var.backup_copy_region.regions : {
+          name          = name
+          provider_name = try([for r in local.backup_copy_candidate_regions : r.provider_name if r.name == name][0], null)
+        }
+      ] : local.backup_copy_derived_targets
     )
   )
 
@@ -158,12 +166,50 @@ locals {
   # group backup_copy_candidate_regions derives region_name/cloud_provider from (see comment above).
   backup_copy_zone_id = var.backup_copy_region == null ? null : try(mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id, null)
 
-  backup_copy_settings = var.backup_copy_region == null ? null : {
-    cloud_provider     = local.backup_copy_region_derived_provider_name
-    region_name        = local.backup_copy_region_derived_name
-    zone_id            = local.backup_copy_zone_id
-    should_copy_oplogs = coalesce(var.backup_copy_region.should_copy_oplogs, local.effective_pit_enabled)
-  }
+  # One copy_settings entry per target. `cloud_provider` stays null (left for the provider to infer) only
+  # when neither the override, the target region, nor the root provider_name can resolve it.
+  backup_copy_settings = var.backup_copy_region == null ? [] : [
+    for t in local.backup_copy_targets : {
+      cloud_provider = var.backup_copy_region.cloud_provider != null ? var.backup_copy_region.cloud_provider : (
+        t.provider_name != null ? t.provider_name : var.provider_name
+      )
+      region_name              = t.name
+      zone_id                  = local.backup_copy_zone_id
+      should_copy_oplogs       = coalesce(var.backup_copy_region.should_copy_oplogs, local.effective_pit_enabled)
+      last_number_of_snapshots = var.backup_copy_region.last_number_of_snapshots
+    }
+  ]
+
+  # Request-level (not per target) copy-snapshot lifecycle flags.
+  backup_copy_update_snapshots = var.backup_copy_region == null ? null : try(var.backup_copy_region.update_copy_snapshots, null)
+  backup_copy_delete_snapshots = var.backup_copy_region == null ? null : try(var.backup_copy_region.delete_copy_snapshots, null)
+
+  # Ternaries, not && -- see tests/plan_short_circuit.tftest.hcl.
+  backup_copy_derives_by_count = var.backup_copy_region == null ? false : (
+    var.backup_copy_region.region == null && var.backup_copy_region.regions == null
+  )
+
+  backup_copy_region_validation_errors = var.backup_copy_region == null ? [] : compact(concat(
+    # region_count = 0 derives no targets, so it does not need a second region.
+    # region_count = 0 derives no targets, so it does not need a second region and cannot exceed any.
+    local.backup_copy_derives_by_count && local.backup_copy_region_count > 0 && length(local.backup_copy_candidate_regions) < 2 ? [
+      "backup_copy_region = {} needs at least 2 regions in `regions` to derive a copy target from. Add a region or set backup_copy_region.region."
+    ] : [],
+
+    local.backup_copy_derives_by_count && local.backup_copy_region_count > 0 && local.backup_copy_region_count > length(local.backup_copy_candidate_regions) - 1 ? [
+      "backup_copy_region.region_count = ${local.backup_copy_region_count} is greater than the ${max(length(local.backup_copy_candidate_regions) - 1, 0)} secondary region(s) in `regions`. Add a region or lower region_count."
+    ] : [],
+
+    # An explicit list must name secondary regions, with no duplicates (Atlas rejects a duplicate copy destination).
+    var.backup_copy_region.regions != null ? compact(concat(
+      [for name in var.backup_copy_region.regions :
+        length([for r in local.backup_copy_candidate_regions : r if r.name == name]) == 0 || name == try(local.backup_copy_candidate_regions[0].name, null)
+        ? "backup_copy_region.regions: '${name}' must be a secondary region in `regions` (not the primary)." : ""
+      ],
+      length(distinct(var.backup_copy_region.regions)) != length(var.backup_copy_region.regions)
+      ? ["backup_copy_region.regions: duplicate copy targets are not allowed."] : [],
+    )) : [],
+  ))
 
   # auto scaling for electable nodes
   auto_scaling_compute_enabled = var.auto_scaling.compute_enabled
@@ -472,7 +518,10 @@ module "backup_schedule" {
     monthly                  = null
     yearly                   = null
   }
-  copy_settings = local.backup_copy_settings
-  export        = var.backup_export
-  skip_destroy  = var.backup_schedule_skip_destroy
+  copy_settings             = local.backup_copy_settings
+  copy_policy_items_enabled = var.backup_copy_region != null
+  update_copy_snapshots     = local.backup_copy_update_snapshots
+  delete_copy_snapshots     = local.backup_copy_delete_snapshots
+  export                    = var.backup_export
+  skip_destroy              = var.backup_schedule_skip_destroy
 }
