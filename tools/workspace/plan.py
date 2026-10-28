@@ -41,7 +41,8 @@ def run_terraform_init(ws_dir: Path) -> None:
             ["terraform", "init", "-upgrade", "-input=false"], ws_dir
         )
     except tf_retry.TerraformInitError as e:
-        logger.error(f"terraform init failed: {e.stderr[:200]}")
+        logger.error(f"terraform init failed: {e.stderr}")
+        tf_retry._annotate(ws_dir, e.stderr)
         raise typer.Exit(1) from e
     if result.stdout:
         typer.echo(result.stdout.rstrip())
