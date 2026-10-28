@@ -145,3 +145,32 @@ def test_registry_outage_still_retries(tmp_path: Path):
         result = run_terraform_init(["terraform", "init"], tmp_path)
     assert result.returncode == 0
     assert mock_run.call_count == 2
+
+
+def test_annotate_error_escapes_newlines(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    stderr = "100% failed\r\nno available releases match the given constraints"
+
+    tf_retry.annotate_error(tmp_path, stderr)
+
+    out = capsys.readouterr().out.rstrip("\n")
+    assert out == (
+        f"::error::terraform init failed in {tmp_path}: "
+        "100%25 failed%0D%0Ano available releases match the given constraints"
+    )
+
+
+def test_annotate_error_noop_outside_github_actions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
+    tf_retry.annotate_error(tmp_path, "boom")
+
+    assert capsys.readouterr().out == ""

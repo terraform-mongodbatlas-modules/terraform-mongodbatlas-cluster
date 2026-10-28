@@ -49,7 +49,7 @@ def _is_transient(error: BaseException) -> bool:
     return any(p in error.stderr for p in TRANSIENT_PATTERNS)
 
 
-def _annotate(work_dir: Path, stderr: str) -> None:
+def annotate_error(work_dir: Path, stderr: str) -> None:
     if os.environ.get("GITHUB_ACTIONS") != "true":
         return
     detail = stderr.strip().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
