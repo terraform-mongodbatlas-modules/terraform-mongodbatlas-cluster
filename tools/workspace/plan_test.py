@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
 import subprocess
 from pathlib import Path
 
 import pytest
+import typer
 
 from shared import tf_retry
 from workspace.plan import (
@@ -90,6 +92,55 @@ def test_run_terraform_init_prints_success_output(tmp_path: Path, monkeypatch, c
 
     captured = capsys.readouterr()
     assert (captured.out, captured.err) == (stdout, stderr)
+
+
+def test_run_terraform_init_failure_logs_annotates_and_exits(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+):
+    stderr = "Error: 100% failed\r\nno available releases match the given constraints " + "y" * 200
+
+    def _raise(*_: object, **__: object) -> None:
+        raise tf_retry.TerraformInitError(stderr, tmp_path)
+
+    monkeypatch.setattr(tf_retry, "run_terraform_init", _raise)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    with (
+        caplog.at_level(logging.ERROR, logger="workspace.plan"),
+        pytest.raises(typer.Exit) as exc_info,
+    ):
+        run_terraform_init(tmp_path)
+
+    assert exc_info.value.exit_code == 1
+    assert stderr in caplog.text
+    annotation = capsys.readouterr().out.rstrip("\n")
+    assert annotation.startswith(f"::error::terraform init failed in {tmp_path}: ")
+    assert "%25" in annotation
+    assert "%0D" in annotation
+    assert "%0A" in annotation
+    assert "\n" not in annotation
+    assert "\r" not in annotation
+
+
+def test_run_terraform_init_failure_no_annotation_outside_github_actions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
+    def _raise(*_: object, **__: object) -> None:
+        raise tf_retry.TerraformInitError("boom", tmp_path)
+
+    monkeypatch.setattr(tf_retry, "run_terraform_init", _raise)
+
+    with pytest.raises(typer.Exit):
+        run_terraform_init(tmp_path)
+
+    assert capsys.readouterr().out == ""
 
 
 @pytest.mark.parametrize(

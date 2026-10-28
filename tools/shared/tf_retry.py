@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -24,6 +25,12 @@ TRANSIENT_PATTERNS = [
     "registry service is unreachable",
 ]
 
+# Deterministic failures that retrying cannot fix. A genuine registry outage also
+# prints the transient patterns, so these are checked first to tell the two apart.
+TERMINAL_PATTERNS = [
+    "no available releases match the given constraints",
+]
+
 CHECKSUM_PATTERN = "does not match any of the checksums recorded"
 
 
@@ -37,7 +44,16 @@ class TerraformInitError(RuntimeError):
 def _is_transient(error: BaseException) -> bool:
     if not isinstance(error, TerraformInitError):
         return False
+    if any(p in error.stderr for p in TERMINAL_PATTERNS):
+        return False
     return any(p in error.stderr for p in TRANSIENT_PATTERNS)
+
+
+def annotate_error(work_dir: Path, stderr: str) -> None:
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return
+    detail = stderr.strip().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error::terraform init failed in {work_dir}: {detail}")
 
 
 def _cleanup_terraform_cache(work_dir: Path) -> None:
@@ -51,8 +67,12 @@ def _cleanup_terraform_cache(work_dir: Path) -> None:
 
 def _log_retry(state: RetryCallState) -> None:
     exc = state.outcome.exception() if state.outcome else None
-    work_dir = exc.work_dir if isinstance(exc, TerraformInitError) else "?"
-    logger.warning(f"terraform init retry #{state.attempt_number} in {work_dir}")
+    if isinstance(exc, TerraformInitError):
+        logger.warning(
+            f"terraform init retry #{state.attempt_number} in {exc.work_dir}:\n{exc.stderr}"
+        )
+        return
+    logger.warning(f"terraform init retry #{state.attempt_number} in ?")
 
 
 def _before_retry(state: RetryCallState) -> None:
