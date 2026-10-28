@@ -1,5 +1,7 @@
 ## (Unreleased)
 
+## 1.0.0 (October 28, 2026)
+
 BREAKING CHANGES:
 
 * submodule/cloud_backup_schedule: Switches `copy_settings` from the deprecated `frequencies` list to `copy_policy_items` and enables `copy_policy_items_enabled` ([#243](https://github.com/terraform-mongodbatlas-modules/terraform-mongodbatlas-cluster/pull/243))
