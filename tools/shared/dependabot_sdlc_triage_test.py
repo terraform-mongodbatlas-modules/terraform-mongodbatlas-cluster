@@ -367,7 +367,7 @@ def test_mixed_references_list_both_and_require_cluster_first():
     assert client.added_labels == [(42, MANAGED_LABEL), (42, DESTINATION_LABEL)]
     body = client.created_comments[0][1]
     assert "If a matching cluster Dependabot PR exists" in body
-    assert "Create a cluster PR with the suggested action version" in body
+    assert "Create the matching update in the cluster repository" in body
     assert "Both labels: follow the `dependabot-cluster` guidance first" in body
 
 
@@ -400,7 +400,7 @@ def test_destination_references_reconcile_only_changed_labels_and_keep_comment()
     assert client.created_comments == []
 
 
-def test_non_github_actions_dependabot_pr_gets_unsupported_label_and_comment():
+def test_unsupported_ecosystem_dependabot_pr_gets_unsupported_label_and_comment():
     client = FakeClient()
     event = {
         "pull_request": _pull(
@@ -419,6 +419,134 @@ def test_non_github_actions_dependabot_pr_gets_unsupported_label_and_comment():
     assert client.added_labels == [(42, UNSUPPORTED_LABEL)]
     body = client.created_comments[0][1]
     assert "dependabot-unsupported" in body
+
+
+def test_uv_pull_request_touching_destination_owned_file_gets_required_label():
+    path = "chatbot/uv.lock"
+    client = FakeClient(
+        files=[{"filename": path, "status": "modified"}],
+        contents={(path, "base-sha"): 'version = 1\nrequires-python = ">=3.14"\n'},
+    )
+    event = {
+        "pull_request": _pull(
+            head_ref="dependabot/uv/chatbot/python-deps-7c78492b5b",
+            title="chore(deps): bump the python-deps group in /chatbot with 5 updates",
+        )
+    }
+
+    classification = triage_event(event, client)
+
+    assert classification == ActionClassification(
+        managed=(),
+        destination=(),
+        destination_paths=(path,),
+    )
+    assert client.reads == [(path, "base-sha")]
+    assert client.removed_labels == []
+    assert client.added_labels == [(42, DESTINATION_LABEL)]
+    body = client.created_comments[0][1]
+    assert "dependabot-required" in body
+
+
+def test_uv_pull_request_touching_managed_file_gets_cluster_label():
+    path = "tools/uv.lock"
+    client = FakeClient(
+        files=[{"filename": path, "status": "modified"}],
+        contents={(path, "base-sha"): "# path-sync copy -n sdlc\nversion = 1\n"},
+    )
+    event = {
+        "pull_request": _pull(
+            head_ref="dependabot/uv/tools/python-deps-example",
+            title="chore(deps): bump the python-deps group in /tools",
+        )
+    }
+
+    classification = triage_event(event, client)
+
+    assert classification == ActionClassification(
+        managed=(),
+        destination=(),
+        managed_paths=(path,),
+    )
+    assert client.added_labels == [(42, MANAGED_LABEL)]
+
+
+def test_uv_pull_request_touching_managed_and_destination_files_lists_both_labels():
+    managed_path = "tools/uv.lock"
+    destination_path = "chatbot/uv.lock"
+    client = FakeClient(
+        files=[
+            {"filename": managed_path, "status": "modified"},
+            {"filename": destination_path, "status": "modified"},
+        ],
+        contents={
+            (managed_path, "base-sha"): "# path-sync copy -n sdlc\nversion = 1\n",
+            (destination_path, "base-sha"): "version = 1\n",
+        },
+    )
+    event = {
+        "pull_request": _pull(
+            head_ref="dependabot/uv/chatbot/python-deps-7c78492b5b",
+            title="chore(deps): bump the python-deps group in /chatbot with 5 updates",
+        )
+    }
+
+    classification = triage_event(event, client)
+
+    assert classification is not None
+    assert classification.managed_paths == (managed_path,)
+    assert classification.destination_paths == (destination_path,)
+    assert client.added_labels == [(42, MANAGED_LABEL), (42, DESTINATION_LABEL)]
+
+
+def test_uv_pull_request_renaming_managed_file_uses_base_path_ownership():
+    path = "app/uv.lock"
+    client = FakeClient(
+        files=[
+            {
+                "filename": path,
+                "previous_filename": "tools/uv.lock",
+                "status": "renamed",
+            }
+        ],
+        contents={("tools/uv.lock", "base-sha"): "# path-sync copy -n sdlc\nversion = 1\n"},
+    )
+    event = {
+        "pull_request": _pull(
+            head_ref="dependabot/uv/chatbot/python-deps-7c78492b5b",
+            title="chore(deps): bump the python-deps group in /chatbot with 5 updates",
+        )
+    }
+
+    classification = triage_event(event, client)
+
+    assert classification == ActionClassification(
+        managed=(),
+        destination=(),
+        managed_paths=(path,),
+    )
+    assert client.reads == [("tools/uv.lock", "base-sha")]
+    assert client.added_labels == [(42, MANAGED_LABEL)]
+
+
+def test_uv_pull_request_with_unreadable_file_gets_unsupported_label():
+    path = "chatbot/uv.lock"
+    client = FakeClient(files=[{"filename": path, "status": "modified"}])
+    event = {
+        "pull_request": _pull(
+            head_ref="dependabot/uv/chatbot/python-deps-7c78492b5b",
+            title="chore(deps): bump the python-deps group in /chatbot with 5 updates",
+        )
+    }
+
+    classification = triage_event(event, client)
+
+    assert classification == ActionClassification(
+        managed=(),
+        destination=(),
+        unclassified_paths=(path,),
+    )
+    assert client.added_labels == [(42, UNSUPPORTED_LABEL)]
 
 
 def test_unclassified_github_actions_change_gets_unsupported_label():
