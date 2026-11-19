@@ -18,6 +18,7 @@ COMMENT_MARKER = "<!-- dependabot-sdlc-triage -->"
 DEPENDABOT_LOGIN = "dependabot[bot]"
 SDLC_MARKER = "path-sync copy -n sdlc"
 GITHUB_ACTIONS_ECOSYSTEM = "github_actions"
+UV_ECOSYSTEM = "uv"
 API_REQUEST_TIMEOUT_SECONDS = 15
 SECTION_MARKER_PATTERN = re.compile(
     r"^\s*#\s*===\s*(DO_NOT_EDIT|OK_EDIT):\s*path-sync\s+\S+\s*===\s*$"
@@ -66,6 +67,8 @@ class ActionClassification:
     destination: tuple[ActionReferenceChange, ...]
     unclassified: tuple[ActionReferenceChange, ...] = ()
     unclassified_paths: tuple[str, ...] = ()
+    managed_paths: tuple[str, ...] = ()
+    destination_paths: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -288,6 +291,12 @@ def _uses_references(content: str) -> dict[tuple[str, int], _UsesReference]:
     return references
 
 
+def _base_path(file: dict[str, Any]) -> str | None:
+    if file.get("status") == "renamed":
+        return file.get("previous_filename")
+    return file["filename"]
+
+
 def classify_action_references(
     files: list[dict[str, Any]],
     read_file: Callable[[str, str], str | None],
@@ -301,7 +310,7 @@ def classify_action_references(
 
     for file in files:
         filename = file["filename"]
-        base_path = file.get("previous_filename") if file.get("status") == "renamed" else filename
+        base_path = _base_path(file)
         if not base_path:
             unclassified_paths.append(filename)
             continue
@@ -347,6 +356,36 @@ def classify_action_references(
     )
 
 
+def classify_file_ownership(
+    files: list[dict[str, Any]],
+    read_file: Callable[[str, str], str | None],
+    base_ref: str,
+) -> ActionClassification:
+    managed_paths: list[str] = []
+    destination_paths: list[str] = []
+    unclassified_paths: list[str] = []
+
+    for file in files:
+        filename = file["filename"]
+        base_path = _base_path(file)
+        base_content = read_file(base_path, base_ref) if base_path else None
+        if base_content is None:
+            unclassified_paths.append(filename)
+            continue
+        if _whole_file_managed(base_path, base_content):
+            managed_paths.append(filename)
+        else:
+            destination_paths.append(filename)
+
+    return ActionClassification(
+        managed=(),
+        destination=(),
+        unclassified_paths=tuple(unclassified_paths),
+        managed_paths=tuple(managed_paths),
+        destination_paths=tuple(destination_paths),
+    )
+
+
 def render_comment() -> str:
     return "\n".join(
         [
@@ -358,7 +397,7 @@ def render_comment() -> str:
             "- `dependabot-cluster`: this update affects SDLC-managed content. Do not merge this "
             "pull request. If a matching cluster Dependabot PR exists, wait for it and its SDLC "
             "sync. If none exists, the source may be a destination-only workflow that Dependabot "
-            "does not scan in cluster. Create a cluster PR with the suggested action version, then "
+            "does not scan in cluster. Create the matching update in the cluster repository, then "
             "merge its SDLC sync.",
             "- `dependabot-required`: this pull request contains destination-owned updates. It can "
             "follow normal review once it has no `dependabot-cluster` label.",
@@ -393,13 +432,23 @@ def classify_pull_request(
     return classify_action_references(files, client.read_file, base_ref, head_ref)
 
 
+def classify_pull_file_ownership(
+    pull_request: dict[str, Any],
+    client: GitHubClient,
+) -> ActionClassification:
+    pull_number = int(pull_request["number"])
+    base_ref = pull_request["base"]["sha"]
+    files = client.list_pull_files(pull_number)
+    return classify_file_ownership(files, client.read_file, base_ref)
+
+
 def desired_labels(classification: ActionClassification) -> tuple[Label, ...]:
     if classification.unclassified or classification.unclassified_paths:
         return (UNSUPPORTED_LABEL,)
     labels = []
-    if classification.managed:
+    if classification.managed or classification.managed_paths:
         labels.append(MANAGED_LABEL)
-    if classification.destination:
+    if classification.destination or classification.destination_paths:
         labels.append(DESTINATION_LABEL)
     return tuple(labels) or (UNSUPPORTED_LABEL,)
 
@@ -443,11 +492,12 @@ def triage_event(
 
     pull_request = event["pull_request"]
     ecosystem = dependabot_ecosystem(pull_request)
-    classification = (
-        classify_pull_request(pull_request, client)
-        if ecosystem == GITHUB_ACTIONS_ECOSYSTEM
-        else ActionClassification((), (), unclassified_paths=("unsupported ecosystem",))
-    )
+    if ecosystem == GITHUB_ACTIONS_ECOSYSTEM:
+        classification = classify_pull_request(pull_request, client)
+    elif ecosystem == UV_ECOSYSTEM:
+        classification = classify_pull_file_ownership(pull_request, client)
+    else:
+        classification = ActionClassification((), (), unclassified_paths=("unsupported ecosystem",))
     create_comment_once(int(pull_request["number"]), client)
     reconcile_labels(pull_request, desired_labels(classification), client)
     return classification
