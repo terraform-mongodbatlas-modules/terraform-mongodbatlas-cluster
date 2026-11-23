@@ -6,10 +6,10 @@ dependencies = [
     "pydantic~=2.14",
     "pyyaml~=6.0",
     "tenacity~=9.2",
-    "typer~=0.28",
+    "typer~=0.29",
     "pytest~=9.2",
     "pytest-regressions~=2.11",
-    "python-hcl2~=8.1",
+    "python-hcl2~=8.2",
     "pygments>=2.21.0",
 ]
 
